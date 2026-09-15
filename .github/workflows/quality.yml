@@ -46,18 +46,18 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: doccheck
-          POSTGRES_PASSWORD: doccheck
-          POSTGRES_DB: doccheck
+          POSTGRES_USER: advs
+          POSTGRES_PASSWORD: advs
+          POSTGRES_DB: advs
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U doccheck -d doccheck"
+          --health-cmd "pg_isready -U advs -d advs"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql+psycopg://doccheck:doccheck@localhost:5432/doccheck
+      DATABASE_URL: postgresql+psycopg://advs:advs@localhost:5432/advs
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
