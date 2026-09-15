@@ -1,0 +1,45 @@
+{
+  "sample_id": "business_021",
+  "source": "synthetic",
+  "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+  "input_format": "scanned_pdf",
+  "quality": "low_contrast",
+  "layout_variant": "table",
+  "split": "dev",
+  "fields": {
+    "company_name": {
+      "value": "예시산업 주식회사",
+      "required": true
+    },
+    "representative_name": {
+      "value": "박대표",
+      "required": true
+    },
+    "business_registration_number": {
+      "value": "921-81-10777",
+      "required": true
+    },
+    "business_address": {
+      "value": "경기도 가상시 모형대로 34",
+      "required": true
+    },
+    "business_type": {
+      "value": "제조업",
+      "required": true
+    },
+    "business_item": {
+      "value": "전자부품 제조",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2018-07-05",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

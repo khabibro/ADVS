@@ -1,0 +1,45 @@
+{
+  "sample_id": "business_019",
+  "source": "synthetic",
+  "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+  "input_format": "jpg",
+  "quality": "compressed",
+  "layout_variant": "compact",
+  "split": "held_out",
+  "fields": {
+    "company_name": {
+      "value": "더미시스템 주식회사",
+      "required": true
+    },
+    "representative_name": {
+      "value": "한사업",
+      "required": true
+    },
+    "business_registration_number": {
+      "value": "919-99-10703",
+      "required": true
+    },
+    "business_address": {
+      "value": "인천광역시 견본구 표본로 78",
+      "required": true
+    },
+    "business_type": {
+      "value": "정보통신업",
+      "required": true
+    },
+    "business_item": {
+      "value": "경영 컨설팅",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2018-03-05",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "label spacing variant applied",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

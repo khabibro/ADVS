@@ -1,0 +1,41 @@
+{
+  "sample_id": "graduation_016",
+  "source": "synthetic",
+  "document_type": "GRADUATION_CERTIFICATE",
+  "input_format": "text_pdf",
+  "quality": "clean",
+  "layout_variant": "table",
+  "split": "dev",
+  "fields": {
+    "applicant_name": {
+      "value": "김테스트",
+      "required": true
+    },
+    "university_name": {
+      "value": "마바사대학교",
+      "required": true
+    },
+    "department": {
+      "value": "전자공학과",
+      "required": true
+    },
+    "degree": {
+      "value": "석사",
+      "required": true
+    },
+    "graduation_date": {
+      "value": "2022-01-22",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2022-03-09",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

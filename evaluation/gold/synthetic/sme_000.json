@@ -1,0 +1,45 @@
+{
+  "sample_id": "sme_000",
+  "source": "synthetic",
+  "document_type": "SME_CONFIRMATION_CERTIFICATE",
+  "input_format": "text_pdf",
+  "quality": "clean",
+  "layout_variant": "standard",
+  "split": "dev",
+  "fields": {
+    "company_name": {
+      "value": "가상소프트 주식회사",
+      "required": true
+    },
+    "representative_name": {
+      "value": "박대표",
+      "required": true
+    },
+    "business_registration_number": {
+      "value": "950-80-28500",
+      "required": true
+    },
+    "certificate_number": {
+      "value": "SME-2020-100",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2020-01-01",
+      "required": true
+    },
+    "expiration_date": {
+      "value": "2020-06-29",
+      "required": true
+    },
+    "validity_period": {
+      "value": "2020-01-01 ~ 2020-06-29",
+      "required": true
+    }
+  },
+  "expected_validation_status": "NEEDS_CORRECTION",
+  "notes": "expired certificate",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

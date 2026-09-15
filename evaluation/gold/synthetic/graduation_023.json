@@ -1,0 +1,41 @@
+{
+  "sample_id": "graduation_023",
+  "source": "synthetic",
+  "document_type": "GRADUATION_CERTIFICATE",
+  "input_format": "jpg",
+  "quality": "low_resolution",
+  "layout_variant": "vertical",
+  "split": "dev",
+  "fields": {
+    "applicant_name": {
+      "value": "서예시",
+      "required": true
+    },
+    "university_name": {
+      "value": "카파타대학교",
+      "required": true
+    },
+    "department": {
+      "value": "산업공학과",
+      "required": true
+    },
+    "degree": {
+      "value": "박사",
+      "required": true
+    },
+    "graduation_date": {
+      "value": "2022-12-17",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2023-02-08",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "label spacing variant applied",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

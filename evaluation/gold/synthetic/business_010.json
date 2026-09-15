@@ -1,0 +1,45 @@
+{
+  "sample_id": "business_010",
+  "source": "synthetic",
+  "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+  "input_format": "png",
+  "quality": "rotated",
+  "layout_variant": "standard",
+  "split": "dev",
+  "fields": {
+    "company_name": {
+      "value": "테스트테크 주식회사",
+      "required": true
+    },
+    "representative_name": {
+      "value": "이영희",
+      "required": true
+    },
+    "business_registration_number": {
+      "value": "910-90-10370",
+      "required": true
+    },
+    "business_address": {
+      "value": "부산광역시 더미구 샘플길 56",
+      "required": true
+    },
+    "business_type": {
+      "value": "도소매업",
+      "required": true
+    },
+    "business_item": {
+      "value": "무역업",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2016-09-02",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

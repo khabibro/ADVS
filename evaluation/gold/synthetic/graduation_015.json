@@ -1,0 +1,41 @@
+{
+  "sample_id": "graduation_015",
+  "source": "synthetic",
+  "document_type": "GRADUATION_CERTIFICATE",
+  "input_format": "jpg",
+  "quality": "low_contrast",
+  "layout_variant": "standard",
+  "split": "dev",
+  "fields": {
+    "applicant_name": {
+      "value": "서예시",
+      "required": true
+    },
+    "university_name": {
+      "value": "가나다대학교",
+      "required": true
+    },
+    "department": {
+      "value": "컴퓨터공학과",
+      "required": true
+    },
+    "degree": {
+      "value": null,
+      "required": true
+    },
+    "graduation_date": {
+      "value": "2021-12-06",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2022-01-20",
+      "required": true
+    }
+  },
+  "expected_validation_status": "REVIEW",
+  "notes": "omitted field to test missing-value handling; label spacing variant applied",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

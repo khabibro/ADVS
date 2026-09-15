@@ -1,0 +1,41 @@
+{
+  "sample_id": "graduation_014",
+  "source": "synthetic",
+  "document_type": "GRADUATION_CERTIFICATE",
+  "input_format": "png",
+  "quality": "blurred",
+  "layout_variant": "compact",
+  "split": "dev",
+  "fields": {
+    "applicant_name": {
+      "value": "오테스트",
+      "required": true
+    },
+    "university_name": {
+      "value": "하거너대학교",
+      "required": true
+    },
+    "department": {
+      "value": null,
+      "required": true
+    },
+    "degree": {
+      "value": "박사",
+      "required": true
+    },
+    "graduation_date": {
+      "value": "2021-10-20",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2021-12-03",
+      "required": true
+    }
+  },
+  "expected_validation_status": "REVIEW",
+  "notes": "omitted field to test missing-value handling",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

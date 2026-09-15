@@ -1,0 +1,16 @@
+{
+  "sample_id": "subdoc_ambiguous_as_career",
+  "source": "synthetic",
+  "document_type": "UNKNOWN",
+  "input_format": "text_pdf",
+  "quality": "clean",
+  "layout_variant": "verbatim",
+  "split": "dev",
+  "fields": {},
+  "expected_validation_status": null,
+  "notes": "submission-bundle fixture: an employment CONTRACT (근로계약서) submitted in place of a required CAREER_CERTIFICATE -- must not be silently accepted as satisfying the requirement",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "NEGATIVE_OUT_OF_SCOPE",
+  "source_id": null
+}

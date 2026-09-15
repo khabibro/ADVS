@@ -1,0 +1,28 @@
+{
+  "name": "@advs/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./button": "./src/button.tsx",
+    "./card": "./src/card.tsx",
+    "./status-badge": "./src/status-badge.tsx"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
+    "tailwind-merge": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "^5.5.4"
+  },
+  "scripts": {
+    "lint": "echo \"@advs/ui lint delegated to app builds\"",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"@advs/ui has no tests yet\"",
+    "build": "tsc --noEmit"
+  }
+}
+

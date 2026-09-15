@@ -1,0 +1,45 @@
+{
+  "sample_id": "business_006",
+  "source": "synthetic",
+  "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+  "input_format": "png",
+  "quality": "clean",
+  "layout_variant": "table",
+  "split": "dev",
+  "fields": {
+    "company_name": {
+      "value": "예시산업 주식회사",
+      "required": true
+    },
+    "representative_name": {
+      "value": "박대표",
+      "required": true
+    },
+    "business_registration_number": {
+      "value": "906-86-10222",
+      "required": true
+    },
+    "business_address": {
+      "value": "부산광역시 더미구 샘플길 56",
+      "required": true
+    },
+    "business_type": {
+      "value": "도소매업",
+      "required": true
+    },
+    "business_item": {
+      "value": null,
+      "required": true
+    },
+    "issue_date": {
+      "value": "2016-01-02",
+      "required": true
+    }
+  },
+  "expected_validation_status": "REVIEW",
+  "notes": "omitted field to test missing-value handling",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

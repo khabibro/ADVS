@@ -1,0 +1,18 @@
+{
+  "name": "@advs/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "openapi-typescript ../../apps/api/openapi.json -o src/openapi.ts",
+    "lint": "echo \"@advs/contracts lint delegated to generated types\"",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"@advs/contracts has no tests yet\"",
+    "build": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.5.2",
+    "typescript": "^5.5.4"
+  }
+}
+

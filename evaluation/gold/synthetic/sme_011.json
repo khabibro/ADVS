@@ -1,0 +1,45 @@
+{
+  "sample_id": "sme_011",
+  "source": "synthetic",
+  "document_type": "SME_CONFIRMATION_CERTIFICATE",
+  "input_format": "jpg",
+  "quality": "low_resolution",
+  "layout_variant": "table",
+  "split": "dev",
+  "fields": {
+    "company_name": {
+      "value": "모형전자 주식회사",
+      "required": true
+    },
+    "representative_name": {
+      "value": "최사장",
+      "required": true
+    },
+    "business_registration_number": {
+      "value": "961-91-28907",
+      "required": true
+    },
+    "certificate_number": {
+      "value": "SME-2024-111",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2021-03-27",
+      "required": true
+    },
+    "expiration_date": {
+      "value": "2028-01-12",
+      "required": true
+    },
+    "validity_period": {
+      "value": "2026-01-01 ~ 2028-01-12",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "label spacing variant applied",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

@@ -1,0 +1,22 @@
+{
+  "name": "advs",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @advs/web dev",
+    "dev:admin": "pnpm --filter @advs/admin dev",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "build": "turbo build",
+    "contracts:generate": "cd apps/api && ${API_VENV:-.venv312}/bin/python scripts/export_openapi.py && cd ../.. && pnpm --filter @advs/contracts generate",
+    "env:validate": "node scripts/validate-env.mjs",
+    "security:audit": "node scripts/security-audit.mjs",
+    "check": "pnpm env:validate && pnpm security:audit && pnpm lint && pnpm typecheck && pnpm test",
+    "check:all": "pnpm check && pnpm build && pnpm contracts:generate"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3"
+  }
+}

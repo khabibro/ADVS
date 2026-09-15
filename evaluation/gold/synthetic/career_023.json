@@ -1,0 +1,41 @@
+{
+  "sample_id": "career_023",
+  "source": "synthetic",
+  "document_type": "CAREER_CERTIFICATE",
+  "input_format": "jpg",
+  "quality": "low_resolution",
+  "layout_variant": "vertical",
+  "split": "dev",
+  "fields": {
+    "applicant_name": {
+      "value": "김테스트",
+      "required": true
+    },
+    "company_name": {
+      "value": "모형전자 주식회사",
+      "required": true
+    },
+    "position": {
+      "value": "팀장",
+      "required": true
+    },
+    "employment_start_date": {
+      "value": "2021-05-04",
+      "required": true
+    },
+    "employment_end_date": {
+      "value": "2023-05-30",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2023-06-12",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "label spacing variant applied; multiple employment periods present; only first period is supported",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

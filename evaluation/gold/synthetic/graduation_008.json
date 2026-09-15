@@ -1,0 +1,41 @@
+{
+  "sample_id": "graduation_008",
+  "source": "synthetic",
+  "document_type": "GRADUATION_CERTIFICATE",
+  "input_format": "text_pdf",
+  "quality": "clean",
+  "layout_variant": "vertical",
+  "split": "held_out",
+  "fields": {
+    "applicant_name": {
+      "value": "김테스트",
+      "required": true
+    },
+    "university_name": {
+      "value": "카파타대학교",
+      "required": true
+    },
+    "department": {
+      "value": null,
+      "required": true
+    },
+    "degree": {
+      "value": "박사",
+      "required": true
+    },
+    "graduation_date": {
+      "value": "2021-01-11",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2021-02-18",
+      "required": true
+    }
+  },
+  "expected_validation_status": "REVIEW",
+  "notes": "omitted field to test missing-value handling",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

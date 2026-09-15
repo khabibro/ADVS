@@ -1,0 +1,41 @@
+{
+  "sample_id": "career_005",
+  "source": "synthetic",
+  "document_type": "CAREER_CERTIFICATE",
+  "input_format": "scanned_pdf",
+  "quality": "low_resolution",
+  "layout_variant": "standard",
+  "split": "dev",
+  "fields": {
+    "applicant_name": {
+      "value": "오테스트",
+      "required": true
+    },
+    "company_name": {
+      "value": "테스트테크 주식회사",
+      "required": true
+    },
+    "position": {
+      "value": "대리",
+      "required": true
+    },
+    "employment_start_date": {
+      "value": "2018-09-23",
+      "required": true
+    },
+    "employment_end_date": {
+      "value": "2019-12-17",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2020-01-01",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "multiple employment periods present; only first period is supported",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

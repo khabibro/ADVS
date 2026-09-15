@@ -1,0 +1,39 @@
+.env
+.env.*
+!.env.example
+storage/
+apps/api/storage/
+apps/api/.venv/
+apps/api/.venv312/
+apps/api/.pytest_cache/
+apps/api/.ruff_cache/
+apps/api/.mypy_cache/
+apps/api/doccheck_test.db
+apps/api/*.db
+apps/api/*.egg-info/
+__pycache__/
+*.pyc
+*.tsbuildinfo
+apps/*/.next/
+apps/*/node_modules/
+apps/*/out/
+node_modules/
+.turbo/
+*.log
+.DS_Store
+
+# Real/anonymized evaluation documents and their labels may contain
+# sensitive personal or business information -- never committed by default.
+# Synthetic/recreated fixtures (evaluation/datasets/synthetic,
+# evaluation/datasets/recreated, evaluation/gold/synthetic,
+# evaluation/gold/recreated, evaluation/sources) use only fictional data and
+# ARE safe to commit and are NOT ignored.
+evaluation/datasets/real/**
+!evaluation/datasets/real/README.md
+!evaluation/datasets/real/.gitkeep
+!evaluation/datasets/real/inbox/.gitkeep
+evaluation/gold/real/**
+!evaluation/gold/real/.gitkeep
+# OCR result cache may hold text extracted from real documents.
+evaluation/cache/**
+!evaluation/cache/.gitkeep

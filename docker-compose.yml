@@ -1,0 +1,68 @@
+name: advs
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: advs
+      POSTGRES_PASSWORD: advs
+      POSTGRES_DB: advs
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U advs -d advs"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./apps/api
+    env_file: .env.example
+    environment:
+      DATABASE_URL: postgresql+psycopg://advs:advs@db:5432/advs
+      STORAGE_PATH: /app/storage
+      WEB_URL: http://localhost:3000
+      ADMIN_URL: http://localhost:3002
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3002
+    volumes:
+      - api_storage:/app/storage
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    ports:
+      - "3002:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  api_storage:

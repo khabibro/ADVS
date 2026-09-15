@@ -1,0 +1,41 @@
+{
+  "sample_id": "graduation_002",
+  "source": "synthetic",
+  "document_type": "GRADUATION_CERTIFICATE",
+  "input_format": "png",
+  "quality": "blurred",
+  "layout_variant": "reordered",
+  "split": "dev",
+  "fields": {
+    "applicant_name": {
+      "value": "박샘플",
+      "required": true
+    },
+    "university_name": {
+      "value": "아자차대학교",
+      "required": true
+    },
+    "department": {
+      "value": null,
+      "required": true
+    },
+    "degree": {
+      "value": "박사",
+      "required": true
+    },
+    "graduation_date": {
+      "value": "2020-04-04",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2020-05-06",
+      "required": true
+    }
+  },
+  "expected_validation_status": "REVIEW",
+  "notes": "omitted field to test missing-value handling",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

@@ -1,0 +1,41 @@
+{
+  "sample_id": "career_001",
+  "source": "synthetic",
+  "document_type": "CAREER_CERTIFICATE",
+  "input_format": "scanned_pdf",
+  "quality": "compressed",
+  "layout_variant": "table",
+  "split": "dev",
+  "fields": {
+    "applicant_name": {
+      "value": "박샘플",
+      "required": true
+    },
+    "company_name": {
+      "value": "예시산업 주식회사",
+      "required": true
+    },
+    "position": {
+      "value": "과장",
+      "required": true
+    },
+    "employment_start_date": {
+      "value": "2018-02-23",
+      "required": true
+    },
+    "employment_end_date": {
+      "value": "2019-03-12",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2019-03-23",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

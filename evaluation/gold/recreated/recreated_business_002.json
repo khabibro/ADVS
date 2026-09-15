@@ -1,0 +1,45 @@
+{
+  "sample_id": "recreated_business_002",
+  "source": "recreated",
+  "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+  "input_format": "png",
+  "quality": "clean",
+  "layout_variant": "table",
+  "split": "held_out",
+  "fields": {
+    "company_name": {
+      "value": "가상소프트 주식회사",
+      "required": true
+    },
+    "representative_name": {
+      "value": "최사장",
+      "required": true
+    },
+    "business_registration_number": {
+      "value": "972-82-35974",
+      "required": true
+    },
+    "business_address": {
+      "value": "부산광역시 더미구 샘플길 56",
+      "required": true
+    },
+    "business_type": {
+      "value": "도소매업",
+      "required": true
+    },
+    "business_item": {
+      "value": "무역업",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2020-05-09",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "recreated from official law.go.kr annexed-form wording (label '상호'/'대표자 성명')",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "RECREATED_FROM_PUBLIC_REFERENCE",
+  "source_id": "src_business_01"
+}

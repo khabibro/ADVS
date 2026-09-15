@@ -1,0 +1,41 @@
+{
+  "sample_id": "career_019",
+  "source": "synthetic",
+  "document_type": "CAREER_CERTIFICATE",
+  "input_format": "jpg",
+  "quality": "compressed",
+  "layout_variant": "compact",
+  "split": "held_out",
+  "fields": {
+    "applicant_name": {
+      "value": "정더미",
+      "required": true
+    },
+    "company_name": {
+      "value": "더미시스템 주식회사",
+      "required": true
+    },
+    "position": {
+      "value": "차장",
+      "required": true
+    },
+    "employment_start_date": {
+      "value": "2020-10-04",
+      "required": true
+    },
+    "employment_end_date": {
+      "value": "2022-08-23",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2022-09-21",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "label spacing variant applied",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

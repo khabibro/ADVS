@@ -1,0 +1,45 @@
+{
+  "sample_id": "business_005",
+  "source": "synthetic",
+  "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+  "input_format": "scanned_pdf",
+  "quality": "low_resolution",
+  "layout_variant": "standard",
+  "split": "dev",
+  "fields": {
+    "company_name": {
+      "value": "테스트테크 주식회사",
+      "required": true
+    },
+    "representative_name": {
+      "value": "이영희",
+      "required": true
+    },
+    "business_registration_number": {
+      "value": "905-85-10185",
+      "required": true
+    },
+    "business_address": {
+      "value": "경기도 가상시 모형대로 34",
+      "required": true
+    },
+    "business_type": {
+      "value": "제조업",
+      "required": true
+    },
+    "business_item": {
+      "value": "전자부품 제조",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2015-11-02",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

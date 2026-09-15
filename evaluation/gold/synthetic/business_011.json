@@ -1,0 +1,45 @@
+{
+  "sample_id": "business_011",
+  "source": "synthetic",
+  "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+  "input_format": "jpg",
+  "quality": "low_resolution",
+  "layout_variant": "table",
+  "split": "dev",
+  "fields": {
+    "company_name": {
+      "value": "예시산업 주식회사",
+      "required": true
+    },
+    "representative_name": {
+      "value": "박대표",
+      "required": true
+    },
+    "business_registration_number": {
+      "value": "911-91-10407",
+      "required": true
+    },
+    "business_address": {
+      "value": "인천광역시 견본구 표본로 78",
+      "required": true
+    },
+    "business_type": {
+      "value": "정보통신업",
+      "required": true
+    },
+    "business_item": {
+      "value": "경영 컨설팅",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2016-11-02",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "label spacing variant applied",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

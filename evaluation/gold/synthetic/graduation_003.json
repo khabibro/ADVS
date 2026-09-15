@@ -1,0 +1,41 @@
+{
+  "sample_id": "graduation_003",
+  "source": "synthetic",
+  "document_type": "GRADUATION_CERTIFICATE",
+  "input_format": "jpg",
+  "quality": "low_contrast",
+  "layout_variant": "vertical",
+  "split": "dev",
+  "fields": {
+    "applicant_name": {
+      "value": "최가상",
+      "required": true
+    },
+    "university_name": {
+      "value": "카파타대학교",
+      "required": true
+    },
+    "department": {
+      "value": "산업공학과",
+      "required": true
+    },
+    "degree": {
+      "value": null,
+      "required": true
+    },
+    "graduation_date": {
+      "value": "2020-05-21",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2020-06-23",
+      "required": true
+    }
+  },
+  "expected_validation_status": "REVIEW",
+  "notes": "omitted field to test missing-value handling; label spacing variant applied",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

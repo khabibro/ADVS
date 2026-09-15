@@ -1,0 +1,1240 @@
+{
+  "manifest_version": "1.1",
+  "generator_seed": 42,
+  "sample_count": 137,
+  "entries": [
+    {
+      "sample_id": "graduation_000",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_000.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_000.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_000.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_001",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_001.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_001.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_001.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_002",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_002.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_002.png",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_002.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_003",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_003.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_003.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_003.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_004",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_004.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_004.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_004.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_005",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_005.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_005.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_005.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_006",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_006.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_006.png",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_006.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_007",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_007.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_007.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_007.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "graduation_008",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_008.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_008.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_008.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "graduation_009",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_009.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_009.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_009.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "graduation_010",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_010.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_010.png",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_010.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_011",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_011.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_011.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_011.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_012",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_012.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_012.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_012.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_013",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_013.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_013.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_013.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_014",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_014.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_014.png",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_014.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_015",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_015.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_015.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_015.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_016",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_016.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_016.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_016.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_017",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_017.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_017.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_017.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "graduation_018",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_018.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_018.png",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_018.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "graduation_019",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_019.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_019.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_019.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "graduation_020",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_020.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_020.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_020.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_021",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_021.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_021.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_021.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_022",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_022.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_022.png",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_022.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "graduation_023",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/graduation_023.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/graduation_023.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/graduation_023.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_000",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_000.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_000.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/career_000.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_001",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_001.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_001.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/career_001.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_002",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_002.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_002.png",
+      "gold_label_path": "evaluation/gold/synthetic/career_002.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_003",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_003.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_003.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/career_003.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_004",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_004.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_004.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/career_004.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_005",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_005.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_005.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/career_005.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_006",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_006.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_006.png",
+      "gold_label_path": "evaluation/gold/synthetic/career_006.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_007",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_007.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_007.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/career_007.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "career_008",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_008.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_008.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/career_008.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "career_009",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_009.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_009.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/career_009.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "career_010",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_010.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_010.png",
+      "gold_label_path": "evaluation/gold/synthetic/career_010.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_011",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_011.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_011.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/career_011.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_012",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_012.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_012.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/career_012.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_013",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_013.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_013.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/career_013.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_014",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_014.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_014.png",
+      "gold_label_path": "evaluation/gold/synthetic/career_014.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_015",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_015.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_015.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/career_015.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_016",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_016.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_016.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/career_016.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_017",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_017.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_017.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/career_017.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "career_018",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_018.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_018.png",
+      "gold_label_path": "evaluation/gold/synthetic/career_018.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "career_019",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_019.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_019.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/career_019.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "career_020",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_020.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_020.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/career_020.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_021",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_021.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_021.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/career_021.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_022",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_022.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_022.png",
+      "gold_label_path": "evaluation/gold/synthetic/career_022.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "career_023",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/career_023.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/career_023.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/career_023.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_000",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_000.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_000.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/business_000.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_001",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_001.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_001.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/business_001.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_002",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_002.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_002.png",
+      "gold_label_path": "evaluation/gold/synthetic/business_002.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_003",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_003.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_003.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/business_003.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_004",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_004.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_004.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/business_004.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_005",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_005.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_005.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/business_005.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_006",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_006.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_006.png",
+      "gold_label_path": "evaluation/gold/synthetic/business_006.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_007",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_007.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_007.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/business_007.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "business_008",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_008.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_008.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/business_008.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "business_009",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_009.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_009.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/business_009.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "business_010",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_010.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_010.png",
+      "gold_label_path": "evaluation/gold/synthetic/business_010.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_011",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_011.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_011.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/business_011.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_012",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_012.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_012.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/business_012.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_013",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_013.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_013.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/business_013.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_014",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_014.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_014.png",
+      "gold_label_path": "evaluation/gold/synthetic/business_014.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_015",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_015.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_015.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/business_015.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_016",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_016.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_016.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/business_016.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_017",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_017.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_017.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/business_017.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "business_018",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_018.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_018.png",
+      "gold_label_path": "evaluation/gold/synthetic/business_018.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "business_019",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_019.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_019.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/business_019.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "business_020",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_020.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_020.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/business_020.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_021",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_021.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_021.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/business_021.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_022",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_022.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_022.png",
+      "gold_label_path": "evaluation/gold/synthetic/business_022.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "business_023",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/business_023.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/business_023.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/business_023.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_000",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_000.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_000.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/sme_000.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_001",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_001.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_001.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/sme_001.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_002",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_002.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_002.png",
+      "gold_label_path": "evaluation/gold/synthetic/sme_002.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_003",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_003.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_003.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/sme_003.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_004",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_004.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_004.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/sme_004.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_005",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_005.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_005.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/sme_005.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_006",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_006.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_006.png",
+      "gold_label_path": "evaluation/gold/synthetic/sme_006.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_007",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_007.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_007.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/sme_007.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "sme_008",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_008.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_008.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/sme_008.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "sme_009",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_009.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_009.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/sme_009.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "sme_010",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_010.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_010.png",
+      "gold_label_path": "evaluation/gold/synthetic/sme_010.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_011",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_011.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_011.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/sme_011.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_012",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_012.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_012.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/sme_012.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_013",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_013.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_013.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/sme_013.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_014",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_014.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_014.png",
+      "gold_label_path": "evaluation/gold/synthetic/sme_014.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_015",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_015.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_015.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/sme_015.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_016",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_016.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_016.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/sme_016.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_017",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_017.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_017.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/sme_017.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "sme_018",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_018.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_018.png",
+      "gold_label_path": "evaluation/gold/synthetic/sme_018.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "sme_019",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_019.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_019.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/sme_019.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "sme_020",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_020.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_020.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/sme_020.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_021",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_021.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_021.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/sme_021.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_022",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_022.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_022.png",
+      "gold_label_path": "evaluation/gold/synthetic/sme_022.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "sme_023",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/sme_023.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/sme_023.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/sme_023.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_000",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_000.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_000.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_000.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_001",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_001.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_001.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_001.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_002",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_002.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_002.png",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_002.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_003",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_003.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_003.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_003.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_004",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_004.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_004.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_004.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_005",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_005.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_005.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_005.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_006",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_006.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_006.png",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_006.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_007",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_007.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_007.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_007.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "unknown_008",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_008.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_008.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_008.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "unknown_009",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_009.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_009.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_009.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "unknown_010",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_010.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_010.png",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_010.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_011",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_011.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_011.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_011.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_012",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_012.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_012.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_012.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_013",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_013.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_013.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_013.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_014",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_014.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_014.png",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_014.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_015",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_015.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_015.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_015.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_016",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_016.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_016.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_016.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_017",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_017.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_017.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_017.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "unknown_018",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_018.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_018.png",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_018.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "unknown_019",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_019.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_019.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_019.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "unknown_020",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_020.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_020.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_020.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_021",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_021.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_021.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_021.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_022",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_022.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_022.png",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_022.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "unknown_023",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/unknown_023.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/unknown_023.jpg",
+      "gold_label_path": "evaluation/gold/synthetic/unknown_023.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "recreated_business_000",
+      "source": "recreated",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/recreated/business_registration/recreated_business_000.txt",
+      "rendered_file_path": "evaluation/datasets/recreated/business_registration/recreated_business_000.pdf",
+      "gold_label_path": "evaluation/gold/recreated/recreated_business_000.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "recreated_business_001",
+      "source": "recreated",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/recreated/business_registration/recreated_business_001.txt",
+      "rendered_file_path": "evaluation/datasets/recreated/business_registration/recreated_business_001.pdf",
+      "gold_label_path": "evaluation/gold/recreated/recreated_business_001.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "recreated_business_002",
+      "source": "recreated",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/recreated/business_registration/recreated_business_002.txt",
+      "rendered_file_path": "evaluation/datasets/recreated/business_registration/recreated_business_002.png",
+      "gold_label_path": "evaluation/gold/recreated/recreated_business_002.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "recreated_graduation_000",
+      "source": "recreated",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/recreated/graduation/recreated_graduation_000.txt",
+      "rendered_file_path": "evaluation/datasets/recreated/graduation/recreated_graduation_000.pdf",
+      "gold_label_path": "evaluation/gold/recreated/recreated_graduation_000.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "recreated_graduation_001",
+      "source": "recreated",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/recreated/graduation/recreated_graduation_001.txt",
+      "rendered_file_path": "evaluation/datasets/recreated/graduation/recreated_graduation_001.pdf",
+      "gold_label_path": "evaluation/gold/recreated/recreated_graduation_001.json",
+      "split": "held_out"
+    },
+    {
+      "sample_id": "subdoc_grad_A",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/subdoc_grad_A.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/subdoc_grad_A.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/subdoc_grad_A.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "subdoc_grad_B",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/subdoc_grad_B.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/subdoc_grad_B.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/subdoc_grad_B.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "subdoc_grad_missing_dept",
+      "source": "synthetic",
+      "document_type": "GRADUATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/graduation/subdoc_grad_missing_dept.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/graduation/subdoc_grad_missing_dept.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/subdoc_grad_missing_dept.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "subdoc_ambiguous_as_career",
+      "source": "synthetic",
+      "document_type": "UNKNOWN",
+      "gold_text_path": "evaluation/datasets/synthetic/unknown/subdoc_ambiguous_as_career.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/unknown/subdoc_ambiguous_as_career.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/subdoc_ambiguous_as_career.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "subdoc_career_A",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/subdoc_career_A.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/subdoc_career_A.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/subdoc_career_A.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "subdoc_career_B",
+      "source": "synthetic",
+      "document_type": "CAREER_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/career/subdoc_career_B.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/career/subdoc_career_B.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/subdoc_career_B.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "subdoc_business_A",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/subdoc_business_A.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/subdoc_business_A.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/subdoc_business_A.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "subdoc_business_B",
+      "source": "synthetic",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/business_registration/subdoc_business_B.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/business_registration/subdoc_business_B.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/subdoc_business_B.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "subdoc_sme_valid",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/subdoc_sme_valid.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/subdoc_sme_valid.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/subdoc_sme_valid.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "subdoc_sme_expired",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/subdoc_sme_expired.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/subdoc_sme_expired.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/subdoc_sme_expired.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "subdoc_sme_near_expiry",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/subdoc_sme_near_expiry.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/subdoc_sme_near_expiry.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/subdoc_sme_near_expiry.json",
+      "split": "dev"
+    },
+    {
+      "sample_id": "subdoc_sme_company_mismatch",
+      "source": "synthetic",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "gold_text_path": "evaluation/datasets/synthetic/sme_confirmation/subdoc_sme_company_mismatch.txt",
+      "rendered_file_path": "evaluation/datasets/synthetic/sme_confirmation/subdoc_sme_company_mismatch.pdf",
+      "gold_label_path": "evaluation/gold/synthetic/subdoc_sme_company_mismatch.json",
+      "split": "dev"
+    }
+  ]
+}

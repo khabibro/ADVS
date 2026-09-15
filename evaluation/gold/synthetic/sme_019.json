@@ -1,0 +1,45 @@
+{
+  "sample_id": "sme_019",
+  "source": "synthetic",
+  "document_type": "SME_CONFIRMATION_CERTIFICATE",
+  "input_format": "jpg",
+  "quality": "compressed",
+  "layout_variant": "compact",
+  "split": "held_out",
+  "fields": {
+    "company_name": {
+      "value": "예시산업 주식회사",
+      "required": true
+    },
+    "representative_name": {
+      "value": "이영희",
+      "required": true
+    },
+    "business_registration_number": {
+      "value": "969-99-29203",
+      "required": true
+    },
+    "certificate_number": {
+      "value": "SME-2025-119",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2022-02-18",
+      "required": true
+    },
+    "expiration_date": {
+      "value": "2028-01-20",
+      "required": true
+    },
+    "validity_period": {
+      "value": "2026-01-01 ~ 2028-01-20",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "label spacing variant applied",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

@@ -1,0 +1,10 @@
+.venv
+.venv312
+.pytest_cache
+.ruff_cache
+.mypy_cache
+storage
+doccheck_test.db
+*.egg-info
+__pycache__
+*.pyc

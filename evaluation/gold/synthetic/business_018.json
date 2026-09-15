@@ -1,0 +1,45 @@
+{
+  "sample_id": "business_018",
+  "source": "synthetic",
+  "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+  "input_format": "png",
+  "quality": "clean",
+  "layout_variant": "vertical",
+  "split": "held_out",
+  "fields": {
+    "company_name": {
+      "value": "모형전자 주식회사",
+      "required": true
+    },
+    "representative_name": {
+      "value": "정법인",
+      "required": true
+    },
+    "business_registration_number": {
+      "value": "918-98-10666",
+      "required": true
+    },
+    "business_address": {
+      "value": "부산광역시 더미구 샘플길 56",
+      "required": true
+    },
+    "business_type": {
+      "value": "도소매업",
+      "required": true
+    },
+    "business_item": {
+      "value": "무역업",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2018-01-03",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "SYNTHETIC_REALISTIC",
+  "source_id": null
+}

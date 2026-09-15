@@ -1,0 +1,45 @@
+{
+  "sample_id": "recreated_business_000",
+  "source": "recreated",
+  "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+  "input_format": "text_pdf",
+  "quality": "clean",
+  "layout_variant": "standard",
+  "split": "dev",
+  "fields": {
+    "company_name": {
+      "value": "테스트테크 주식회사",
+      "required": true
+    },
+    "representative_name": {
+      "value": "이영희",
+      "required": true
+    },
+    "business_registration_number": {
+      "value": "970-80-35900",
+      "required": true
+    },
+    "business_address": {
+      "value": "서울특별시 테스트구 예시로 12",
+      "required": true
+    },
+    "business_type": {
+      "value": "서비스업",
+      "required": true
+    },
+    "business_item": {
+      "value": "소프트웨어 개발",
+      "required": true
+    },
+    "issue_date": {
+      "value": "2018-03-01",
+      "required": true
+    }
+  },
+  "expected_validation_status": "PASS",
+  "notes": "recreated from official law.go.kr annexed-form wording (label '법인명칭'/'대표자')",
+  "schema_version": "1.1",
+  "verified": true,
+  "source_class": "RECREATED_FROM_PUBLIC_REFERENCE",
+  "source_id": "src_business_02"
+}
