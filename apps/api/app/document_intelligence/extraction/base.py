@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 from app.core.domain import DocumentType
+from app.document_intelligence.evidence import CoordinateSpace, EvidenceRef, EvidenceSourceKind
 from app.document_intelligence.normalization.field_normalizer import (
     BUSINESS_NUMBER_RE,
     DATE_RE,
@@ -13,6 +14,8 @@ from app.document_intelligence.normalization.field_normalizer import (
     normalize_gpa_scale,
     normalize_text_field,
 )
+from app.document_intelligence.ocr.models import OCRDocumentResult, OCRLine
+from app.document_intelligence.ocr.text_assembly import order_lines
 
 EXTRACTOR_VERSION = "heuristic-v2"
 
@@ -32,6 +35,7 @@ _KNOWN_LABELS = [
     "이름",
     "신청인",
     "대학교",
+    "대학",
     "대학명",
     "학교명",
     "학과",
@@ -40,12 +44,14 @@ _KNOWN_LABELS = [
     "졸업일자",
     "졸업 연월일",
     "발급일자",
+    "발급일",
     "발행일자",
     "회사명",
     "상호",
     "상호명",
     "기업명",
     "법인명",
+    "법인명(단체명)",
     "업체명",
     "납세자명",
     "직위",
@@ -69,6 +75,7 @@ _KNOWN_LABELS = [
     "종목",
     "개업연월일",
     "확인번호",
+    "발급번호",
     "증명서번호",
     "일련번호",
     "유효기간",
@@ -95,6 +102,51 @@ class ExtractedValue:
     needs_review: bool = False
     extraction_method: str | None = None
     source_text: str | None = None
+    evidence: list[EvidenceRef] | None = None
+
+
+type ExtractionInput = str | OCRDocumentResult
+
+
+@dataclass(frozen=True)
+class ExtractionCandidate:
+    value: str
+    evidence: list[EvidenceRef]
+
+
+def _source_lines(source: ExtractionInput) -> list[tuple[str, EvidenceRef | None]]:
+    if isinstance(source, str):
+        return [(line, None) for line in source.splitlines() if line.strip()]
+    source_kind: EvidenceSourceKind = (
+        "embedded_pdf_text" if source.provider == "direct_pdf_text" else "ocr"
+    )
+    coordinate_space: CoordinateSpace = (
+        "pdf_point" if source_kind == "embedded_pdf_text" else "pixel"
+    )
+    observations: list[tuple[str, EvidenceRef | None]] = []
+    for page in source.pages:
+        lines = order_lines(page.lines) or [OCRLine(text=line) for line in page.text.splitlines()]
+        for line in lines:
+            if not line.text.strip():
+                continue
+            observations.append(
+                (
+                    line.text,
+                    EvidenceRef(
+                        page_number=page.page_number,
+                        source_text=line.text,
+                        bounding_box=line.bounding_box,
+                        confidence=line.confidence,
+                        source_kind=source_kind,
+                        coordinate_space=coordinate_space,
+                    ),
+                )
+            )
+    return observations
+
+
+def source_text(source: ExtractionInput) -> str:
+    return source if isinstance(source, str) else source.assembled_text
 
 
 def _label_pattern(label: str) -> str:
@@ -164,7 +216,7 @@ def _next_line_value_allowed(value: str) -> bool:
     return len(normalized) <= 80
 
 
-def after_label(text: str, labels: list[str]) -> str | None:
+def candidate_after_label(source: ExtractionInput, labels: list[str]) -> ExtractionCandidate | None:
     """Returns the text following the first matching label on the same
     line. Tolerant of a colon separator, surrounding whitespace, and an
     internal whitespace variant within the label itself; does not
@@ -178,8 +230,8 @@ def after_label(text: str, labels: list[str]) -> str | None:
     separator and hallucinate the rest of that word as the field's value
     (evaluation/reports/baseline_2026-09-09b.md: 'degree' field on a
     recreated 학위수여증명서 sample was extracted as "수여증명서")."""
-    normalized_text = _normalize_extraction_text(text)
-    lines = [line for line in normalized_text.splitlines() if line.strip()]
+    observations = _source_lines(source)
+    lines = [_normalize_extraction_text(line) for line, _ in observations]
     for idx, line in enumerate(lines):
         for label in labels:
             label_re = _label_pattern(label)
@@ -191,10 +243,23 @@ def after_label(text: str, labels: list[str]) -> str | None:
             sep = match.group("sep")
             value = _strip_trailing_labels(match.group("value"), labels)
             if value and (sep or _adjacent_value_allowed(label, value)):
-                return value.strip()
+                evidence: list[EvidenceRef] = []
+                observation = observations[idx][1]
+                if observation is not None:
+                    evidence.append(observation)
+                return ExtractionCandidate(value.strip(), evidence)
             if not value and idx + 1 < len(lines) and _next_line_value_allowed(lines[idx + 1]):
-                return _strip_trailing_labels(lines[idx + 1], labels)
+                evidence = []
+                for item in (observations[idx][1], observations[idx + 1][1]):
+                    if item is not None:
+                        evidence.append(item)
+                return ExtractionCandidate(_strip_trailing_labels(lines[idx + 1], labels), evidence)
     return None
+
+
+def after_label(source: ExtractionInput, labels: list[str]) -> str | None:
+    candidate = candidate_after_label(source, labels)
+    return candidate.value if candidate else None
 
 
 def split_range(raw: str | None) -> tuple[str | None, str | None]:
@@ -217,63 +282,107 @@ class BaseDocumentExtractor(ABC):
     extractor_version: str = EXTRACTOR_VERSION
 
     @abstractmethod
-    def extract(self, text: str) -> list[ExtractedValue]:
+    def extract(self, text: ExtractionInput) -> list[ExtractedValue]:
         raise NotImplementedError
 
     def missing(self, field_name: str) -> ExtractedValue:
         return ExtractedValue(field_name, None, None, None, True)
 
-    def text_field(self, text: str, field_name: str, labels: list[str]) -> ExtractedValue:
-        raw = after_label(text, labels)
-        normalized = normalize_text_field(raw)
-        if normalized is None or self._reject_text_candidate(field_name, normalized):
-            return self.missing(field_name)
-        return ExtractedValue(field_name, raw, normalized, 0.7, False, "label_match", raw)
+    def _value(
+        self,
+        field_name: str,
+        raw: str,
+        normalized: str,
+        method: str,
+        candidate: ExtractionCandidate,
+    ) -> ExtractedValue:
+        confidences = [
+            item.confidence for item in candidate.evidence if item.confidence is not None
+        ]
+        confidence = min(confidences) if confidences else None
+        supporting_text = "\n".join(item.source_text for item in candidate.evidence) or raw
+        return ExtractedValue(
+            field_name,
+            raw,
+            normalized,
+            confidence,
+            False,
+            method,
+            supporting_text,
+            candidate.evidence or None,
+        )
 
-    def date_field(self, text: str, field_name: str, labels: list[str]) -> ExtractedValue:
-        raw = after_label(text, labels)
-        normalized = normalize_date(raw)
-        if normalized is None:
+    def text_field(
+        self, text: ExtractionInput, field_name: str, labels: list[str]
+    ) -> ExtractedValue:
+        candidate = candidate_after_label(text, labels)
+        raw = candidate.value if candidate else None
+        normalized = normalize_text_field(raw)
+        if (
+            candidate is None
+            or normalized is None
+            or self._reject_text_candidate(field_name, normalized)
+        ):
             return self.missing(field_name)
-        return ExtractedValue(field_name, raw, normalized, 0.55, False, "regex_date", raw)
+        assert raw is not None
+        return self._value(field_name, raw, normalized, "label_match", candidate)
+
+    def date_field(
+        self, text: ExtractionInput, field_name: str, labels: list[str]
+    ) -> ExtractedValue:
+        candidate = candidate_after_label(text, labels)
+        raw = candidate.value if candidate else None
+        normalized = normalize_date(raw)
+        if candidate is None or normalized is None:
+            return self.missing(field_name)
+        assert raw is not None
+        return self._value(field_name, raw, normalized, "regex_date", candidate)
 
     def business_number_field(
-        self, text: str, field_name: str, labels: list[str]
+        self, text: ExtractionInput, field_name: str, labels: list[str]
     ) -> ExtractedValue:
-        raw_context = after_label(text, labels)
+        candidate = candidate_after_label(text, labels)
+        raw_context = candidate.value if candidate else None
         match = BUSINESS_NUMBER_RE.search(raw_context) if raw_context else None
         raw_value = match.group(0) if match else None
         normalized = normalize_business_number(raw_value)
-        if normalized is None:
+        if candidate is None or normalized is None:
             return self.missing(field_name)
-        return ExtractedValue(
-            field_name, raw_value, normalized, 0.9, False, "regex_business_number", raw_value
-        )
+        assert raw_value is not None
+        return self._value(field_name, raw_value, normalized, "regex_business_number", candidate)
 
-    def valid_until_field(self, text: str, labels: list[str]) -> ExtractedValue:
-        raw = after_label(text, labels)
+    def valid_until_field(self, text: ExtractionInput, labels: list[str]) -> ExtractedValue:
+        candidate_match = candidate_after_label(text, labels)
+        raw = candidate_match.value if candidate_match else None
         _, end_raw = split_range(raw)
         candidate = end_raw or raw
         normalized = normalize_date(candidate)
-        if normalized is None:
+        if candidate_match is None or normalized is None:
             return self.missing("valid_until")
-        return ExtractedValue(
-            "valid_until", candidate, normalized, 0.55, False, "regex_date", candidate
-        )
+        assert candidate is not None
+        return self._value("valid_until", candidate, normalized, "regex_date", candidate_match)
 
-    def gpa_field(self, text: str, field_name: str, labels: list[str]) -> ExtractedValue:
-        raw = after_label(text, labels)
+    def gpa_field(
+        self, text: ExtractionInput, field_name: str, labels: list[str]
+    ) -> ExtractedValue:
+        candidate = candidate_after_label(text, labels)
+        raw = candidate.value if candidate else None
         normalized = normalize_gpa(raw)
-        if normalized is None:
+        if candidate is None or normalized is None:
             return self.missing(field_name)
-        return ExtractedValue(field_name, raw, normalized, 0.7, False, "regex_gpa", raw)
+        assert raw is not None
+        return self._value(field_name, raw, normalized, "regex_gpa", candidate)
 
-    def gpa_scale_field(self, text: str, field_name: str, labels: list[str]) -> ExtractedValue:
-        raw = after_label(text, labels)
+    def gpa_scale_field(
+        self, text: ExtractionInput, field_name: str, labels: list[str]
+    ) -> ExtractedValue:
+        candidate = candidate_after_label(text, labels)
+        raw = candidate.value if candidate else None
         normalized = normalize_gpa_scale(raw)
-        if normalized is None:
+        if candidate is None or normalized is None:
             return self.missing(field_name)
-        return ExtractedValue(field_name, raw, normalized, 0.7, False, "regex_gpa", raw)
+        assert raw is not None
+        return self._value(field_name, raw, normalized, "regex_gpa", candidate)
 
     def _reject_text_candidate(self, field_name: str, value: str) -> bool:
         if _looks_like_label_or_title(value):

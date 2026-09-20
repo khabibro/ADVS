@@ -14,12 +14,14 @@ Calling `/process` on an already-`COMPLETED` document is a no-op (returns immedi
 
 ## API surface
 
-`GET /documents/{id}` returns processing status, detected type, `classification_confidence` + `classification_meta` (heuristic score/evidence/alternatives -- never a calibrated probability), extracted fields (with `extraction_method`/`source_text` provenance), validation results, and a computed `overall_status` (READY/REVIEW_REQUIRED/NEEDS_CORRECTION). `READY` means only that the configured pre-check found no clear problem; it is not official approval. The API never exposes the internal storage path or raw provider payloads.
+`GET /documents/{id}` returns processing status, detected type, `classification_confidence` + `classification_meta` (heuristic score/evidence/alternatives -- never a calibrated probability), extracted fields (raw and normalized values plus field-level evidence), `missing_expected_fields`, validation results, and a computed `overall_status` (READY/REVIEW_REQUIRED/NEEDS_CORRECTION). `READY` means only that the configured pre-check found no clear problem; it is not official approval. The API never exposes the internal storage path or raw provider payloads.
 
 Upload validation, storage-key generation (UUID, not the original filename), checksums, and safe filename sanitization are owned by `services/storage/local.py`.
 
 ## Known limitations
 
 - No async worker/queue -- `/process` runs synchronously in the request.
-- No page-level bounding-box provenance on extracted fields (only on raw OCR lines).
+- Evidence geometry is an axis-aligned source rectangle; rotated/polygon detail is not retained.
+- Expected-but-missing means the extractor did not resolve a schema field. It does not prove the
+  document omits that information and does not independently force `NEEDS_CORRECTION`.
 - No cross-document validation (e.g. matching a business number across two documents in the same submission) beyond what an admin-configured `BUSINESS_REGISTRATION_NUMBER_MATCH` rule with an explicit expected value can express.

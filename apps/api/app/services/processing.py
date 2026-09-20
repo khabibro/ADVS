@@ -19,6 +19,7 @@ from app.document_intelligence.ocr.models import OCRDocumentResult, OCRPage, OCR
 from app.document_intelligence.ocr.providers import get_ocr_provider
 from app.document_intelligence.ocr.text_assembly import assemble_document_text
 from app.document_intelligence.preprocessing.processor import PdfProcessor
+from app.document_intelligence.results import CanonicalDocumentResult
 from app.document_intelligence.validation.engine import ConfiguredRule, ValidationEngine
 from app.models.entities import (
     Document,
@@ -59,8 +60,13 @@ class DocumentProcessingService:
         try:
             ocr_result = await self._run_ocr_stage(db, document)
             classification = self._run_classification_stage(db, document, ocr_result.assembled_text)
-            fields = self._run_extraction_stage(
-                db, document, classification, ocr_result.assembled_text
+            fields = self._run_extraction_stage(db, document, classification, ocr_result)
+            canonical_result = CanonicalDocumentResult.compose(
+                document_id=document.id,
+                document_type=classification.predicted_type,
+                classification_confidence=classification.confidence_score,
+                extracted_fields=fields,
+                processing_status=ProcessingStatus.EXTRACTING,
             )
             self._run_validation_stage(db, document, fields)
             document.processing_status = ProcessingStatus.COMPLETED
@@ -72,6 +78,7 @@ class DocumentProcessingService:
                     "document_id": str(document.id),
                     "duration_ms": int((time.perf_counter() - started) * 1000),
                     "document_type": document.document_type,
+                    "missing_expected_fields": canonical_result.missing_expected_fields,
                 },
             )
             return document
@@ -116,16 +123,7 @@ class DocumentProcessingService:
 
         if direct_text:
             provider_name = "direct_pdf_text"
-            pages: list[OCRPage] = [
-                OCRPage(
-                    page_number=1,
-                    text=direct_text,
-                    lines=[],
-                    confidence=None,
-                    duration_ms=0,
-                    metadata={"source": "direct_pdf_text"},
-                )
-            ]
+            pages: list[OCRPage] = pdf_result.pages
         else:
             pages = await get_ocr_provider(self.settings).extract_document(
                 path, document.mime_type, document.original_filename
@@ -200,11 +198,15 @@ class DocumentProcessingService:
         return result
 
     def _run_extraction_stage(
-        self, db: Session, document: Document, classification: ClassificationResult, text: str
+        self,
+        db: Session,
+        document: Document,
+        classification: ClassificationResult,
+        ocr_result: OCRDocumentResult,
     ) -> list[ExtractedValue]:
         document.processing_status = ProcessingStatus.EXTRACTING
         db.commit()
-        fields = self.extractor.extract(classification.predicted_type, text)
+        fields = self.extractor.extract(classification.predicted_type, ocr_result)
         for existing in list(document.extracted_fields):
             db.delete(existing)
         for field in fields:
@@ -218,6 +220,9 @@ class DocumentProcessingService:
                     needs_review=field.needs_review,
                     extraction_method=field.extraction_method,
                     source_text=field.source_text,
+                    evidence=(
+                        [item.to_dict() for item in field.evidence] if field.evidence else None
+                    ),
                 )
             )
         db.commit()

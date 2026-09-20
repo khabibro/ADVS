@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.config import get_settings
 from app.core.domain import (
     DOCUMENT_TYPE_DISPLAY_NAMES,
+    EXPECTED_FIELDS,
     DocumentType,
     OverallStatus,
     ProcessingStatus,
@@ -284,6 +285,13 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
     if not document:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Document not found", 404)
     detail = DocumentDetail.model_validate(document)
+    expected = EXPECTED_FIELDS[DocumentType(document.document_type)]
+    extracted = {
+        field.field_name
+        for field in document.extracted_fields
+        if field.normalized_value is not None
+    }
+    detail.missing_expected_fields = [name for name in expected if name not in extracted]
     detail.overall_status = ValidationEngine().overall_status(document.validation_results)
     return detail
 

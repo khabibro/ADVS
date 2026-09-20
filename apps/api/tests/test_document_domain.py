@@ -17,11 +17,11 @@ MENTOR_TYPES = {
     ),
     DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE: (
         "국세 납세증명서",
-        {"company_name", "business_registration_number", "issue_date", "valid_until"},
+        {"company_name", "business_registration_number", "valid_until"},
     ),
     DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE: (
         "4대 사회보험료 완납증명서",
-        {"workplace_name", "business_registration_number", "issue_date", "valid_until"},
+        {"workplace_name", "business_registration_number", "valid_until"},
     ),
     DocumentType.ENROLLMENT_CERTIFICATE: (
         "재학증명서",

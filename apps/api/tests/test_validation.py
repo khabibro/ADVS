@@ -74,6 +74,23 @@ def test_required_field_rule_targets_specific_field() -> None:
     assert engine.overall_status(issues) == OverallStatus.NEEDS_CORRECTION
 
 
+def test_required_field_rule_without_target_uses_document_schema() -> None:
+    fields = [
+        ExtractedValue("company_name", "예시기업", "예시기업"),
+        ExtractedValue("business_registration_number", "123-45-67890", "1234567890"),
+        # Optional legacy extraction fields must not silently become required.
+        ExtractedValue("issue_date", None, None, None, True),
+    ]
+    rules = [ConfiguredRule(RuleType.REQUIRED_FIELD, Severity.WARNING, {})]
+    issues = engine.validate_document(
+        None,
+        DocumentType.BUSINESS_REGISTRATION_CERTIFICATE,
+        fields,
+        configured_rules=rules,
+    )
+    assert issues == []
+
+
 def test_date_not_expired_rule_expired_fails() -> None:
     fields = [ExtractedValue("expiration_date", "2020-01-01", "2020-01-01", 0.6)]
     rules = [

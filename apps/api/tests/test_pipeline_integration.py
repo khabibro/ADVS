@@ -23,7 +23,7 @@ def _blank_pdf_bytes() -> bytes:
 def _text_pdf_bytes(text: str) -> bytes:
     doc = fitz.open()
     page = doc.new_page()
-    page.insert_text((72, 72), text, fontsize=12)
+    page.insert_text((72, 72), text, fontsize=12, fontname="korea")
     data = doc.tobytes()
     doc.close()
     return data
@@ -120,6 +120,13 @@ def test_full_pipeline_business_registration_success(client: TestClient, db_sess
     detail = _detail(client, document["id"])
     fields = {f["field_name"]: f for f in detail["extracted_fields"]}
     assert fields["business_registration_number"]["normalized_value"] == "1234567890"
+    evidence = fields["business_registration_number"]["evidence"][0]
+    assert evidence["page_number"] == 1
+    assert evidence["source_text"] == "사업자등록번호 123-45-67890"
+    assert evidence["bounding_box"] == {"x": 10.0, "y": 72.0, "width": 500.0, "height": 20.0}
+    assert evidence["confidence"] == 0.99
+    assert evidence["coordinate_space"] == "pixel"
+    assert detail["missing_expected_fields"] == []
     assert detail["overall_status"] == "READY"
 
 
@@ -220,7 +227,13 @@ def test_digital_pdf_with_meaningful_text_skips_ocr_provider(
         db_session.query(OCRResult).filter_by(document_id=uuid_module.UUID(document["id"])).one()
     )
     assert ocr_row.provider == "direct_pdf_text"
-    assert ocr_row.lines == []
+    assert ocr_row.lines
+    applicant = next(
+        field for field in detail["extracted_fields"] if field["field_name"] == "applicant_name"
+    )
+    assert applicant["evidence"][0]["source_kind"] == "embedded_pdf_text"
+    assert applicant["evidence"][0]["coordinate_space"] == "pdf_point"
+    assert applicant["evidence"][0]["confidence"] is None
 
 
 def test_reprocessing_same_document_does_not_duplicate_rows(client: TestClient, db_session) -> None:

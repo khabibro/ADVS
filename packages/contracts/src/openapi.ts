@@ -274,6 +274,17 @@ export interface components {
             /** File */
             file: string;
         };
+        /** BoundingBoxRead */
+        BoundingBoxRead: {
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+        };
         /** ChecklistCreate */
         ChecklistCreate: {
             /** Name */
@@ -342,6 +353,11 @@ export interface components {
              */
             extracted_fields: components["schemas"]["FieldRead"][];
             /**
+             * Missing Expected Fields
+             * @default []
+             */
+            missing_expected_fields: string[];
+            /**
              * Validation Results
              * @default []
              */
@@ -391,6 +407,20 @@ export interface components {
          * @enum {string}
          */
         DocumentType: "GRADUATION_CERTIFICATE" | "CAREER_CERTIFICATE" | "BUSINESS_REGISTRATION_CERTIFICATE" | "SME_CONFIRMATION_CERTIFICATE" | "NATIONAL_TAX_PAYMENT_CERTIFICATE" | "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE" | "ENROLLMENT_CERTIFICATE" | "TRANSCRIPT" | "UNKNOWN";
+        /** EvidenceRead */
+        EvidenceRead: {
+            /** Page Number */
+            page_number: number;
+            /** Source Text */
+            source_text: string;
+            bounding_box?: components["schemas"]["BoundingBoxRead"] | null;
+            /** Confidence */
+            confidence?: number | null;
+            /** Source Kind */
+            source_kind: string;
+            /** Coordinate Space */
+            coordinate_space: string;
+        };
         /** FieldRead */
         FieldRead: {
             /** Field Name */
@@ -407,6 +437,8 @@ export interface components {
             extraction_method?: string | null;
             /** Source Text */
             source_text?: string | null;
+            /** Evidence */
+            evidence?: components["schemas"]["EvidenceRead"][] | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {

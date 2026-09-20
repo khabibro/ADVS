@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 from datetime import date
 
-from app.core.domain import DocumentType, OverallStatus, RuleType, Severity
+from app.core.domain import EXPECTED_FIELDS, DocumentType, OverallStatus, RuleType, Severity
 from app.document_intelligence.extraction.base import ExtractedValue
 
 VALIDATION_ENGINE_VERSION = "heuristic-v2"
@@ -111,7 +111,7 @@ class ValidationEngine:
             issues.extend(self._default_required_field_issues(by_name))
         else:
             for rule in configured_rules:
-                issues.extend(self._apply_configured_rule(rule, by_name))
+                issues.extend(self._apply_configured_rule(rule, by_name, actual_type))
         return issues
 
     def _always_on_expiration_issues(
@@ -193,16 +193,24 @@ class ValidationEngine:
         ]
 
     def _apply_configured_rule(
-        self, rule: ConfiguredRule, by_name: dict[str, ExtractedValue]
+        self,
+        rule: ConfiguredRule,
+        by_name: dict[str, ExtractedValue],
+        document_type: DocumentType,
     ) -> list[ValidationIssue]:
+        if rule.rule_type == RuleType.REQUIRED_FIELD:
+            return self._handle_required_field(rule, by_name, EXPECTED_FIELDS[document_type])
         handler = _RULE_HANDLERS.get(rule.rule_type)
         return handler(self, rule, by_name) if handler else []
 
     def _handle_required_field(
-        self, rule: ConfiguredRule, by_name: dict[str, ExtractedValue]
+        self,
+        rule: ConfiguredRule,
+        by_name: dict[str, ExtractedValue],
+        default_fields: list[str] | None = None,
     ) -> list[ValidationIssue]:
         field_name = rule.params.get("field")
-        targets = [field_name] if field_name else list(by_name.keys())
+        targets = [field_name] if field_name else (default_fields or list(by_name.keys()))
         issues = []
         for name in targets:
             field = by_name.get(name)

@@ -81,6 +81,22 @@ class DocumentRead(BaseModel):
         return self
 
 
+class BoundingBoxRead(BaseModel):
+    x: float
+    y: float
+    width: float
+    height: float
+
+
+class EvidenceRead(BaseModel):
+    page_number: int
+    source_text: str
+    bounding_box: BoundingBoxRead | None = None
+    confidence: float | None = None
+    source_kind: str
+    coordinate_space: str
+
+
 class FieldRead(BaseModel):
     field_name: str
     raw_value: str | None
@@ -89,6 +105,7 @@ class FieldRead(BaseModel):
     needs_review: bool
     extraction_method: str | None = None
     source_text: str | None = None
+    evidence: list[EvidenceRead] | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -105,6 +122,7 @@ class ValidationRead(BaseModel):
 
 class DocumentDetail(DocumentRead):
     extracted_fields: list[FieldRead] = []
+    missing_expected_fields: list[str] = []
     validation_results: list[ValidationRead] = []
     # Computed at read time from validation_results
     # (READY/REVIEW_REQUIRED/NEEDS_CORRECTION);

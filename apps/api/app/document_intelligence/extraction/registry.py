@@ -1,5 +1,9 @@
 from app.core.domain import DocumentType
-from app.document_intelligence.extraction.base import BaseDocumentExtractor, ExtractedValue
+from app.document_intelligence.extraction.base import (
+    BaseDocumentExtractor,
+    ExtractedValue,
+    ExtractionInput,
+)
 from app.document_intelligence.extraction.business_registration import BusinessRegistrationExtractor
 from app.document_intelligence.extraction.career import CareerCertificateExtractor
 from app.document_intelligence.extraction.enrollment import EnrollmentCertificateExtractor
@@ -32,6 +36,6 @@ class ExtractorRegistry:
     def get(self, document_type: DocumentType) -> BaseDocumentExtractor | None:
         return _EXTRACTORS.get(document_type)
 
-    def extract(self, document_type: DocumentType, text: str) -> list[ExtractedValue]:
+    def extract(self, document_type: DocumentType, text: ExtractionInput) -> list[ExtractedValue]:
         extractor = self.get(document_type)
         return extractor.extract(text) if extractor else []

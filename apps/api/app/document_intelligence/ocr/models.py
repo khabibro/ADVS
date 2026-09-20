@@ -14,7 +14,11 @@ class OCRProviderError(Exception):
 
 @dataclass
 class BoundingBox:
-    """Pixel-space box, origin top-left, x right, y down."""
+    """Source-space rectangle, origin top-left, x right, y down.
+
+    OCR providers use pixels; embedded PDF text uses PDF points. The
+    evidence reference records that coordinate space explicitly.
+    """
 
     x: float
     y: float

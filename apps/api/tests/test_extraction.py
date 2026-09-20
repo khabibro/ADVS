@@ -63,7 +63,7 @@ def by_name(fields) -> dict:
 )
 def test_extractor_field_names_match_expected_fields_contract(doc_type, extractor_cls) -> None:
     fields = extractor_cls().extract("")
-    assert {f.field_name for f in fields} == set(EXPECTED_FIELDS[doc_type])
+    assert set(EXPECTED_FIELDS[doc_type]) <= {f.field_name for f in fields}
 
 
 def test_graduation_extraction_happy_path() -> None:
@@ -180,6 +180,16 @@ def test_business_registration_official_form_labels() -> None:
     assert fields["representative_name"].normalized_value == "박대표"
 
 
+def test_mentor_business_label_and_opening_date_semantics() -> None:
+    fields = by_name(
+        BusinessRegistrationExtractor().extract(
+            "사업자등록증\n법인명(단체명) 예시기업\n등록번호 123-45-67890\n개업연월일 2020-01-02"
+        )
+    )
+    assert fields["company_name"].normalized_value == "예시기업"
+    assert fields["issue_date"].normalized_value is None
+
+
 def test_business_registration_number_false_positive_resistance() -> None:
     # An unrelated 10-digit run (e.g. a phone number) elsewhere in the text
     # must not be mistaken for the business registration number.
@@ -270,6 +280,32 @@ def test_new_mentor_extractors_preserve_structured_values() -> None:
     )
     assert social["workplace_name"].normalized_value == "한국테크 본점"
     assert social["valid_until"].normalized_value == "2026-02-02"
+
+
+def test_mentor_tax_and_student_aliases() -> None:
+    tax = by_name(
+        NationalTaxPaymentCertificateExtractor().extract(
+            "납세증명서\n성명(상호) 예시기업\n사업자등록번호 123-45-67890\n"
+            "증명서 유효기간 2026-12-31"
+        )
+    )
+    assert tax["company_name"].normalized_value == "예시기업"
+
+    enrollment = by_name(
+        EnrollmentCertificateExtractor().extract(
+            "재학증명서\n성명 김학생\n대학 예시대학교\n발급일 2026-09-20"
+        )
+    )
+    assert enrollment["university_name"].normalized_value == "예시대학교"
+    assert enrollment["issue_date"].normalized_value == "2026-09-20"
+
+
+def test_mentor_issue_number_and_total_gpa_aliases() -> None:
+    sme = by_name(SMEConfirmationExtractor().extract("중소기업확인서\n발급번호 SME-001"))
+    transcript = by_name(TranscriptExtractor().extract("성적증명서\n총평점 3.85 / 4.50"))
+    assert sme["certificate_number"].normalized_value == "SME-001"
+    assert transcript["gpa"].normalized_value == "3.85"
+    assert transcript["gpa_scale"].normalized_value == "4.5"
 
 
 def test_student_extractors_preserve_fields_and_numeric_gpa() -> None:

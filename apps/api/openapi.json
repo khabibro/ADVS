@@ -775,6 +775,34 @@
         ],
         "title": "Body_upload_document_api_v1_projects__project_id__documents_post"
       },
+      "BoundingBoxRead": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          },
+          "width": {
+            "type": "number",
+            "title": "Width"
+          },
+          "height": {
+            "type": "number",
+            "title": "Height"
+          }
+        },
+        "type": "object",
+        "required": [
+          "x",
+          "y",
+          "width",
+          "height"
+        ],
+        "title": "BoundingBoxRead"
+      },
       "ChecklistCreate": {
         "properties": {
           "name": {
@@ -929,6 +957,14 @@
             "title": "Extracted Fields",
             "default": []
           },
+          "missing_expected_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Expected Fields",
+            "default": []
+          },
           "validation_results": {
             "items": {
               "$ref": "#/components/schemas/ValidationRead"
@@ -1069,6 +1105,55 @@
         ],
         "title": "DocumentType"
       },
+      "EvidenceRead": {
+        "properties": {
+          "page_number": {
+            "type": "integer",
+            "title": "Page Number"
+          },
+          "source_text": {
+            "type": "string",
+            "title": "Source Text"
+          },
+          "bounding_box": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BoundingBoxRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "source_kind": {
+            "type": "string",
+            "title": "Source Kind"
+          },
+          "coordinate_space": {
+            "type": "string",
+            "title": "Coordinate Space"
+          }
+        },
+        "type": "object",
+        "required": [
+          "page_number",
+          "source_text",
+          "source_kind",
+          "coordinate_space"
+        ],
+        "title": "EvidenceRead"
+      },
       "FieldRead": {
         "properties": {
           "field_name": {
@@ -1133,6 +1218,20 @@
               }
             ],
             "title": "Source Text"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/EvidenceRead"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
           }
         },
         "type": "object",

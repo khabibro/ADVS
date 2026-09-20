@@ -84,7 +84,15 @@ class MockOCRProvider(OCRProvider):
         else:
             hint = next((key for key in _MOCK_FIXTURES if key in name_hint), None)
             text = _MOCK_FIXTURES[hint or _DEFAULT_MOCK_FIXTURE]
-        lines = [OCRLine(text=line) for line in text.splitlines() if line]
+        lines = [
+            OCRLine(
+                text=line,
+                confidence=0.99,
+                bounding_box=BoundingBox(x=10.0, y=float(index * 24), width=500.0, height=20.0),
+            )
+            for index, line in enumerate(text.splitlines())
+            if line
+        ]
         return [OCRPage(1, text, lines, 0.99, 1, {"provider": "mock", "mock": True})]
 
     async def health_check(self) -> bool:

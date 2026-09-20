@@ -28,7 +28,8 @@ upload -> file signature/decode validation -> store
   -> ExtractorRegistry -> document-type-specific extractor -> ExtractedValue[]
   -> field_normalizer (dates, business numbers, text) -- used by both extraction and validation
   -> ValidationEngine (always-on checks + DB-configured ValidationRule rows) -> ValidationIssue[]
-  -> persist (Document, OCRResult, ExtractedField, ValidationResult)
+  -> CanonicalDocumentResult (identity/type, fields, missing expected fields, state/issues)
+  -> persist (Document, OCRResult, ExtractedField + field evidence, ValidationResult)
   -> structured API response (DocumentDetail, including computed overall_status)
 ```
 
@@ -48,6 +49,38 @@ validation/     engine.py (ValidationEngine, ConfiguredRule, rule-type dispatch)
 ```
 
 Each stage communicates through typed dataclasses (`OCRPage`, `ClassificationResult`, `ExtractedValue`, `ValidationIssue`) -- nothing downstream of OCR touches raw provider responses, and nothing outside `validation/` re-implements a rule's pass/fail logic.
+
+### Canonical result and provenance
+
+`CanonicalDocumentResult` is the document-intelligence read model composed from the existing
+pipeline types. It does not duplicate the `Document` database entity. It carries the document ID,
+classified type and honest heuristic confidence, canonical `ExtractedValue` fields,
+expected-but-unresolved field names, processing state, and optional verification/issues metadata.
+The document-detail API is its persisted/read-side representation.
+
+An extraction fact, its supporting evidence, and a validation decision are separate concepts:
+
+- `ExtractedValue` is an interpretation with a canonical field name, raw value, normalized value,
+  optional field confidence, and evidence references.
+- `EvidenceRef` is the provider-independent observation supporting that interpretation.
+- `ValidationResult` remains the outcome of a rule. Missing extraction evidence does not by itself
+  assert that the source document lacks the information and does not automatically select a final
+  verification status.
+
+A value without provenance is harder to trust, debug, and review. New pipeline results therefore
+retain field-level evidence; historical rows may legitimately have `evidence = null`.
+
+Evidence conventions:
+
+- `page_number` is always 1-based and is never hard-coded to the first page.
+- `source_text` is the actual supporting OCR or embedded-text line, not cleaned display text.
+- `bounding_box` uses `{x, y, width, height}`, top-left origin, x-right/y-down. `coordinate_space`
+  is `pixel` for OCR and `pdf_point` for embedded PDF text. Paddle polygons are explicitly reduced
+  to their axis-aligned enclosing rectangle by the provider adapter.
+- `confidence` is the original line/source confidence. Direct PDF text has null confidence; the
+  pipeline does not invent `1.0`.
+- A field supported by multiple lines uses the minimum available supporting-line confidence. This
+  deliberately prevents a high page average from hiding a weak supporting observation.
 
 ## Error taxonomy vs. UNKNOWN vs. validation failure
 

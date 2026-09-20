@@ -70,32 +70,22 @@ EXPECTED_FIELDS: dict[DocumentType, list[str]] = {
     ],
     DocumentType.BUSINESS_REGISTRATION_CERTIFICATE: [
         "company_name",
-        "representative_name",
         "business_registration_number",
-        "business_address",
-        "business_type",
-        "business_item",
-        "issue_date",
     ],
     DocumentType.SME_CONFIRMATION_CERTIFICATE: [
         "company_name",
-        "representative_name",
         "business_registration_number",
-        "certificate_number",
-        "issue_date",
         "valid_from",
         "valid_until",
     ],
     DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE: [
         "company_name",
         "business_registration_number",
-        "issue_date",
         "valid_until",
     ],
     DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE: [
         "workplace_name",
         "business_registration_number",
-        "issue_date",
         "valid_until",
     ],
     DocumentType.ENROLLMENT_CERTIFICATE: [

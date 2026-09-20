@@ -137,6 +137,7 @@ class ExtractedField(Base, TimestampMixin):
     needs_review: Mapped[bool] = mapped_column(Boolean, default=False)
     extraction_method: Mapped[str | None] = mapped_column(String(60), nullable=True)
     source_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    evidence: Mapped[list | None] = mapped_column(JSONType, nullable=True)
     document = relationship("Document", back_populates="extracted_fields")
 
 

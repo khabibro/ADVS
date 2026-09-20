@@ -2,6 +2,11 @@
 
 Entities: User, Project, Checklist, DocumentRequirement, ValidationRule, Submission, Document, OCRResult, ExtractedField, ValidationResult, AuditLog. UUID primary keys and timestamps are used throughout.
 
+`ExtractedField.evidence` is nullable JSON containing the minimal source observations supporting
+the field (`page_number`, original `source_text`, optional rectangle, optional source confidence,
+source kind, and coordinate space). Nullable storage preserves historical records for which the
+pipeline did not capture provenance. Full page images and binary OCR payloads are not stored here.
+
 ```mermaid
 erDiagram
   USER ||--o{ PROJECT : owns
