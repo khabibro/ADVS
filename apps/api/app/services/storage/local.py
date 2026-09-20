@@ -45,7 +45,9 @@ class LocalStorageService:
         original = sanitize_filename(file.filename or "upload")
         ext = Path(original).suffix.lower()
         if ext not in ALLOWED_EXT or file.content_type not in ALLOWED_MIME:
-            raise api_error(ApiErrorCode.INVALID_FILE_TYPE, "PDF, PNG, JPG, JPEG files are supported.")
+            raise api_error(
+                ApiErrorCode.INVALID_FILE_TYPE, "PDF, PNG, JPG, JPEG files are supported."
+            )
         storage_key = f"{uuid.uuid4()}{ext}"
         path = self.root / storage_key
         digest = hashlib.sha256()
@@ -58,7 +60,9 @@ class LocalStorageService:
                 size += len(chunk)
                 if size > self.max_size:
                     path.unlink(missing_ok=True)
-                    raise api_error(ApiErrorCode.FILE_TOO_LARGE, "Uploaded file exceeds size limit.")
+                    raise api_error(
+                        ApiErrorCode.FILE_TOO_LARGE, "Uploaded file exceeds size limit."
+                    )
                 digest.update(chunk)
                 out.write(chunk)
         if size == 0:

@@ -32,7 +32,12 @@ def _confusion_table(matrix: dict) -> str:
 
 def _section(title: str, payload: dict) -> str:
     repro = payload["reproducibility"]
-    c, e, v, fc = payload["classification"], payload["extraction"], payload["validation"], payload["failure_categories"]
+    c, e, v, fc = (
+        payload["classification"],
+        payload["extraction"],
+        payload["validation"],
+        payload["failure_categories"],
+    )
 
     lines = [f"## {title}", ""]
     lines.append(
@@ -47,7 +52,9 @@ def _section(title: str, payload: dict) -> str:
         f"- Total: {c['total']}, correct: {c['correct']}, incorrect: {c['incorrect']}, "
         f"predicted UNKNOWN: {c['unknown_predicted']}"
     )
-    lines.append(f"- **Accuracy: {c['accuracy']:.2%}** (heuristic score, not a calibrated probability)")
+    lines.append(
+        f"- **Accuracy: {c['accuracy']:.2%}** (heuristic score, not a calibrated probability)"
+    )
     lines.append(f"- Review rate: {c['review_rate']:.2%}")
     ca = c["confidence_analysis"]
     lines.append(
@@ -70,7 +77,9 @@ def _section(title: str, payload: dict) -> str:
     )
     lines.append(f"- **Field accuracy: {e['field_accuracy']:.2%}**")
     lines.append(f"- Missing-value rate: {e['missing_value_rate']:.2%}")
-    lines.append(f"- **False-value rate: {e['false_value_rate']:.2%}** (a value was invented/wrong, not just absent)")
+    lines.append(
+        f"- **False-value rate: {e['false_value_rate']:.2%}** (a value was invented/wrong, not just absent)"
+    )
     lines.append(
         f"- **Document-level required-field success: {e['document_level_success_rate']:.2%}** "
         f"({e['document_level_success_count']}/{e['document_level_total']}) -- ALL required fields correct"
@@ -87,10 +96,10 @@ def _section(title: str, payload: dict) -> str:
     lines.append("### Validation")
     if v["total"]:
         lines.append(f"- Total scored: {v['total']}, correct: {v['correct']} ({v['accuracy']:.2%})")
+        lines.append(f"- **False READY: {v['false_ready_count']}** {v['false_ready_samples']}")
         lines.append(
-            f"- **False READY: {v['false_ready_count']}** {v['false_ready_samples']}"
+            f"- False NEEDS_CORRECTION: {v['false_needs_correction_count']} {v['false_needs_correction_samples']}"
         )
-        lines.append(f"- False NEEDS_CORRECTION: {v['false_needs_correction_count']} {v['false_needs_correction_samples']}")
         lines.append("")
         lines.append("Confusion matrix:")
         lines.append("")
@@ -117,7 +126,12 @@ def main() -> None:
 
     parts = [f"# {args.title}", ""]
     if args.dev:
-        parts.append(_section("Development set (dev, ~70% of synthetic samples)", json.loads(args.dev.read_text(encoding="utf-8"))))
+        parts.append(
+            _section(
+                "Development set (dev, ~70% of synthetic samples)",
+                json.loads(args.dev.read_text(encoding="utf-8")),
+            )
+        )
     if args.held_out:
         parts.append(
             _section(

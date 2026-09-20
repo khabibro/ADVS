@@ -180,11 +180,21 @@ def generate_career_cases(count: int) -> list[CaseSpec]:
             # this with an unexplained bug.
             second_start = end + timedelta(days=60)
             second_end = second_start + timedelta(days=300)
-            base_specs += [("employment_start_date", "재직기간", f"{start.isoformat()} ~ {end.isoformat()}")]
-            base_specs.append(("__second_period__", "재직기간", f"{second_start.isoformat()} ~ {second_end.isoformat()}"))
+            base_specs += [
+                ("employment_start_date", "재직기간", f"{start.isoformat()} ~ {end.isoformat()}")
+            ]
+            base_specs.append(
+                (
+                    "__second_period__",
+                    "재직기간",
+                    f"{second_start.isoformat()} ~ {second_end.isoformat()}",
+                )
+            )
             gold_start, gold_end = start.isoformat(), end.isoformat()
             notes = "multiple employment periods present; only first period is supported"
-        base_specs.append(("issue_date", "발급일자", format_date_variant(issue_date.isoformat(), i + 2)))
+        base_specs.append(
+            ("issue_date", "발급일자", format_date_variant(issue_date.isoformat(), i + 2))
+        )
         notes = _note_tags(omit is not None, spacing is not None, notes)
 
         # __second_period__ is a synthetic marker field (not a real
@@ -261,12 +271,16 @@ def generate_business_cases(count: int) -> list[CaseSpec]:
             # Nearby unrelated 10-digit-shaped number (e.g. a phone number)
             # that must NOT be picked up as the business registration number.
             pairs.append(("연락처", "010-1234-5678"))
-            extra_note = "includes an unrelated 10-digit-shaped number (phone) near the business fields"
+            extra_note = (
+                "includes an unrelated 10-digit-shaped number (phone) near the business fields"
+            )
 
         gold = {
             "company_name": gold_raw["company_name"],
             "representative_name": gold_raw["representative_name"],
-            "business_registration_number": number_norm if gold_raw["business_registration_number"] else None,
+            "business_registration_number": number_norm
+            if gold_raw["business_registration_number"]
+            else None,
             "business_address": gold_raw["business_address"],
             "business_type": gold_raw["business_type"],
             "business_item": gold_raw["business_item"],
@@ -283,7 +297,9 @@ def generate_business_cases(count: int) -> list[CaseSpec]:
                 quality=_quality_for(i, input_format),
                 layout_variant=layout,
                 split=_split_for(i),
-                expected_validation_status=_expected_status("BUSINESS_REGISTRATION_CERTIFICATE", gold),
+                expected_validation_status=_expected_status(
+                    "BUSINESS_REGISTRATION_CERTIFICATE", gold
+                ),
                 notes=_note_tags(omit is not None, spacing is not None, extra_note),
             )
         )
@@ -325,10 +341,14 @@ def generate_sme_cases(count: int) -> list[CaseSpec]:
         gold = {
             "company_name": gold_raw["company_name"],
             "representative_name": gold_raw["representative_name"],
-            "business_registration_number": number_norm if gold_raw["business_registration_number"] else None,
+            "business_registration_number": number_norm
+            if gold_raw["business_registration_number"]
+            else None,
             "certificate_number": cert_number if gold_raw["certificate_number"] else None,
             "issue_date": issue_date.isoformat() if gold_raw["issue_date"] else None,
-            "expiration_date": valid_until.isoformat() if gold_raw.get("validity_period_raw") else None,
+            "expiration_date": valid_until.isoformat()
+            if gold_raw.get("validity_period_raw")
+            else None,
             "validity_period": validity_raw if gold_raw.get("validity_period_raw") else None,
         }
         lines = build_lines("중소기업확인서", pairs, layout, rng)
@@ -343,7 +363,9 @@ def generate_sme_cases(count: int) -> list[CaseSpec]:
                 layout_variant=layout,
                 split=_split_for(i),
                 expected_validation_status=_expected_status("SME_CONFIRMATION_CERTIFICATE", gold),
-                notes=_note_tags(omit is not None, spacing is not None, "expired certificate" if expired else ""),
+                notes=_note_tags(
+                    omit is not None, spacing is not None, "expired certificate" if expired else ""
+                ),
             )
         )
     return cases
@@ -402,7 +424,9 @@ def generate_recreated_cases() -> list[CaseSpec]:
                 quality="clean",
                 layout_variant=layout,
                 split="dev" if i < 2 else "held_out",
-                expected_validation_status=_expected_status("BUSINESS_REGISTRATION_CERTIFICATE", gold),
+                expected_validation_status=_expected_status(
+                    "BUSINESS_REGISTRATION_CERTIFICATE", gold
+                ),
                 notes=(
                     f"recreated from official law.go.kr annexed-form wording "
                     f"(label '{company_label}'/'{rep_label}')"
@@ -630,7 +654,9 @@ def generate_submission_documents() -> list[CaseSpec]:
         )
 
     def ambiguous_as_career() -> CaseSpec:
-        text = "근로계약서\n성명 이예시\n회사명 테스트테크 주식회사\n계약기간 2026-01-01 ~ 2027-01-01"
+        text = (
+            "근로계약서\n성명 이예시\n회사명 테스트테크 주식회사\n계약기간 2026-01-01 ~ 2027-01-01"
+        )
         return CaseSpec(
             sample_id="subdoc_ambiguous_as_career",
             document_type="UNKNOWN",
@@ -659,7 +685,9 @@ def generate_submission_documents() -> list[CaseSpec]:
     cases.append(sme("subdoc_sme_valid", "테스트테크 주식회사", today + timedelta(days=400)))
     cases.append(sme("subdoc_sme_expired", "테스트테크 주식회사", today - timedelta(days=30)))
     cases.append(sme("subdoc_sme_near_expiry", "테스트테크 주식회사", today + timedelta(days=10)))
-    cases.append(sme("subdoc_sme_company_mismatch", "다른회사 주식회사", today + timedelta(days=400)))
+    cases.append(
+        sme("subdoc_sme_company_mismatch", "다른회사 주식회사", today + timedelta(days=400))
+    )
     return cases
 
 
@@ -681,7 +709,9 @@ def generate_unknown_cases(count: int) -> list[CaseSpec]:
                 layout_variant="verbatim",
                 split=_split_for(i),
                 expected_validation_status=None,
-                notes="negative/out-of-scope example" if i < len(pools.UNRELATED_TEXTS) else "ambiguous/near-miss example",
+                notes="negative/out-of-scope example"
+                if i < len(pools.UNRELATED_TEXTS)
+                else "ambiguous/near-miss example",
                 source_class="NEGATIVE_OUT_OF_SCOPE",
             )
         )
@@ -689,7 +719,9 @@ def generate_unknown_cases(count: int) -> list[CaseSpec]:
 
 
 def to_gold_label(case: CaseSpec) -> GoldLabel:
-    fields = {name: GoldField(value=value, required=True) for name, value in case.gold_fields.items()}
+    fields = {
+        name: GoldField(value=value, required=True) for name, value in case.gold_fields.items()
+    }
     source = "recreated" if case.source_class == "RECREATED_FROM_PUBLIC_REFERENCE" else "synthetic"
     return GoldLabel(
         sample_id=case.sample_id,

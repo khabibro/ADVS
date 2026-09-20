@@ -165,7 +165,9 @@ def after_label(text: str, labels: list[str]) -> str | None:
     for idx, line in enumerate(lines):
         for label in labels:
             label_re = _label_pattern(label)
-            match = re.search(rf"(?:^|[ \t]){label_re}(?P<sep>[ \t]*:[ \t]*|[ \t]+)?(?P<value>.*)$", line)
+            match = re.search(
+                rf"(?:^|[ \t]){label_re}(?P<sep>[ \t]*:[ \t]*|[ \t]+)?(?P<value>.*)$", line
+            )
             if not match:
                 continue
             sep = match.group("sep")
@@ -217,22 +219,26 @@ class BaseDocumentExtractor(ABC):
             return self.missing(field_name)
         return ExtractedValue(field_name, raw, normalized, 0.55, False, "regex_date", raw)
 
-    def business_number_field(self, text: str, field_name: str, labels: list[str]) -> ExtractedValue:
+    def business_number_field(
+        self, text: str, field_name: str, labels: list[str]
+    ) -> ExtractedValue:
         raw_context = after_label(text, labels)
         match = BUSINESS_NUMBER_RE.search(raw_context) if raw_context else None
         raw_value = match.group(0) if match else None
         normalized = normalize_business_number(raw_value)
         if normalized is None:
             return self.missing(field_name)
-        return (
-            ExtractedValue(field_name, raw_value, normalized, 0.9, False, "regex_business_number", raw_value)
+        return ExtractedValue(
+            field_name, raw_value, normalized, 0.9, False, "regex_business_number", raw_value
         )
 
     def _reject_text_candidate(self, field_name: str, value: str) -> bool:
         if _looks_like_label_or_title(value):
             return True
         if field_name in {"applicant_name", "representative_name"}:
-            return bool(normalize_date(value) or normalize_business_number(value) or len(value) > 20)
+            return bool(
+                normalize_date(value) or normalize_business_number(value) or len(value) > 20
+            )
         if field_name == "degree":
             return _DEGREE_RE.match(_compact(value)) is None
         return False

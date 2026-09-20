@@ -31,7 +31,9 @@ def maybe_space_label(label: str, apply: bool) -> str:
     return LABEL_SPACING_VARIANTS.get(label, label)
 
 
-def build_lines(title: str, pairs: list[tuple[str, str]], layout: str, rng: random.Random) -> list[str]:
+def build_lines(
+    title: str, pairs: list[tuple[str, str]], layout: str, rng: random.Random
+) -> list[str]:
     lines = [title] if title else []
     if layout == "vertical":
         for label, value in pairs:

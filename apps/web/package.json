@@ -12,6 +12,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@advs/contracts": "workspace:*",
     "@hookform/resolvers": "^3.9.0",
     "@advs/ui": "workspace:*",
     "@tanstack/react-query": "^5.51.0",

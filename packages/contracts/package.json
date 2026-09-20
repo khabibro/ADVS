@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./openapi": "./src/openapi.ts"
+  },
   "scripts": {
     "generate": "openapi-typescript ../../apps/api/openapi.json -o src/openapi.ts",
     "lint": "echo \"@advs/contracts lint delegated to generated types\"",
@@ -15,4 +18,3 @@
     "typescript": "^5.5.4"
   }
 }
-

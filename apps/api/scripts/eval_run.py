@@ -64,14 +64,21 @@ def main() -> None:
     parser.add_argument("--output", default=None, help="Result file basename (without extension)")
     parser.add_argument(
         "--source-class",
-        choices=["OFFICIAL_PUBLIC_REFERENCE", "RECREATED_FROM_PUBLIC_REFERENCE", "SYNTHETIC_REALISTIC", "NEGATIVE_OUT_OF_SCOPE"],
+        choices=[
+            "OFFICIAL_PUBLIC_REFERENCE",
+            "RECREATED_FROM_PUBLIC_REFERENCE",
+            "SYNTHETIC_REALISTIC",
+            "NEGATIVE_OUT_OF_SCOPE",
+        ],
         default=None,
         help="Score only samples of this source_class (see evaluation/README.md)",
     )
     args = parser.parse_args()
 
     output_name = args.output or f"{args.mode}_{args.split or 'all'}"
-    config = RunConfig(mode=args.mode, split=args.split, output_name=output_name, source_class=args.source_class)
+    config = RunConfig(
+        mode=args.mode, split=args.split, output_name=output_name, source_class=args.source_class
+    )
 
     payload = run_mock(config) if args.mode == "mock" else run_paddle(config)
 
@@ -87,7 +94,9 @@ def main() -> None:
 
         c, e, v = payload["classification"], payload["extraction"], payload["validation"]
         print(f"Classification accuracy: {c['accuracy']:.2%} ({c['correct']}/{c['total']})")
-        print(f"Extraction field accuracy: {e['field_accuracy']:.2%} ({e['field_correct']}/{e['field_total']})")
+        print(
+            f"Extraction field accuracy: {e['field_accuracy']:.2%} ({e['field_correct']}/{e['field_total']})"
+        )
         print(f"Document-level extraction success: {e['document_level_success_rate']:.2%}")
         if v["total"]:
             print(f"Validation accuracy: {v['accuracy']:.2%} ({v['correct']}/{v['total']})")

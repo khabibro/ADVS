@@ -59,7 +59,11 @@ These three are kept structurally distinct (see `docs/domains/ocr.md`, `docs/dom
 
 ## Database-driven configuration
 
-`Checklist` -> `DocumentRequirement` (per document type) -> `ValidationRule` (rule_type, severity, JSON params) already existed in the schema; P1 wires `ValidationEngine` to actually consume these rows instead of leaving them unused, while keeping "how a rule_type behaves" in code and "whether/with what parameters it applies" in the database -- ready for a later admin UI to edit checklist rules without a code change.
+ADVS is workflow-centric: a document type is not globally required. An active `Checklist` is the persistence model for a product/API **Workflow**, and each workflow owns `DocumentRequirement` rows with an explicit required/optional flag. `Project.checklist_id` is the single canonical project-to-workflow relationship; a duplicate `Workflow` table or `workflow_id` database column is intentionally avoided.
+
+`Checklist` -> `DocumentRequirement` (per document type) -> `ValidationRule` (rule_type, severity, JSON params) already existed in the schema; P1 wires `ValidationEngine` to consume these rows, while keeping "how a rule type behaves" in code and "whether/with what parameters it applies" in the database. The workflow API and project reads expose expected documents so the frontend does not reconstruct requirements.
+
+The target business workflow will use 사업자등록증 as its reference identity and later compare company documents and validity periods. The target student workflow will later apply issue-date checks and configurable conditions. Those extractors and cross-document rules are not implemented in Phase 1.
 
 ## Known limitations
 

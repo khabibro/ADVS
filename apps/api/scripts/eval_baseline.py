@@ -116,7 +116,9 @@ def _dataset_summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
         validation_labels[gold.expected_validation_status or "NOT_AVAILABLE"] += 1
         rendered_path = paths.REPO_ROOT / entry["rendered_file_path"]
         gold_path = paths.REPO_ROOT / entry["gold_label_path"]
-        text_path = paths.REPO_ROOT / entry["gold_text_path"] if entry.get("gold_text_path") else None
+        text_path = (
+            paths.REPO_ROOT / entry["gold_text_path"] if entry.get("gold_text_path") else None
+        )
         canonical_entries.append(
             {
                 "sample_id": entry["sample_id"],
@@ -137,7 +139,9 @@ def _dataset_summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
             }
         )
 
-    canonical_blob = json.dumps(canonical_entries, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    canonical_blob = json.dumps(
+        canonical_entries, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    )
     return {
         "count": len(entries),
         "fingerprint": hashlib.sha256(canonical_blob.encode("utf-8")).hexdigest(),
@@ -184,10 +188,14 @@ def _combine_gold(dev: dict[str, Any], held_out: dict[str, Any]) -> dict[str, An
     return {
         "mode": "gold_text",
         "splits": {"dev": dev, "held_out": held_out},
-        "classification": _combine_classification(dev["classification"], held_out["classification"]),
+        "classification": _combine_classification(
+            dev["classification"], held_out["classification"]
+        ),
         "extraction": _combine_extraction(dev["extraction"], held_out["extraction"]),
         "validation": _combine_validation(dev["validation"], held_out["validation"]),
-        "failure_categories": _combine_failures(dev["failure_categories"], held_out["failure_categories"]),
+        "failure_categories": _combine_failures(
+            dev["failure_categories"], held_out["failure_categories"]
+        ),
         "samples": samples,
     }
 
@@ -195,7 +203,9 @@ def _combine_gold(dev: dict[str, Any], held_out: dict[str, Any]) -> dict[str, An
 def _combine_classification(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any]:
     total = left["total"] + right["total"]
     correct = left["correct"] + right["correct"]
-    review_count = round(left["review_rate"] * left["total"]) + round(right["review_rate"] * right["total"])
+    review_count = round(left["review_rate"] * left["total"]) + round(
+        right["review_rate"] * right["total"]
+    )
     per_class: dict[str, Any] = {}
     for doc_type in sorted(set(left["per_class_accuracy"]) | set(right["per_class_accuracy"])):
         left_bucket = left["per_class_accuracy"].get(doc_type, {"correct": 0, "total": 0})
@@ -214,7 +224,9 @@ def _combine_classification(left: dict[str, Any], right: dict[str, Any]) -> dict
         "accuracy": correct / total if total else 0.0,
         "review_rate": review_count / total if total else 0.0,
         "per_class_accuracy": per_class,
-        "confusion_matrix": _merge_nested_counts(left["confusion_matrix"], right["confusion_matrix"]),
+        "confusion_matrix": _merge_nested_counts(
+            left["confusion_matrix"], right["confusion_matrix"]
+        ),
     }
 
 
@@ -234,7 +246,9 @@ def _combine_extraction(left: dict[str, Any], right: dict[str, Any]) -> dict[str
         "missing_value_rate": missing / total if total else 0.0,
         "false_value_rate": false_value / total if total else 0.0,
         "per_field": _merge_metric_buckets(left["per_field"], right["per_field"]),
-        "per_document_type": _merge_metric_buckets(left["per_document_type"], right["per_document_type"]),
+        "per_document_type": _merge_metric_buckets(
+            left["per_document_type"], right["per_document_type"]
+        ),
         "document_level_success_count": doc_success,
         "document_level_total": doc_total,
         "document_level_success_rate": doc_success / doc_total if doc_total else 0.0,
@@ -247,12 +261,16 @@ def _combine_validation(left: dict[str, Any], right: dict[str, Any]) -> dict[str
     false_ready_samples = left.get("false_ready_samples", left["false_pass_samples"]) + right.get(
         "false_ready_samples", right["false_pass_samples"]
     )
-    false_needs_samples = left["false_needs_correction_samples"] + right["false_needs_correction_samples"]
+    false_needs_samples = (
+        left["false_needs_correction_samples"] + right["false_needs_correction_samples"]
+    )
     return {
         "total": total,
         "correct": correct,
         "accuracy": correct / total if total else 0.0,
-        "confusion_matrix": _merge_nested_counts(left["confusion_matrix"], right["confusion_matrix"]),
+        "confusion_matrix": _merge_nested_counts(
+            left["confusion_matrix"], right["confusion_matrix"]
+        ),
         "false_ready_count": len(false_ready_samples),
         "false_ready_rate": len(false_ready_samples) / total if total else 0.0,
         "false_ready_samples": false_ready_samples,
@@ -301,7 +319,9 @@ def _merge_nested_counts(left: dict[str, Any], right: dict[str, Any]) -> dict[st
 
 def _gap_analysis(gold: dict[str, Any], paddle: dict[str, Any]) -> dict[str, Any]:
     fields: dict[str, Any] = {}
-    for field_name in sorted(set(gold["extraction"]["per_field"]) | set(paddle["extraction"]["per_field"])):
+    for field_name in sorted(
+        set(gold["extraction"]["per_field"]) | set(paddle["extraction"]["per_field"])
+    ):
         g = gold["extraction"]["per_field"].get(field_name, {})
         p = paddle["extraction"]["per_field"].get(field_name, {})
         gold_acc = g.get("correct", 0) / g.get("total", 1) if g.get("total") else None
@@ -309,30 +329,41 @@ def _gap_analysis(gold: dict[str, Any], paddle: dict[str, Any]) -> dict[str, Any
         fields[field_name] = {
             "gold_accuracy": gold_acc,
             "paddle_accuracy": paddle_acc,
-            "gap": (gold_acc - paddle_acc) if gold_acc is not None and paddle_acc is not None else None,
+            "gap": (gold_acc - paddle_acc)
+            if gold_acc is not None and paddle_acc is not None
+            else None,
             "gold": g,
             "paddle": p,
         }
     by_document_type: dict[str, Any] = {}
     for doc_type in sorted(
-        set(gold["extraction"]["per_document_type"]) | set(paddle["extraction"]["per_document_type"])
+        set(gold["extraction"]["per_document_type"])
+        | set(paddle["extraction"]["per_document_type"])
     ):
         g = gold["extraction"]["per_document_type"].get(doc_type, {})
         p = paddle["extraction"]["per_document_type"].get(doc_type, {})
-        gold_acc = g.get("fields_correct", 0) / g.get("fields_total", 1) if g.get("fields_total") else None
-        paddle_acc = p.get("fields_correct", 0) / p.get("fields_total", 1) if p.get("fields_total") else None
+        gold_acc = (
+            g.get("fields_correct", 0) / g.get("fields_total", 1) if g.get("fields_total") else None
+        )
+        paddle_acc = (
+            p.get("fields_correct", 0) / p.get("fields_total", 1) if p.get("fields_total") else None
+        )
         by_document_type[doc_type] = {
             "gold_field_accuracy": gold_acc,
             "paddle_field_accuracy": paddle_acc,
-            "gap": (gold_acc - paddle_acc) if gold_acc is not None and paddle_acc is not None else None,
+            "gap": (gold_acc - paddle_acc)
+            if gold_acc is not None and paddle_acc is not None
+            else None,
             "gold": g,
             "paddle": p,
         }
     return {
-        "field_accuracy_gap": gold["extraction"]["field_accuracy"] - paddle["extraction"]["field_accuracy"],
+        "field_accuracy_gap": gold["extraction"]["field_accuracy"]
+        - paddle["extraction"]["field_accuracy"],
         "document_success_gap": gold["extraction"]["document_level_success_rate"]
         - paddle["extraction"]["document_level_success_rate"],
-        "validation_accuracy_gap": gold["validation"]["accuracy"] - paddle["validation"]["accuracy"],
+        "validation_accuracy_gap": gold["validation"]["accuracy"]
+        - paddle["validation"]["accuracy"],
         "by_field": fields,
         "by_document_type": by_document_type,
     }
@@ -423,7 +454,9 @@ def _write_markdown(payload: dict[str, Any], path: Path) -> None:
         "|---|---:|---:|---:|",
     ]
     for field_name, stats in sorted(
-        gap["by_field"].items(), key=lambda item: item[1]["gap"] if item[1]["gap"] is not None else -1, reverse=True
+        gap["by_field"].items(),
+        key=lambda item: item[1]["gap"] if item[1]["gap"] is not None else -1,
+        reverse=True,
     ):
         lines.append(
             f"| {field_name} | {_pct(stats['gold_accuracy'])} | {_pct(stats['paddle_accuracy'])} | {_pct(stats['gap'])} |"
@@ -466,11 +499,15 @@ def build_baseline(args: argparse.Namespace) -> dict[str, Any]:
     started = time.perf_counter()
     all_entries = _load_manifest_entries()
     sample_ids = _selected_fast_ids(all_entries) if args.fast else None
-    entries = [entry for entry in all_entries if sample_ids is None or entry["sample_id"] in sample_ids]
+    entries = [
+        entry for entry in all_entries if sample_ids is None or entry["sample_id"] in sample_ids
+    ]
     name = args.name or (f"{DEFAULT_NAME}_fast" if args.fast else DEFAULT_NAME)
 
     dev = run_mock(RunConfig("mock", "dev", f"{name}_gold_dev", sample_ids=sample_ids))
-    held_out = run_mock(RunConfig("mock", "held_out", f"{name}_gold_held_out", sample_ids=sample_ids))
+    held_out = run_mock(
+        RunConfig("mock", "held_out", f"{name}_gold_held_out", sample_ids=sample_ids)
+    )
     paddle = run_paddle(RunConfig("paddle", None, f"{name}_paddle", sample_ids=sample_ids))
     gold = _combine_gold(dev, held_out)
 
@@ -505,7 +542,9 @@ def build_baseline(args: argparse.Namespace) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build a reproducible ADVS baseline report.")
     parser.add_argument("--name", default=None)
-    parser.add_argument("--fast", action="store_true", help="Use a deterministic one-sample-per-type subset.")
+    parser.add_argument(
+        "--fast", action="store_true", help="Use a deterministic one-sample-per-type subset."
+    )
     args = parser.parse_args()
 
     payload = build_baseline(args)

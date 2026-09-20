@@ -46,17 +46,23 @@ def main() -> None:
         matches = list((paths.DATASETS_REAL / "unlabeled").glob(f"{sample_id}.*"))
         source_path = matches[0] if matches else None
         print(f"- {sample_id}")
-        print(f"    document: {source_path.relative_to(paths.REPO_ROOT) if source_path else '(missing!)'}")
+        print(
+            f"    document: {source_path.relative_to(paths.REPO_ROOT) if source_path else '(missing!)'}"
+        )
         print(f"    gold label to edit: {gold_path.relative_to(paths.REPO_ROOT)}")
         print("    steps: open the document yourself, then edit the gold label JSON:")
         print('      1. set "document_type" to one of: ' + ", ".join(t.value for t in DocumentType))
-        print("      2. fill each field's \"value\" (see app/core/domain.py EXPECTED_FIELDS for the field list")
+        print(
+            '      2. fill each field\'s "value" (see app/core/domain.py EXPECTED_FIELDS for the field list'
+        )
         print("         per document type -- do not invent new field names)")
         print(
             '      3. set "expected_validation_status" to "READY", '
             '"REVIEW_REQUIRED", or "NEEDS_CORRECTION"'
         )
-        print('      4. set "verified": true only once you have confirmed the values against the document')
+        print(
+            '      4. set "verified": true only once you have confirmed the values against the document'
+        )
         print()
 
     print("Reference -- expected fields per type:")

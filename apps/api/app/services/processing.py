@@ -59,7 +59,9 @@ class DocumentProcessingService:
         try:
             ocr_result = await self._run_ocr_stage(db, document)
             classification = self._run_classification_stage(db, document, ocr_result.assembled_text)
-            fields = self._run_extraction_stage(db, document, classification, ocr_result.assembled_text)
+            fields = self._run_extraction_stage(
+                db, document, classification, ocr_result.assembled_text
+            )
             self._run_validation_stage(db, document, fields)
             document.processing_status = ProcessingStatus.COMPLETED
             db.commit()
@@ -128,10 +130,16 @@ class DocumentProcessingService:
             pages = await get_ocr_provider(self.settings).extract_document(
                 path, document.mime_type, document.original_filename
             )
-            provider_name = str(pages[0].metadata.get("provider") or "mock") if pages else self.settings.ocr_provider
+            provider_name = (
+                str(pages[0].metadata.get("provider") or "mock")
+                if pages
+                else self.settings.ocr_provider
+            )
 
         assembled_text = assemble_document_text(pages)
-        result = OCRDocumentResult(provider=provider_name, pages=pages, assembled_text=assembled_text)
+        result = OCRDocumentResult(
+            provider=provider_name, pages=pages, assembled_text=assembled_text
+        )
 
         # Idempotent reprocessing: replace derived OCR rows, don't accumulate.
         for existing in list(document.ocr_results):

@@ -1,9 +1,15 @@
 import type { Checklist, Document, DocumentDetail, Project, ProjectCreate, Workflow } from "@/types/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const BROWSER_API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+
+function apiBase(): string {
+  return typeof window === "undefined"
+    ? (process.env.API_URL ?? BROWSER_API_BASE)
+    : BROWSER_API_BASE;
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, { ...init, cache: "no-store" });
+  const response = await fetch(`${apiBase()}${path}`, { ...init, cache: "no-store" });
   if (!response.ok) throw new Error(`API error ${response.status}`);
   return response.json() as Promise<T>;
 }

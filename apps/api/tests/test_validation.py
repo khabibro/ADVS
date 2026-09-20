@@ -76,7 +76,9 @@ def test_required_field_rule_targets_specific_field() -> None:
 
 def test_date_not_expired_rule_expired_fails() -> None:
     fields = [ExtractedValue("expiration_date", "2020-01-01", "2020-01-01", 0.6)]
-    rules = [ConfiguredRule(RuleType.DATE_NOT_EXPIRED, Severity.ERROR, {"field": "expiration_date"})]
+    rules = [
+        ConfiguredRule(RuleType.DATE_NOT_EXPIRED, Severity.ERROR, {"field": "expiration_date"})
+    ]
     issues = engine.validate_document(
         None, DocumentType.SME_CONFIRMATION_CERTIFICATE, fields, configured_rules=rules
     )
@@ -85,7 +87,9 @@ def test_date_not_expired_rule_expired_fails() -> None:
 
 def test_date_not_expired_rule_future_date_passes() -> None:
     fields = [ExtractedValue("expiration_date", "2099-01-01", "2099-01-01", 0.6)]
-    rules = [ConfiguredRule(RuleType.DATE_NOT_EXPIRED, Severity.ERROR, {"field": "expiration_date"})]
+    rules = [
+        ConfiguredRule(RuleType.DATE_NOT_EXPIRED, Severity.ERROR, {"field": "expiration_date"})
+    ]
     issues = engine.validate_document(
         None, DocumentType.SME_CONFIRMATION_CERTIFICATE, fields, configured_rules=rules
     )
@@ -106,11 +110,7 @@ def test_issue_date_max_age_rule_too_old_fails() -> None:
 
 
 def test_business_number_match_rule_mismatch() -> None:
-    fields = [
-        ExtractedValue(
-            "business_registration_number", "123-45-67890", "123-45-67890", 0.9
-        )
-    ]
+    fields = [ExtractedValue("business_registration_number", "123-45-67890", "123-45-67890", 0.9)]
     rules = [
         ConfiguredRule(
             RuleType.BUSINESS_REGISTRATION_NUMBER_MATCH,
@@ -128,11 +128,7 @@ def test_business_number_match_rule_mismatch() -> None:
 
 
 def test_business_number_match_rule_without_expected_value_skips() -> None:
-    fields = [
-        ExtractedValue(
-            "business_registration_number", "123-45-67890", "123-45-67890", 0.9
-        )
-    ]
+    fields = [ExtractedValue("business_registration_number", "123-45-67890", "123-45-67890", 0.9)]
     rules = [ConfiguredRule(RuleType.BUSINESS_REGISTRATION_NUMBER_MATCH, Severity.ERROR, {})]
     issues = engine.validate_document(
         None,
@@ -147,7 +143,9 @@ def test_custom_text_rule_contains_pass() -> None:
     fields = [ExtractedValue("business_type", "서비스업", "서비스업", 0.7)]
     rules = [
         ConfiguredRule(
-            RuleType.CUSTOM_TEXT_RULE, Severity.WARNING, {"field": "business_type", "contains": "서비스"}
+            RuleType.CUSTOM_TEXT_RULE,
+            Severity.WARNING,
+            {"field": "business_type", "contains": "서비스"},
         )
     ]
     issues = engine.validate_document(
@@ -162,7 +160,9 @@ def test_custom_text_rule_contains_pass() -> None:
 def test_custom_text_rule_missing_field_reviews() -> None:
     rules = [
         ConfiguredRule(
-            RuleType.CUSTOM_TEXT_RULE, Severity.WARNING, {"field": "business_type", "contains": "서비스"}
+            RuleType.CUSTOM_TEXT_RULE,
+            Severity.WARNING,
+            {"field": "business_type", "contains": "서비스"},
         )
     ]
     issues = engine.validate_document(
@@ -196,3 +196,20 @@ def test_legacy_overall_status_values_are_normalized_safely() -> None:
 def test_unknown_overall_status_does_not_default_to_ready() -> None:
     with pytest.raises(ValueError):
         normalize_overall_status("ERROR")
+
+
+def test_status_precedence_is_correction_then_review_then_ready() -> None:
+    warning = engine.validate_document(
+        None,
+        DocumentType.GRADUATION_CERTIFICATE,
+        [],
+        duplicate=True,
+        configured_rules=[],
+    )
+    error = engine.validate_required_documents(
+        [DocumentType.CAREER_CERTIFICATE], {DocumentType.GRADUATION_CERTIFICATE}
+    )
+
+    assert engine.overall_status([]) == OverallStatus.READY
+    assert engine.overall_status(warning) == OverallStatus.REVIEW_REQUIRED
+    assert engine.overall_status(warning + error) == OverallStatus.NEEDS_CORRECTION

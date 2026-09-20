@@ -934,8 +934,7 @@
             "default": []
           },
           "overall_status": {
-            "type": "string",
-            "title": "Overall Status",
+            "$ref": "#/components/schemas/OverallStatus",
             "default": "REVIEW_REQUIRED"
           }
         },
@@ -1136,6 +1135,15 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "OverallStatus": {
+        "type": "string",
+        "enum": [
+          "READY",
+          "REVIEW_REQUIRED",
+          "NEEDS_CORRECTION"
+        ],
+        "title": "OverallStatus"
+      },
       "ProjectCreate": {
         "properties": {
           "name": {
@@ -1240,8 +1248,7 @@
             "title": "Company Name"
           },
           "status": {
-            "type": "string",
-            "title": "Status"
+            "$ref": "#/components/schemas/OverallStatus"
           },
           "created_at": {
             "type": "string",
@@ -1254,6 +1261,7 @@
           "id",
           "name",
           "workflow_id",
+          "expected_documents",
           "status",
           "created_at"
         ],
@@ -1423,6 +1431,7 @@
           "id",
           "name",
           "is_active",
+          "document_requirements",
           "created_at"
         ],
         "title": "WorkflowRead"

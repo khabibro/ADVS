@@ -52,16 +52,29 @@ _TYPE_DIR = {
 
 
 def _dataset_dir_for(case: CaseSpec) -> Path:
-    root = paths.DATASETS_RECREATED if case.source_class == "RECREATED_FROM_PUBLIC_REFERENCE" else paths.DATASETS_SYNTHETIC
+    root = (
+        paths.DATASETS_RECREATED
+        if case.source_class == "RECREATED_FROM_PUBLIC_REFERENCE"
+        else paths.DATASETS_SYNTHETIC
+    )
     return root / _TYPE_DIR[case.document_type]
 
 
 def _gold_dir_for(case: CaseSpec) -> Path:
-    return paths.GOLD_RECREATED if case.source_class == "RECREATED_FROM_PUBLIC_REFERENCE" else paths.GOLD_SYNTHETIC
+    return (
+        paths.GOLD_RECREATED
+        if case.source_class == "RECREATED_FROM_PUBLIC_REFERENCE"
+        else paths.GOLD_SYNTHETIC
+    )
 
 
 def main() -> None:
-    for directory in (paths.DATASETS_SYNTHETIC, paths.GOLD_SYNTHETIC, paths.DATASETS_RECREATED, paths.GOLD_RECREATED):
+    for directory in (
+        paths.DATASETS_SYNTHETIC,
+        paths.GOLD_SYNTHETIC,
+        paths.DATASETS_RECREATED,
+        paths.GOLD_RECREATED,
+    ):
         if directory.exists():
             shutil.rmtree(directory)
     paths.GOLD_SYNTHETIC.mkdir(parents=True, exist_ok=True)
@@ -91,7 +104,9 @@ def main() -> None:
         text_path = case_dir / f"{case.sample_id}.txt"
         text_path.write_text(gold_text, encoding="utf-8")
 
-        rendered = render(case.lines, case.input_format, case.quality, rng_seed=GENERATOR_SEED + index)
+        rendered = render(
+            case.lines, case.input_format, case.quality, rng_seed=GENERATOR_SEED + index
+        )
         rendered_path = case_dir / f"{case.sample_id}.{rendered.extension}"
         rendered_path.write_bytes(rendered.content)
 
@@ -104,7 +119,9 @@ def main() -> None:
         manifest.entries.append(
             ManifestEntry(
                 sample_id=case.sample_id,
-                source="recreated" if case.source_class == "RECREATED_FROM_PUBLIC_REFERENCE" else "synthetic",
+                source="recreated"
+                if case.source_class == "RECREATED_FROM_PUBLIC_REFERENCE"
+                else "synthetic",
                 document_type=case.document_type,
                 gold_text_path=str(text_path.relative_to(paths.REPO_ROOT)),
                 rendered_file_path=str(rendered_path.relative_to(paths.REPO_ROOT)),

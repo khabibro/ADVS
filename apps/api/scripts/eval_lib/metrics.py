@@ -84,7 +84,9 @@ def canonical_validation_status(value: str | None) -> str | None:
     return LEGACY_VALIDATION_STATUS_MAP.get(value, value)
 
 
-def compare_fields(gold: dict[str, str | None], predicted: dict[str, str | None]) -> list[FieldResult]:
+def compare_fields(
+    gold: dict[str, str | None], predicted: dict[str, str | None]
+) -> list[FieldResult]:
     results = []
     for name, gold_value in gold.items():
         predicted_value = predicted.get(name)
@@ -105,7 +107,9 @@ def classification_metrics(samples: list[SampleResult]) -> dict:
     unknown_pred = sum(1 for s in scored if s.document_type_pred == "UNKNOWN")
     review = sum(1 for s in scored if s.classification_needs_review)
 
-    confusion: dict[str, dict[str, int]] = {g: dict.fromkeys(CLASSIFICATION_TYPES, 0) for g in CLASSIFICATION_TYPES}
+    confusion: dict[str, dict[str, int]] = {
+        g: dict.fromkeys(CLASSIFICATION_TYPES, 0) for g in CLASSIFICATION_TYPES
+    }
     per_class: dict[str, dict[str, int]] = {}
     for s in scored:
         confusion.setdefault(s.document_type_gold, dict.fromkeys(CLASSIFICATION_TYPES, 0))
@@ -128,7 +132,11 @@ def classification_metrics(samples: list[SampleResult]) -> dict:
         "review_rate": review / total if total else 0.0,
         "accuracy": correct / total if total else 0.0,
         "per_class_accuracy": {
-            k: {"correct": v["correct"], "total": v["total"], "accuracy": v["correct"] / v["total"] if v["total"] else 0.0}
+            k: {
+                "correct": v["correct"],
+                "total": v["total"],
+                "accuracy": v["correct"] / v["total"] if v["total"] else 0.0,
+            }
             for k, v in per_class.items()
         },
         "confusion_matrix": confusion,
@@ -150,7 +158,8 @@ def extraction_metrics(samples: list[SampleResult]) -> dict:
 
     for s in scored:
         per_type_bucket = per_type.setdefault(
-            s.document_type_gold, {"documents": 0, "documents_all_correct": 0, "fields_total": 0, "fields_correct": 0}
+            s.document_type_gold,
+            {"documents": 0, "documents_all_correct": 0, "fields_total": 0, "fields_correct": 0},
         )
         per_type_bucket["documents"] += 1
         per_type_bucket["fields_total"] += s.required_fields_total
@@ -160,7 +169,9 @@ def extraction_metrics(samples: list[SampleResult]) -> dict:
             per_type_bucket["documents_all_correct"] += 1
         for f in s.field_results:
             field_total += 1
-            bucket = per_field.setdefault(f.field_name, {"correct": 0, "missing": 0, "false_value": 0, "total": 0})
+            bucket = per_field.setdefault(
+                f.field_name, {"correct": 0, "missing": 0, "false_value": 0, "total": 0}
+            )
             bucket["total"] += 1
             bucket[f.status] += 1
             if f.status == "correct":

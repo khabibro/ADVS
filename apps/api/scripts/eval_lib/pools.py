@@ -6,7 +6,16 @@ registration number (see BUSINESS_NUMBER_PREFIX). Do not add real personal
 or business data to this file.
 """
 
-APPLICANT_NAMES = ["김테스트", "이예시", "박샘플", "최가상", "정더미", "한모형", "오테스트", "서예시"]
+APPLICANT_NAMES = [
+    "김테스트",
+    "이예시",
+    "박샘플",
+    "최가상",
+    "정더미",
+    "한모형",
+    "오테스트",
+    "서예시",
+]
 
 UNIVERSITY_NAMES = ["가나다대학교", "마바사대학교", "아자차대학교", "카파타대학교", "하거너대학교"]
 DEPARTMENTS = ["컴퓨터공학과", "전자공학과", "경영학과", "산업공학과", "정보통신학과"]

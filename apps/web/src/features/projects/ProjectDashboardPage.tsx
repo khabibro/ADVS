@@ -23,10 +23,15 @@ export async function ProjectDashboardPage({ projectId }: { projectId: string })
         </div>
         <StatusBadge status={project.status} />
       </div>
+      {project.status === "READY" && (
+        <p className="text-sm text-muted-foreground">
+          현재 설정된 점검 기준에서 확인된 문제가 없습니다. 공식 승인이나 기관의 접수를 보장하지 않습니다.
+        </p>
+      )}
       {project.workflow?.description && (
         <p className="max-w-2xl text-sm text-muted-foreground">{project.workflow.description}</p>
       )}
-      {(project.expected_documents?.length ?? 0) > 0 && (
+      {(project.expected_documents?.length ?? 0) > 0 ? (
         <div className="space-y-2">
           <h2 className="font-semibold">필요 서류</h2>
           <div className="grid gap-2">
@@ -43,6 +48,12 @@ export async function ProjectDashboardPage({ projectId }: { projectId: string })
             })}
           </div>
         </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          {project.workflow
+            ? "이 업무에 등록된 필요 서류가 없습니다."
+            : "이전 프로젝트로 제출 업무가 지정되지 않았습니다."}
+        </p>
       )}
       <Link className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground" href={`/projects/${projectId}/upload`}>
         서류 업로드

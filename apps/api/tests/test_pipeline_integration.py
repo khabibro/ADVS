@@ -136,9 +136,7 @@ def test_full_pipeline_unknown_document(client: TestClient, db_session) -> None:
     assert detail["extracted_fields"] == []
 
 
-def test_full_pipeline_ocr_failure_is_distinct_from_unknown(
-    client: TestClient, db_session
-) -> None:
+def test_full_pipeline_ocr_failure_is_distinct_from_unknown(client: TestClient, db_session) -> None:
     """OCR_PROVIDER_ERROR must not be silently converted into a
     classification of UNKNOWN -- classification must never run at all."""
     project = _create_project(client, db_session)
@@ -218,14 +216,14 @@ def test_digital_pdf_with_meaningful_text_skips_ocr_provider(
     assert processed["processing_status"] == "COMPLETED"
     detail = _detail(client, document["id"])
     assert detail["overall_status"] == "READY"
-    ocr_row = db_session.query(OCRResult).filter_by(document_id=uuid_module.UUID(document["id"])).one()
+    ocr_row = (
+        db_session.query(OCRResult).filter_by(document_id=uuid_module.UUID(document["id"])).one()
+    )
     assert ocr_row.provider == "direct_pdf_text"
     assert ocr_row.lines == []
 
 
-def test_reprocessing_same_document_does_not_duplicate_rows(
-    client: TestClient, db_session
-) -> None:
+def test_reprocessing_same_document_does_not_duplicate_rows(client: TestClient, db_session) -> None:
     import uuid as uuid_module
 
     from app.models.entities import Document, ExtractedField, OCRResult, ValidationResult

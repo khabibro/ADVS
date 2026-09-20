@@ -35,7 +35,9 @@ class GoldLabel:
     source: str  # "synthetic" | "real"
     document_type: str
     input_format: str  # "text_pdf" | "scanned_pdf" | "png" | "jpg"
-    quality: str  # "clean" | "compressed" | "blurred" | "low_contrast" | "rotated" | "low_resolution"
+    quality: (
+        str  # "clean" | "compressed" | "blurred" | "low_contrast" | "rotated" | "low_resolution"
+    )
     layout_variant: str
     split: str  # "dev" | "held_out"
     fields: dict[str, GoldField]

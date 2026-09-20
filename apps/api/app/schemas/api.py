@@ -1,7 +1,9 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
+
+from app.core.domain import OverallStatus
 
 
 class ProjectCreate(BaseModel):
@@ -22,7 +24,7 @@ class WorkflowRead(BaseModel):
     name: str
     description: str | None = None
     is_active: bool
-    document_requirements: list[WorkflowDocumentRequirementRead] = Field(default_factory=list)
+    document_requirements: list[WorkflowDocumentRequirementRead]
     created_at: datetime
 
 
@@ -37,10 +39,10 @@ class ProjectRead(BaseModel):
     name: str
     workflow_id: uuid.UUID | None
     workflow: WorkflowSummary | None = None
-    expected_documents: list[WorkflowDocumentRequirementRead] = Field(default_factory=list)
+    expected_documents: list[WorkflowDocumentRequirementRead]
     applicant_name: str | None = None
     company_name: str | None = None
-    status: str
+    status: OverallStatus
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
@@ -100,4 +102,4 @@ class DocumentDetail(DocumentRead):
     # Computed at read time from validation_results
     # (READY/REVIEW_REQUIRED/NEEDS_CORRECTION);
     # not a stored column.
-    overall_status: str = "REVIEW_REQUIRED"
+    overall_status: OverallStatus = OverallStatus.REVIEW_REQUIRED

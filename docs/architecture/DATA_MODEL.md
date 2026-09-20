@@ -5,6 +5,7 @@ Entities: User, Project, Checklist, DocumentRequirement, ValidationRule, Submiss
 ```mermaid
 erDiagram
   USER ||--o{ PROJECT : owns
+  CHECKLIST ||--o{ PROJECT : configures
   PROJECT ||--o{ SUBMISSION : has
   CHECKLIST ||--o{ DOCUMENT_REQUIREMENT : defines
   DOCUMENT_REQUIREMENT ||--o{ VALIDATION_RULE : has
@@ -17,3 +18,4 @@ erDiagram
 
 Important indexes cover project ownership, document checksum, document type, processing status, checklist requirements, and validation codes.
 
+`Checklist` is the persistence name for the user-facing Workflow concept. `Project.checklist_id` remains nullable only for backward compatibility with existing projects; all new project API requests require an active `workflow_id`, which is stored in that column. Document requirements are scoped to a checklist and carry `required=true|false`, so no document type is universally required.

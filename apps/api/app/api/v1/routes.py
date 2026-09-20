@@ -94,7 +94,7 @@ def _project_read(project: Project) -> ProjectRead:
         ],
         applicant_name=project.applicant_name,
         company_name=project.company_name,
-        status=str(normalize_overall_status(project.status)),
+        status=normalize_overall_status(project.status),
         created_at=project.created_at,
     )
 
@@ -284,7 +284,7 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
     if not document:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Document not found", 404)
     detail = DocumentDetail.model_validate(document)
-    detail.overall_status = str(ValidationEngine().overall_status(document.validation_results))
+    detail.overall_status = ValidationEngine().overall_status(document.validation_results)
     return detail
 
 

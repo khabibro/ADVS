@@ -24,10 +24,14 @@ def main() -> None:
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     summary = payload["summary"]
-    print(f"Submission bundles: {summary['total']}, correct: {summary['correct']} ({summary['accuracy']:.2%})")
+    print(
+        f"Submission bundles: {summary['total']}, correct: {summary['correct']} ({summary['accuracy']:.2%})"
+    )
     for bundle in payload["bundles"]:
         mark = "OK" if bundle["correct"] else "MISMATCH"
-        print(f"  [{mark}] {bundle['bundle_id']}: expected={bundle['expected_status']} predicted={bundle['predicted_status']}")
+        print(
+            f"  [{mark}] {bundle['bundle_id']}: expected={bundle['expected_status']} predicted={bundle['predicted_status']}"
+        )
     print(f"Results written to {out_path.relative_to(paths.REPO_ROOT)}")
 
 

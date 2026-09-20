@@ -155,7 +155,9 @@ def test_business_registration_official_form_labels() -> None:
     src_business_01) uses '법인명칭' for company name and the compound
     '대표자 성명' for representative name, neither of which the original
     label lists (['상호','상호명'] / ['대표자','대표자명']) recognized."""
-    text = "사업자등록증\n법인명칭 예시산업 주식회사\n대표자 성명 박대표\n사업자등록번호 971-81-35937"
+    text = (
+        "사업자등록증\n법인명칭 예시산업 주식회사\n대표자 성명 박대표\n사업자등록번호 971-81-35937"
+    )
     fields = by_name(BusinessRegistrationExtractor().extract(text))
     assert fields["company_name"].normalized_value == "예시산업 주식회사"
     assert fields["representative_name"].normalized_value == "박대표"
@@ -237,7 +239,9 @@ def test_registry_returns_empty_list_for_unknown() -> None:
 
 
 def test_registry_dispatches_to_correct_extractor() -> None:
-    fields = by_name(ExtractorRegistry().extract(DocumentType.GRADUATION_CERTIFICATE, GRADUATION_TEXT))
+    fields = by_name(
+        ExtractorRegistry().extract(DocumentType.GRADUATION_CERTIFICATE, GRADUATION_TEXT)
+    )
     assert fields["applicant_name"].normalized_value == "홍길동"
 
 

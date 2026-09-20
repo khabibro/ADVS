@@ -28,6 +28,7 @@ def _squash(text: str) -> str:
     fuzziness), applied identically to signal text and haystack."""
     return _WHITESPACE_RE.sub("", text)
 
+
 CLASSIFIER_VERSION = "heuristic-v2"
 
 TITLE = 5.0
@@ -122,7 +123,9 @@ class ClassificationResult:
     alternatives: list[ClassificationAlternative] = field(default_factory=list)
 
 
-def _unknown(scores: dict[DocumentType, float], evidence: dict[DocumentType, list[str]]) -> ClassificationResult:
+def _unknown(
+    scores: dict[DocumentType, float], evidence: dict[DocumentType, list[str]]
+) -> ClassificationResult:
     alternatives = _alternatives(scores)
     return ClassificationResult(
         predicted_type=DocumentType.UNKNOWN,
@@ -149,7 +152,9 @@ class DocumentClassifier:
             hits = [signal for signal in signals if _squash(signal.text) in haystack]
             scores[doc_type] = sum(signal.weight for signal in hits)
             evidence[doc_type] = [signal.text for signal in hits]
-            has_strong_signal[doc_type] = any(signal.weight >= MIN_STRONG_SIGNAL_WEIGHT for signal in hits)
+            has_strong_signal[doc_type] = any(
+                signal.weight >= MIN_STRONG_SIGNAL_WEIGHT for signal in hits
+            )
 
         ranked = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)
         winner_type, winner_score = ranked[0]

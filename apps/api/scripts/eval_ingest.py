@@ -85,7 +85,9 @@ def main() -> None:
         data = json.loads(gold_path.read_text(encoding="utf-8"))
         already_ingested_hashes.add(data.get("notes", ""))  # notes carries the source hash marker
 
-    inbox_files = sorted(p for p in paths.DATASETS_REAL_INBOX.iterdir() if p.is_file() and p.name != ".gitkeep")
+    inbox_files = sorted(
+        p for p in paths.DATASETS_REAL_INBOX.iterdir() if p.is_file() and p.name != ".gitkeep"
+    )
     if not inbox_files:
         print(f"No files found in {paths.DATASETS_REAL_INBOX.relative_to(paths.REPO_ROOT)}.")
         return
@@ -125,7 +127,9 @@ def main() -> None:
             verified=False,
         )
         gold_path = paths.GOLD_REAL / f"{sample_id}.json"
-        gold_path.write_text(json.dumps(gold.to_json(), ensure_ascii=False, indent=2), encoding="utf-8")
+        gold_path.write_text(
+            json.dumps(gold.to_json(), ensure_ascii=False, indent=2), encoding="utf-8"
+        )
 
         manifest.entries.append(
             ManifestEntry(
@@ -141,7 +145,9 @@ def main() -> None:
         ingested += 1
         print(f"Ingested {path.name} -> {sample_id} (UNVERIFIED, needs labeling)")
 
-    paths.MANIFEST_PATH.write_text(json.dumps(manifest.to_json(), ensure_ascii=False, indent=2), encoding="utf-8")
+    paths.MANIFEST_PATH.write_text(
+        json.dumps(manifest.to_json(), ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     print(f"\nIngested: {ingested}, already-ingested (skipped): {skipped}, rejected: {rejected}")
     if ingested:
         print("Run `make eval-label` next to assign document types and gold field values.")

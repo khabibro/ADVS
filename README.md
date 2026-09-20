@@ -4,7 +4,9 @@ AI-Based Administrative Document Analysis and Automated Verification System.
 
 CURRENT PHASE: Phase 1 bootstrap / MVP development.
 
-ADVS is a modular monorepo for uploading Korean administrative documents, extracting text through direct PDF text or OCR, classifying the document, extracting structured fields, and validating results against checklist rules.
+ADVS is a workflow-centric modular monorepo for uploading Korean administrative documents, extracting text through direct PDF text or OCR, classifying the document, extracting structured fields, and validating results against workflow-scoped checklist rules. A document is required only when the selected workflow requires it.
+
+Canonical pre-check results are `READY` (제출 가능), `REVIEW_REQUIRED` (확인 필요), and `NEEDS_CORRECTION` (보완 필요). `READY` means only that the configured ADVS checks found no issue; it does not mean official approval or guaranteed acceptance by an institution.
 
 CURRENTLY SUPPORTED:
 - Graduation Certificate / 졸업증명서

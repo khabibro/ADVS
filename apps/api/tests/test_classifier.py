@@ -1,13 +1,19 @@
 from app.core.domain import DocumentType
 from app.document_intelligence.classification.classifier import DocumentClassifier
 
-GRADUATION_TEXT = "졸업증명서\n성명 홍길동\n대학교 한국대학교\n학과 컴퓨터공학과\n학위 학사\n졸업일자 2024-02-20"
-CAREER_TEXT = "경력증명서\n성명 김철수\n회사명 한국테크\n직위 대리\n담당업무 백엔드 개발\n재직기간 2020-2023"
+GRADUATION_TEXT = (
+    "졸업증명서\n성명 홍길동\n대학교 한국대학교\n학과 컴퓨터공학과\n학위 학사\n졸업일자 2024-02-20"
+)
+CAREER_TEXT = (
+    "경력증명서\n성명 김철수\n회사명 한국테크\n직위 대리\n담당업무 백엔드 개발\n재직기간 2020-2023"
+)
 BUSINESS_TEXT = (
     "사업자등록증\n상호 한국테크\n대표자 이영희\n사업자등록번호 123-45-67890\n"
     "사업장 소재지 서울특별시\n업태 서비스업\n종목 소프트웨어"
 )
-SME_TEXT = "중소기업확인서\n기업명 한국테크\n사업자등록번호 123-45-67890\n유효기간 2026-01-01 ~ 2027-12-31"
+SME_TEXT = (
+    "중소기업확인서\n기업명 한국테크\n사업자등록번호 123-45-67890\n유효기간 2026-01-01 ~ 2027-12-31"
+)
 
 
 def test_classifier_graduation_certificate() -> None:

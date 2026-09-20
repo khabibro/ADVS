@@ -342,11 +342,8 @@ export interface components {
              * @default []
              */
             validation_results: components["schemas"]["ValidationRead"][];
-            /**
-             * Overall Status
-             * @default REVIEW_REQUIRED
-             */
-            overall_status: string;
+            /** @default REVIEW_REQUIRED */
+            overall_status: components["schemas"]["OverallStatus"];
         };
         /** DocumentRead */
         DocumentRead: {
@@ -403,6 +400,11 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /**
+         * OverallStatus
+         * @enum {string}
+         */
+        OverallStatus: "READY" | "REVIEW_REQUIRED" | "NEEDS_CORRECTION";
         /** ProjectCreate */
         ProjectCreate: {
             /** Name */
@@ -430,13 +432,12 @@ export interface components {
             workflow_id: string | null;
             workflow?: components["schemas"]["WorkflowSummary"] | null;
             /** Expected Documents */
-            expected_documents?: components["schemas"]["WorkflowDocumentRequirementRead"][];
+            expected_documents: components["schemas"]["WorkflowDocumentRequirementRead"][];
             /** Applicant Name */
             applicant_name?: string | null;
             /** Company Name */
             company_name?: string | null;
-            /** Status */
-            status: string;
+            status: components["schemas"]["OverallStatus"];
             /**
              * Created At
              * Format: date-time
@@ -496,7 +497,7 @@ export interface components {
             /** Is Active */
             is_active: boolean;
             /** Document Requirements */
-            document_requirements?: components["schemas"]["WorkflowDocumentRequirementRead"][];
+            document_requirements: components["schemas"]["WorkflowDocumentRequirementRead"][];
             /**
              * Created At
              * Format: date-time

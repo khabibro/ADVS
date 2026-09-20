@@ -246,7 +246,12 @@ class PaddleOCRProvider(OCRProvider):
                     if "rec_texts" in item:
                         texts = item.get("rec_texts") or []
                         scores = item.get("rec_scores") or []
-                        boxes = item.get("rec_polys") or item.get("dt_polys") or item.get("rec_boxes") or []
+                        boxes = (
+                            item.get("rec_polys")
+                            or item.get("dt_polys")
+                            or item.get("rec_boxes")
+                            or []
+                        )
                         expanded.extend(zip(boxes, texts, scores, strict=False))
                     else:
                         expanded.append(item)
@@ -326,4 +331,6 @@ def get_ocr_provider(settings: Settings) -> OCRProvider:
         if key not in _PROVIDER_CACHE:
             _PROVIDER_CACHE[key] = PaddleOCRProvider(settings)
         return _PROVIDER_CACHE[key]  # type: ignore[return-value]
-    raise ValueError(f"Unsupported OCR_PROVIDER '{settings.ocr_provider}'. Expected mock or paddle.")
+    raise ValueError(
+        f"Unsupported OCR_PROVIDER '{settings.ocr_provider}'. Expected mock or paddle."
+    )

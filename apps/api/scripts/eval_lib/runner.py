@@ -136,13 +136,19 @@ def _score_text(gold: GoldLabel, text: str, pipeline: Pipeline) -> SampleResult:
 
     validation_pred = None
     if gold.expected_validation_status is not None:
-        issues = pipeline.validator.validate_document(None, predicted_type, extracted, None, None, False, None)
+        issues = pipeline.validator.validate_document(
+            None, predicted_type, extracted, None, None, False, None
+        )
         validation_pred = str(pipeline.validator.overall_status(issues))
     elapsed_ms = (time.perf_counter() - started) * 1000
 
     classification_correct = classification.predicted_type == gold.document_type
     category, reason = _categorize_failure(
-        gold, classification_correct, field_results, gold.expected_validation_status, validation_pred
+        gold,
+        classification_correct,
+        field_results,
+        gold.expected_validation_status,
+        validation_pred,
     )
 
     return SampleResult(
@@ -318,7 +324,9 @@ def _sample_id_to_entry() -> dict[str, dict]:
     return {e["sample_id"]: e for e in load_manifest_entries(None)}
 
 
-def _score_bundle(bundle: SubmissionBundle, pipeline: Pipeline, entry_by_id: dict[str, dict]) -> dict:
+def _score_bundle(
+    bundle: SubmissionBundle, pipeline: Pipeline, entry_by_id: dict[str, dict]
+) -> dict:
     seen: set[str] = set()
     all_issues = []
     document_predictions: list[dict] = []
@@ -335,12 +343,22 @@ def _score_bundle(bundle: SubmissionBundle, pipeline: Pipeline, entry_by_id: dic
         seen.add(sample_id)
 
         issues = pipeline.validator.validate_document(
-            None, predicted_type, extracted, bundle.applicant_name, bundle.company_name, duplicate, None
+            None,
+            predicted_type,
+            extracted,
+            bundle.applicant_name,
+            bundle.company_name,
+            duplicate,
+            None,
         )
         all_issues.extend(issues)
         predicted_types.add(str(predicted_type))
         document_predictions.append(
-            {"sample_id": sample_id, "document_type_pred": str(predicted_type), "duplicate_flagged": duplicate}
+            {
+                "sample_id": sample_id,
+                "document_type_pred": str(predicted_type),
+                "duplicate_flagged": duplicate,
+            }
         )
 
     required_issues = pipeline.validator.validate_required_documents(

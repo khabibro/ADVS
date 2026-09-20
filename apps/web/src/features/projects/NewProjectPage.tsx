@@ -22,9 +22,13 @@ export function NewProjectPage() {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [loadingWorkflows, setLoadingWorkflows] = useState(true);
   const [workflowError, setWorkflowError] = useState<string | null>(null);
-  const { register, handleSubmit, formState, setValue } = useForm<FormValues>({
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { register, handleSubmit, formState, setValue, watch } = useForm<FormValues>({
     resolver: zodResolver(schema),
+    defaultValues: { workflow_id: "" },
   });
+  const selectedWorkflowId = watch("workflow_id");
+  const selectedWorkflow = workflows.find((workflow) => workflow.id === selectedWorkflowId);
 
   useEffect(() => {
     let mounted = true;
@@ -52,11 +56,19 @@ export function NewProjectPage() {
     <form
       className="max-w-xl space-y-4"
       onSubmit={handleSubmit(async (values) => {
-        const project = await api.createProject(values);
-        router.push(`/projects/${project.id}`);
+        setSubmitError(null);
+        try {
+          const project = await api.createProject(values);
+          router.push(`/projects/${project.id}`);
+        } catch {
+          setSubmitError("프로젝트를 생성하지 못했습니다. 선택한 업무와 입력 내용을 확인해 주세요.");
+        }
       })}
     >
       <h1 className="text-2xl font-semibold">새 프로젝트</h1>
+      <p className="text-sm text-muted-foreground">
+        제출 업무를 선택하고 필요 서류를 확인한 뒤 프로젝트를 시작하세요.
+      </p>
       <label className="block space-y-1 text-sm">
         <span className="font-medium">업무 유형</span>
         <select
@@ -81,9 +93,49 @@ export function NewProjectPage() {
       {formState.errors.workflow_id && (
         <p className="text-sm text-red-600">{formState.errors.workflow_id.message}</p>
       )}
-      <input className="w-full rounded-md border p-2" placeholder="프로젝트명" {...register("name")} />
-      <input className="w-full rounded-md border p-2" placeholder="신청인 이름" {...register("applicant_name")} />
-      <input className="w-full rounded-md border p-2" placeholder="회사명" {...register("company_name")} />
+      {selectedWorkflow && (
+        <section className="space-y-3 rounded-md border p-4" aria-live="polite">
+          <div>
+            <h2 className="font-medium">필요 서류</h2>
+            {selectedWorkflow.description && (
+              <p className="text-sm text-muted-foreground">{selectedWorkflow.description}</p>
+            )}
+          </div>
+          {selectedWorkflow.document_requirements.length > 0 ? (
+            <ul className="space-y-2 text-sm">
+              {selectedWorkflow.document_requirements.map((requirement) => (
+                <li
+                  className="flex items-center justify-between"
+                  key={requirement.document_type}
+                >
+                  <span>{requirement.display_name}</span>
+                  <span className="text-muted-foreground">
+                    {requirement.required ? "필수" : "선택"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">등록된 필요 서류가 없습니다.</p>
+          )}
+        </section>
+      )}
+      <label className="block space-y-1 text-sm">
+        <span className="font-medium">프로젝트명</span>
+        <input className="w-full rounded-md border p-2" {...register("name")} />
+      </label>
+      {formState.errors.name && (
+        <p className="text-sm text-red-600">프로젝트명을 입력해 주세요.</p>
+      )}
+      <label className="block space-y-1 text-sm">
+        <span className="font-medium">신청인 이름</span>
+        <input className="w-full rounded-md border p-2" {...register("applicant_name")} />
+      </label>
+      <label className="block space-y-1 text-sm">
+        <span className="font-medium">회사명</span>
+        <input className="w-full rounded-md border p-2" {...register("company_name")} />
+      </label>
+      {submitError && <p className="text-sm text-red-600">{submitError}</p>}
       <Button disabled={formState.isSubmitting || loadingWorkflows || workflows.length === 0}>생성</Button>
     </form>
   );
