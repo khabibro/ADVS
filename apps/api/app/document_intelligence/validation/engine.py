@@ -122,15 +122,15 @@ class ValidationEngine:
         """An expired document is invalid regardless of whether an admin
         remembered to configure a checklist rule for it -- unlike
         REQUIRED_FIELD/CUSTOM_TEXT_RULE/etc, this one check is unconditional
-        whenever the document carries an `expiration_date`. A DB-configured
+        whenever the document carries a `valid_until`. A DB-configured
         DATE_NOT_EXPIRED rule for the same field takes over instead of
         duplicating it."""
-        field = by_name.get("expiration_date")
+        field = by_name.get("valid_until")
         if field is None or field.normalized_value is None:
             return []
         already_configured = any(
             rule.rule_type == RuleType.DATE_NOT_EXPIRED
-            and rule.params.get("field", "expiration_date") == "expiration_date"
+            and rule.params.get("field", "valid_until") == "valid_until"
             for rule in (configured_rules or [])
         )
         if already_configured:
@@ -223,7 +223,7 @@ class ValidationEngine:
     def _handle_date_not_expired(
         self, rule: ConfiguredRule, by_name: dict[str, ExtractedValue]
     ) -> list[ValidationIssue]:
-        field_name = rule.params.get("field", "expiration_date")
+        field_name = rule.params.get("field", "valid_until")
         field = by_name.get(field_name)
         value = field.normalized_value if field else None
         if value is None:

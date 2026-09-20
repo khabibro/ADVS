@@ -315,8 +315,12 @@ export interface components {
             size_bytes: number;
             /** Processing Status */
             processing_status: string;
-            /** Document Type */
-            document_type: string;
+            document_type: components["schemas"]["DocumentType"];
+            /**
+             * Document Type Display Name
+             * @default
+             */
+            document_type_display_name: string;
             /** Classification Confidence */
             classification_confidence: number | null;
             /** Classification Meta */
@@ -360,8 +364,12 @@ export interface components {
             size_bytes: number;
             /** Processing Status */
             processing_status: string;
-            /** Document Type */
-            document_type: string;
+            document_type: components["schemas"]["DocumentType"];
+            /**
+             * Document Type Display Name
+             * @default
+             */
+            document_type_display_name: string;
             /** Classification Confidence */
             classification_confidence: number | null;
             /** Classification Meta */
@@ -378,6 +386,11 @@ export interface components {
              */
             created_at: string;
         };
+        /**
+         * DocumentType
+         * @enum {string}
+         */
+        DocumentType: "GRADUATION_CERTIFICATE" | "CAREER_CERTIFICATE" | "BUSINESS_REGISTRATION_CERTIFICATE" | "SME_CONFIRMATION_CERTIFICATE" | "NATIONAL_TAX_PAYMENT_CERTIFICATE" | "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE" | "ENROLLMENT_CERTIFICATE" | "TRANSCRIPT" | "UNKNOWN";
         /** FieldRead */
         FieldRead: {
             /** Field Name */
@@ -476,8 +489,7 @@ export interface components {
         };
         /** WorkflowDocumentRequirementRead */
         WorkflowDocumentRequirementRead: {
-            /** Document Type */
-            document_type: string;
+            document_type: components["schemas"]["DocumentType"];
             /** Display Name */
             display_name: string;
             /** Required */

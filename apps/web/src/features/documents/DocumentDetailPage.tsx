@@ -9,7 +9,7 @@ export async function DocumentDetailPage({ documentId }: { documentId: string })
         <div>
           <h1 className="text-2xl font-semibold">{document.original_filename}</h1>
           <p className="text-sm text-muted-foreground">
-            문서 유형 {document.document_type} · 신뢰도 {document.classification_confidence ?? "-"}
+            문서 유형 {document.document_type_display_name} · 신뢰도 {document.classification_confidence ?? "-"}
           </p>
         </div>
         <div className="flex items-center gap-2">

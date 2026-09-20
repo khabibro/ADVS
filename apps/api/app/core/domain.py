@@ -6,6 +6,10 @@ class DocumentType(StrEnum):
     CAREER_CERTIFICATE = "CAREER_CERTIFICATE"
     BUSINESS_REGISTRATION_CERTIFICATE = "BUSINESS_REGISTRATION_CERTIFICATE"
     SME_CONFIRMATION_CERTIFICATE = "SME_CONFIRMATION_CERTIFICATE"
+    NATIONAL_TAX_PAYMENT_CERTIFICATE = "NATIONAL_TAX_PAYMENT_CERTIFICATE"
+    SOCIAL_INSURANCE_PAYMENT_CERTIFICATE = "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE"
+    ENROLLMENT_CERTIFICATE = "ENROLLMENT_CERTIFICATE"
+    TRANSCRIPT = "TRANSCRIPT"
     UNKNOWN = "UNKNOWN"
 
 
@@ -79,8 +83,35 @@ EXPECTED_FIELDS: dict[DocumentType, list[str]] = {
         "business_registration_number",
         "certificate_number",
         "issue_date",
-        "expiration_date",
-        "validity_period",
+        "valid_from",
+        "valid_until",
+    ],
+    DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE: [
+        "company_name",
+        "business_registration_number",
+        "issue_date",
+        "valid_until",
+    ],
+    DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE: [
+        "workplace_name",
+        "business_registration_number",
+        "issue_date",
+        "valid_until",
+    ],
+    DocumentType.ENROLLMENT_CERTIFICATE: [
+        "student_name",
+        "university_name",
+        "department",
+        "student_id",
+        "issue_date",
+    ],
+    DocumentType.TRANSCRIPT: [
+        "student_name",
+        "university_name",
+        "student_id",
+        "issue_date",
+        "gpa",
+        "gpa_scale",
     ],
     DocumentType.UNKNOWN: [],
 }
@@ -91,6 +122,10 @@ DOCUMENT_TYPE_DISPLAY_NAMES: dict[DocumentType, str] = {
     DocumentType.CAREER_CERTIFICATE: "경력증명서",
     DocumentType.BUSINESS_REGISTRATION_CERTIFICATE: "사업자등록증",
     DocumentType.SME_CONFIRMATION_CERTIFICATE: "중소기업확인서",
+    DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE: "국세 납세증명서",
+    DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE: "4대 사회보험료 완납증명서",
+    DocumentType.ENROLLMENT_CERTIFICATE: "재학증명서",
+    DocumentType.TRANSCRIPT: "성적증명서",
     DocumentType.UNKNOWN: "알 수 없는 문서",
 }
 

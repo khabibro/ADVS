@@ -59,7 +59,7 @@ def _quality_for(index: int, input_format: str) -> str:
 
 def _expected_status(document_type: str, fields: dict[str, str | None]) -> str:
     if document_type == "SME_CONFIRMATION_CERTIFICATE":
-        expiration = fields.get("expiration_date")
+        expiration = fields.get("valid_until")
         if expiration and date.fromisoformat(expiration) < date.today():
             return "NEEDS_CORRECTION"
     if any(value is None for value in fields.values()):
@@ -278,7 +278,7 @@ def generate_business_cases(count: int) -> list[CaseSpec]:
         gold = {
             "company_name": gold_raw["company_name"],
             "representative_name": gold_raw["representative_name"],
-            "business_registration_number": number_norm
+            "business_registration_number": number_norm.replace("-", "")
             if gold_raw["business_registration_number"]
             else None,
             "business_address": gold_raw["business_address"],
@@ -341,15 +341,13 @@ def generate_sme_cases(count: int) -> list[CaseSpec]:
         gold = {
             "company_name": gold_raw["company_name"],
             "representative_name": gold_raw["representative_name"],
-            "business_registration_number": number_norm
+            "business_registration_number": number_norm.replace("-", "")
             if gold_raw["business_registration_number"]
             else None,
             "certificate_number": cert_number if gold_raw["certificate_number"] else None,
             "issue_date": issue_date.isoformat() if gold_raw["issue_date"] else None,
-            "expiration_date": valid_until.isoformat()
-            if gold_raw.get("validity_period_raw")
-            else None,
-            "validity_period": validity_raw if gold_raw.get("validity_period_raw") else None,
+            "valid_from": valid_from.isoformat() if gold_raw.get("validity_period_raw") else None,
+            "valid_until": valid_until.isoformat() if gold_raw.get("validity_period_raw") else None,
         }
         lines = build_lines("중소기업확인서", pairs, layout, rng)
         cases.append(
@@ -407,7 +405,7 @@ def generate_recreated_cases() -> list[CaseSpec]:
         gold = {
             "company_name": company,
             "representative_name": rep,
-            "business_registration_number": number,
+            "business_registration_number": number.replace("-", ""),
             "business_address": address,
             "business_type": pools.BUSINESS_TYPES[i % len(pools.BUSINESS_TYPES)],
             "business_item": pools.BUSINESS_ITEMS[i % len(pools.BUSINESS_ITEMS)],
@@ -572,7 +570,7 @@ def generate_submission_documents() -> list[CaseSpec]:
         gold = {
             "company_name": company,
             "representative_name": "이영희",
-            "business_registration_number": number,
+            "business_registration_number": number.replace("-", ""),
             "business_address": "서울특별시 테스트구 예시로 12",
             "business_type": "서비스업",
             "business_item": "소프트웨어 개발",
@@ -605,11 +603,11 @@ def generate_submission_documents() -> list[CaseSpec]:
         gold = {
             "company_name": company,
             "representative_name": "이영희",
-            "business_registration_number": number,
+            "business_registration_number": number.replace("-", ""),
             "certificate_number": f"SME-{sample_id[-6:]}",
             "issue_date": "2026-01-01",
-            "expiration_date": valid_until.isoformat(),
-            "validity_period": validity_raw,
+            "valid_from": "2026-01-01",
+            "valid_until": valid_until.isoformat(),
         }
         return CaseSpec(
             sample_id=sample_id,

@@ -2,17 +2,23 @@
 
 AI-Based Administrative Document Analysis and Automated Verification System.
 
-CURRENT PHASE: Phase 1 bootstrap / MVP development.
+CURRENT PHASE: Phase 2 mentor-defined document domain.
 
 ADVS is a workflow-centric modular monorepo for uploading Korean administrative documents, extracting text through direct PDF text or OCR, classifying the document, extracting structured fields, and validating results against workflow-scoped checklist rules. A document is required only when the selected workflow requires it.
 
 Canonical pre-check results are `READY` (제출 가능), `REVIEW_REQUIRED` (확인 필요), and `NEEDS_CORRECTION` (보완 필요). `READY` means only that the configured ADVS checks found no issue; it does not mean official approval or guaranteed acceptance by an institution.
 
-CURRENTLY SUPPORTED:
-- Graduation Certificate / 졸업증명서
-- Career Certificate / 경력증명서
+MENTOR-DEFINED MVP DOCUMENT DOMAIN:
 - Business Registration Certificate / 사업자등록증
 - SME Confirmation Certificate / 중소기업확인서
+- National Tax Payment Certificate / 국세 납세증명서
+- Social Insurance Payment Certificate / 4대 사회보험료 완납증명서
+- Enrollment Certificate / 재학증명서
+- Transcript / 성적증명서
+
+Existing Graduation Certificate / 졸업증명서 and Career Certificate / 경력증명서 support is
+preserved. Phase 2 defines structured facts; it does not yet perform cross-document identity
+matching, generalized validity decisions, or GPA threshold evaluation.
 
 This is not production-ready OCR/extraction. PaddleOCR is the only real OCR provider; mock OCR remains available for tests and local pipeline development.
 

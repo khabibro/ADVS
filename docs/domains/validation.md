@@ -4,13 +4,13 @@
 
 Supported rule types (`RuleType`): `REQUIRED_DOCUMENT`, `REQUIRED_FIELD`, `DATE_NOT_EXPIRED`, `ISSUE_DATE_MAX_AGE`, `APPLICANT_NAME_MATCH`, `COMPANY_NAME_MATCH`, `BUSINESS_REGISTRATION_NUMBER_MATCH`, `DUPLICATE_DOCUMENT`, `EXPECTED_DOCUMENT_TYPE`, `CUSTOM_TEXT_RULE`.
 
-**Always-on checks** (independent of any checklist): `EXPECTED_DOCUMENT_TYPE` (if the caller supplied an expected type), `DUPLICATE_DOCUMENT` (same checksum already in the submission), `APPLICANT_NAME_MATCH`/`COMPANY_NAME_MATCH` (against the project's recorded name, when both are present), and `DATE_NOT_EXPIRED` on `expiration_date` whenever that field was extracted -- an expired document is invalid regardless of whether an admin configured a rule for it.
+**Always-on checks** (independent of any checklist): `EXPECTED_DOCUMENT_TYPE` (if the caller supplied an expected type), `DUPLICATE_DOCUMENT` (same checksum already in the submission), `APPLICANT_NAME_MATCH`/`COMPANY_NAME_MATCH` (against the project's recorded name, when both are present), and the pre-existing `DATE_NOT_EXPIRED` behavior on the SME confirmation certificate's canonical `valid_until` field. Phase 2 does not extend this decision to the newly introduced certificate types.
 
 **Database-configured rules**: `DocumentRequirement`/`ValidationRule` rows (already in the schema, keyed by checklist + document_type) are loaded per document and passed to the engine as `ConfiguredRule(rule_type, severity, params)`. The engine owns *how* each rule_type is evaluated; the database decides *whether* it applies and with what parameters:
 
 ```
 document_type = SME_CONFIRMATION_CERTIFICATE
-field = expiration_date
+field = valid_until
 rule_type = DATE_NOT_EXPIRED
 severity = ERROR
 ```

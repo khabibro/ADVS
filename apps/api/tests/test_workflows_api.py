@@ -8,8 +8,8 @@ from app.models.entities import Checklist, DocumentRequirement
 
 def _workflow(db_session, *, is_active: bool = True) -> Checklist:
     checklist = Checklist(
-        name="MVP administrative workflow",
-        description="Four-document MVP workflow.",
+        name="기업 제출서류 점검",
+        description="Mentor-defined business workflow.",
         is_active=is_active,
     )
     db_session.add(checklist)
@@ -28,8 +28,13 @@ def _workflow(db_session, *, is_active: bool = True) -> Checklist:
             ),
             DocumentRequirement(
                 checklist_id=checklist.id,
-                document_type=DocumentType.CAREER_CERTIFICATE.value,
-                required=False,
+                document_type=DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE.value,
+                required=True,
+            ),
+            DocumentRequirement(
+                checklist_id=checklist.id,
+                document_type=DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE.value,
+                required=True,
             ),
         ]
     )
@@ -46,14 +51,15 @@ def test_list_workflows_exposes_document_requirements(client: TestClient, db_ses
     assert response.status_code == 200
     payload = response.json()
     item = next(item for item in payload if item["id"] == str(workflow.id))
-    assert item["name"] == "MVP administrative workflow"
+    assert item["name"] == "기업 제출서류 점검"
     requirements = {req["document_type"]: req for req in item["document_requirements"]}
     assert requirements["BUSINESS_REGISTRATION_CERTIFICATE"] == {
         "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
         "display_name": "사업자등록증",
         "required": True,
     }
-    assert requirements["CAREER_CERTIFICATE"]["required"] is False
+    assert requirements["NATIONAL_TAX_PAYMENT_CERTIFICATE"]["display_name"] == "국세 납세증명서"
+    assert requirements["SOCIAL_INSURANCE_PAYMENT_CERTIFICATE"]["required"] is True
 
 
 def test_get_workflow_exposes_required_and_optional_documents(
@@ -69,7 +75,7 @@ def test_get_workflow_exposes_required_and_optional_documents(
     assert payload["is_active"] is True
     requirements = {item["document_type"]: item for item in payload["document_requirements"]}
     assert requirements["BUSINESS_REGISTRATION_CERTIFICATE"]["required"] is True
-    assert requirements["CAREER_CERTIFICATE"]["required"] is False
+    assert requirements["NATIONAL_TAX_PAYMENT_CERTIFICATE"]["required"] is True
 
 
 def test_inactive_workflows_are_not_listed(client: TestClient, db_session) -> None:
@@ -110,7 +116,8 @@ def test_create_project_requires_valid_workflow(client: TestClient, db_session) 
     assert {doc["document_type"] for doc in payload["expected_documents"]} == {
         "BUSINESS_REGISTRATION_CERTIFICATE",
         "SME_CONFIRMATION_CERTIFICATE",
-        "CAREER_CERTIFICATE",
+        "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+        "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
     }
 
 
@@ -126,7 +133,7 @@ def test_project_read_exposes_workflow_context(client: TestClient, db_session) -
     assert response.status_code == 200
     payload = response.json()
     assert payload["workflow_id"] == str(workflow.id)
-    assert payload["workflow"]["description"] == "Four-document MVP workflow."
+    assert payload["workflow"]["description"] == "Mentor-defined business workflow."
     assert payload["expected_documents"][0]["display_name"]
 
 
@@ -176,3 +183,40 @@ def test_legacy_project_without_workflow_remains_readable(client: TestClient, db
     assert payload["workflow"] is None
     assert payload["expected_documents"] == []
     assert payload["status"] == "READY"
+
+
+def test_student_workflow_required_and_optional_semantics(client: TestClient, db_session) -> None:
+    workflow = Checklist(name="학생 제출서류 점검", description="Student workflow.")
+    db_session.add(workflow)
+    db_session.flush()
+    db_session.add_all(
+        [
+            DocumentRequirement(
+                checklist_id=workflow.id,
+                document_type=DocumentType.ENROLLMENT_CERTIFICATE.value,
+                required=True,
+            ),
+            DocumentRequirement(
+                checklist_id=workflow.id,
+                document_type=DocumentType.TRANSCRIPT.value,
+                required=False,
+            ),
+        ]
+    )
+    db_session.commit()
+
+    response = client.get(f"/api/v1/workflows/{workflow.id}")
+    assert response.status_code == 200
+    requirements = {
+        item["document_type"]: item for item in response.json()["document_requirements"]
+    }
+    assert requirements["ENROLLMENT_CERTIFICATE"] == {
+        "document_type": "ENROLLMENT_CERTIFICATE",
+        "display_name": "재학증명서",
+        "required": True,
+    }
+    assert requirements["TRANSCRIPT"] == {
+        "document_type": "TRANSCRIPT",
+        "display_name": "성적증명서",
+        "required": False,
+    }

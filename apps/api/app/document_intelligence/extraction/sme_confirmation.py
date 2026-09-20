@@ -7,7 +7,6 @@ from app.document_intelligence.extraction.base import (
 )
 from app.document_intelligence.normalization.field_normalizer import (
     normalize_date,
-    normalize_text_field,
 )
 
 
@@ -24,27 +23,20 @@ class SMEConfirmationExtractor(BaseDocumentExtractor):
             ),
             self.text_field(text, "certificate_number", ["확인번호", "증명서번호", "일련번호"]),
             self.date_field(text, "issue_date", ["발급일자", "발행일자"]),
-            self._expiration_field(validity_raw),
-            self._validity_period_field(validity_raw),
+            self._validity_date_field(validity_raw, "valid_from", 0),
+            self._validity_date_field(validity_raw, "valid_until", 1),
         ]
 
-    def _validity_period_field(self, raw: str | None) -> ExtractedValue:
+    def _validity_date_field(
+        self, raw: str | None, field_name: str, range_index: int
+    ) -> ExtractedValue:
         start_raw, end_raw = split_range(raw)
-        start = normalize_date(start_raw)
-        end = normalize_date(end_raw)
-        normalized = f"{start} ~ {end}" if start and end else normalize_text_field(raw)
-        if normalized is None:
-            return self.missing("validity_period")
-        return ExtractedValue("validity_period", raw, normalized, 0.6, False, "label_match", raw)
-
-    def _expiration_field(self, raw: str | None) -> ExtractedValue:
-        if not raw:
-            return self.missing("expiration_date")
-        _, end_raw = split_range(raw)
-        candidate = end_raw or raw
+        candidate = (start_raw, end_raw)[range_index]
+        if candidate is None and field_name == "valid_until":
+            candidate = raw
         normalized = normalize_date(candidate)
         if normalized is None:
-            return self.missing("expiration_date")
+            return self.missing(field_name)
         return ExtractedValue(
-            "expiration_date", candidate, normalized, 0.55, False, "regex_date", candidate
+            field_name, candidate, normalized, 0.55, False, "regex_date", candidate
         )

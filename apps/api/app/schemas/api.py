@@ -1,9 +1,10 @@
 import uuid
 from datetime import datetime
+from typing import Self
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
-from app.core.domain import OverallStatus
+from app.core.domain import DOCUMENT_TYPE_DISPLAY_NAMES, DocumentType, OverallStatus
 
 
 class ProjectCreate(BaseModel):
@@ -14,7 +15,7 @@ class ProjectCreate(BaseModel):
 
 
 class WorkflowDocumentRequirementRead(BaseModel):
-    document_type: str
+    document_type: DocumentType
     display_name: str
     required: bool
 
@@ -65,13 +66,19 @@ class DocumentRead(BaseModel):
     mime_type: str
     size_bytes: int
     processing_status: str
-    document_type: str
+    document_type: DocumentType
+    document_type_display_name: str = ""
     classification_confidence: float | None
     classification_meta: dict | None = None
     error_code: str | None
     error_message: str | None
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def populate_document_type_display_name(self) -> Self:
+        self.document_type_display_name = DOCUMENT_TYPE_DISPLAY_NAMES[self.document_type]
+        return self
 
 
 class FieldRead(BaseModel):

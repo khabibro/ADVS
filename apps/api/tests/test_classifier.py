@@ -14,6 +14,10 @@ BUSINESS_TEXT = (
 SME_TEXT = (
     "중소기업확인서\n기업명 한국테크\n사업자등록번호 123-45-67890\n유효기간 2026-01-01 ~ 2027-12-31"
 )
+TAX_TEXT = "국세 납세증명서\n납세자명 한국테크\n사업자등록번호 123-45-67890"
+SOCIAL_TEXT = "4대 사회보험료 완납증명서\n사업장명 한국테크\n사업자등록번호 123-45-67890"
+ENROLLMENT_TEXT = "재학증명서\n성명 김학생\n대학교 한국대학교\n학번 20260001"
+TRANSCRIPT_TEXT = "성적증명서\n성명 김학생\n학번 20260001\n평점평균 3.85 / 4.50"
 
 
 def test_classifier_graduation_certificate() -> None:
@@ -39,6 +43,31 @@ def test_classifier_sme_confirmation_certificate() -> None:
     result = DocumentClassifier().classify(SME_TEXT)
     assert result.predicted_type == DocumentType.SME_CONFIRMATION_CERTIFICATE
     assert result.needs_review is False
+
+
+def test_classifier_national_tax_payment_certificate() -> None:
+    assert (
+        DocumentClassifier().classify(TAX_TEXT).predicted_type
+        == DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE
+    )
+
+
+def test_classifier_social_insurance_payment_certificate() -> None:
+    assert (
+        DocumentClassifier().classify(SOCIAL_TEXT).predicted_type
+        == DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE
+    )
+
+
+def test_classifier_enrollment_certificate() -> None:
+    assert (
+        DocumentClassifier().classify(ENROLLMENT_TEXT).predicted_type
+        == DocumentType.ENROLLMENT_CERTIFICATE
+    )
+
+
+def test_classifier_transcript() -> None:
+    assert DocumentClassifier().classify(TRANSCRIPT_TEXT).predicted_type == DocumentType.TRANSCRIPT
 
 
 def test_classifier_unknown_for_unrelated_text() -> None:
@@ -90,13 +119,13 @@ def test_ocr_whitespace_and_linewrap_noise_is_tolerated() -> None:
     assert result.predicted_type == DocumentType.BUSINESS_REGISTRATION_CERTIFICATE
 
 
-def test_support_only_evidence_without_title_or_identifier_is_unknown() -> None:
+def test_enrollment_support_evidence_without_title_or_identifier_is_unknown() -> None:
     """Regression test for a P1.5 baseline finding (evaluation/reports/
     baseline_2026-09-09.md): an enrollment certificate ("재학증명서") sharing
     only SUPPORT-weight vocabulary (대학교, 학과) with GRADUATION_CERTIFICATE,
     and no title or identifier-level signal, was confidently (0.99, no
     review) misclassified as GRADUATION_CERTIFICATE."""
-    text = "재학증명서\n성명 김테스트\n대학교 가나다대학교\n학과 컴퓨터공학과\n재학 여부 재학중"
+    text = "학생 신상 정보\n성명 김테스트\n대학교 가나다대학교\n학과 컴퓨터공학과"
     result = DocumentClassifier().classify(text)
     assert result.predicted_type == DocumentType.UNKNOWN
 

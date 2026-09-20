@@ -29,7 +29,7 @@ def _squash(text: str) -> str:
     return _WHITESPACE_RE.sub("", text)
 
 
-CLASSIFIER_VERSION = "heuristic-v2"
+CLASSIFIER_VERSION = "heuristic-v3"
 
 TITLE = 5.0
 IDENTIFIER = 3.0
@@ -102,6 +102,34 @@ SIGNALS: dict[DocumentType, list[Signal]] = {
         Signal("기업명", SUPPORT),
         Signal("사업자등록번호", SUPPORT),
         Signal("확인서", GENERIC),
+    ],
+    DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE: [
+        Signal("국세납세증명서", TITLE),
+        Signal("납세증명서", TITLE),
+        Signal("납세자명", IDENTIFIER),
+        Signal("유효기한", SUPPORT),
+        Signal("사업자등록번호", SUPPORT),
+    ],
+    DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE: [
+        Signal("4대사회보험료완납증명서", TITLE),
+        Signal("사회보험료완납증명서", TITLE),
+        Signal("사업장명", IDENTIFIER),
+        Signal("사업자등록번호", SUPPORT),
+        Signal("유효기한", SUPPORT),
+    ],
+    DocumentType.ENROLLMENT_CERTIFICATE: [
+        Signal("재학증명서", TITLE),
+        Signal("재학여부", IDENTIFIER),
+        Signal("학번", SUPPORT),
+        Signal("학과", SUPPORT),
+        Signal("대학교", SUPPORT),
+    ],
+    DocumentType.TRANSCRIPT: [
+        Signal("성적증명서", TITLE),
+        Signal("평점평균", IDENTIFIER),
+        Signal("총평점", IDENTIFIER),
+        Signal("학번", SUPPORT),
+        Signal("GPA", SUPPORT),
     ],
 }
 

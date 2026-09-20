@@ -119,7 +119,7 @@ def test_full_pipeline_business_registration_success(client: TestClient, db_sess
     assert processed["document_type"] == "BUSINESS_REGISTRATION_CERTIFICATE"
     detail = _detail(client, document["id"])
     fields = {f["field_name"]: f for f in detail["extracted_fields"]}
-    assert fields["business_registration_number"]["normalized_value"] == "123-45-67890"
+    assert fields["business_registration_number"]["normalized_value"] == "1234567890"
     assert detail["overall_status"] == "READY"
 
 
@@ -159,7 +159,7 @@ def test_full_pipeline_expired_sme_certificate_needs_correction(
     assert processed["document_type"] == "SME_CONFIRMATION_CERTIFICATE"
     detail = _detail(client, document["id"])
     fields = {f["field_name"]: f for f in detail["extracted_fields"]}
-    assert fields["expiration_date"]["normalized_value"] == "2020-01-01"
+    assert fields["valid_until"]["normalized_value"] == "2020-01-01"
     assert detail["overall_status"] == "NEEDS_CORRECTION"
     codes = {v["code"] for v in detail["validation_results"]}
     assert "EXPIRED_DOCUMENT" in codes

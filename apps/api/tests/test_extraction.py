@@ -3,12 +3,22 @@ import pytest
 from app.core.domain import EXPECTED_FIELDS, DocumentType
 from app.document_intelligence.extraction.business_registration import BusinessRegistrationExtractor
 from app.document_intelligence.extraction.career import CareerCertificateExtractor
+from app.document_intelligence.extraction.enrollment import EnrollmentCertificateExtractor
 from app.document_intelligence.extraction.graduation import GraduationCertificateExtractor
+from app.document_intelligence.extraction.national_tax_payment import (
+    NationalTaxPaymentCertificateExtractor,
+)
 from app.document_intelligence.extraction.registry import ExtractorRegistry
 from app.document_intelligence.extraction.sme_confirmation import SMEConfirmationExtractor
+from app.document_intelligence.extraction.social_insurance_payment import (
+    SocialInsurancePaymentCertificateExtractor,
+)
+from app.document_intelligence.extraction.transcript import TranscriptExtractor
 from app.document_intelligence.normalization.field_normalizer import (
     normalize_business_number,
     normalize_date,
+    normalize_gpa,
+    normalize_gpa_scale,
     normalize_text_field,
 )
 
@@ -42,6 +52,13 @@ def by_name(fields) -> dict:
         (DocumentType.CAREER_CERTIFICATE, CareerCertificateExtractor),
         (DocumentType.BUSINESS_REGISTRATION_CERTIFICATE, BusinessRegistrationExtractor),
         (DocumentType.SME_CONFIRMATION_CERTIFICATE, SMEConfirmationExtractor),
+        (DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE, NationalTaxPaymentCertificateExtractor),
+        (
+            DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE,
+            SocialInsurancePaymentCertificateExtractor,
+        ),
+        (DocumentType.ENROLLMENT_CERTIFICATE, EnrollmentCertificateExtractor),
+        (DocumentType.TRANSCRIPT, TranscriptExtractor),
     ],
 )
 def test_extractor_field_names_match_expected_fields_contract(doc_type, extractor_cls) -> None:
@@ -81,7 +98,7 @@ def test_extraction_strips_trailing_merged_labels() -> None:
     fields = by_name(BusinessRegistrationExtractor().extract(text))
     assert fields["company_name"].normalized_value == "한국테크"
     assert fields["representative_name"].normalized_value == "이영희"
-    assert fields["business_registration_number"].normalized_value == "123-45-67890"
+    assert fields["business_registration_number"].normalized_value == "1234567890"
     assert fields["business_type"].normalized_value == "서비스업"
     assert fields["business_item"].normalized_value == "소프트웨어 개발"
 
@@ -145,7 +162,7 @@ def test_business_registration_extraction_happy_path() -> None:
     fields = by_name(BusinessRegistrationExtractor().extract(BUSINESS_TEXT))
     assert fields["company_name"].normalized_value == "한국테크"
     assert fields["representative_name"].normalized_value == "이영희"
-    assert fields["business_registration_number"].normalized_value == "123-45-67890"
+    assert fields["business_registration_number"].normalized_value == "1234567890"
     assert fields["business_registration_number"].raw_value == "123-45-67890"
 
 
@@ -175,13 +192,13 @@ def test_business_registration_number_false_positive_resistance() -> None:
 def test_business_registration_number_unformatted_input() -> None:
     text = "사업자등록번호 1234567890"
     fields = by_name(BusinessRegistrationExtractor().extract(text))
-    assert fields["business_registration_number"].normalized_value == "123-45-67890"
+    assert fields["business_registration_number"].normalized_value == "1234567890"
 
 
 def test_business_registration_number_spaced_digits() -> None:
     text = "사업자등록번호 123 45 67890"
     fields = by_name(BusinessRegistrationExtractor().extract(text))
-    assert fields["business_registration_number"].normalized_value == "123-45-67890"
+    assert fields["business_registration_number"].normalized_value == "1234567890"
 
 
 def test_business_registration_number_tolerates_spaced_label() -> None:
@@ -191,7 +208,7 @@ def test_business_registration_number_tolerates_spaced_label() -> None:
     baseline_2026-09-09.md, EXTRACTION_LABEL_ERROR)."""
     text = "사업자등록증\n상호 한국테크\n사업자 등록번호 123-45-67890"
     fields = by_name(BusinessRegistrationExtractor().extract(text))
-    assert fields["business_registration_number"].normalized_value == "123-45-67890"
+    assert fields["business_registration_number"].normalized_value == "1234567890"
 
 
 def test_graduation_date_label_tolerates_spaced_label() -> None:
@@ -208,30 +225,72 @@ def test_label_spacing_tolerance_does_not_match_across_lines() -> None:
     fields = by_name(BusinessRegistrationExtractor().extract(text))
     # Documents the current behavior rather than asserting it is desirable:
     # "등록번호" alone (the fallback label) still matches on its own line.
-    assert fields["business_registration_number"].normalized_value == "123-45-67890"
+    assert fields["business_registration_number"].normalized_value == "1234567890"
 
 
 def test_sme_confirmation_extraction_happy_path() -> None:
     fields = by_name(SMEConfirmationExtractor().extract(SME_TEXT))
     assert fields["company_name"].normalized_value == "한국테크"
     assert fields["certificate_number"].normalized_value == "SME-2026-001"
-    assert fields["expiration_date"].normalized_value == "2027-12-31"
-    assert fields["validity_period"].normalized_value is not None
+    assert fields["valid_from"].normalized_value == "2026-01-01"
+    assert fields["valid_until"].normalized_value == "2027-12-31"
     assert fields["issue_date"].normalized_value == "2026-01-01"
 
 
 def test_sme_validity_period_normalizes_ocr_date_variants() -> None:
     text = "중소기업확인서\n기업명 한국테크\n유효기간 2026. 1. 1. ~ 2027년 12월 31일"
     fields = by_name(SMEConfirmationExtractor().extract(text))
-    assert fields["validity_period"].normalized_value == "2026-01-01 ~ 2027-12-31"
-    assert fields["expiration_date"].normalized_value == "2027-12-31"
+    assert fields["valid_from"].normalized_value == "2026-01-01"
+    assert fields["valid_until"].normalized_value == "2027-12-31"
 
 
 def test_sme_confirmation_missing_validity_is_null() -> None:
     fields = by_name(SMEConfirmationExtractor().extract("중소기업확인서\n기업명 한국테크"))
-    assert fields["expiration_date"].normalized_value is None
-    assert fields["expiration_date"].needs_review is True
-    assert fields["validity_period"].normalized_value is None
+    assert fields["valid_from"].normalized_value is None
+    assert fields["valid_until"].normalized_value is None
+    assert fields["valid_until"].needs_review is True
+
+
+def test_new_mentor_extractors_preserve_structured_values() -> None:
+    tax = by_name(
+        NationalTaxPaymentCertificateExtractor().extract(
+            "국세 납세증명서\n납세자명 한국테크\n사업자등록번호 123-45-67890\n"
+            "발급일자 2026-01-01\n유효기간 2026-01-01 ~ 2026-02-01"
+        )
+    )
+    assert tax["company_name"].normalized_value == "한국테크"
+    assert tax["business_registration_number"].normalized_value == "1234567890"
+    assert tax["valid_until"].normalized_value == "2026-02-01"
+
+    social = by_name(
+        SocialInsurancePaymentCertificateExtractor().extract(
+            "4대 사회보험료 완납증명서\n사업장명 한국테크 본점\n사업자등록번호 1234567890\n"
+            "발급일자 2026.01.02\n유효기한 2026.02.02"
+        )
+    )
+    assert social["workplace_name"].normalized_value == "한국테크 본점"
+    assert social["valid_until"].normalized_value == "2026-02-02"
+
+
+def test_student_extractors_preserve_fields_and_numeric_gpa() -> None:
+    enrollment = by_name(
+        EnrollmentCertificateExtractor().extract(
+            "재학증명서\n성명 김학생\n대학교 한국대학교\n학과 행정학과\n"
+            "학번 20260001\n발급일자 2026-09-20"
+        )
+    )
+    assert enrollment["student_name"].normalized_value == "김학생"
+    assert enrollment["student_id"].normalized_value == "20260001"
+
+    transcript = by_name(
+        TranscriptExtractor().extract(
+            "성적증명서\n성명 김학생\n대학교 한국대학교\n학번 20260001\n"
+            "발급일자 2026-09-20\nGPA 3.85 / 4.50"
+        )
+    )
+    assert transcript["gpa"].raw_value == "3.85 / 4.50"
+    assert transcript["gpa"].normalized_value == "3.85"
+    assert transcript["gpa_scale"].normalized_value == "4.5"
 
 
 def test_registry_returns_empty_list_for_unknown() -> None:
@@ -245,12 +304,21 @@ def test_registry_dispatches_to_correct_extractor() -> None:
     assert fields["applicant_name"].normalized_value == "홍길동"
 
 
-def test_normalize_business_number_from_unformatted_digits() -> None:
-    assert normalize_business_number("1234567890") == "123-45-67890"
+@pytest.mark.parametrize("raw", ["123-45-67890", "123 45 67890", "1234567890"])
+def test_normalize_business_number_to_comparison_digits(raw: str) -> None:
+    assert normalize_business_number(raw) == "1234567890"
 
 
 def test_normalize_business_number_rejects_wrong_length() -> None:
     assert normalize_business_number("12345") is None
+    assert normalize_business_number("01234567890") is None
+
+
+def test_normalize_gpa_and_scale() -> None:
+    assert normalize_gpa("3.85 / 4.50") == "3.85"
+    assert normalize_gpa_scale("3.85 / 4.50") == "4.5"
+    assert normalize_gpa("4.8 / 4.5") is None
+    assert normalize_gpa("not a grade") is None
 
 
 def test_normalize_date_dot_format() -> None:

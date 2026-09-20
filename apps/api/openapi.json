@@ -864,8 +864,12 @@
             "title": "Processing Status"
           },
           "document_type": {
+            "$ref": "#/components/schemas/DocumentType"
+          },
+          "document_type_display_name": {
             "type": "string",
-            "title": "Document Type"
+            "title": "Document Type Display Name",
+            "default": ""
           },
           "classification_confidence": {
             "anyOf": [
@@ -977,8 +981,12 @@
             "title": "Processing Status"
           },
           "document_type": {
+            "$ref": "#/components/schemas/DocumentType"
+          },
+          "document_type_display_name": {
             "type": "string",
-            "title": "Document Type"
+            "title": "Document Type Display Name",
+            "default": ""
           },
           "classification_confidence": {
             "anyOf": [
@@ -1045,6 +1053,21 @@
           "created_at"
         ],
         "title": "DocumentRead"
+      },
+      "DocumentType": {
+        "type": "string",
+        "enum": [
+          "GRADUATION_CERTIFICATE",
+          "CAREER_CERTIFICATE",
+          "BUSINESS_REGISTRATION_CERTIFICATE",
+          "SME_CONFIRMATION_CERTIFICATE",
+          "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+          "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+          "ENROLLMENT_CERTIFICATE",
+          "TRANSCRIPT",
+          "UNKNOWN"
+        ],
+        "title": "DocumentType"
       },
       "FieldRead": {
         "properties": {
@@ -1367,8 +1390,7 @@
       "WorkflowDocumentRequirementRead": {
         "properties": {
           "document_type": {
-            "type": "string",
-            "title": "Document Type"
+            "$ref": "#/components/schemas/DocumentType"
           },
           "display_name": {
             "type": "string",

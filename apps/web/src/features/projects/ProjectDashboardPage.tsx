@@ -65,7 +65,7 @@ export async function ProjectDashboardPage({ projectId }: { projectId: string })
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">{document.original_filename}</p>
-                  <p className="text-sm text-muted-foreground">문서 유형 {document.document_type}</p>
+                  <p className="text-sm text-muted-foreground">문서 유형 {document.document_type_display_name}</p>
                 </div>
                 <StatusBadge status={document.processing_status} />
               </div>

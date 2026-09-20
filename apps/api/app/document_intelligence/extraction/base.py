@@ -9,6 +9,8 @@ from app.document_intelligence.normalization.field_normalizer import (
     DATE_RE,
     normalize_business_number,
     normalize_date,
+    normalize_gpa,
+    normalize_gpa_scale,
     normalize_text_field,
 )
 
@@ -21,6 +23,11 @@ _KNOWN_LABELS = [
     "경력증명서",
     "사업자등록증",
     "중소기업확인서",
+    "국세 납세증명서",
+    "납세증명서",
+    "4대 사회보험료 완납증명서",
+    "재학증명서",
+    "성적증명서",
     "성명",
     "이름",
     "신청인",
@@ -38,7 +45,9 @@ _KNOWN_LABELS = [
     "상호",
     "상호명",
     "기업명",
+    "법인명",
     "업체명",
+    "납세자명",
     "직위",
     "직급",
     "담당업무",
@@ -63,6 +72,15 @@ _KNOWN_LABELS = [
     "증명서번호",
     "일련번호",
     "유효기간",
+    "유효기한",
+    "사업장명",
+    "사업장 명칭",
+    "학생명",
+    "학번",
+    "평점",
+    "총평점",
+    "평점평균",
+    "GPA",
 ]
 _DOCUMENT_TITLE_RE = re.compile(r"(증명서|확인서|등록증)$")
 _DEGREE_RE = re.compile(r"^(전문학사|학사|석사|박사)$")
@@ -232,10 +250,35 @@ class BaseDocumentExtractor(ABC):
             field_name, raw_value, normalized, 0.9, False, "regex_business_number", raw_value
         )
 
+    def valid_until_field(self, text: str, labels: list[str]) -> ExtractedValue:
+        raw = after_label(text, labels)
+        _, end_raw = split_range(raw)
+        candidate = end_raw or raw
+        normalized = normalize_date(candidate)
+        if normalized is None:
+            return self.missing("valid_until")
+        return ExtractedValue(
+            "valid_until", candidate, normalized, 0.55, False, "regex_date", candidate
+        )
+
+    def gpa_field(self, text: str, field_name: str, labels: list[str]) -> ExtractedValue:
+        raw = after_label(text, labels)
+        normalized = normalize_gpa(raw)
+        if normalized is None:
+            return self.missing(field_name)
+        return ExtractedValue(field_name, raw, normalized, 0.7, False, "regex_gpa", raw)
+
+    def gpa_scale_field(self, text: str, field_name: str, labels: list[str]) -> ExtractedValue:
+        raw = after_label(text, labels)
+        normalized = normalize_gpa_scale(raw)
+        if normalized is None:
+            return self.missing(field_name)
+        return ExtractedValue(field_name, raw, normalized, 0.7, False, "regex_gpa", raw)
+
     def _reject_text_candidate(self, field_name: str, value: str) -> bool:
         if _looks_like_label_or_title(value):
             return True
-        if field_name in {"applicant_name", "representative_name"}:
+        if field_name in {"applicant_name", "representative_name", "student_name"}:
             return bool(
                 normalize_date(value) or normalize_business_number(value) or len(value) > 20
             )
