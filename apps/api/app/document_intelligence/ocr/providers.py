@@ -1,4 +1,5 @@
 import os
+import shutil
 import tempfile
 import time
 from abc import ABC, abstractmethod
@@ -180,9 +181,11 @@ class PaddleOCRProvider(OCRProvider):
             raise OCRProviderError(ProcessingErrorCode.OCR_PROCESSING_ERROR) from exc
         finally:
             if mime_type == "application/pdf":
-                for rendered in locals().get("image_paths", []):
-                    if rendered.parent.name.startswith("advs_paddle_"):
-                        rendered.unlink(missing_ok=True)
+                rendered_pages = locals().get("image_paths", [])
+                if rendered_pages:
+                    rendered_dir = rendered_pages[0].parent
+                    if rendered_dir.name.startswith("advs_paddle_"):
+                        shutil.rmtree(rendered_dir, ignore_errors=True)
 
         duration_ms = int((time.perf_counter() - started) * 1000)
         for page in pages:
@@ -205,6 +208,7 @@ class PaddleOCRProvider(OCRProvider):
                     pix.save(image_path)
                     rendered.append(image_path)
         except Exception as exc:
+            shutil.rmtree(output_dir, ignore_errors=True)
             raise OCRProviderError(ProcessingErrorCode.PDF_RENDER_ERROR) from exc
         return rendered
 

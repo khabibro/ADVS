@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from starlette.datastructures import Headers, UploadFile
 
 from app.core.config import Settings
+from app.document_intelligence.preprocessing.processor import is_meaningful_text
 from app.services.storage.local import LocalStorageService, sanitize_filename
 
 
@@ -89,3 +90,8 @@ async def test_rejects_pdf_exceeding_page_limit(tmp_path) -> None:
     with pytest.raises(HTTPException) as exc_info:
         await service.save_upload(upload)
     assert exc_info.value.detail["code"] == "TOO_MANY_PAGES"
+
+
+def test_pdf_text_heuristic_rejects_long_nonsemantic_artifacts() -> None:
+    assert not is_meaningful_text("!@#$%^&*()_+{}[]<>?/|~`" * 3)
+    assert is_meaningful_text("사업자등록증 상호 한국테크 사업자등록번호 123-45-67890")

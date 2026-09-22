@@ -169,6 +169,39 @@ async def test_paddle_fixture_flows_through_classifier_extractor_validator(tmp_p
     assert issues
 
 
+@pytest.mark.asyncio
+async def test_paddle_pdf_render_directory_is_removed_after_processing(
+    tmp_path, monkeypatch
+) -> None:
+    import fitz
+
+    path = tmp_path / "two_pages.pdf"
+    pdf = fitz.open()
+    pdf.new_page()
+    pdf.new_page()
+    pdf.save(path)
+    pdf.close()
+    rendered_dir = tmp_path / "advs_paddle_controlled"
+
+    def controlled_mkdtemp(prefix: str) -> str:
+        rendered_dir.mkdir()
+        return str(rendered_dir)
+
+    monkeypatch.setattr(
+        "app.document_intelligence.ocr.providers.tempfile.mkdtemp",
+        controlled_mkdtemp,
+    )
+    provider = PaddleOCRProvider(make_settings())
+    provider.__dict__["_engine"] = _FakePaddleEngine(
+        [[([[0, 0], [100, 0], [100, 20], [0, 20]], ("사업자등록증", 0.99))]]
+    )
+
+    pages = await provider.extract_document(path, "application/pdf")
+
+    assert len(pages) == 2
+    assert not rendered_dir.exists()
+
+
 class _FakePaddleEngine:
     def __init__(self, payload: object) -> None:
         self.payload = payload

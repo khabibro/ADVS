@@ -3,11 +3,22 @@ MockOCRProvider (real OCR is never called in this suite). Each test drives the
 actual HTTP API, not the service class directly, so it also exercises
 routing, persistence, and response shaping."""
 
+import uuid
+
 import fitz
 from fastapi.testclient import TestClient
 
 from app.core.domain import DocumentType, RuleType, Severity
-from app.models.entities import Checklist, DocumentRequirement, ValidationRule
+from app.document_intelligence.ocr.models import BoundingBox, OCRLine, OCRPage
+from app.models.entities import (
+    Checklist,
+    Document,
+    DocumentRequirement,
+    ExtractedField,
+    OCRResult,
+    ValidationResult,
+    ValidationRule,
+)
 
 
 def _blank_pdf_bytes() -> bytes:
@@ -27,6 +38,33 @@ def _text_pdf_bytes(text: str) -> bytes:
     data = doc.tobytes()
     doc.close()
     return data
+
+
+def _blank_pdf_bytes_with_pages(page_count: int) -> bytes:
+    doc = fitz.open()
+    for _ in range(page_count):
+        doc.new_page()
+    data = doc.tobytes()
+    doc.close()
+    return data
+
+
+def _page(page_number: int, lines: list[str]) -> OCRPage:
+    observations = [
+        OCRLine(
+            text=line,
+            confidence=0.97,
+            bounding_box=BoundingBox(x=12.0, y=float(index * 30), width=420.0, height=22.0),
+        )
+        for index, line in enumerate(lines)
+    ]
+    return OCRPage(
+        page_number=page_number,
+        text="\n".join(lines),
+        lines=observations,
+        confidence=0.97,
+        metadata={"provider": "controlled"},
+    )
 
 
 def _create_workflow(db_session) -> Checklist:
@@ -141,6 +179,7 @@ def test_full_pipeline_unknown_document(client: TestClient, db_session) -> None:
 
     detail = _detail(client, document["id"])
     assert detail["extracted_fields"] == []
+    assert detail["overall_status"] == "REVIEW_REQUIRED"
 
 
 def test_full_pipeline_ocr_failure_is_distinct_from_unknown(client: TestClient, db_session) -> None:
@@ -154,6 +193,7 @@ def test_full_pipeline_ocr_failure_is_distinct_from_unknown(client: TestClient, 
     assert processed["error_code"] == "OCR_PROVIDER_ERROR"
     assert processed["classification_confidence"] is None
     assert processed["classification_meta"] is None
+    assert _detail(client, document["id"])["overall_status"] == "REVIEW_REQUIRED"
 
 
 def test_full_pipeline_expired_sme_certificate_needs_correction(
@@ -239,8 +279,6 @@ def test_digital_pdf_with_meaningful_text_skips_ocr_provider(
 def test_reprocessing_same_document_does_not_duplicate_rows(client: TestClient, db_session) -> None:
     import uuid as uuid_module
 
-    from app.models.entities import Document, ExtractedField, OCRResult, ValidationResult
-
     project = _create_project(client, db_session, applicant_name="홍길동")
     document = _upload(client, project["id"], "graduation_scan.pdf")
     _process(client, document["id"])
@@ -257,13 +295,172 @@ def test_reprocessing_same_document_does_not_duplicate_rows(client: TestClient, 
     assert first_counts[0] > 0
     assert first_counts[1] > 0
 
-    # Simulate a retry (e.g. after a transient failure) by putting the
-    # document back into a reprocessable state -- /process short-circuits on
-    # COMPLETED by design, so this bypasses that guard the way a real retry
-    # of a FAILED document would.
-    db_row = db_session.get(Document, doc_uuid)
-    db_row.processing_status = "UPLOADED"
-    db_session.commit()
-
     _process(client, document["id"])
     assert row_counts() == first_counts
+
+
+def test_multi_page_raster_pipeline_preserves_page_evidence(
+    client: TestClient, db_session, monkeypatch
+) -> None:
+    class MultiPageProvider:
+        async def extract_document(self, *_args, **_kwargs):
+            return [
+                _page(1, ["사업자등록증", "상호 한국테크"]),
+                _page(2, ["사업자등록번호 123-45-67890"]),
+            ]
+
+    monkeypatch.setattr(
+        "app.services.processing.get_ocr_provider", lambda _settings: MultiPageProvider()
+    )
+    project = _create_project(client, db_session)
+    document = _upload(
+        client,
+        project["id"],
+        "two_page_business.pdf",
+        _blank_pdf_bytes_with_pages(2),
+    )
+
+    processed = _process(client, document["id"])
+    detail = _detail(client, document["id"])
+    document_id = uuid.UUID(document["id"])
+    registration_number = next(
+        field
+        for field in detail["extracted_fields"]
+        if field["field_name"] == "business_registration_number"
+    )
+    rows = (
+        db_session.query(OCRResult)
+        .filter_by(document_id=document_id)
+        .order_by(OCRResult.page_number)
+        .all()
+    )
+
+    assert processed["processing_status"] == "COMPLETED"
+    assert [row.page_number for row in rows] == [1, 2]
+    assert registration_number["evidence"][0]["page_number"] == 2
+    assert registration_number["evidence"][0]["confidence"] == 0.97
+    assert registration_number["evidence"][0]["coordinate_space"] == "pixel"
+
+
+def test_corrupt_stored_pdf_fails_safely_and_clears_derived_state(
+    client: TestClient, db_session
+) -> None:
+    from app.core.config import get_settings
+
+    project = _create_project(client, db_session)
+    document = _upload(client, project["id"], "business_corrupt_later.pdf")
+    row = db_session.get(Document, uuid.UUID(document["id"]))
+    (get_settings().storage_path / row.storage_key).write_bytes(b"%PDF-1.4\ntruncated")
+
+    processed = _process(client, document["id"])
+
+    assert processed["processing_status"] == "FAILED"
+    assert processed["error_code"] == "CORRUPT_DOCUMENT"
+    assert processed["error_message"] == "File could not be opened; it may be corrupt."
+    assert db_session.query(OCRResult).filter_by(document_id=row.id).count() == 0
+    assert db_session.query(ExtractedField).filter_by(document_id=row.id).count() == 0
+
+
+def test_reprocessing_replaces_changed_classification_fields_and_evidence(
+    client: TestClient, db_session, monkeypatch
+) -> None:
+    class ChangingProvider:
+        calls = 0
+
+        async def extract_document(self, *_args, **_kwargs):
+            self.calls += 1
+            if self.calls == 1:
+                return [
+                    _page(
+                        1,
+                        [
+                            "졸업증명서",
+                            "성명 홍길동",
+                            "대학교 한국대학교",
+                            "학과 컴퓨터공학과",
+                            "학위 학사",
+                            "졸업일자 2024-02-20",
+                            "발급일자 2026-01-10",
+                        ],
+                    )
+                ]
+            return [
+                _page(
+                    1,
+                    [
+                        "사업자등록증",
+                        "상호 새회사",
+                        "사업자등록번호 111-22-33333",
+                    ],
+                )
+            ]
+
+    provider = ChangingProvider()
+    monkeypatch.setattr("app.services.processing.get_ocr_provider", lambda _settings: provider)
+    project = _create_project(client, db_session)
+    document = _upload(client, project["id"], "changing_scan.pdf")
+    document_id = uuid.UUID(document["id"])
+
+    assert _process(client, document["id"])["document_type"] == "GRADUATION_CERTIFICATE"
+    assert _process(client, document["id"])["document_type"] == "BUSINESS_REGISTRATION_CERTIFICATE"
+    detail = _detail(client, document["id"])
+    field_names = [field["field_name"] for field in detail["extracted_fields"]]
+
+    assert "business_registration_number" in field_names
+    assert "graduation_date" not in field_names
+    assert len(field_names) == len(set(field_names))
+    assert db_session.query(OCRResult).filter_by(document_id=document_id).count() == 1
+
+
+def test_failed_reprocessing_does_not_leave_old_successful_result(
+    client: TestClient, db_session
+) -> None:
+    project = _create_project(client, db_session)
+    document = _upload(client, project["id"], "business_scan.pdf")
+    _process(client, document["id"])
+    row = db_session.get(Document, uuid.UUID(document["id"]))
+    assert db_session.query(ExtractedField).filter_by(document_id=row.id).count() > 0
+
+    row.original_filename = "ocr_failure_scan.pdf"
+    db_session.commit()
+    processed = _process(client, document["id"])
+
+    assert processed["processing_status"] == "FAILED"
+    assert processed["document_type"] == "UNKNOWN"
+    assert processed["classification_meta"] is None
+    assert db_session.query(OCRResult).filter_by(document_id=row.id).count() == 0
+    assert db_session.query(ExtractedField).filter_by(document_id=row.id).count() == 0
+    assert db_session.query(ValidationResult).filter_by(document_id=row.id).count() == 0
+
+
+def test_late_transaction_failure_rolls_back_and_leaves_coherent_failed_state(
+    client: TestClient, db_session, monkeypatch
+) -> None:
+    from app.services.processing import DocumentProcessingService
+
+    project = _create_project(client, db_session)
+    document = _upload(client, project["id"], "business_scan.pdf")
+    _process(client, document["id"])
+    document_id = uuid.UUID(document["id"])
+
+    def fail_after_deleting_rows(self, db, row, *_args, **_kwargs):
+        self._delete_derived_rows(db, row.id)
+        db.flush()
+        raise RuntimeError("controlled late persistence failure")
+
+    monkeypatch.setattr(DocumentProcessingService, "_persist_success", fail_after_deleting_rows)
+    processed = _process(client, document["id"])
+
+    assert processed["processing_status"] == "FAILED"
+    assert processed["error_code"] == "PROCESSING_FAILED"
+    assert "controlled" not in processed["error_message"]
+    assert db_session.query(OCRResult).filter_by(document_id=document_id).count() == 0
+    assert db_session.query(ExtractedField).filter_by(document_id=document_id).count() == 0
+    assert db_session.query(ValidationResult).filter_by(document_id=document_id).count() == 0
+
+
+def test_process_missing_document_returns_safe_404(client: TestClient) -> None:
+    response = client.post(f"/api/v1/documents/{uuid.uuid4()}/process")
+
+    assert response.status_code == 404
+    assert response.json()["detail"]["code"] == "RESOURCE_NOT_FOUND"

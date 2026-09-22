@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.config import get_settings
 from app.core.domain import (
     DOCUMENT_TYPE_DISPLAY_NAMES,
-    EXPECTED_FIELDS,
     DocumentType,
     OverallStatus,
     ProcessingStatus,
@@ -15,6 +14,7 @@ from app.core.domain import (
 )
 from app.core.errors import ApiErrorCode, api_error
 from app.db.session import get_db
+from app.document_intelligence.results import CanonicalDocumentResult
 from app.document_intelligence.validation.engine import ValidationEngine
 from app.models.entities import (
     Checklist,
@@ -285,19 +285,27 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
     if not document:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Document not found", 404)
     detail = DocumentDetail.model_validate(document)
-    expected = EXPECTED_FIELDS[DocumentType(document.document_type)]
-    extracted = {
-        field.field_name
-        for field in document.extracted_fields
-        if field.normalized_value is not None
-    }
-    detail.missing_expected_fields = [name for name in expected if name not in extracted]
-    detail.overall_status = ValidationEngine().overall_status(document.validation_results)
+    validation_status = ValidationEngine().overall_status(document.validation_results)
+    if (
+        document.processing_status != ProcessingStatus.COMPLETED
+        or document.document_type == DocumentType.UNKNOWN
+    ):
+        detail.overall_status = OverallStatus.REVIEW_REQUIRED
+    else:
+        detail.overall_status = validation_status
+    canonical = CanonicalDocumentResult.from_persisted(
+        document,
+        verification_status=detail.overall_status,
+        issues=[row.code for row in document.validation_results if not row.passed],
+    )
+    detail.missing_expected_fields = canonical.missing_expected_fields
     return detail
 
 
 @router.post("/documents/{document_id}/process", response_model=DocumentRead)
 async def process_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
+    if db.get(Document, document_id) is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Document not found", 404)
     return await DocumentProcessingService().process(db, document_id)
 
 
