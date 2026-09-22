@@ -1,10 +1,16 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Self
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from app.core.domain import DOCUMENT_TYPE_DISPLAY_NAMES, DocumentType, OverallStatus
+from app.core.domain import (
+    DOCUMENT_TYPE_DISPLAY_NAMES,
+    DocumentType,
+    OverallStatus,
+    RuleOutcome,
+    RuleType,
+)
 
 
 class ProjectCreate(BaseModel):
@@ -128,3 +134,46 @@ class DocumentDetail(DocumentRead):
     # (READY/REVIEW_REQUIRED/NEEDS_CORRECTION);
     # not a stored column.
     overall_status: OverallStatus = OverallStatus.REVIEW_REQUIRED
+
+
+class VerificationRequest(BaseModel):
+    evaluation_date: date
+
+
+class VerificationIssueRead(BaseModel):
+    code: str
+    status_effect: OverallStatus
+    message: str
+    document_id: uuid.UUID | None = None
+    document_type: DocumentType | None = None
+    field_name: str | None = None
+    related_document_id: uuid.UUID | None = None
+    related_document_type: DocumentType | None = None
+    related_field_name: str | None = None
+    rule_id: uuid.UUID | None = None
+    field_id: uuid.UUID | None = None
+    related_field_id: uuid.UUID | None = None
+
+
+class RuleEvaluationRead(BaseModel):
+    rule_id: uuid.UUID | None = None
+    rule_type: RuleType
+    outcome: RuleOutcome
+    document_id: uuid.UUID | None = None
+    document_type: DocumentType | None = None
+    field_name: str | None = None
+    related_document_id: uuid.UUID | None = None
+    related_document_type: DocumentType | None = None
+    related_field_name: str | None = None
+
+
+class SubmissionVerificationRead(BaseModel):
+    project_id: uuid.UUID
+    workflow_id: uuid.UUID | None
+    status: OverallStatus
+    evaluation_date: date | None
+    evaluated_at: datetime | None
+    is_current: bool
+    issues: list[VerificationIssueRead]
+    rule_results: list[RuleEvaluationRead]
+    disclaimer: str

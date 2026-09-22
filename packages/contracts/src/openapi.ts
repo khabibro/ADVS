@@ -489,6 +489,56 @@ export interface components {
              */
             created_at: string;
         };
+        /** RuleEvaluationRead */
+        RuleEvaluationRead: {
+            /** Rule Id */
+            rule_id?: string | null;
+            rule_type: components["schemas"]["RuleType"];
+            outcome: components["schemas"]["RuleOutcome"];
+            /** Document Id */
+            document_id?: string | null;
+            document_type?: components["schemas"]["DocumentType"] | null;
+            /** Field Name */
+            field_name?: string | null;
+            /** Related Document Id */
+            related_document_id?: string | null;
+            related_document_type?: components["schemas"]["DocumentType"] | null;
+            /** Related Field Name */
+            related_field_name?: string | null;
+        };
+        /**
+         * RuleOutcome
+         * @enum {string}
+         */
+        RuleOutcome: "PASS" | "FAIL" | "UNRESOLVED" | "NOT_APPLICABLE";
+        /**
+         * RuleType
+         * @enum {string}
+         */
+        RuleType: "REQUIRED_DOCUMENT" | "REQUIRED_FIELD" | "DATE_NOT_EXPIRED" | "ISSUE_DATE_MAX_AGE" | "APPLICANT_NAME_MATCH" | "COMPANY_NAME_MATCH" | "BUSINESS_REGISTRATION_NUMBER_MATCH" | "DUPLICATE_DOCUMENT" | "EXPECTED_DOCUMENT_TYPE" | "CUSTOM_TEXT_RULE" | "FIELD_COMPARISON" | "DATE_COMPARISON" | "NUMERIC_COMPARISON";
+        /** SubmissionVerificationRead */
+        SubmissionVerificationRead: {
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Workflow Id */
+            workflow_id: string | null;
+            status: components["schemas"]["OverallStatus"];
+            /** Evaluation Date */
+            evaluation_date: string | null;
+            /** Evaluated At */
+            evaluated_at: string | null;
+            /** Is Current */
+            is_current: boolean;
+            /** Issues */
+            issues: components["schemas"]["VerificationIssueRead"][];
+            /** Rule Results */
+            rule_results: components["schemas"]["RuleEvaluationRead"][];
+            /** Disclaimer */
+            disclaimer: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -518,6 +568,38 @@ export interface components {
             message: string;
             /** Code */
             code: string;
+        };
+        /** VerificationIssueRead */
+        VerificationIssueRead: {
+            /** Code */
+            code: string;
+            status_effect: components["schemas"]["OverallStatus"];
+            /** Message */
+            message: string;
+            /** Document Id */
+            document_id?: string | null;
+            document_type?: components["schemas"]["DocumentType"] | null;
+            /** Field Name */
+            field_name?: string | null;
+            /** Related Document Id */
+            related_document_id?: string | null;
+            related_document_type?: components["schemas"]["DocumentType"] | null;
+            /** Related Field Name */
+            related_field_name?: string | null;
+            /** Rule Id */
+            rule_id?: string | null;
+            /** Field Id */
+            field_id?: string | null;
+            /** Related Field Id */
+            related_field_id?: string | null;
+        };
+        /** VerificationRequest */
+        VerificationRequest: {
+            /**
+             * Evaluation Date
+             * Format: date
+             */
+            evaluation_date: string;
         };
         /** WorkflowDocumentRequirementRead */
         WorkflowDocumentRequirementRead: {
@@ -1077,7 +1159,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -1085,7 +1171,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SubmissionVerificationRead"];
                 };
             };
             /** @description Validation Error */
@@ -1116,7 +1202,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SubmissionVerificationRead"];
                 };
             };
             /** @description Validation Error */
@@ -1147,7 +1233,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SubmissionVerificationRead"];
                 };
             };
             /** @description Validation Error */

@@ -16,6 +16,7 @@ from app.core.errors import ApiErrorCode, api_error
 from app.db.session import get_db
 from app.document_intelligence.results import CanonicalDocumentResult
 from app.document_intelligence.validation.engine import ValidationEngine
+from app.document_intelligence.validation.submission import RuleConfigurationError
 from app.models.entities import (
     Checklist,
     Document,
@@ -31,16 +32,26 @@ from app.schemas.api import (
     DocumentRead,
     ProjectCreate,
     ProjectRead,
+    RuleEvaluationRead,
+    SubmissionVerificationRead,
+    VerificationIssueRead,
+    VerificationRequest,
     WorkflowDocumentRequirementRead,
     WorkflowRead,
     WorkflowSummary,
 )
 from app.services.processing import DocumentProcessingService
 from app.services.storage.local import LocalStorageService, sanitize_filename
+from app.services.verification import (
+    StoredSubmissionVerification,
+    SubmissionVerificationService,
+    invalidate_submission_verification,
+)
 from app.services.workflows import WorkflowService
 
 router = APIRouter()
 workflow_service = WorkflowService()
+submission_verification_service = SubmissionVerificationService()
 
 
 def demo_user(db: Session) -> User:
@@ -97,6 +108,33 @@ def _project_read(project: Project) -> ProjectRead:
         company_name=project.company_name,
         status=normalize_overall_status(project.status),
         created_at=project.created_at,
+    )
+
+
+def _verification_read(
+    project: Project, stored: StoredSubmissionVerification
+) -> SubmissionVerificationRead:
+    result = stored.result
+    return SubmissionVerificationRead(
+        project_id=project.id,
+        workflow_id=project.checklist_id,
+        status=result.status if result else normalize_overall_status(project.status),
+        evaluation_date=result.evaluation_date if result else None,
+        evaluated_at=stored.evaluated_at,
+        is_current=stored.is_current,
+        issues=[
+            VerificationIssueRead.model_validate(issue, from_attributes=True)
+            for issue in (result.issues if result else ())
+        ],
+        rule_results=[
+            RuleEvaluationRead.model_validate(item, from_attributes=True)
+            for item in (result.rule_results if result else ())
+        ],
+        disclaimer=(
+            "현재 설정된 점검 기준에서 확인된 문제가 없습니다."
+            if result and result.status == OverallStatus.READY
+            else "현재 설정된 점검 기준에 따른 사전 점검 결과입니다."
+        ),
     )
 
 
@@ -170,6 +208,7 @@ def update_project(project_id: uuid.UUID, payload: ProjectCreate, db: Session = 
     project.name = payload.name
     project.applicant_name = payload.applicant_name
     project.company_name = payload.company_name
+    invalidate_submission_verification(db, project.id)
     db.commit()
     db.refresh(project)
     project.checklist = workflow
@@ -260,6 +299,7 @@ async def upload_document(
         checksum_sha256=checksum,
     )
     db.add(doc)
+    invalidate_submission_verification(db, project.id)
     db.commit()
     db.refresh(doc)
     return doc
@@ -317,54 +357,28 @@ def processing_status(document_id: uuid.UUID, db: Session = Depends(get_db)):
     return {"document_id": str(document.id), "status": document.processing_status}
 
 
-@router.post("/projects/{project_id}/verify")
-def verify_project(project_id: uuid.UUID, db: Session = Depends(get_db)):
+@router.post("/projects/{project_id}/verify", response_model=SubmissionVerificationRead)
+def verify_project(
+    project_id: uuid.UUID,
+    payload: VerificationRequest,
+    db: Session = Depends(get_db),
+):
     project = db.get(Project, project_id)
     if not project:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
-    docs = list_documents(project_id, db)
-    engine = ValidationEngine()
-
-    if not docs:
-        status_value = OverallStatus.NEEDS_CORRECTION
-    elif any(doc.processing_status == ProcessingStatus.FAILED for doc in docs):
-        status_value = OverallStatus.NEEDS_CORRECTION
-    else:
-        statuses = [engine.overall_status(doc.validation_results) for doc in docs]
-        if project.checklist_id:
-            requirements = db.scalars(
-                select(DocumentRequirement).where(
-                    DocumentRequirement.checklist_id == project.checklist_id,
-                    DocumentRequirement.required.is_(True),
-                )
-            ).all()
-            required_types = [DocumentType(r.document_type) for r in requirements]
-            present_types = {
-                DocumentType(d.document_type)
-                for d in docs
-                if d.processing_status == ProcessingStatus.COMPLETED
-            }
-            missing_issues = engine.validate_required_documents(required_types, present_types)
-            if missing_issues:
-                statuses.append(engine.overall_status(missing_issues))
-        if OverallStatus.NEEDS_CORRECTION in statuses:
-            status_value = OverallStatus.NEEDS_CORRECTION
-        elif OverallStatus.REVIEW_REQUIRED in statuses:
-            status_value = OverallStatus.REVIEW_REQUIRED
-        else:
-            status_value = OverallStatus.READY
-
-    project.status = str(status_value)
-    db.commit()
-    return {
-        "project_id": str(project_id),
-        "status": str(status_value),
-        "document_count": len(docs),
-    }
+    try:
+        stored = submission_verification_service.verify(db, project_id, payload.evaluation_date)
+    except (RuleConfigurationError, ValueError) as exc:
+        db.rollback()
+        raise api_error(ApiErrorCode.VALIDATION_FAILED, str(exc), 400) from exc
+    db.refresh(project)
+    return _verification_read(project, stored)
 
 
-@router.get("/projects/{project_id}/verification")
-@router.get("/projects/{project_id}/verification-history")
+@router.get("/projects/{project_id}/verification", response_model=SubmissionVerificationRead)
+@router.get(
+    "/projects/{project_id}/verification-history", response_model=SubmissionVerificationRead
+)
 def verification(project_id: uuid.UUID, db: Session = Depends(get_db)):
     project = db.scalar(
         select(Project)
@@ -373,5 +387,5 @@ def verification(project_id: uuid.UUID, db: Session = Depends(get_db)):
     )
     if not project:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
-    docs = list_documents(project_id, db)
-    return {"project": _project_read(project), "documents": docs}
+    stored = submission_verification_service.get_latest(db, project_id)
+    return _verification_read(project, stored)

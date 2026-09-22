@@ -2,6 +2,10 @@
 
 Entities: User, Project, Checklist, DocumentRequirement, ValidationRule, Submission, Document, OCRResult, ExtractedField, ValidationResult, AuditLog. UUID primary keys and timestamps are used throughout.
 
+`ValidationResult.scope=SUBMISSION` identifies the latest project-level verification rows.
+`outcome` stores `PASS`, `FAIL`, `UNRESOLVED`, or `NOT_APPLICABLE`; `details` stores only
+structured rule/document/field references and evaluation metadata, not copied OCR payloads.
+
 `ExtractedField.evidence` is nullable JSON containing the minimal source observations supporting
 the field (`page_number`, original `source_text`, optional rectangle, optional source confidence,
 source kind, and coordinate space). Nullable storage preserves historical records for which the

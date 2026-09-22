@@ -638,12 +638,24 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionVerificationRead"
+                }
               }
             }
           },
@@ -681,7 +693,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionVerificationRead"
+                }
               }
             }
           },
@@ -719,7 +733,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionVerificationRead"
+                }
               }
             }
           },
@@ -1389,6 +1405,212 @@
         ],
         "title": "ProjectRead"
       },
+      "RuleEvaluationRead": {
+        "properties": {
+          "rule_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Id"
+          },
+          "rule_type": {
+            "$ref": "#/components/schemas/RuleType"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/RuleOutcome"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "document_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DocumentType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "field_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Name"
+          },
+          "related_document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Document Id"
+          },
+          "related_document_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DocumentType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "related_field_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Field Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rule_type",
+          "outcome"
+        ],
+        "title": "RuleEvaluationRead"
+      },
+      "RuleOutcome": {
+        "type": "string",
+        "enum": [
+          "PASS",
+          "FAIL",
+          "UNRESOLVED",
+          "NOT_APPLICABLE"
+        ],
+        "title": "RuleOutcome"
+      },
+      "RuleType": {
+        "type": "string",
+        "enum": [
+          "REQUIRED_DOCUMENT",
+          "REQUIRED_FIELD",
+          "DATE_NOT_EXPIRED",
+          "ISSUE_DATE_MAX_AGE",
+          "APPLICANT_NAME_MATCH",
+          "COMPANY_NAME_MATCH",
+          "BUSINESS_REGISTRATION_NUMBER_MATCH",
+          "DUPLICATE_DOCUMENT",
+          "EXPECTED_DOCUMENT_TYPE",
+          "CUSTOM_TEXT_RULE",
+          "FIELD_COMPARISON",
+          "DATE_COMPARISON",
+          "NUMERIC_COMPARISON"
+        ],
+        "title": "RuleType"
+      },
+      "SubmissionVerificationRead": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "workflow_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OverallStatus"
+          },
+          "evaluation_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Date"
+          },
+          "evaluated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluated At"
+          },
+          "is_current": {
+            "type": "boolean",
+            "title": "Is Current"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationIssueRead"
+            },
+            "type": "array",
+            "title": "Issues"
+          },
+          "rule_results": {
+            "items": {
+              "$ref": "#/components/schemas/RuleEvaluationRead"
+            },
+            "type": "array",
+            "title": "Rule Results"
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "workflow_id",
+          "status",
+          "evaluation_date",
+          "evaluated_at",
+          "is_current",
+          "issues",
+          "rule_results",
+          "disclaimer"
+        ],
+        "title": "SubmissionVerificationRead"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -1485,6 +1707,144 @@
           "code"
         ],
         "title": "ValidationRead"
+      },
+      "VerificationIssueRead": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "status_effect": {
+            "$ref": "#/components/schemas/OverallStatus"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "document_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DocumentType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "field_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Name"
+          },
+          "related_document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Document Id"
+          },
+          "related_document_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DocumentType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "related_field_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Field Name"
+          },
+          "rule_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Id"
+          },
+          "field_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Id"
+          },
+          "related_field_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Field Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "status_effect",
+          "message"
+        ],
+        "title": "VerificationIssueRead"
+      },
+      "VerificationRequest": {
+        "properties": {
+          "evaluation_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Evaluation Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "evaluation_date"
+        ],
+        "title": "VerificationRequest"
       },
       "WorkflowDocumentRequirementRead": {
         "properties": {

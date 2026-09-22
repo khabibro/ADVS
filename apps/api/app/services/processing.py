@@ -36,6 +36,7 @@ from app.models.entities import (
     ValidationRule,
 )
 from app.services.storage.local import LocalStorageService
+from app.services.verification import invalidate_document_project_verification
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +93,8 @@ class DocumentProcessingService:
         if claimed_document_id is None:
             db.refresh(document)
             return document
+        invalidate_document_project_verification(db, document)
+        db.commit()
         db.refresh(document)
         logger.info("document_processing_started", extra={"document_id": str(document.id)})
 

@@ -157,6 +157,9 @@ class ValidationResult(Base, TimestampMixin):
     actual_value: Mapped[str | None] = mapped_column(Text, nullable=True)
     message: Mapped[str] = mapped_column(Text)
     code: Mapped[str] = mapped_column(String(100), index=True)
+    scope: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
+    outcome: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    details: Mapped[dict | None] = mapped_column(JSONType, nullable=True)
     document = relationship("Document", back_populates="validation_results")
 
 
