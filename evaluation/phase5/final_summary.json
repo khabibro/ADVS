@@ -1,0 +1,3480 @@
+{
+  "schema_version": "phase5-mentor-eval-v1",
+  "reproducibility": {
+    "generated_at": "2026-09-22T01:04:20.367897+00:00",
+    "git_commit": "2638c51",
+    "git_dirty": true,
+    "ocr_provider": "paddle",
+    "ocr_models": {
+      "detector": "PP-OCRv5_mobile_det",
+      "recognizer": "korean_PP-OCRv5_mobile_rec"
+    },
+    "classifier_version": "heuristic-v3",
+    "extractor_version": "heuristic-v3",
+    "evaluation_path": "HTTP upload -> storage -> DocumentProcessingService -> persisted GET",
+    "runtime_seconds": 157.74
+  },
+  "dataset": {
+    "description": "Mentor-provided controlled synthetic raster PDFs",
+    "mentor_pdf_count": 38,
+    "in_scope_count": 32,
+    "excluded_local_tax_count": 6,
+    "per_type": {
+      "BUSINESS_REGISTRATION_CERTIFICATE": 7,
+      "ENROLLMENT_CERTIFICATE": 2,
+      "NATIONAL_TAX_PAYMENT_CERTIFICATE": 7,
+      "SME_CONFIRMATION_CERTIFICATE": 7,
+      "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE": 7,
+      "TRANSCRIPT": 2
+    },
+    "field_value_ground_truth": "NOT_AVAILABLE"
+  },
+  "metrics": {
+    "processing_success": {
+      "numerator": 32,
+      "denominator": 32,
+      "rate": 1.0
+    },
+    "classification_accuracy": {
+      "numerator": 32,
+      "denominator": 32,
+      "rate": 1.0
+    },
+    "unknown_count": 0,
+    "wrong_type_count": 0,
+    "expected_field_completeness": {
+      "numerator": 100,
+      "denominator": 106,
+      "rate": 0.9433962264150944
+    },
+    "exact_field_correctness": {
+      "status": "NOT_EVALUATED",
+      "reason": "Mentor materials provide no field-value ground truth."
+    },
+    "normalization_shape_validity": {
+      "numerator": 128,
+      "denominator": 128,
+      "rate": 1.0,
+      "scope": "Populated fields with canonical shape constraints; not value correctness."
+    },
+    "provenance_coverage": {
+      "numerator": 128,
+      "denominator": 128,
+      "rate": 1.0
+    },
+    "missing_expected_field_count": 6,
+    "incorrect_populated_value_count": {
+      "status": "NOT_EVALUATED",
+      "reason": "Mentor materials provide no field-value ground truth."
+    }
+  },
+  "per_document_type": {
+    "BUSINESS_REGISTRATION_CERTIFICATE": {
+      "processing_success": {
+        "numerator": 7,
+        "denominator": 7,
+        "rate": 1.0
+      },
+      "classification_accuracy": {
+        "numerator": 7,
+        "denominator": 7,
+        "rate": 1.0
+      },
+      "unknown_count": 0,
+      "wrong_type_count": 0,
+      "expected_field_completeness": {
+        "numerator": 14,
+        "denominator": 14,
+        "rate": 1.0
+      },
+      "exact_field_correctness": {
+        "status": "NOT_EVALUATED",
+        "reason": "Mentor materials provide no field-value ground truth."
+      },
+      "normalization_shape_validity": {
+        "numerator": 28,
+        "denominator": 28,
+        "rate": 1.0,
+        "scope": "Populated fields with canonical shape constraints; not value correctness."
+      },
+      "provenance_coverage": {
+        "numerator": 28,
+        "denominator": 28,
+        "rate": 1.0
+      },
+      "missing_expected_field_count": 0,
+      "incorrect_populated_value_count": {
+        "status": "NOT_EVALUATED",
+        "reason": "Mentor materials provide no field-value ground truth."
+      }
+    },
+    "ENROLLMENT_CERTIFICATE": {
+      "processing_success": {
+        "numerator": 2,
+        "denominator": 2,
+        "rate": 1.0
+      },
+      "classification_accuracy": {
+        "numerator": 2,
+        "denominator": 2,
+        "rate": 1.0
+      },
+      "unknown_count": 0,
+      "wrong_type_count": 0,
+      "expected_field_completeness": {
+        "numerator": 10,
+        "denominator": 10,
+        "rate": 1.0
+      },
+      "exact_field_correctness": {
+        "status": "NOT_EVALUATED",
+        "reason": "Mentor materials provide no field-value ground truth."
+      },
+      "normalization_shape_validity": {
+        "numerator": 10,
+        "denominator": 10,
+        "rate": 1.0,
+        "scope": "Populated fields with canonical shape constraints; not value correctness."
+      },
+      "provenance_coverage": {
+        "numerator": 10,
+        "denominator": 10,
+        "rate": 1.0
+      },
+      "missing_expected_field_count": 0,
+      "incorrect_populated_value_count": {
+        "status": "NOT_EVALUATED",
+        "reason": "Mentor materials provide no field-value ground truth."
+      }
+    },
+    "NATIONAL_TAX_PAYMENT_CERTIFICATE": {
+      "processing_success": {
+        "numerator": 7,
+        "denominator": 7,
+        "rate": 1.0
+      },
+      "classification_accuracy": {
+        "numerator": 7,
+        "denominator": 7,
+        "rate": 1.0
+      },
+      "unknown_count": 0,
+      "wrong_type_count": 0,
+      "expected_field_completeness": {
+        "numerator": 21,
+        "denominator": 21,
+        "rate": 1.0
+      },
+      "exact_field_correctness": {
+        "status": "NOT_EVALUATED",
+        "reason": "Mentor materials provide no field-value ground truth."
+      },
+      "normalization_shape_validity": {
+        "numerator": 21,
+        "denominator": 21,
+        "rate": 1.0,
+        "scope": "Populated fields with canonical shape constraints; not value correctness."
+      },
+      "provenance_coverage": {
+        "numerator": 21,
+        "denominator": 21,
+        "rate": 1.0
+      },
+      "missing_expected_field_count": 0,
+      "incorrect_populated_value_count": {
+        "status": "NOT_EVALUATED",
+        "reason": "Mentor materials provide no field-value ground truth."
+      }
+    },
+    "SME_CONFIRMATION_CERTIFICATE": {
+      "processing_success": {
+        "numerator": 7,
+        "denominator": 7,
+        "rate": 1.0
+      },
+      "classification_accuracy": {
+        "numerator": 7,
+        "denominator": 7,
+        "rate": 1.0
+      },
+      "unknown_count": 0,
+      "wrong_type_count": 0,
+      "expected_field_completeness": {
+        "numerator": 26,
+        "denominator": 28,
+        "rate": 0.9285714285714286
+      },
+      "exact_field_correctness": {
+        "status": "NOT_EVALUATED",
+        "reason": "Mentor materials provide no field-value ground truth."
+      },
+      "normalization_shape_validity": {
+        "numerator": 40,
+        "denominator": 40,
+        "rate": 1.0,
+        "scope": "Populated fields with canonical shape constraints; not value correctness."
+      },
+      "provenance_coverage": {
+        "numerator": 40,
+        "denominator": 40,
+        "rate": 1.0
+      },
+      "missing_expected_field_count": 2,
+      "incorrect_populated_value_count": {
+        "status": "NOT_EVALUATED",
+        "reason": "Mentor materials provide no field-value ground truth."
+      }
+    },
+    "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE": {
+      "processing_success": {
+        "numerator": 7,
+        "denominator": 7,
+        "rate": 1.0
+      },
+      "classification_accuracy": {
+        "numerator": 7,
+        "denominator": 7,
+        "rate": 1.0
+      },
+      "unknown_count": 0,
+      "wrong_type_count": 0,
+      "expected_field_completeness": {
+        "numerator": 21,
+        "denominator": 21,
+        "rate": 1.0
+      },
+      "exact_field_correctness": {
+        "status": "NOT_EVALUATED",
+        "reason": "Mentor materials provide no field-value ground truth."
+      },
+      "normalization_shape_validity": {
+        "numerator": 21,
+        "denominator": 21,
+        "rate": 1.0,
+        "scope": "Populated fields with canonical shape constraints; not value correctness."
+      },
+      "provenance_coverage": {
+        "numerator": 21,
+        "denominator": 21,
+        "rate": 1.0
+      },
+      "missing_expected_field_count": 0,
+      "incorrect_populated_value_count": {
+        "status": "NOT_EVALUATED",
+        "reason": "Mentor materials provide no field-value ground truth."
+      }
+    },
+    "TRANSCRIPT": {
+      "processing_success": {
+        "numerator": 2,
+        "denominator": 2,
+        "rate": 1.0
+      },
+      "classification_accuracy": {
+        "numerator": 2,
+        "denominator": 2,
+        "rate": 1.0
+      },
+      "unknown_count": 0,
+      "wrong_type_count": 0,
+      "expected_field_completeness": {
+        "numerator": 8,
+        "denominator": 12,
+        "rate": 0.6666666666666666
+      },
+      "exact_field_correctness": {
+        "status": "NOT_EVALUATED",
+        "reason": "Mentor materials provide no field-value ground truth."
+      },
+      "normalization_shape_validity": {
+        "numerator": 8,
+        "denominator": 8,
+        "rate": 1.0,
+        "scope": "Populated fields with canonical shape constraints; not value correctness."
+      },
+      "provenance_coverage": {
+        "numerator": 8,
+        "denominator": 8,
+        "rate": 1.0
+      },
+      "missing_expected_field_count": 4,
+      "incorrect_populated_value_count": {
+        "status": "NOT_EVALUATED",
+        "reason": "Mentor materials provide no field-value ground truth."
+      }
+    }
+  },
+  "per_field": {
+    "business_registration_number": {
+      "expected": 28,
+      "populated": 28,
+      "evidenced": 28,
+      "normalization_valid": 28
+    },
+    "company_name": {
+      "expected": 21,
+      "populated": 21,
+      "evidenced": 21,
+      "normalization_valid": 21
+    },
+    "department": {
+      "expected": 2,
+      "populated": 2,
+      "evidenced": 2,
+      "normalization_valid": 2
+    },
+    "gpa": {
+      "expected": 2,
+      "populated": 1,
+      "evidenced": 1,
+      "normalization_valid": 1
+    },
+    "gpa_scale": {
+      "expected": 2,
+      "populated": 1,
+      "evidenced": 1,
+      "normalization_valid": 1
+    },
+    "issue_date": {
+      "expected": 4,
+      "populated": 2,
+      "evidenced": 2,
+      "normalization_valid": 2
+    },
+    "student_id": {
+      "expected": 4,
+      "populated": 4,
+      "evidenced": 4,
+      "normalization_valid": 4
+    },
+    "student_name": {
+      "expected": 4,
+      "populated": 4,
+      "evidenced": 4,
+      "normalization_valid": 4
+    },
+    "university_name": {
+      "expected": 4,
+      "populated": 4,
+      "evidenced": 4,
+      "normalization_valid": 4
+    },
+    "valid_from": {
+      "expected": 7,
+      "populated": 6,
+      "evidenced": 6,
+      "normalization_valid": 6
+    },
+    "valid_until": {
+      "expected": 21,
+      "populated": 20,
+      "evidenced": 20,
+      "normalization_valid": 20
+    },
+    "workplace_name": {
+      "expected": 7,
+      "populated": 7,
+      "evidenced": 7,
+      "normalization_valid": 7
+    }
+  },
+  "samples": [
+    {
+      "sample_id": "degraded_transcript",
+      "scenario": "degraded",
+      "expected_document_type": "TRANSCRIPT",
+      "predicted_document_type": "TRANSCRIPT",
+      "classification_correct": true,
+      "classification_confidence": 0.6666666666666666,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 6,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [
+        "issue_date",
+        "gpa",
+        "gpa_scale"
+      ],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 33,
+      "page_average_confidence": [
+        0.9801539254911018
+      ],
+      "fields": [
+        {
+          "field_name": "gpa",
+          "expected": true,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "gpa_scale",
+          "expected": true,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "issue_date",
+          "expected": true,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "student_id",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "e6dfdc739eef",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "student_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "d92723b005c1",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "university_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "16d3873121cb",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 5665.13
+    },
+    {
+      "sample_id": "normal_transcript",
+      "scenario": "normal",
+      "expected_document_type": "TRANSCRIPT",
+      "predicted_document_type": "TRANSCRIPT",
+      "classification_correct": true,
+      "classification_confidence": 0.75,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 6,
+      "populated_expected_field_count": 5,
+      "populated_field_count": 5,
+      "evidenced_populated_field_count": 5,
+      "missing_expected_fields": [
+        "issue_date"
+      ],
+      "normalization_checked": 5,
+      "normalization_valid": 5,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 34,
+      "page_average_confidence": [
+        0.9618170241660932
+      ],
+      "fields": [
+        {
+          "field_name": "gpa",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "09e520bed665",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "gpa_scale",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "32209ccbf8a8",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": true,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "student_id",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "c6f4841c6fed",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "student_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9c6b9b1b1627",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "university_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "16d3873121cb",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 3759.93
+    },
+    {
+      "sample_id": "reference_date_exceeded_enrollment",
+      "scenario": "reference_date_exceeded",
+      "expected_document_type": "ENROLLMENT_CERTIFICATE",
+      "predicted_document_type": "ENROLLMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.7804878048780488,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 5,
+      "populated_expected_field_count": 5,
+      "populated_field_count": 5,
+      "evidenced_populated_field_count": 5,
+      "missing_expected_fields": [],
+      "normalization_checked": 5,
+      "normalization_valid": 5,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 19,
+      "page_average_confidence": [
+        0.9870579179964567
+      ],
+      "fields": [
+        {
+          "field_name": "department",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "088235a51c7c",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "ef569f668662",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "student_id",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "f44cb6dd306e",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "student_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "f09c2129c2be",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "university_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "16d3873121cb",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 2701.39
+    },
+    {
+      "sample_id": "normal_enrollment",
+      "scenario": "normal",
+      "expected_document_type": "ENROLLMENT_CERTIFICATE",
+      "predicted_document_type": "ENROLLMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.7804878048780488,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 5,
+      "populated_expected_field_count": 5,
+      "populated_field_count": 5,
+      "evidenced_populated_field_count": 5,
+      "missing_expected_fields": [],
+      "normalization_checked": 5,
+      "normalization_valid": 5,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 19,
+      "page_average_confidence": [
+        0.986890014849211
+      ],
+      "fields": [
+        {
+          "field_name": "department",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "088235a51c7c",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "febdcffe80f6",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "student_id",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "c6f4841c6fed",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "student_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9c6b9b1b1627",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "university_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "16d3873121cb",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 2690.96
+    },
+    {
+      "sample_id": "P001_social",
+      "scenario": "P001",
+      "expected_document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "predicted_document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.6363636363636364,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 3,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 36,
+      "page_average_confidence": [
+        0.966990171207322
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "d073dd6208f7",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9f2abc6e8bb0",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "workplace_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "516827ce0e4e",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 5794.41
+    },
+    {
+      "sample_id": "P001_national_tax",
+      "scenario": "P001",
+      "expected_document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "predicted_document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.6,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 3,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 41,
+      "page_average_confidence": [
+        0.9795115270265718
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "d073dd6208f7",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "516827ce0e4e",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9f2abc6e8bb0",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 6002.87
+    },
+    {
+      "sample_id": "P001_business",
+      "scenario": "P001",
+      "expected_document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "predicted_document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.99,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 2,
+      "populated_expected_field_count": 2,
+      "populated_field_count": 4,
+      "evidenced_populated_field_count": 4,
+      "missing_expected_fields": [],
+      "normalization_checked": 4,
+      "normalization_valid": 4,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 34,
+      "page_average_confidence": [
+        0.9747601905289818
+      ],
+      "fields": [
+        {
+          "field_name": "business_address",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "business_item",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "d073dd6208f7",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "business_type",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "8c65f73b68bb",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "516827ce0e4e",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "representative_name",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "9c6b9b1b1627",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 4426.42
+    },
+    {
+      "sample_id": "P001_sme",
+      "scenario": "P001",
+      "expected_document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "predicted_document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.7377049180327869,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 4,
+      "populated_expected_field_count": 4,
+      "populated_field_count": 6,
+      "evidenced_populated_field_count": 6,
+      "missing_expected_fields": [],
+      "normalization_checked": 6,
+      "normalization_valid": 6,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 27,
+      "page_average_confidence": [
+        0.9797805790547971
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "d073dd6208f7",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "certificate_number",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "340855131824",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "516827ce0e4e",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "representative_name",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "9f96b8e22cc0",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "valid_from",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "6838d1d2aa57",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "5a957adef68c",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 4038.15
+    },
+    {
+      "sample_id": "P002_social",
+      "scenario": "P002",
+      "expected_document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "predicted_document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.6363636363636364,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 3,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 36,
+      "page_average_confidence": [
+        0.9650137854946984
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "d6259ed3f72a",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9f2abc6e8bb0",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "workplace_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "93671cf482c6",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 5859.4
+    },
+    {
+      "sample_id": "P002_national_tax",
+      "scenario": "P002",
+      "expected_document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "predicted_document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.6,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 3,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 41,
+      "page_average_confidence": [
+        0.9778434648746397
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "d6259ed3f72a",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "93671cf482c6",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9f2abc6e8bb0",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 6051.71
+    },
+    {
+      "sample_id": "P002_business",
+      "scenario": "P002",
+      "expected_document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "predicted_document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.99,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 2,
+      "populated_expected_field_count": 2,
+      "populated_field_count": 4,
+      "evidenced_populated_field_count": 4,
+      "missing_expected_fields": [],
+      "normalization_checked": 4,
+      "normalization_valid": 4,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 34,
+      "page_average_confidence": [
+        0.9793999791145325
+      ],
+      "fields": [
+        {
+          "field_name": "business_address",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "business_item",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "89023addeac6",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "d6259ed3f72a",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "business_type",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "93671cf482c6",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "representative_name",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "f09c2129c2be",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 4434.16
+    },
+    {
+      "sample_id": "P002_sme",
+      "scenario": "P002",
+      "expected_document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "predicted_document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.7377049180327869,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 4,
+      "populated_expected_field_count": 4,
+      "populated_field_count": 6,
+      "evidenced_populated_field_count": 6,
+      "missing_expected_fields": [],
+      "normalization_checked": 6,
+      "normalization_valid": 6,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 27,
+      "page_average_confidence": [
+        0.9812455442216661
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "b923856d9daa",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "certificate_number",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "17738b3ce509",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "93671cf482c6",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "representative_name",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "9f96b8e22cc0",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "valid_from",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "6838d1d2aa57",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "5a957adef68c",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 4074.75
+    },
+    {
+      "sample_id": "P003_social",
+      "scenario": "P003",
+      "expected_document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "predicted_document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.6363636363636364,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 3,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 36,
+      "page_average_confidence": [
+        0.9666933284865485
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "cd77dbd1dd92",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9f2abc6e8bb0",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "workplace_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "1e6fc0aec837",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 5911.54
+    },
+    {
+      "sample_id": "P003_national_tax",
+      "scenario": "P003",
+      "expected_document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "predicted_document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.6,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 3,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 41,
+      "page_average_confidence": [
+        0.9791651179150838
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "cd77dbd1dd92",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "1e6fc0aec837",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9f2abc6e8bb0",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 6113.55
+    },
+    {
+      "sample_id": "P003_business",
+      "scenario": "P003",
+      "expected_document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "predicted_document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.99,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 2,
+      "populated_expected_field_count": 2,
+      "populated_field_count": 4,
+      "evidenced_populated_field_count": 4,
+      "missing_expected_fields": [],
+      "normalization_checked": 4,
+      "normalization_valid": 4,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 34,
+      "page_average_confidence": [
+        0.9718229630414177
+      ],
+      "fields": [
+        {
+          "field_name": "business_address",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "business_item",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "cd77dbd1dd92",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "business_type",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "8c65f73b68bb",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "1e6fc0aec837",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "representative_name",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "d92723b005c1",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 4484.14
+    },
+    {
+      "sample_id": "P003_sme",
+      "scenario": "P003",
+      "expected_document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "predicted_document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.7377049180327869,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 4,
+      "populated_expected_field_count": 4,
+      "populated_field_count": 6,
+      "evidenced_populated_field_count": 6,
+      "missing_expected_fields": [],
+      "normalization_checked": 6,
+      "normalization_valid": 6,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 27,
+      "page_average_confidence": [
+        0.9764776737601669
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "cd77dbd1dd92",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "certificate_number",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "8f167b1221dd",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "92e95b725c5f",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "representative_name",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "9f96b8e22cc0",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "valid_from",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "6838d1d2aa57",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "febdcffe80f6",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 4110.31
+    },
+    {
+      "sample_id": "P004_social",
+      "scenario": "P004",
+      "expected_document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "predicted_document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.6363636363636364,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 3,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 36,
+      "page_average_confidence": [
+        0.9667836493915982
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "0566bdf3211c",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9f2abc6e8bb0",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "workplace_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "5ee03f420dea",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 5914.17
+    },
+    {
+      "sample_id": "P004_national_tax",
+      "scenario": "P004",
+      "expected_document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "predicted_document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.6,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 3,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 41,
+      "page_average_confidence": [
+        0.9782181614782752
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "0566bdf3211c",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "5ee03f420dea",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9499aee670fe",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 6127.66
+    },
+    {
+      "sample_id": "P004_business",
+      "scenario": "P004",
+      "expected_document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "predicted_document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.99,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 2,
+      "populated_expected_field_count": 2,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 34,
+      "page_average_confidence": [
+        0.9707717930569368
+      ],
+      "fields": [
+        {
+          "field_name": "business_address",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "business_item",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "0566bdf3211c",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "business_type",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "8c65f73b68bb",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "5ee03f420dea",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "representative_name",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        }
+      ],
+      "processing_ms": 4512.71
+    },
+    {
+      "sample_id": "P004_sme",
+      "scenario": "P004",
+      "expected_document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "predicted_document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.7377049180327869,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 4,
+      "populated_expected_field_count": 4,
+      "populated_field_count": 6,
+      "evidenced_populated_field_count": 6,
+      "missing_expected_fields": [],
+      "normalization_checked": 6,
+      "normalization_valid": 6,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 27,
+      "page_average_confidence": [
+        0.9821964436107211
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "0566bdf3211c",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "certificate_number",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "eaeaa4617c1c",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "5ee03f420dea",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "representative_name",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "9f96b8e22cc0",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "valid_from",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "6838d1d2aa57",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "5a957adef68c",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 4089.62
+    },
+    {
+      "sample_id": "P005_social",
+      "scenario": "P005",
+      "expected_document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "predicted_document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.6363636363636364,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 3,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 36,
+      "page_average_confidence": [
+        0.9629166192478604
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "de9e160d30f3",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9499aee670fe",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "workplace_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "c0967aeeb477",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 5896.16
+    },
+    {
+      "sample_id": "P005_national_tax",
+      "scenario": "P005",
+      "expected_document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "predicted_document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.6,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 3,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 41,
+      "page_average_confidence": [
+        0.9767358899116516
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "de9e160d30f3",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "b183360decdb",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9f2abc6e8bb0",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 6163.7
+    },
+    {
+      "sample_id": "P005_business",
+      "scenario": "P005",
+      "expected_document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "predicted_document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.99,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 2,
+      "populated_expected_field_count": 2,
+      "populated_field_count": 4,
+      "evidenced_populated_field_count": 4,
+      "missing_expected_fields": [],
+      "normalization_checked": 4,
+      "normalization_valid": 4,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 34,
+      "page_average_confidence": [
+        0.964574463227216
+      ],
+      "fields": [
+        {
+          "field_name": "business_address",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "business_item",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "de9e160d30f3",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "business_type",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "8c65f73b68bb",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "b4f30cf4f140",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "representative_name",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "b06a16aeef8d",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 4486.15
+    },
+    {
+      "sample_id": "P005_sme",
+      "scenario": "P005",
+      "expected_document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "predicted_document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.7377049180327869,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 4,
+      "populated_expected_field_count": 4,
+      "populated_field_count": 6,
+      "evidenced_populated_field_count": 6,
+      "missing_expected_fields": [],
+      "normalization_checked": 6,
+      "normalization_valid": 6,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 27,
+      "page_average_confidence": [
+        0.9717953911534062
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "de9e160d30f3",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "certificate_number",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "83e0d67459be",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "c6e731d9ae0b",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "representative_name",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "9f96b8e22cc0",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "valid_from",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "6838d1d2aa57",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "5a957adef68c",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 4118.53
+    },
+    {
+      "sample_id": "P006_social",
+      "scenario": "P006",
+      "expected_document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "predicted_document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.6363636363636364,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 3,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 36,
+      "page_average_confidence": [
+        0.9667530357837677
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "82c8bf8373b0",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9f2abc6e8bb0",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "workplace_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "5510609261dc",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 5947.6
+    },
+    {
+      "sample_id": "P006_national_tax",
+      "scenario": "P006",
+      "expected_document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "predicted_document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.6,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 3,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 41,
+      "page_average_confidence": [
+        0.9776599058290807
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "82c8bf8373b0",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "5510609261dc",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9f2abc6e8bb0",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 6132.13
+    },
+    {
+      "sample_id": "P006_business",
+      "scenario": "P006",
+      "expected_document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "predicted_document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.99,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 2,
+      "populated_expected_field_count": 2,
+      "populated_field_count": 4,
+      "evidenced_populated_field_count": 4,
+      "missing_expected_fields": [],
+      "normalization_checked": 4,
+      "normalization_valid": 4,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 34,
+      "page_average_confidence": [
+        0.9793985924300026
+      ],
+      "fields": [
+        {
+          "field_name": "business_address",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "business_item",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "89023addeac6",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "82c8bf8373b0",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "business_type",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "5510609261dc",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "representative_name",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "82b2b70371f0",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 4503.24
+    },
+    {
+      "sample_id": "P006_sme",
+      "scenario": "P006",
+      "expected_document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "predicted_document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.7377049180327869,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 4,
+      "populated_expected_field_count": 4,
+      "populated_field_count": 6,
+      "evidenced_populated_field_count": 6,
+      "missing_expected_fields": [],
+      "normalization_checked": 6,
+      "normalization_valid": 6,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 27,
+      "page_average_confidence": [
+        0.9820889256618641
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "82c8bf8373b0",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "certificate_number",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "b25aa75252a3",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "5510609261dc",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "representative_name",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "9f96b8e22cc0",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "valid_from",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "6838d1d2aa57",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "5a957adef68c",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 4133.11
+    },
+    {
+      "sample_id": "P007_social",
+      "scenario": "P007",
+      "expected_document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "predicted_document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.6363636363636364,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 3,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 36,
+      "page_average_confidence": [
+        0.9501001139481863
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "65dce15efcc4",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9f2abc6e8bb0",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "workplace_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "f84b485fafc6",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 5670.78
+    },
+    {
+      "sample_id": "P007_national_tax",
+      "scenario": "P007",
+      "expected_document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "predicted_document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.6,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 3,
+      "populated_expected_field_count": 3,
+      "populated_field_count": 3,
+      "evidenced_populated_field_count": 3,
+      "missing_expected_fields": [],
+      "normalization_checked": 3,
+      "normalization_valid": 3,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 41,
+      "page_average_confidence": [
+        0.9654006550951701
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "65dce15efcc4",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "f84b485fafc6",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "9f2abc6e8bb0",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 5726.48
+    },
+    {
+      "sample_id": "P007_business",
+      "scenario": "P007",
+      "expected_document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "predicted_document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.99,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 2,
+      "populated_expected_field_count": 2,
+      "populated_field_count": 5,
+      "evidenced_populated_field_count": 5,
+      "missing_expected_fields": [],
+      "normalization_checked": 5,
+      "normalization_valid": 5,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 34,
+      "page_average_confidence": [
+        0.977236319990719
+      ],
+      "fields": [
+        {
+          "field_name": "business_address",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "business_item",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "e3f0e5054fe8",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "65dce15efcc4",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "business_type",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "06aff97f69dc",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "f84b485fafc6",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "representative_name",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "2bbfa1e5d03a",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        }
+      ],
+      "processing_ms": 4275.83
+    },
+    {
+      "sample_id": "P007_sme",
+      "scenario": "P007",
+      "expected_document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "predicted_document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_confidence": 0.7377049180327869,
+      "processing_status": "COMPLETED",
+      "error_code": null,
+      "expected_field_count": 4,
+      "populated_expected_field_count": 2,
+      "populated_field_count": 4,
+      "evidenced_populated_field_count": 4,
+      "missing_expected_fields": [
+        "valid_from",
+        "valid_until"
+      ],
+      "normalization_checked": 4,
+      "normalization_valid": 4,
+      "page_count": 1,
+      "ocr_provider": [
+        "paddle"
+      ],
+      "ocr_line_count": 25,
+      "page_average_confidence": [
+        0.9718365812301636
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "65dce15efcc4",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "certificate_number",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "40fb6719fbf7",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "company_name",
+          "expected": true,
+          "populated": true,
+          "normalized_value_fingerprint": "f84b485fafc6",
+          "normalization_shape_valid": true,
+          "evidence_count": 2,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "issue_date",
+          "expected": false,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "representative_name",
+          "expected": false,
+          "populated": true,
+          "normalized_value_fingerprint": "9f96b8e22cc0",
+          "normalization_shape_valid": true,
+          "evidence_count": 1,
+          "evidence_pages": [
+            1
+          ],
+          "bbox_complete": true,
+          "confidence_complete": true
+        },
+        {
+          "field_name": "valid_from",
+          "expected": true,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        },
+        {
+          "field_name": "valid_until",
+          "expected": true,
+          "populated": false,
+          "normalized_value_fingerprint": null,
+          "normalization_shape_valid": null,
+          "evidence_count": 0,
+          "evidence_pages": [],
+          "bbox_complete": null,
+          "confidence_complete": null
+        }
+      ],
+      "processing_ms": 3899.75
+    }
+  ]
+}

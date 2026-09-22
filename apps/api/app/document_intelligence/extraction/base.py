@@ -17,7 +17,7 @@ from app.document_intelligence.normalization.field_normalizer import (
 from app.document_intelligence.ocr.models import OCRDocumentResult, OCRLine
 from app.document_intelligence.ocr.text_assembly import order_lines
 
-EXTRACTOR_VERSION = "heuristic-v2"
+EXTRACTOR_VERSION = "heuristic-v3"
 
 _COLON_RE = re.compile(r"[：﹕꞉︓]")
 _WHITESPACE_RE = re.compile(r"[ \t]+")
@@ -204,6 +204,8 @@ def _adjacent_value_allowed(label: str, value: str) -> bool:
         return True
     if label in {"학위"} and _DEGREE_RE.match(compact):
         return True
+    if label in {"대학교", "대학명", "학교명", "대학"}:
+        return compact.endswith(("대학교", "대학")) and len(compact) > len(label)
     return len(label) >= 3 and not _looks_like_label_or_title(compact)
 
 
@@ -254,6 +256,73 @@ def candidate_after_label(source: ExtractionInput, labels: list[str]) -> Extract
                     if item is not None:
                         evidence.append(item)
                 return ExtractionCandidate(_strip_trailing_labels(lines[idx + 1], labels), evidence)
+    return None
+
+
+def candidate_right_of_label(
+    source: ExtractionInput, labels: list[str]
+) -> ExtractionCandidate | None:
+    """Return the nearest observation on the same visual row as an empty label.
+
+    This is deliberately unavailable for flattened string input. It requires
+    source geometry, a value to the right of the label, substantial vertical
+    overlap, and a bounded horizontal gap. Both observations remain attached
+    as evidence. The helper does not decide field semantics; the caller still
+    validates the returned text for its particular field.
+    """
+    if isinstance(source, str):
+        return None
+    observations = _source_lines(source)
+    normalized_labels = {_compact(_normalize_extraction_text(label)) for label in labels}
+    for label_text, label_evidence in observations:
+        if label_evidence is None or label_evidence.bounding_box is None:
+            continue
+        if (
+            _compact(_normalize_extraction_text(label_text).rstrip(":").strip())
+            not in normalized_labels
+        ):
+            continue
+        label_box = label_evidence.bounding_box
+        candidates: list[tuple[float, float, str, EvidenceRef]] = []
+        for value_text, value_evidence in observations:
+            if (
+                value_evidence is None
+                or value_evidence is label_evidence
+                or value_evidence.page_number != label_evidence.page_number
+                or value_evidence.bounding_box is None
+                or not _next_line_value_allowed(value_text)
+            ):
+                continue
+            value_box = value_evidence.bounding_box
+            overlap = min(label_box.y + label_box.height, value_box.y + value_box.height) - max(
+                label_box.y, value_box.y
+            )
+            minimum_overlap = min(label_box.height, value_box.height) * 0.4
+            horizontal_gap = value_box.x - (label_box.x + label_box.width)
+            if overlap < minimum_overlap or horizontal_gap < -4 or horizontal_gap > 600:
+                continue
+            label_center = label_box.y + label_box.height / 2
+            value_center = value_box.y + value_box.height / 2
+            candidates.append(
+                (abs(value_center - label_center), horizontal_gap, value_text, value_evidence)
+            )
+        if candidates:
+            _, _, value, evidence = min(candidates, key=lambda item: (item[0], item[1]))
+            return ExtractionCandidate(
+                _strip_trailing_labels(_normalize_extraction_text(value), labels),
+                [label_evidence, evidence],
+            )
+    return None
+
+
+def candidate_matching_line(
+    source: ExtractionInput, pattern: re.Pattern[str]
+) -> ExtractionCandidate | None:
+    """Return the first full-line semantic pattern match with source evidence."""
+    for line, evidence in _source_lines(source):
+        normalized = _normalize_extraction_text(line)
+        if pattern.fullmatch(normalized) and not _looks_like_label_or_title(normalized):
+            return ExtractionCandidate(normalized, [evidence] if evidence is not None else [])
     return None
 
 
@@ -313,9 +382,18 @@ class BaseDocumentExtractor(ABC):
         )
 
     def text_field(
-        self, text: ExtractionInput, field_name: str, labels: list[str]
+        self,
+        text: ExtractionInput,
+        field_name: str,
+        labels: list[str],
+        *,
+        allow_spatial_right: bool = False,
     ) -> ExtractedValue:
         candidate = candidate_after_label(text, labels)
+        used_spatial_candidate = False
+        if candidate is None and allow_spatial_right:
+            candidate = candidate_right_of_label(text, labels)
+            used_spatial_candidate = candidate is not None
         raw = candidate.value if candidate else None
         normalized = normalize_text_field(raw)
         if (
@@ -325,7 +403,8 @@ class BaseDocumentExtractor(ABC):
         ):
             return self.missing(field_name)
         assert raw is not None
-        return self._value(field_name, raw, normalized, "label_match", candidate)
+        method = "spatial_right_of_label" if used_spatial_candidate else "label_match"
+        return self._value(field_name, raw, normalized, method, candidate)
 
     def date_field(
         self, text: ExtractionInput, field_name: str, labels: list[str]

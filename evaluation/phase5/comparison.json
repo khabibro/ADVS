@@ -1,0 +1,42 @@
+{
+  "schema_version": "phase5-comparison-v1",
+  "baseline_artifact": "evaluation/phase5/baseline_summary.json",
+  "final_artifact": "evaluation/phase5/final_summary.json",
+  "methodology_identical": true,
+  "metrics": {
+    "processing_success": {
+      "baseline": {"numerator": 32, "denominator": 32, "rate": 1.0},
+      "final": {"numerator": 32, "denominator": 32, "rate": 1.0},
+      "delta": 0.0
+    },
+    "classification_accuracy": {
+      "baseline": {"numerator": 32, "denominator": 32, "rate": 1.0},
+      "final": {"numerator": 32, "denominator": 32, "rate": 1.0},
+      "delta": 0.0
+    },
+    "expected_field_completeness": {
+      "baseline": {"numerator": 85, "denominator": 106, "rate": 0.8018867924528302},
+      "final": {"numerator": 100, "denominator": 106, "rate": 0.9433962264150944},
+      "delta": 0.14150943396226423
+    },
+    "normalization_shape_validity": {
+      "baseline": {"numerator": 113, "denominator": 113, "rate": 1.0},
+      "final": {"numerator": 128, "denominator": 128, "rate": 1.0},
+      "delta": 0.0,
+      "scope": "Canonical shape validity only; exact value correctness was not evaluable."
+    },
+    "provenance_coverage": {
+      "baseline": {"numerator": 113, "denominator": 113, "rate": 1.0},
+      "final": {"numerator": 128, "denominator": 128, "rate": 1.0},
+      "delta": 0.0
+    },
+    "missing_expected_fields": {"baseline": 21, "final": 6, "delta": -15},
+    "exact_field_correctness": "NOT_EVALUATED",
+    "incorrect_populated_values": "NOT_EVALUATED"
+  },
+  "regression_check": {
+    "previously_populated_fields_dropped": 0,
+    "previously_populated_value_fingerprints_changed": 0,
+    "newly_populated_fields": 15
+  }
+}

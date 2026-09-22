@@ -261,6 +261,16 @@ def test_sme_confirmation_missing_validity_is_null() -> None:
     assert fields["valid_until"].needs_review is True
 
 
+def test_sme_split_line_validity_range_is_supported() -> None:
+    fields = by_name(
+        SMEConfirmationExtractor().extract(
+            "중소기업확인서\n유효기간\n2026년 1월 1일 ~ 2027년 12월 31일"
+        )
+    )
+    assert fields["valid_from"].normalized_value == "2026-01-01"
+    assert fields["valid_until"].normalized_value == "2027-12-31"
+
+
 def test_new_mentor_extractors_preserve_structured_values() -> None:
     tax = by_name(
         NationalTaxPaymentCertificateExtractor().extract(
@@ -290,6 +300,7 @@ def test_mentor_tax_and_student_aliases() -> None:
         )
     )
     assert tax["company_name"].normalized_value == "예시기업"
+    assert tax["valid_until"].normalized_value == "2026-12-31"
 
     enrollment = by_name(
         EnrollmentCertificateExtractor().extract(
@@ -306,6 +317,41 @@ def test_mentor_issue_number_and_total_gpa_aliases() -> None:
     assert sme["certificate_number"].normalized_value == "SME-001"
     assert transcript["gpa"].normalized_value == "3.85"
     assert transcript["gpa_scale"].normalized_value == "4.5"
+
+
+def test_social_payment_number_is_not_a_business_registration_number() -> None:
+    fields = by_name(
+        SocialInsurancePaymentCertificateExtractor().extract(
+            "4대 사회보험료 완납증명서\n통합납부자번호 123-45-67890\n사업장명 예시사업장"
+        )
+    )
+    assert fields["business_registration_number"].normalized_value is None
+
+
+def test_validity_is_not_guessed_from_unrelated_dates() -> None:
+    tax = by_name(
+        NationalTaxPaymentCertificateExtractor().extract(
+            "납세증명서\n발급일 2026-09-20\n납부기한 2026-12-31"
+        )
+    )
+    social = by_name(
+        SocialInsurancePaymentCertificateExtractor().extract(
+            "4대 사회보험료 완납증명서\n발급일 2026-09-20\n개업연월일 2020-01-01"
+        )
+    )
+    assert tax["valid_until"].normalized_value is None
+    assert social["valid_until"].normalized_value is None
+
+
+def test_transcript_does_not_guess_issue_date_or_gpa_from_unlabeled_numbers() -> None:
+    fields = by_name(
+        TranscriptExtractor().extract(
+            "성적증명서\n학번 20260001\n2026-09-20\n3학점\n4.0\n2026년도 1학기"
+        )
+    )
+    assert fields["issue_date"].normalized_value is None
+    assert fields["gpa"].normalized_value is None
+    assert fields["gpa_scale"].normalized_value is None
 
 
 def test_student_extractors_preserve_fields_and_numeric_gpa() -> None:

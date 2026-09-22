@@ -1,0 +1,52 @@
+{
+  "schema_version": "phase5-error-analysis-v1",
+  "baseline_artifact": "evaluation/phase5/baseline_summary.json",
+  "final_artifact": "evaluation/phase5/final_summary.json",
+  "missing_expected_field_count": 21,
+  "final_missing_expected_field_count": 6,
+  "categories": [
+    {
+      "failure_category": "LABEL_ALIAS_MISSING",
+      "count": 12,
+      "document_types": [
+        "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+        "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE"
+      ],
+      "fields": ["valid_until"],
+      "representative_structure": "A certificate-qualified validity label is followed by, or shares a line with, a parseable date.",
+      "root_cause": "Extractors accepted bare validity labels but not the semantically equivalent certificate-qualified label.",
+      "implemented_fix": "Added the full semantic label alias while retaining field-specific date normalization.",
+      "final_remaining": 0
+    },
+    {
+      "failure_category": "OCR_READING_ORDER",
+      "count": 1,
+      "document_types": ["TRANSCRIPT"],
+      "fields": ["student_name"],
+      "representative_structure": "Label and value are horizontally aligned, but small OCR box-height differences place the value immediately before the label in flattened order.",
+      "root_cause": "Sequential next-line lookup cannot recover a same-row value that sorts before its label.",
+      "implemented_fix": "Added a bounded nearest-right observation fallback only when the label line has no value and the field validator accepts the candidate.",
+      "final_remaining": 0
+    },
+    {
+      "failure_category": "CANDIDATE_SELECTION",
+      "count": 2,
+      "document_types": ["TRANSCRIPT"],
+      "fields": ["university_name"],
+      "representative_structure": "A standalone institution name is present, but the document provides no explicit university label.",
+      "root_cause": "Label-only extraction has no conservative fallback for a full-line institution-name pattern.",
+      "implemented_fix": "Added a transcript-specific full-line university-name candidate with strict semantic shape and direct evidence.",
+      "final_remaining": 0
+    },
+    {
+      "failure_category": "OCR_TEXT_ERROR",
+      "count": 6,
+      "document_types": ["SME_CONFIRMATION_CERTIFICATE", "TRANSCRIPT"],
+      "fields": ["valid_from", "valid_until", "issue_date", "gpa", "gpa_scale"],
+      "representative_structure": "The required value is absent or unusable in OCR observations despite high page-average OCR confidence.",
+      "root_cause": "Downstream extraction has no trustworthy source candidate.",
+      "implemented_fix": "Left unresolved; OCR/preprocessing research remains deferred rather than inferring from unrelated values.",
+      "final_remaining": 6
+    }
+  ]
+}
