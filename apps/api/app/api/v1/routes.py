@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -14,6 +14,7 @@ from app.core.domain import (
 )
 from app.core.errors import ApiErrorCode, api_error
 from app.db.session import get_db
+from app.document_intelligence.evidence_sufficiency import FieldReviewDecision
 from app.document_intelligence.results import CanonicalDocumentResult
 from app.document_intelligence.validation.engine import ValidationEngine
 from app.document_intelligence.validation.submission import RuleConfigurationError
@@ -30,8 +31,12 @@ from app.schemas.api import (
     ChecklistRead,
     DocumentDetail,
     DocumentRead,
+    FieldRead,
+    FieldReviewCreate,
+    FieldReviewRead,
     ProjectCreate,
     ProjectRead,
+    ReviewItemRead,
     RuleEvaluationRead,
     SubmissionVerificationRead,
     VerificationIssueRead,
@@ -41,6 +46,7 @@ from app.schemas.api import (
     WorkflowSummary,
 )
 from app.services.processing import DocumentProcessingService
+from app.services.reviews import FieldReviewService, ReviewValidationError
 from app.services.storage.local import LocalStorageService, sanitize_filename
 from app.services.verification import (
     StoredSubmissionVerification,
@@ -52,6 +58,7 @@ from app.services.workflows import WorkflowService
 router = APIRouter()
 workflow_service = WorkflowService()
 submission_verification_service = SubmissionVerificationService()
+field_review_service = FieldReviewService()
 
 
 def demo_user(db: Session) -> User:
@@ -319,7 +326,11 @@ def list_documents(project_id: uuid.UUID, db: Session = Depends(get_db)):
 def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
     document = db.scalar(
         select(Document)
-        .options(selectinload(Document.extracted_fields), selectinload(Document.validation_results))
+        .options(
+            selectinload(Document.extracted_fields),
+            selectinload(Document.validation_results),
+            selectinload(Document.field_reviews),
+        )
         .where(Document.id == document_id)
     )
     if not document:
@@ -339,6 +350,26 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
         issues=[row.code for row in document.validation_results if not row.passed],
     )
     detail.missing_expected_fields = canonical.missing_expected_fields
+    current_reviews = {
+        item.field_name: item
+        for item in document.field_reviews
+        if item.is_current and item.processing_version == document.processing_version
+    }
+    detail.extracted_fields = []
+    for item in document.extracted_fields:
+        effective = field_review_service.resolver.resolve(
+            item, current_reviews.get(item.field_name), document.processing_version
+        )
+        field_read = FieldRead.model_validate(item)
+        field_read.evidence_assessment = effective.assessment.state
+        field_read.assessment_reasons = list(effective.assessment.reasons)
+        field_read.policy_version = effective.assessment.policy_version
+        field_read.effective_normalized_value = effective.normalized_value
+        field_read.effective_source = effective.source
+        field_read.current_review_decision = (
+            FieldReviewDecision(effective.review.decision) if effective.review else None
+        )
+        detail.extracted_fields.append(field_read)
     return detail
 
 
@@ -389,3 +420,51 @@ def verification(project_id: uuid.UUID, db: Session = Depends(get_db)):
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
     stored = submission_verification_service.get_latest(db, project_id)
     return _verification_read(project, stored)
+
+
+@router.get("/projects/{project_id}/review-items", response_model=list[ReviewItemRead])
+def review_items(project_id: uuid.UUID, db: Session = Depends(get_db)):
+    items = field_review_service.review_items(db, project_id)
+    if items is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
+    return items
+
+
+@router.get("/projects/{project_id}/reviews", response_model=list[FieldReviewRead])
+def list_reviews(
+    project_id: uuid.UUID,
+    include_history: bool = Query(default=False),
+    db: Session = Depends(get_db),
+):
+    if db.get(Project, project_id) is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
+    return field_review_service.list_reviews(db, project_id, include_history=include_history)
+
+
+@router.post(
+    "/projects/{project_id}/documents/{document_id}/fields/{field_name}/review",
+    response_model=FieldReviewRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def review_field(
+    project_id: uuid.UUID,
+    document_id: uuid.UUID,
+    field_name: str,
+    payload: FieldReviewCreate,
+    db: Session = Depends(get_db),
+):
+    try:
+        target = field_review_service.target(db, project_id, document_id, field_name)
+        if target is None:
+            raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Review target not found", 404)
+        return field_review_service.submit(
+            db,
+            target,
+            decision=payload.decision,
+            corrected_value=payload.corrected_value,
+            reviewer_label=payload.reviewer_label,
+            note=payload.note,
+        )
+    except ReviewValidationError as exc:
+        db.rollback()
+        raise api_error(ApiErrorCode.VALIDATION_FAILED, str(exc), 400) from exc

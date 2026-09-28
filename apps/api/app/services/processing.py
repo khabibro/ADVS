@@ -35,6 +35,7 @@ from app.models.entities import (
     ValidationResult,
     ValidationRule,
 )
+from app.services.reviews import invalidate_document_reviews
 from app.services.storage.local import LocalStorageService
 from app.services.verification import invalidate_document_project_verification
 
@@ -86,6 +87,7 @@ class DocumentProcessingService:
                 processing_status=ProcessingStatus.PREPROCESSING,
                 error_code=None,
                 error_message=None,
+                processing_version=Document.processing_version + 1,
             )
             .returning(Document.id)
         )
@@ -93,6 +95,7 @@ class DocumentProcessingService:
         if claimed_document_id is None:
             db.refresh(document)
             return document
+        invalidate_document_reviews(db, document.id)
         invalidate_document_project_verification(db, document)
         db.commit()
         db.refresh(document)

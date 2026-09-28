@@ -31,10 +31,12 @@ from app.models.entities import (
     Checklist,
     Document,
     DocumentRequirement,
+    FieldReview,
     Project,
     Submission,
     ValidationResult,
 )
+from app.services.reviews import EffectiveFieldResolver
 
 SUBMISSION_SCOPE = "SUBMISSION"
 
@@ -72,6 +74,7 @@ class SubmissionVerificationService:
 
     def __init__(self) -> None:
         self.engine = SubmissionVerificationEngine()
+        self.field_resolver = EffectiveFieldResolver()
 
     def verify(
         self, db: Session, project_id: uuid.UUID, evaluation_date: date
@@ -187,25 +190,51 @@ class SubmissionVerificationService:
             .where(Submission.project_id == project_id)
             .order_by(Document.created_at, Document.id)
         ).all()
-        return [
-            DocumentSnapshot(
-                id=row.id,
-                document_type=DocumentType(row.document_type),
-                processing_status=ProcessingStatus(row.processing_status),
-                checksum_sha256=row.checksum_sha256,
-                fields={
-                    item.field_name: FieldSnapshot(
-                        id=item.id,
-                        field_name=item.field_name,
-                        normalized_value=item.normalized_value,
-                        needs_review=item.needs_review,
-                        evidence_available=bool(item.evidence),
-                    )
-                    for item in row.extracted_fields
-                },
+        document_ids = [row.id for row in rows]
+        reviews = (
+            db.scalars(
+                select(FieldReview).where(
+                    FieldReview.document_id.in_(document_ids), FieldReview.is_current.is_(True)
+                )
+            ).all()
+            if document_ids
+            else []
+        )
+        reviews_by_target = {(item.document_id, item.field_name): item for item in reviews}
+        snapshots: list[DocumentSnapshot] = []
+        for row in rows:
+            fields: dict[str, FieldSnapshot] = {}
+            machine_by_name = {item.field_name: item for item in row.extracted_fields}
+            field_names = set(machine_by_name) | {
+                field_name
+                for (document_id, field_name), review in reviews_by_target.items()
+                if document_id == row.id and review.processing_version == row.processing_version
+            }
+            for field_name in field_names:
+                machine = machine_by_name.get(field_name)
+                review = reviews_by_target.get((row.id, field_name))
+                effective = self.field_resolver.resolve(machine, review, row.processing_version)
+                fields[field_name] = FieldSnapshot(
+                    id=machine.id if machine else None,
+                    field_name=field_name,
+                    normalized_value=effective.normalized_value,
+                    needs_review=machine.needs_review if machine else True,
+                    evidence_available=bool(machine and machine.evidence),
+                    assessment_state=effective.assessment.state,
+                    assessment_reasons=effective.assessment.reasons,
+                    effective_source=effective.source,
+                    review_id=effective.review.id if effective.review else None,
+                )
+            snapshots.append(
+                DocumentSnapshot(
+                    id=row.id,
+                    document_type=DocumentType(row.document_type),
+                    processing_status=ProcessingStatus(row.processing_status),
+                    checksum_sha256=row.checksum_sha256,
+                    fields=fields,
+                )
             )
-            for row in rows
-        ]
+        return snapshots
 
     def _persist(
         self,

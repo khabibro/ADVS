@@ -752,6 +752,173 @@
         }
       }
     },
+    "/api/v1/projects/{project_id}/review-items": {
+      "get": {
+        "summary": "Review Items",
+        "operationId": "review_items_api_v1_projects__project_id__review_items_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReviewItemRead"
+                  },
+                  "title": "Response Review Items Api V1 Projects  Project Id  Review Items Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/reviews": {
+      "get": {
+        "summary": "List Reviews",
+        "operationId": "list_reviews_api_v1_projects__project_id__reviews_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "include_history",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include History"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FieldReviewRead"
+                  },
+                  "title": "Response List Reviews Api V1 Projects  Project Id  Reviews Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/documents/{document_id}/fields/{field_name}/review": {
+      "post": {
+        "summary": "Review Field",
+        "operationId": "review_field_api_v1_projects__project_id__documents__document_id__fields__field_name__review_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Document Id"
+            }
+          },
+          {
+            "name": "field_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Field Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldReviewCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldReviewRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Root Health",
@@ -1121,6 +1288,36 @@
         ],
         "title": "DocumentType"
       },
+      "EffectiveValueSource": {
+        "type": "string",
+        "enum": [
+          "MACHINE",
+          "HUMAN_CONFIRMED",
+          "HUMAN_CORRECTED",
+          "UNAVAILABLE"
+        ],
+        "title": "EffectiveValueSource"
+      },
+      "EvidenceAssessmentReason": {
+        "type": "string",
+        "enum": [
+          "FIELD_MISSING",
+          "EVIDENCE_MISSING",
+          "OCR_CONFIDENCE_UNAVAILABLE",
+          "OCR_CONFIDENCE_BELOW_POLICY",
+          "EXTRACTION_MARKED_FOR_REVIEW"
+        ],
+        "title": "EvidenceAssessmentReason"
+      },
+      "EvidenceAssessmentState": {
+        "type": "string",
+        "enum": [
+          "SUFFICIENT",
+          "REVIEW_REQUIRED",
+          "UNAVAILABLE"
+        ],
+        "title": "EvidenceAssessmentState"
+      },
       "EvidenceRead": {
         "properties": {
           "page_number": {
@@ -1172,6 +1369,18 @@
       },
       "FieldRead": {
         "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
           "field_name": {
             "type": "string",
             "title": "Field Name"
@@ -1248,6 +1457,66 @@
               }
             ],
             "title": "Evidence"
+          },
+          "evidence_assessment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidenceAssessmentState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assessment_reasons": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceAssessmentReason"
+            },
+            "type": "array",
+            "title": "Assessment Reasons",
+            "default": []
+          },
+          "policy_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Version"
+          },
+          "effective_normalized_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Normalized Value"
+          },
+          "effective_source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EffectiveValueSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "current_review_decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FieldReviewDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -1259,6 +1528,242 @@
           "needs_review"
         ],
         "title": "FieldRead"
+      },
+      "FieldReviewCreate": {
+        "properties": {
+          "decision": {
+            "$ref": "#/components/schemas/FieldReviewDecision"
+          },
+          "corrected_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corrected Value"
+          },
+          "reviewer_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer Label"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "FieldReviewCreate"
+      },
+      "FieldReviewDecision": {
+        "type": "string",
+        "enum": [
+          "CONFIRMED",
+          "CORRECTED",
+          "REJECTED",
+          "CANNOT_DETERMINE"
+        ],
+        "title": "FieldReviewDecision"
+      },
+      "FieldReviewRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Id"
+          },
+          "extracted_field_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extracted Field Id"
+          },
+          "field_name": {
+            "type": "string",
+            "title": "Field Name"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/FieldReviewDecision"
+          },
+          "original_raw_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Raw Value"
+          },
+          "original_normalized_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Normalized Value"
+          },
+          "original_evidence_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Evidence Fingerprint"
+          },
+          "reviewed_raw_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed Raw Value"
+          },
+          "reviewed_normalized_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed Normalized Value"
+          },
+          "reviewer_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer Label"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "processing_version": {
+            "type": "integer",
+            "title": "Processing Version"
+          },
+          "policy_version": {
+            "type": "string",
+            "title": "Policy Version"
+          },
+          "is_current": {
+            "type": "boolean",
+            "title": "Is Current"
+          },
+          "reviewed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Reviewed At"
+          },
+          "stale_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stale At"
+          },
+          "superseded_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Superseded At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "project_id",
+          "document_id",
+          "extracted_field_id",
+          "field_name",
+          "decision",
+          "original_raw_value",
+          "original_normalized_value",
+          "original_evidence_fingerprint",
+          "reviewed_raw_value",
+          "reviewed_normalized_value",
+          "reviewer_label",
+          "note",
+          "processing_version",
+          "policy_version",
+          "is_current",
+          "reviewed_at",
+          "stale_at",
+          "superseded_at"
+        ],
+        "title": "FieldReviewRead"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1404,6 +1909,165 @@
           "created_at"
         ],
         "title": "ProjectRead"
+      },
+      "ReviewItemRead": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Id"
+          },
+          "document_type": {
+            "$ref": "#/components/schemas/DocumentType"
+          },
+          "field_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Id"
+          },
+          "field_name": {
+            "type": "string",
+            "title": "Field Name"
+          },
+          "machine_raw_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Machine Raw Value"
+          },
+          "machine_normalized_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Machine Normalized Value"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/EvidenceRead"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
+          },
+          "assessment_state": {
+            "$ref": "#/components/schemas/EvidenceAssessmentState"
+          },
+          "assessment_reasons": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceAssessmentReason"
+            },
+            "type": "array",
+            "title": "Assessment Reasons"
+          },
+          "policy_version": {
+            "type": "string",
+            "title": "Policy Version"
+          },
+          "issue_code": {
+            "type": "string",
+            "title": "Issue Code"
+          },
+          "affects_verification": {
+            "type": "boolean",
+            "title": "Affects Verification"
+          },
+          "queue_status": {
+            "type": "string",
+            "title": "Queue Status"
+          },
+          "current_review_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Review Id"
+          },
+          "current_review_decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FieldReviewDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "effective_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Value"
+          },
+          "effective_source": {
+            "$ref": "#/components/schemas/EffectiveValueSource"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_id",
+          "document_type",
+          "field_id",
+          "field_name",
+          "machine_raw_value",
+          "machine_normalized_value",
+          "confidence",
+          "evidence",
+          "assessment_state",
+          "assessment_reasons",
+          "policy_version",
+          "issue_code",
+          "affects_verification",
+          "queue_status",
+          "current_review_id",
+          "current_review_decision",
+          "effective_value",
+          "effective_source"
+        ],
+        "title": "ReviewItemRead"
       },
       "RuleEvaluationRead": {
         "properties": {

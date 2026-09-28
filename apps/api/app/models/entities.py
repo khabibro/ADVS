@@ -1,7 +1,18 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, String, Text, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
@@ -99,6 +110,7 @@ class Document(Base, TimestampMixin):
     classification_meta: Mapped[dict | None] = mapped_column(JSONType, nullable=True)
     error_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    processing_version: Mapped[int] = mapped_column(Integer, default=0)
     submission = relationship("Submission", back_populates="documents")
     ocr_results = relationship("OCRResult", back_populates="document", cascade="all, delete-orphan")
     extracted_fields = relationship(
@@ -107,6 +119,7 @@ class Document(Base, TimestampMixin):
     validation_results = relationship(
         "ValidationResult", back_populates="document", cascade="all, delete-orphan"
     )
+    field_reviews = relationship("FieldReview", back_populates="document")
     __table_args__ = (
         Index("ix_documents_submission_checksum", "submission_id", "checksum_sha256"),
     )
@@ -139,6 +152,43 @@ class ExtractedField(Base, TimestampMixin):
     source_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     evidence: Mapped[list | None] = mapped_column(JSONType, nullable=True)
     document = relationship("Document", back_populates="extracted_fields")
+
+
+class FieldReview(Base, TimestampMixin):
+    __tablename__ = "field_reviews"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
+    document_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("documents.id"), index=True)
+    extracted_field_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("extracted_fields.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    field_name: Mapped[str] = mapped_column(String(120), index=True)
+    decision: Mapped[str] = mapped_column(String(30), index=True)
+    original_raw_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    original_normalized_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    original_evidence_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    reviewed_raw_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reviewed_normalized_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reviewer_label: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    note: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    processing_version: Mapped[int] = mapped_column(Integer)
+    policy_version: Mapped[str] = mapped_column(String(60))
+    is_current: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    reviewed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    stale_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    superseded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    document = relationship("Document", back_populates="field_reviews")
+    extracted_field = relationship("ExtractedField")
+    __table_args__ = (
+        Index(
+            "uq_field_reviews_current_target",
+            "document_id",
+            "field_name",
+            unique=True,
+            sqlite_where=text("is_current = 1"),
+            postgresql_where=text("is_current = true"),
+        ),
+    )
 
 
 class ValidationResult(Base, TimestampMixin):

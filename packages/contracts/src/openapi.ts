@@ -248,6 +248,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/review-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Review Items */
+        get: operations["review_items_api_v1_projects__project_id__review_items_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Reviews */
+        get: operations["list_reviews_api_v1_projects__project_id__reviews_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/documents/{document_id}/fields/{field_name}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Review Field */
+        post: operations["review_field_api_v1_projects__project_id__documents__document_id__fields__field_name__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -407,6 +458,21 @@ export interface components {
          * @enum {string}
          */
         DocumentType: "GRADUATION_CERTIFICATE" | "CAREER_CERTIFICATE" | "BUSINESS_REGISTRATION_CERTIFICATE" | "SME_CONFIRMATION_CERTIFICATE" | "NATIONAL_TAX_PAYMENT_CERTIFICATE" | "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE" | "ENROLLMENT_CERTIFICATE" | "TRANSCRIPT" | "UNKNOWN";
+        /**
+         * EffectiveValueSource
+         * @enum {string}
+         */
+        EffectiveValueSource: "MACHINE" | "HUMAN_CONFIRMED" | "HUMAN_CORRECTED" | "UNAVAILABLE";
+        /**
+         * EvidenceAssessmentReason
+         * @enum {string}
+         */
+        EvidenceAssessmentReason: "FIELD_MISSING" | "EVIDENCE_MISSING" | "OCR_CONFIDENCE_UNAVAILABLE" | "OCR_CONFIDENCE_BELOW_POLICY" | "EXTRACTION_MARKED_FOR_REVIEW";
+        /**
+         * EvidenceAssessmentState
+         * @enum {string}
+         */
+        EvidenceAssessmentState: "SUFFICIENT" | "REVIEW_REQUIRED" | "UNAVAILABLE";
         /** EvidenceRead */
         EvidenceRead: {
             /** Page Number */
@@ -423,6 +489,8 @@ export interface components {
         };
         /** FieldRead */
         FieldRead: {
+            /** Id */
+            id?: string | null;
             /** Field Name */
             field_name: string;
             /** Raw Value */
@@ -439,6 +507,85 @@ export interface components {
             source_text?: string | null;
             /** Evidence */
             evidence?: components["schemas"]["EvidenceRead"][] | null;
+            evidence_assessment?: components["schemas"]["EvidenceAssessmentState"] | null;
+            /**
+             * Assessment Reasons
+             * @default []
+             */
+            assessment_reasons: components["schemas"]["EvidenceAssessmentReason"][];
+            /** Policy Version */
+            policy_version?: string | null;
+            /** Effective Normalized Value */
+            effective_normalized_value?: string | null;
+            effective_source?: components["schemas"]["EffectiveValueSource"] | null;
+            current_review_decision?: components["schemas"]["FieldReviewDecision"] | null;
+        };
+        /** FieldReviewCreate */
+        FieldReviewCreate: {
+            decision: components["schemas"]["FieldReviewDecision"];
+            /** Corrected Value */
+            corrected_value?: string | null;
+            /** Reviewer Label */
+            reviewer_label?: string | null;
+            /** Note */
+            note?: string | null;
+        };
+        /**
+         * FieldReviewDecision
+         * @enum {string}
+         */
+        FieldReviewDecision: "CONFIRMED" | "CORRECTED" | "REJECTED" | "CANNOT_DETERMINE";
+        /** FieldReviewRead */
+        FieldReviewRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Extracted Field Id */
+            extracted_field_id: string | null;
+            /** Field Name */
+            field_name: string;
+            decision: components["schemas"]["FieldReviewDecision"];
+            /** Original Raw Value */
+            original_raw_value: string | null;
+            /** Original Normalized Value */
+            original_normalized_value: string | null;
+            /** Original Evidence Fingerprint */
+            original_evidence_fingerprint: string | null;
+            /** Reviewed Raw Value */
+            reviewed_raw_value: string | null;
+            /** Reviewed Normalized Value */
+            reviewed_normalized_value: string | null;
+            /** Reviewer Label */
+            reviewer_label: string | null;
+            /** Note */
+            note: string | null;
+            /** Processing Version */
+            processing_version: number;
+            /** Policy Version */
+            policy_version: string;
+            /** Is Current */
+            is_current: boolean;
+            /**
+             * Reviewed At
+             * Format: date-time
+             */
+            reviewed_at: string;
+            /** Stale At */
+            stale_at: string | null;
+            /** Superseded At */
+            superseded_at: string | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -488,6 +635,44 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** ReviewItemRead */
+        ReviewItemRead: {
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            document_type: components["schemas"]["DocumentType"];
+            /** Field Id */
+            field_id: string | null;
+            /** Field Name */
+            field_name: string;
+            /** Machine Raw Value */
+            machine_raw_value: string | null;
+            /** Machine Normalized Value */
+            machine_normalized_value: string | null;
+            /** Confidence */
+            confidence: number | null;
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRead"][] | null;
+            assessment_state: components["schemas"]["EvidenceAssessmentState"];
+            /** Assessment Reasons */
+            assessment_reasons: components["schemas"]["EvidenceAssessmentReason"][];
+            /** Policy Version */
+            policy_version: string;
+            /** Issue Code */
+            issue_code: string;
+            /** Affects Verification */
+            affects_verification: boolean;
+            /** Queue Status */
+            queue_status: string;
+            /** Current Review Id */
+            current_review_id: string | null;
+            current_review_decision: components["schemas"]["FieldReviewDecision"] | null;
+            /** Effective Value */
+            effective_value: string | null;
+            effective_source: components["schemas"]["EffectiveValueSource"];
         };
         /** RuleEvaluationRead */
         RuleEvaluationRead: {
@@ -1234,6 +1419,107 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SubmissionVerificationRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_items_api_v1_projects__project_id__review_items_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewItemRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_reviews_api_v1_projects__project_id__reviews_get: {
+        parameters: {
+            query?: {
+                include_history?: boolean;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldReviewRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_field_api_v1_projects__project_id__documents__document_id__fields__field_name__review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                document_id: string;
+                field_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldReviewCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldReviewRead"];
                 };
             };
             /** @description Validation Error */

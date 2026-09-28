@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from typing import Self
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.core.domain import (
     DOCUMENT_TYPE_DISPLAY_NAMES,
@@ -10,6 +10,12 @@ from app.core.domain import (
     OverallStatus,
     RuleOutcome,
     RuleType,
+)
+from app.document_intelligence.evidence_sufficiency import (
+    EffectiveValueSource,
+    EvidenceAssessmentReason,
+    EvidenceAssessmentState,
+    FieldReviewDecision,
 )
 
 
@@ -104,6 +110,7 @@ class EvidenceRead(BaseModel):
 
 
 class FieldRead(BaseModel):
+    id: uuid.UUID | None = None
     field_name: str
     raw_value: str | None
     normalized_value: str | None
@@ -112,7 +119,72 @@ class FieldRead(BaseModel):
     extraction_method: str | None = None
     source_text: str | None = None
     evidence: list[EvidenceRead] | None = None
+    evidence_assessment: EvidenceAssessmentState | None = None
+    assessment_reasons: list[EvidenceAssessmentReason] = []
+    policy_version: str | None = None
+    effective_normalized_value: str | None = None
+    effective_source: EffectiveValueSource | None = None
+    current_review_decision: FieldReviewDecision | None = None
     model_config = ConfigDict(from_attributes=True)
+
+
+class FieldReviewCreate(BaseModel):
+    decision: FieldReviewDecision
+    corrected_value: str | None = None
+    reviewer_label: str | None = Field(default=None, max_length=120)
+    note: str | None = Field(default=None, max_length=500)
+
+    @model_validator(mode="after")
+    def validate_decision_value(self) -> Self:
+        if self.decision == FieldReviewDecision.CORRECTED and not self.corrected_value:
+            raise ValueError("CORRECTED requires corrected_value")
+        if self.decision != FieldReviewDecision.CORRECTED and self.corrected_value is not None:
+            raise ValueError(f"{self.decision.value} does not accept corrected_value")
+        return self
+
+
+class FieldReviewRead(BaseModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    document_id: uuid.UUID
+    extracted_field_id: uuid.UUID | None
+    field_name: str
+    decision: FieldReviewDecision
+    original_raw_value: str | None
+    original_normalized_value: str | None
+    original_evidence_fingerprint: str | None
+    reviewed_raw_value: str | None
+    reviewed_normalized_value: str | None
+    reviewer_label: str | None
+    note: str | None
+    processing_version: int
+    policy_version: str
+    is_current: bool
+    reviewed_at: datetime
+    stale_at: datetime | None
+    superseded_at: datetime | None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ReviewItemRead(BaseModel):
+    document_id: uuid.UUID
+    document_type: DocumentType
+    field_id: uuid.UUID | None
+    field_name: str
+    machine_raw_value: str | None
+    machine_normalized_value: str | None
+    confidence: float | None
+    evidence: list[EvidenceRead] | None
+    assessment_state: EvidenceAssessmentState
+    assessment_reasons: list[EvidenceAssessmentReason]
+    policy_version: str
+    issue_code: str
+    affects_verification: bool
+    queue_status: str
+    current_review_id: uuid.UUID | None
+    current_review_decision: FieldReviewDecision | None
+    effective_value: str | None
+    effective_source: EffectiveValueSource
 
 
 class ValidationRead(BaseModel):

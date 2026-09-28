@@ -16,6 +16,11 @@ from app.core.domain import (
     RuleType,
     Severity,
 )
+from app.document_intelligence.evidence_sufficiency import (
+    EffectiveValueSource,
+    EvidenceAssessmentReason,
+    EvidenceAssessmentState,
+)
 
 SUBMISSION_VERIFICATION_VERSION = "rules-v1"
 
@@ -31,11 +36,15 @@ class VerificationContext:
 
 @dataclass(frozen=True)
 class FieldSnapshot:
-    id: uuid.UUID
+    id: uuid.UUID | None
     field_name: str
     normalized_value: str | None
     needs_review: bool
     evidence_available: bool
+    assessment_state: EvidenceAssessmentState | None = None
+    assessment_reasons: tuple[EvidenceAssessmentReason, ...] = ()
+    effective_source: EffectiveValueSource = EffectiveValueSource.MACHINE
+    review_id: uuid.UUID | None = None
 
 
 @dataclass(frozen=True)
@@ -611,16 +620,24 @@ class SubmissionVerificationEngine:
         if (
             snapshot is not None
             and snapshot.normalized_value is not None
-            and not snapshot.needs_review
-            and snapshot.evidence_available
+            and (
+                snapshot.assessment_state == EvidenceAssessmentState.SUFFICIENT
+                or (
+                    snapshot.assessment_state is None
+                    and not snapshot.needs_review
+                    and snapshot.evidence_available
+                )
+            )
         ):
             return None
         issue = VerificationIssue(
             code=(
                 "OCR_UNCERTAIN"
                 if snapshot is not None
-                and snapshot.normalized_value is not None
-                and snapshot.needs_review
+                and (
+                    snapshot.assessment_state == EvidenceAssessmentState.REVIEW_REQUIRED
+                    or (snapshot.assessment_state is None and snapshot.needs_review)
+                )
                 else "REQUIRED_FIELD_UNRESOLVED"
             ),
             status_effect=OverallStatus.REVIEW_REQUIRED,

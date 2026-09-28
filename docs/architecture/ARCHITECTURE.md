@@ -13,6 +13,8 @@ flowchart LR
   API --> EXT[ExtractorRegistry]
   API --> NORM[field_normalizer]
   API --> VAL[ValidationEngine]
+  API --> EVIDENCE[EvidenceSufficiencyPolicy]
+  API --> REVIEW[FieldReviewService]
 ```
 
 Frontend uses App Router pages and a centralized API client. Backend routes stay thin and delegate to `services/processing.py` (`DocumentProcessingService`), which coordinates -- but does not itself implement -- each pipeline stage. PostgreSQL is the intended database; SQLite is used for local dev/tests only.
@@ -46,6 +48,7 @@ extraction/     base.py (BaseDocumentExtractor, label-proximity helpers)
                 registry.py (ExtractorRegistry)
 normalization/  field_normalizer.py (normalize_date/normalize_business_number/normalize_text_field)
 validation/     engine.py (ValidationEngine, ConfiguredRule, rule-type dispatch)
+evidence_sufficiency.py (field evidence assessment policy and effective-value source types)
 ```
 
 Each stage communicates through typed dataclasses (`OCRPage`, `ClassificationResult`, `ExtractedValue`, `ValidationIssue`) -- nothing downstream of OCR touches raw provider responses, and nothing outside `validation/` re-implements a rule's pass/fail logic.
@@ -82,6 +85,27 @@ Evidence conventions:
 - A field supported by multiple lines uses the minimum available supporting-line confidence. This
   deliberately prevents a high page average from hiding a weak supporting observation.
 
+## Evidence sufficiency and human review
+
+`EvidenceSufficiencyPolicy` is the single operational trust policy used before a rule consumes a
+machine-extracted field. It distinguishes `SUFFICIENT`, `REVIEW_REQUIRED`, and `UNAVAILABLE`.
+Populated values require provenance; `needs_review=true` blocks automatic use. OCR evidence uses a
+documented field-level recognition-confidence floor, while embedded PDF text may legitimately have
+null confidence. Confidence is not treated as correctness probability, and page-average or
+classification confidence does not establish field trust.
+
+Only fields referenced by the active workflow's submission rules can block project verification.
+`FieldReview` persists `CONFIRMED`, `CORRECTED`, `REJECTED`, or `CANNOT_DETERMINE` separately from
+`ExtractedField`. The centralized effective-value resolver selects a current human correction,
+confirmed machine value, sufficiently evidenced machine value, or unavailable value in that order.
+Corrections reuse canonical normalization; no review mutates OCR confidence, evidence, or machine
+raw/normalized values.
+
+Review writes and submission-verification invalidation share one transaction. The client explicitly
+re-runs verification; OCR is not rerun. Each processing attempt increments `Document.processing_version`
+and conservatively marks current reviews stale before replacing derived extraction rows. Workflow
+rule changes invalidate verification but do not invalidate evidence reviews.
+
 ## Error taxonomy vs. UNKNOWN vs. validation failure
 
 These three are kept structurally distinct (see `docs/domains/ocr.md`, `docs/domains/classification.md`, `docs/domains/validation.md` for detail):
@@ -100,4 +124,4 @@ The target business workflow will use 사업자등록증 as its reference identi
 
 ## Known limitations
 
-No async worker/queue (processing is synchronous per request); no real-world accuracy benchmark for classification or extraction yet (heuristics only, measured against a synthetic benchmark -- see `evaluation/README.md` and `evaluation/reports/`); admin app remains a structural shell; no auth/RBAC.
+No async worker/queue (processing is synchronous per request); no real-world accuracy benchmark for classification or extraction yet (heuristics only, measured against a synthetic benchmark -- see `evaluation/README.md` and `evaluation/reports/`); admin app remains a structural shell; no auth/RBAC. Reviewer labels are unauthenticated metadata, concurrent review replacement is last-commit-wins, and reviews are not legal or official approvals.

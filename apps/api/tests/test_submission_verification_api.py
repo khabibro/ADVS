@@ -117,7 +117,15 @@ def _document(db_session, submission, document_type: DocumentType, values: dict[
                 raw_value=value,
                 normalized_value=value,
                 needs_review=value is None,
-                evidence=[{"page_number": 1}] if value is not None else None,
+                evidence=[
+                    {
+                        "page_number": 1,
+                        "source_kind": "embedded_pdf_text",
+                        "confidence": None,
+                    }
+                ]
+                if value is not None
+                else None,
             )
         )
     db_session.flush()
