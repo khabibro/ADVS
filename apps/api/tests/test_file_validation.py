@@ -13,6 +13,10 @@ def test_sanitize_filename_removes_path() -> None:
     assert sanitize_filename("../../secret.pdf") == "secret.pdf"
 
 
+def test_sanitize_filename_preserves_safe_korean_display_name() -> None:
+    assert sanitize_filename("../재학증명서_정상.pdf") == "재학증명서_정상.pdf"
+
+
 def _upload(name: str, content: bytes, content_type: str) -> UploadFile:
     return UploadFile(
         file=io.BytesIO(content),

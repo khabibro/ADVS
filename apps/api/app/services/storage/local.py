@@ -1,5 +1,6 @@
 import hashlib
 import re
+import unicodedata
 import uuid
 from pathlib import Path
 
@@ -25,8 +26,12 @@ _MAX_SIGNATURE_BYTES = 8
 
 
 def sanitize_filename(name: str) -> str:
-    stem = Path(name).name
-    return re.sub(r"[^A-Za-z0-9._-]", "_", stem)[:160] or "upload"
+    stem = unicodedata.normalize("NFC", Path(name).name)
+    # Storage uses a generated UUID. This value is only the safe display name,
+    # so retain Korean and other Unicode letters while stripping controls and
+    # filesystem-hostile punctuation.
+    stem = "".join(character for character in stem if unicodedata.category(character)[0] != "C")
+    return re.sub(r'[\\/:*?"<>|]', "_", stem).strip(". ")[:160] or "upload"
 
 
 def _matches_signature(header: bytes, ext: str) -> bool:

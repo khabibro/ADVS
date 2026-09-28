@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
+    "class-variance-authority": "^0.7.1",
     "typescript": "^5.5.4"
   },
   "scripts": {
@@ -25,4 +26,3 @@
     "build": "tsc --noEmit"
   }
 }
-

@@ -1,33 +1,70 @@
-import type { Checklist, Document, DocumentDetail, Project, ProjectCreate, Workflow } from "@/types/api";
+import {
+  apiJsonRequest,
+  apiRequest,
+  apiUploadRequest,
+} from "@/lib/api-client";
+import type {
+  Document,
+  DocumentDetail,
+  FieldReview,
+  FieldReviewCreate,
+  Project,
+  ProjectCreate,
+  ReviewItem,
+  Verification,
+  Workflow,
+} from "@/types/api";
 
-const BROWSER_API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
-
-function apiBase(): string {
-  return typeof window === "undefined"
-    ? (process.env.API_URL ?? BROWSER_API_BASE)
-    : BROWSER_API_BASE;
-}
-
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBase()}${path}`, { ...init, cache: "no-store" });
-  if (!response.ok) throw new Error(`API error ${response.status}`);
-  return response.json() as Promise<T>;
-}
-
+/**
+ * Typed endpoint map. Components call these functions and never build URLs.
+ *
+ * Mutation semantics that matter to the UI:
+ * - `uploadDocument` stores a file only; it does not analyse anything.
+ * - `processDocument` runs the full pipeline and resolves with the terminal
+ *   document. The backend claims each document atomically, so a repeated call
+ *   returns the in-flight document instead of running the pipeline twice.
+ * - Any input mutation invalidates submission verification server-side.
+ */
 export const api = {
-  projects: () => request<Project[]>("/projects"),
-  project: (id: string) => request<Project>(`/projects/${id}`),
-  createProject: (body: ProjectCreate) => request<Project>("/projects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
-  workflows: () => request<Workflow[]>("/workflows"),
-  workflow: (id: string) => request<Workflow>(`/workflows/${id}`),
-  checklists: () => request<Checklist[]>("/checklists"),
-  checklist: (id: string) => request<Checklist>(`/checklists/${id}`),
-  documents: (projectId: string) => request<Document[]>(`/projects/${projectId}/documents`),
-  document: (id: string) => request<DocumentDetail>(`/documents/${id}`),
-  processDocument: (id: string) => request<Document>(`/documents/${id}/process`, { method: "POST" }),
-  uploadDocument: async (projectId: string, file: File) => {
-    const form = new FormData();
-    form.append("file", file);
-    return request<Document>(`/projects/${projectId}/documents`, { method: "POST", body: form });
-  },
+  workflows: () => apiRequest<Workflow[]>("/workflows"),
+
+  projects: () => apiRequest<Project[]>("/projects"),
+  project: (projectId: string) =>
+    apiRequest<Project>(`/projects/${projectId}`),
+  createProject: (body: ProjectCreate) =>
+    apiJsonRequest<Project>("/projects", "POST", body),
+
+  documents: (projectId: string) =>
+    apiRequest<Document[]>(`/projects/${projectId}/documents`),
+  document: (documentId: string) =>
+    apiRequest<DocumentDetail>(`/documents/${documentId}`),
+  uploadDocument: (projectId: string, file: File) =>
+    apiUploadRequest<Document>(`/projects/${projectId}/documents`, file),
+  processDocument: (documentId: string) =>
+    apiJsonRequest<Document>(`/documents/${documentId}/process`, "POST"),
+
+  verification: (projectId: string) =>
+    apiRequest<Verification>(`/projects/${projectId}/verification`),
+  verify: (projectId: string, evaluationDate: string) =>
+    apiJsonRequest<Verification>(`/projects/${projectId}/verify`, "POST", {
+      evaluation_date: evaluationDate,
+    }),
+
+  reviewItems: (projectId: string) =>
+    apiRequest<ReviewItem[]>(`/projects/${projectId}/review-items`),
+  reviews: (projectId: string, includeHistory = false) =>
+    apiRequest<FieldReview[]>(
+      `/projects/${projectId}/reviews?include_history=${includeHistory}`,
+    ),
+  submitReview: (
+    projectId: string,
+    documentId: string,
+    fieldName: string,
+    body: FieldReviewCreate,
+  ) =>
+    apiJsonRequest<FieldReview>(
+      `/projects/${projectId}/documents/${documentId}/fields/${encodeURIComponent(fieldName)}/review`,
+      "POST",
+      body,
+    ),
 };
