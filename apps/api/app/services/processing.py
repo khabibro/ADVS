@@ -15,10 +15,10 @@ from app.document_intelligence.classification.classifier import (
 )
 from app.document_intelligence.extraction.base import ExtractedValue
 from app.document_intelligence.extraction.registry import ExtractorRegistry
-from app.document_intelligence.ocr.models import OCRDocumentResult, OCRProviderError
+from app.document_intelligence.ocr.models import OCRDocumentResult, OCRPage, OCRProviderError
 from app.document_intelligence.ocr.providers import get_ocr_provider
 from app.document_intelligence.ocr.text_assembly import assemble_document_text
-from app.document_intelligence.preprocessing.processor import PdfProcessor
+from app.document_intelligence.preprocessing.processor import PdfProcessor, is_meaningful_text
 from app.document_intelligence.results import CanonicalDocumentResult
 from app.document_intelligence.validation.engine import (
     ConfiguredRule,
@@ -177,28 +177,65 @@ class DocumentProcessingService:
         db.commit()
 
     async def _obtain_source(self, db: Session, document: Document) -> OCRDocumentResult:
-        path = self.storage.path_for(document.storage_key)
-        direct_pages = None
-        if document.mime_type == "application/pdf":
-            pdf_result = self.pdf.extract_text(path)
-            if pdf_result.has_meaningful_text:
-                direct_pages = pdf_result.pages
+        """Choose the source per page, not per document.
 
-        if direct_pages is not None:
-            provider_name = "direct_pdf_text"
-            pages = direct_pages
-            source_path = "embedded_text"
-        else:
+        A single document-level gate is wrong for mixed PDFs: one page with
+        a real text layer made the whole document skip OCR, so every scanned
+        page in the same file silently contributed nothing. Verified on a
+        2-page PDF whose first page had a text layer and whose second page
+        was a real scan -- the scan page yielded 0 characters and every field
+        on it was lost.
+        """
+        path = self.storage.path_for(document.storage_key)
+        embedded_pages: list[OCRPage] = []
+        if document.mime_type == "application/pdf":
+            embedded_pages = self.pdf.extract_text(path).pages
+
+        # Prefer a real text layer page by page: it carries exact characters
+        # and no recognition error. Only pages without a usable layer are
+        # handed to OCR.
+        usable_by_page = {
+            page.page_number: page for page in embedded_pages if is_meaningful_text(page.text)
+        }
+        needs_ocr = [
+            page.page_number for page in embedded_pages if page.page_number not in usable_by_page
+        ]
+        if document.mime_type != "application/pdf":
+            needs_ocr = []
+
+        pages = list(usable_by_page.values())
+        source_path = "embedded_text"
+        provider_name = "direct_pdf_text"
+
+        if needs_ocr:
             self._set_status(db, document, ProcessingStatus.OCR_PROCESSING)
-            pages = await get_ocr_provider(self.settings).extract_document(
+            ocr_pages = await get_ocr_provider(self.settings).extract_document(
                 path, document.mime_type, document.original_filename
             )
-            provider_name = (
-                str(pages[0].metadata.get("provider") or self.settings.ocr_provider)
-                if pages
-                else self.settings.ocr_provider
+            by_page = {page.page_number: page for page in ocr_pages}
+            for page_number in needs_ocr:
+                ocr_page = by_page.get(page_number)
+                if ocr_page is not None:
+                    pages.append(ocr_page)
+            provider_name = str(
+                next(
+                    (
+                        page.metadata.get("provider")
+                        for page in ocr_pages
+                        if page.metadata.get("provider")
+                    ),
+                    self.settings.ocr_provider,
+                )
             )
-            source_path = "ocr"
+            source_path = "mixed" if pages[: len(usable_by_page)] else "ocr"
+
+        pages.sort(key=lambda page: page.page_number)
+        for page in pages:
+            # A mixed document now has pages from two different sources, so
+            # each OCRResult row must record its own provenance rather than
+            # inheriting one document-level provider string.
+            if page.metadata.get("source") != "direct_pdf_text":
+                page.metadata.setdefault("source", "ocr")
 
         result = OCRDocumentResult(
             provider=provider_name,
@@ -213,6 +250,12 @@ class DocumentProcessingService:
                 "source_path": source_path,
                 "provider": provider_name,
                 "page_count": result.page_count,
+                "page_sources": [
+                    "embedded_pdf_text"
+                    if page.metadata.get("source") == "direct_pdf_text"
+                    else "ocr"
+                    for page in pages
+                ],
             },
         )
         return result
@@ -271,10 +314,15 @@ class DocumentProcessingService:
     ) -> None:
         self._delete_derived_rows(db, document.id)
         for page in source_result.pages:
+            page_provider = (
+                "direct_pdf_text"
+                if page.metadata.get("source") == "direct_pdf_text"
+                else source_result.provider
+            )
             db.add(
                 OCRResult(
                     document_id=document.id,
-                    provider=source_result.provider,
+                    provider=page_provider,
                     page_number=page.page_number,
                     normalized_text=page.text,
                     lines=[asdict(line) for line in page.lines],

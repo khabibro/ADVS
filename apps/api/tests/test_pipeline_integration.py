@@ -4,6 +4,7 @@ actual HTTP API, not the service class directly, so it also exercises
 routing, persistence, and response shaping."""
 
 import uuid
+from pathlib import Path
 
 import fitz
 from fastapi.testclient import TestClient
@@ -464,3 +465,67 @@ def test_process_missing_document_returns_safe_404(client: TestClient) -> None:
 
     assert response.status_code == 404
     assert response.json()["detail"]["code"] == "RESOURCE_NOT_FOUND"
+
+
+def test_mixed_pdf_ocrs_only_the_pages_without_a_text_layer(
+    client: TestClient, db_session, monkeypatch
+) -> None:
+    """A PDF can mix a digital page and a scanned page. Routing used to be a
+    single document-level gate, so one usable text page made the whole file
+    skip OCR and every scanned page silently contributed nothing."""
+    import uuid as uuid_module
+
+    from app.models.entities import OCRResult
+
+    calls: list[Path] = []
+
+    class RecordingProvider:
+        async def extract_document(self, path, mime_type, original_filename=""):
+            calls.append(Path(path))
+            return [
+                _page(
+                    1,
+                    ["재학증명서", "성명 홍길동", "학번 202312345"],
+                ),
+                _page(
+                    2,
+                    ["성명 김학생", "입학일자 2023-09-01"],
+                ),
+            ]
+
+    monkeypatch.setattr(
+        "app.services.processing.get_ocr_provider", lambda _settings: RecordingProvider()
+    )
+    project = _create_project(client, db_session, applicant_name="홍길동")
+
+    doc = fitz.open()
+    digital = doc.new_page()
+    digital.insert_text(
+        (72, 72),
+        "사업자등록증\n상호 한빛상사\n사업자등록번호 123-45-67890\n발급일자 2026-01-10",
+        fontsize=12,
+        fontname="korea",
+    )
+    doc.new_page()  # scanned page: image only, no text layer
+    content = doc.tobytes()
+    doc.close()
+
+    document = _upload(client, project["id"], "mixed.pdf", content)
+    processed = _process(client, document["id"])
+
+    assert processed["processing_status"] == "COMPLETED"
+    # The scanned page must have been sent to OCR despite page 1's text layer.
+    assert calls, "OCR provider was never called for the scanned page"
+
+    rows = (
+        db_session.query(OCRResult)
+        .filter_by(document_id=uuid_module.UUID(document["id"]))
+        .order_by(OCRResult.page_number)
+        .all()
+    )
+    assert [row.page_number for row in rows] == [1, 2]
+    # Page 1 keeps the exact embedded text; only page 2 came from OCR.
+    assert rows[0].provider == "direct_pdf_text"
+    assert "한빛상사" in rows[0].normalized_text
+    assert rows[1].provider == "controlled"
+    assert "김학생" in rows[1].normalized_text

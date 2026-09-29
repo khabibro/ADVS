@@ -14,10 +14,13 @@ are hand-assigned by signal strength:
 No LLM. See docs/domains/classification.md.
 """
 
+import logging
 import re
 from dataclasses import dataclass, field
 
 from app.core.domain import DocumentType
+
+logger = logging.getLogger(__name__)
 
 _WHITESPACE_RE = re.compile(r"\s+")
 
@@ -172,7 +175,22 @@ def _alternatives(scores: dict[DocumentType, float]) -> list[ClassificationAlter
 
 class DocumentClassifier:
     def classify(self, text: str, filename: str = "") -> ClassificationResult:
-        haystack = _squash(f"{filename}\n{text}")
+        """Classify from document content only.
+
+        ``filename`` is accepted for call-site compatibility but is
+        deliberately *not* part of the haystack. A filename is metadata the
+        uploader controls, so feeding it to the classifier lets a document
+        be classified by what it is called rather than what it contains, and
+        it silently inflates benchmark accuracy for any sample whose
+        directory encodes its document type. It is recorded in the log for
+        diagnostics instead.
+        """
+        if filename:
+            logger.info(
+                "classification_filename_ignored",
+                extra={"filename_length": len(filename)},
+            )
+        haystack = _squash(text)
         scores: dict[DocumentType, float] = {}
         evidence: dict[DocumentType, list[str]] = {}
         has_strong_signal: dict[DocumentType, bool] = {}

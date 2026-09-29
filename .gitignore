@@ -41,3 +41,6 @@ evaluation/gold/real/**
 # OCR result cache may hold text extracted from real documents.
 evaluation/cache/**
 !evaluation/cache/.gitkeep
+
+# Local audit scratch: raw OCR text / overlays from real (sensitive) documents.
+evaluation/backend_audit/work/

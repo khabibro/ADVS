@@ -1,0 +1,199 @@
+{
+  "schema_version": "1.0",
+  "generated_for": "ADVS backend document-intelligence audit",
+  "privacy_note": "Stores only safe metadata: hashed sample IDs, document types, boolean field presence, error categories. No names, no business numbers, no raw OCR text, no document images.",
+  "sample_id_scheme": "sha256(file_bytes)[:12] -- stable, non-reversible without the file",
+  "samples": [
+    {
+      "sample_id": "a1f4c0e91d2b",
+      "source": "real",
+      "split": "dev",
+      "document_type_gold": "ENROLLMENT_CERTIFICATE",
+      "input_form": "scanned_pdf",
+      "pages": 1,
+      "ground_truth": "MANUALLY_TRANSCRIBED_BY_OWNER_PARTIAL",
+      "ground_truth_coverage": "document_type + student_name + department",
+      "baseline": {
+        "document_type_pred": "UNKNOWN",
+        "classification_confidence": 0.0,
+        "fields_total": 5,
+        "fields_correct": 0,
+        "fields_incorrect_non_null": 0,
+        "fields_missing": 5,
+        "unresolved": 5,
+        "false_populated": 0,
+        "evidence_sufficiency_sufficient_fields": 0,
+        "ocr_ms": 12609,
+        "ocr_lines": 36,
+        "ocr_mean_confidence": 0.9113
+      },
+      "after": {
+        "document_type_pred": "ENROLLMENT_CERTIFICATE",
+        "classification_confidence": 0.757,
+        "fields_total": 5,
+        "fields_correct": 2,
+        "fields_incorrect_non_null": 0,
+        "fields_missing": 3,
+        "unresolved": 3,
+        "false_populated": 0,
+        "evidence_sufficiency_sufficient_fields": 1,
+        "ocr_ms": 14431,
+        "ocr_lines": 32,
+        "ocr_mean_confidence": 0.932
+      },
+      "failures_before": [
+        {
+          "field": "student_name",
+          "earliest_failure_stage": "LAYOUT_LOSS",
+          "secondary_category": "OCR_READING_ORDER",
+          "symptom": "label_present_value_lost",
+          "detail": "OCR returned the row as two boxes ('성' / '명:<name>'). The extractor matched labels against whole lines, so the label '성명' never existed as a contiguous string.",
+          "downstream_consequence": "Field silently unresolved; no evidence, no wrong value.",
+          "solution_category": "LAYOUT_PRESERVING_REPRESENTATION"
+        },
+        {
+          "field": "department",
+          "earliest_failure_stage": "LAYOUT_LOSS",
+          "symptom": "wrong_value_selected",
+          "detail": "Primary department box split into '전' / '공:<primary>'; the secondary '복 수 전 공 :<second major>' stayed intact, so first-match returned the SECOND MAJOR.",
+          "downstream_consequence": "Confidently wrong value in a populated field.",
+          "solution_category": "LAYOUT_PRESERVING_REPRESENTATION + CANDIDATE_RANKING"
+        },
+        {
+          "field": "university_name",
+          "earliest_failure_stage": "LAYOUT_LOSS",
+          "symptom": "wrong_value_selected",
+          "detail": "Letter-spaced document title split into 5 boxes with one mis-recognized ('5명'), so the exact-substring title signal '재학증명서' never matched and the TYPE signal (weight 5.0) was lost.",
+          "downstream_consequence": "Type became UNKNOWN, which disables the entire extractor registry for this document -- every field lost.",
+          "solution_category": "RASTERIZATION_RESOLUTION + LAYOUT_PRESERVING_REPRESENTATION"
+        }
+      ],
+      "failures_after": [
+        {
+          "field": "university_name",
+          "earliest_failure_stage": "LAYOUT_LOSS",
+          "symptom": "unresolved_instead_of_wrong",
+          "detail": "The university name appears only in the signature block as letter-spaced '경 / 북 / 대 / 학 / 교' adjacent to overlapping seal text. The row tail '총' is not a valid institution, so the candidate is rejected rather than repaired.",
+          "downstream_consequence": "Unresolved -> human review. Safe failure, not a confident wrong value.",
+          "solution_category": "NEEDS_LAYOUT_ANCHORED_OR_TEMPLATE_FAMILY_EXTRACTOR (not implemented)"
+        }
+      ]
+    },
+    {
+      "sample_id": "synthetic-control-1",
+      "source": "synthetic_control",
+      "split": "dev",
+      "document_type_gold": "MIXED_PDF_PROBE",
+      "input_form": "synthetic_mixed_pdf",
+      "pages": 2,
+      "ground_truth": "CONSTRUCTED",
+      "baseline": {
+        "routing_decision": "EMBEDDED_TEXT",
+        "page_2_contributed_chars": 0,
+        "page_2_fields_lost": "all"
+      },
+      "after": {
+        "routing_decision": "PER_PAGE_MIXED",
+        "page_1_source": "embedded_pdf_text",
+        "page_2_source": "ocr"
+      },
+      "failures_before": [
+        {
+          "field": "<all page-2 fields>",
+          "earliest_failure_stage": "PDF_ROUTING",
+          "symptom": "entire_page_silently_dropped",
+          "detail": "is_meaningful_text() was evaluated once over the concatenated document text. A 91-character digital text page on page 1 satisfied the gate, so the whole document skipped OCR and the scanned page 2 contributed 0 characters.",
+          "downstream_consequence": "Every field on the scanned page was lost with no error, no warning, and no review flag.",
+          "solution_category": "PAGE_LEVEL_ROUTING"
+        }
+      ],
+      "failures_after": []
+    },
+    {
+      "sample_id": "synthetic-control-2",
+      "source": "synthetic_control",
+      "split": "dev",
+      "document_type_gold": "ENROLLMENT_CERTIFICATE",
+      "input_form": "synthetic_cross_page_probe",
+      "pages": 2,
+      "ground_truth": "CONSTRUCTED",
+      "baseline": {
+        "student_id_value": "POPULATED_ACROSS_PAGES",
+        "evidence_page_span": [1, 2]
+      },
+      "after": {
+        "student_id_value": null,
+        "evidence_page_span": null
+      },
+      "failures_before": [
+        {
+          "field": "student_id",
+          "earliest_failure_stage": "EVIDENCE_ASSOCIATION",
+          "symptom": "cross_page_false_pairing",
+          "detail": "The 'next line' fallback walked a single flattened list of all pages' lines, so a bare label at the bottom of page 1 paired with the first text of page 2.",
+          "downstream_consequence": "A fabricated value with evidence citing two different pages.",
+          "solution_category": "PAGE_SCOPED_OBSERVATIONS"
+        }
+      ],
+      "failures_after": []
+    },
+    {
+      "sample_id": "synthetic-control-3",
+      "source": "synthetic_control",
+      "split": "dev",
+      "document_type_gold": "ENROLLMENT_CERTIFICATE",
+      "input_form": "synthetic_rotated_90",
+      "pages": 1,
+      "ground_truth": "CONSTRUCTED",
+      "baseline": {
+        "recognized_chars": 243,
+        "document_type_pred": "UNKNOWN"
+      },
+      "after": {
+        "recognized_chars": 367,
+        "document_type_pred": "UNKNOWN",
+        "note": "PARTIAL -- orientation retry helps but does not recover the document type. Rotation remains a documented limitation."
+      },
+      "failures_before": [
+        {
+          "field": "<all>",
+          "earliest_failure_stage": "ORIENTATION",
+          "symptom": "degraded_recognition",
+          "detail": "No orientation handling of any kind; PaddleOCR's use_doc_orientation_classify/use_textline_orientation were both hard-disabled.",
+          "downstream_consequence": "Type UNKNOWN; all fields lost.",
+          "solution_category": "CONDITIONAL_PREPROCESSING"
+        }
+      ],
+      "failures_after": [
+        {
+          "field": "<all>",
+          "earliest_failure_stage": "ORIENTATION",
+          "symptom": "still_degraded",
+          "solution_category": "REQUIRES_DEDICATED_ROTATION_HANDLING (not implemented)"
+        }
+      ]
+    }
+  ],
+  "taxonomy_counts_before": {
+    "ORIENTATION": 1,
+    "PDF_ROUTING": 1,
+    "LAYOUT_LOSS": 3,
+    "EVIDENCE_ASSOCIATION": 1,
+    "OCR_RECOGNITION": 0,
+    "FIELD_CANDIDATE_RANKING": 1,
+    "NORMALIZATION": 0,
+    "VERIFICATION": 0,
+    "API/PERSISTENCE": 0
+  },
+  "taxonomy_counts_after": {
+    "ORIENTATION": 1,
+    "PDF_ROUTING": 0,
+    "LAYOUT_LOSS": 1,
+    "EVIDENCE_ASSOCIATION": 0,
+    "OCR_RECOGNITION": 0,
+    "FIELD_CANDIDATE_RANKING": 0,
+    "NORMALIZATION": 0,
+    "VERIFICATION": 0,
+    "API/PERSISTENCE": 0
+  }
+}

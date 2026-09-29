@@ -5,6 +5,11 @@ from dataclasses import dataclass
 
 from app.core.domain import DocumentType
 from app.document_intelligence.evidence import CoordinateSpace, EvidenceRef, EvidenceSourceKind
+from app.document_intelligence.extraction.fields import (
+    is_valid_value,
+    looks_like_boilerplate,
+    score_candidate,
+)
 from app.document_intelligence.normalization.field_normalizer import (
     BUSINESS_NUMBER_RE,
     DATE_RE,
@@ -14,10 +19,11 @@ from app.document_intelligence.normalization.field_normalizer import (
     normalize_gpa_scale,
     normalize_text_field,
 )
-from app.document_intelligence.ocr.models import OCRDocumentResult, OCRLine
+from app.document_intelligence.ocr.layout import TextRow, build_rows
+from app.document_intelligence.ocr.models import OCRDocumentResult, OCRLine, OCRPage
 from app.document_intelligence.ocr.text_assembly import order_lines
 
-EXTRACTOR_VERSION = "heuristic-v3"
+EXTRACTOR_VERSION = "heuristic-v4"
 
 _COLON_RE = re.compile(r"[：﹕꞉︓]")
 _WHITESPACE_RE = re.compile(r"[ \t]+")
@@ -112,37 +118,102 @@ type ExtractionInput = str | OCRDocumentResult
 class ExtractionCandidate:
     value: str
     evidence: list[EvidenceRef]
+    score: float = 0.0
+    has_explicit_separator: bool = False
+    value_from_other_segment: bool = False
+    """True when the value was resolved from a *different* detected box than
+    the one that carried the label, i.e. the pairing was decided by layout
+    geometry rather than by text adjacency."""
 
 
-def _source_lines(source: ExtractionInput) -> list[tuple[str, EvidenceRef | None]]:
+@dataclass(frozen=True)
+class _RowObservation:
+    """A visual row plus the per-segment evidence that produced it."""
+
+    row: TextRow
+    evidence: tuple[EvidenceRef | None, ...]
+
+
+def _evidence_for(
+    page: OCRPage, line: OCRLine, source_kind: EvidenceSourceKind, coordinate_space: CoordinateSpace
+) -> EvidenceRef:
+    return EvidenceRef(
+        page_number=page.page_number,
+        source_text=line.text,
+        bounding_box=line.bounding_box,
+        confidence=line.confidence,
+        source_kind=source_kind,
+        coordinate_space=coordinate_space,
+    )
+
+
+def _source_observations(source: ExtractionInput) -> list[_RowObservation]:
+    """Group the source into page-scoped visual rows.
+
+    Plain-text input becomes one single-segment row per line, so the
+    geometry and non-geometry paths share a single extraction
+    implementation. Rows never span pages, which is what prevents a label
+    at the bottom of page 1 from being paired with a value at the top of
+    page 2.
+    """
     if isinstance(source, str):
-        return [(line, None) for line in source.splitlines() if line.strip()]
+        return [
+            _RowObservation(TextRow(1, (OCRLine(text=line),)), (None,))
+            for line in source.splitlines()
+            if line.strip()
+        ]
+
     source_kind: EvidenceSourceKind = (
         "embedded_pdf_text" if source.provider == "direct_pdf_text" else "ocr"
     )
     coordinate_space: CoordinateSpace = (
         "pdf_point" if source_kind == "embedded_pdf_text" else "pixel"
     )
-    observations: list[tuple[str, EvidenceRef | None]] = []
+    observations: list[_RowObservation] = []
     for page in source.pages:
-        lines = order_lines(page.lines) or [OCRLine(text=line) for line in page.text.splitlines()]
-        for line in lines:
-            if not line.text.strip():
-                continue
-            observations.append(
-                (
-                    line.text,
-                    EvidenceRef(
-                        page_number=page.page_number,
-                        source_text=line.text,
-                        bounding_box=line.bounding_box,
-                        confidence=line.confidence,
-                        source_kind=source_kind,
-                        coordinate_space=coordinate_space,
-                    ),
-                )
+        ordered = order_lines(page.lines) or [
+            OCRLine(text=line) for line in page.text.splitlines() if line.strip()
+        ]
+        if not ordered:
+            continue
+        # Rebuild the page so row grouping sees lines in reading order.
+        ordered_page = OCRPage(
+            page_number=page.page_number,
+            text=page.text,
+            lines=ordered,
+            confidence=page.confidence,
+            duration_ms=page.duration_ms,
+            metadata=page.metadata,
+        )
+        for row in build_rows(ordered_page):
+            evidence = tuple(
+                _evidence_for(ordered_page, segment, source_kind, coordinate_space)
+                for segment in row.segments
             )
+            observations.append(_RowObservation(row, evidence))
     return observations
+
+
+def _unique_evidence(items: tuple[EvidenceRef | None, ...]) -> list[EvidenceRef]:
+    """Deduplicate while preserving order, keeping the first occurrence."""
+    seen: set[int] = set()
+    unique: list[EvidenceRef] = []
+    for item in items:
+        if item is None or id(item) in seen:
+            continue
+        seen.add(id(item))
+        unique.append(item)
+    return unique
+
+
+def _source_lines(source: ExtractionInput) -> list[tuple[str, EvidenceRef | None]]:
+    """Flattened (text, evidence) view, retained for the line-pattern helpers."""
+    flattened: list[tuple[str, EvidenceRef | None]] = []
+    for observation in _source_observations(source):
+        for segment, evidence in zip(observation.row.segments, observation.evidence, strict=True):
+            if segment.text.strip():
+                flattened.append((segment.text, evidence))
+    return flattened
 
 
 def source_text(source: ExtractionInput) -> str:
@@ -218,45 +289,205 @@ def _next_line_value_allowed(value: str) -> bool:
     return len(normalized) <= 80
 
 
-def candidate_after_label(source: ExtractionInput, labels: list[str]) -> ExtractionCandidate | None:
-    """Returns the text following the first matching label on the same
-    line. Tolerant of a colon separator, surrounding whitespace, and an
-    internal whitespace variant within the label itself; does not
-    fuzzy-match across unrelated labels.
+# Longest run of consecutive row segments that may together form one
+# label. Three covers the widest observed real case (a letter-spaced
+# "재 학 증 명 서" title) without letting the matcher wander across a whole
+# row and bolt unrelated words onto a label.
+_MAX_LABEL_SEGMENTS = 5
 
-    Requires an actual separator (whitespace or a colon) between the label
-    and the captured value -- a label with *no* separator at all is not
-    accepted as a match. Without this, a short label that happens to be a
-    literal prefix of a longer, unrelated word (e.g. "학위" is a prefix of
-    the real document title "학위수여증명서") would match with zero
-    separator and hallucinate the rest of that word as the field's value
-    (evaluation/reports/baseline_2026-09-09b.md: 'degree' field on a
-    recreated 학위수여증명서 sample was extracted as "수여증명서")."""
-    observations = _source_lines(source)
-    lines = [_normalize_extraction_text(line) for line, _ in observations]
-    for idx, line in enumerate(lines):
-        for label in labels:
-            label_re = _label_pattern(label)
-            match = re.search(
-                rf"(?:^|[ \t]){label_re}(?P<sep>[ \t]*:[ \t]*|[ \t]+)?(?P<value>.*)$", line
-            )
-            if not match:
+
+def _row_candidates(
+    observation: _RowObservation, labels: list[str], row_index: int
+) -> list[ExtractionCandidate]:
+    """Generate every label/value candidate found on one visual row.
+
+    A label may be split across adjacent segments ("성" + "명:홍길동"), so
+    the matcher walks consecutive segment runs rather than assuming one
+    segment holds one label. Only the segments that actually produced the
+    label and the value are attached as evidence.
+    """
+    row = observation.row
+    segments = row.segments
+    candidates: list[ExtractionCandidate] = []
+
+    for start in range(len(segments)):
+        for span in range(1, _MAX_LABEL_SEGMENTS + 1):
+            end = start + span
+            if end > len(segments):
+                break
+            label_run_text = " ".join(segment.text for segment in segments[start:end])
+            normalized_run = _normalize_extraction_text(label_run_text)
+            for label in labels:
+                match = re.search(rf"(?:^|[ \t]){_label_pattern(label)}", normalized_run)
+                if not match:
+                    continue
+                # Separator flags must be read from the *raw* tail: text
+                # normalization strips leading whitespace, which is exactly
+                # the signal that the value was separated from the label.
+                raw_tail = normalized_run[match.end() :]
+                space_separated = bool(raw_tail[:1].isspace())
+                stripped_tail = raw_tail.lstrip()
+                colon_separated = stripped_tail.startswith(":")
+                explicit = colon_separated
+                separated = colon_separated or space_separated
+                from_other_segment = False
+
+                if colon_separated:
+                    # Value is the remainder of the segment that closed the label.
+                    value = stripped_tail[1:].strip()
+                    value_evidence = observation.evidence[end - 1 : end]
+                elif stripped_tail:
+                    # Label and value share one segment ("상호 한국테크").
+                    value = stripped_tail
+                    value_evidence = observation.evidence[end - 1 : end]
+                elif end < len(segments):
+                    # Label ends mid-segment: value is a later segment on the
+                    # same visual row, so the two are geometrically separated.
+                    value = _normalize_extraction_text(segments[end].text)
+                    value_evidence = observation.evidence[end : end + 1]
+                    separated = True
+                    from_other_segment = True
+                else:
+                    value = ""
+                    value_evidence = ()
+
+                value = _strip_trailing_labels(value, labels)
+                if not value:
+                    break
+                if not separated and not _adjacent_value_allowed(label, value):
+                    break
+
+                # A value that lives inside the label's last box appears in
+                # both slices; evidence must reference each box once.
+                evidence = _unique_evidence((*observation.evidence[start:end], *value_evidence))
+                candidates.append(
+                    ExtractionCandidate(
+                        value=value.strip(),
+                        evidence=evidence,
+                        score=score_candidate(
+                            field_name="",
+                            value=value,
+                            has_explicit_separator=explicit,
+                            label_is_exact=colon_separated,
+                            row_index=row_index,
+                        ).total,
+                        has_explicit_separator=explicit,
+                        value_from_other_segment=from_other_segment,
+                    )
+                )
+                break
+            else:
                 continue
-            sep = match.group("sep")
-            value = _strip_trailing_labels(match.group("value"), labels)
-            if value and (sep or _adjacent_value_allowed(label, value)):
-                evidence: list[EvidenceRef] = []
-                observation = observations[idx][1]
-                if observation is not None:
-                    evidence.append(observation)
-                return ExtractionCandidate(value.strip(), evidence)
-            if not value and idx + 1 < len(lines) and _next_line_value_allowed(lines[idx + 1]):
-                evidence = []
-                for item in (observations[idx][1], observations[idx + 1][1]):
-                    if item is not None:
-                        evidence.append(item)
-                return ExtractionCandidate(_strip_trailing_labels(lines[idx + 1], labels), evidence)
-    return None
+            break
+    return candidates
+
+
+def _below_row_candidates(
+    observations: list[_RowObservation], labels: list[str], row_index: int
+) -> list[ExtractionCandidate]:
+    """Candidates where a label ends a row and its value is on the next row
+    of the *same page*."""
+    candidates: list[ExtractionCandidate] = []
+    for index, observation in enumerate(observations[:-1]):
+        following = observations[index + 1]
+        if following.row.page_number != observation.row.page_number:
+            continue
+        if len(following.row.segments) != 1:
+            continue
+        next_value = _normalize_extraction_text(following.row.text)
+        if not _next_line_value_allowed(next_value):
+            continue
+        for label in labels:
+            if not re.search(
+                rf"(?:^|[ \t]){_label_pattern(label)}\s*[:：]?\s*$", observation.row.text
+            ):
+                continue
+            value = _strip_trailing_labels(next_value, labels)
+            if not value:
+                continue
+            evidence = [
+                item for item in (*observation.evidence, *following.evidence) if item is not None
+            ]
+            candidates.append(
+                ExtractionCandidate(
+                    value=value,
+                    evidence=evidence,
+                    score=score_candidate(
+                        field_name="",
+                        value=value,
+                        has_explicit_separator=False,
+                        label_is_exact=True,
+                        row_index=row_index,
+                    ).total
+                    - 10.0,
+                    has_explicit_separator=False,
+                )
+            )
+    return candidates
+
+
+def rank_candidates(
+    source: ExtractionInput, labels: list[str], field_name: str
+) -> list[ExtractionCandidate]:
+    """All plausible candidates for a field, best first.
+
+    Candidates that cannot be a value of this field are dropped outright, so
+    an impossible capture becomes an unresolved field rather than a
+    confident wrong one.
+    """
+    observations = _source_observations(source)
+    ranked: list[ExtractionCandidate] = []
+    for row_index, observation in enumerate(observations):
+        for candidate in _row_candidates(observation, labels, row_index):
+            if not is_valid_value(field_name, candidate.value):
+                continue
+            if looks_like_boilerplate(candidate.value):
+                continue
+            ranked.append(
+                ExtractionCandidate(
+                    value=candidate.value,
+                    evidence=candidate.evidence,
+                    score=score_candidate(
+                        field_name=field_name,
+                        value=candidate.value,
+                        has_explicit_separator=candidate.has_explicit_separator,
+                        label_is_exact=candidate.has_explicit_separator,
+                        row_index=row_index,
+                    ).total,
+                    has_explicit_separator=candidate.has_explicit_separator,
+                    value_from_other_segment=candidate.value_from_other_segment,
+                )
+            )
+    ranked.extend(
+        candidate
+        for candidate in _below_row_candidates(observations, labels, len(observations))
+        if is_valid_value(field_name, candidate.value)
+        and not looks_like_boilerplate(candidate.value)
+    )
+    ranked.sort(key=lambda candidate: candidate.score, reverse=True)
+    return ranked
+
+
+def candidate_after_label(
+    source: ExtractionInput, labels: list[str], field_name: str | None = None
+) -> ExtractionCandidate | None:
+    """Best label/value candidate for `field_name`, or None.
+
+    When `field_name` is given the candidate must be a shape-valid value for
+    that field and is chosen by score rather than by document order. Without
+    it the behaviour is the unranked, shape-agnostic legacy path used by the
+    date/number helpers.
+    """
+    if field_name is None:
+        observations = _source_observations(source)
+        for row_index, observation in enumerate(observations):
+            found = _row_candidates(observation, labels, row_index)
+            if found:
+                return found[0]
+        below = _below_row_candidates(observations, labels, len(observations))
+        return below[0] if below else None
+    ranked = rank_candidates(source, labels, field_name)
+    return ranked[0] if ranked else None
 
 
 def candidate_right_of_label(
@@ -389,11 +620,13 @@ class BaseDocumentExtractor(ABC):
         *,
         allow_spatial_right: bool = False,
     ) -> ExtractedValue:
-        candidate = candidate_after_label(text, labels)
+        candidate = candidate_after_label(text, labels, field_name)
         used_spatial_candidate = False
         if candidate is None and allow_spatial_right:
-            candidate = candidate_right_of_label(text, labels)
-            used_spatial_candidate = candidate is not None
+            spatial = candidate_right_of_label(text, labels)
+            if spatial is not None and is_valid_value(field_name, spatial.value):
+                candidate = spatial
+                used_spatial_candidate = True
         raw = candidate.value if candidate else None
         normalized = normalize_text_field(raw)
         if (
@@ -403,7 +636,8 @@ class BaseDocumentExtractor(ABC):
         ):
             return self.missing(field_name)
         assert raw is not None
-        method = "spatial_right_of_label" if used_spatial_candidate else "label_match"
+        geometry_resolved = used_spatial_candidate or (candidate.value_from_other_segment)
+        method = "spatial_right_of_label" if geometry_resolved else "label_match"
         return self._value(field_name, raw, normalized, method, candidate)
 
     def date_field(
