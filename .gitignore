@@ -44,3 +44,8 @@ evaluation/cache/**
 
 # Local audit scratch: raw OCR text / overlays from real (sensitive) documents.
 evaluation/backend_audit/work/
+
+# Real-document validation round 2: rendered pages, OCR dumps, overlays and
+# ground-truth annotations transcribed from the owner's own documents. These
+# contain real names, student ids and business registration numbers.
+evaluation/backend_round2/work/

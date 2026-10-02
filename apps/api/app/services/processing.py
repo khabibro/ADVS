@@ -3,11 +3,11 @@ import time
 import uuid
 from dataclasses import asdict
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, or_, update
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.domain import DocumentType, ProcessingStatus, RuleType, Severity
+from app.core.domain import ProcessingStatus
 from app.core.errors import PROCESSING_ERROR_MESSAGES, ProcessingErrorCode
 from app.document_intelligence.classification.classifier import (
     ClassificationResult,
@@ -21,20 +21,18 @@ from app.document_intelligence.ocr.text_assembly import assemble_document_text
 from app.document_intelligence.preprocessing.processor import PdfProcessor, is_meaningful_text
 from app.document_intelligence.results import CanonicalDocumentResult
 from app.document_intelligence.validation.engine import (
-    ConfiguredRule,
     ValidationEngine,
     ValidationIssue,
 )
 from app.models.entities import (
     Document,
-    DocumentRequirement,
     ExtractedField,
     OCRResult,
     Project,
-    Submission,
     ValidationResult,
-    ValidationRule,
 )
+from app.services.consistency import lock_document_project
+from app.services.document_validation import policy_gated_fields, validate_effective_document
 from app.services.reviews import invalidate_document_reviews
 from app.services.storage.local import LocalStorageService
 from app.services.verification import invalidate_document_project_verification
@@ -57,8 +55,9 @@ class DocumentProcessingService:
 
     Algorithms remain in ``document_intelligence``. This service chooses the
     source path, coordinates each stage, and atomically replaces all derived
-    persistence on success. A failed attempt clears derived state rather than
-    exposing a new classification beside stale fields from an older run.
+    persistence on success. Failed attempts retain the last successful generation
+    and review history; FAILED makes its operational state explicit and prevents
+    use in a current submission decision.
     """
 
     def __init__(self) -> None:
@@ -73,7 +72,10 @@ class DocumentProcessingService:
         document = db.get(Document, document_id)
         if not document:
             raise ValueError("document not found")
-        if ProcessingStatus(document.processing_status) in _ACTIVE_STATUSES:
+        lock_document_project(db, document)
+        db.refresh(document)
+        if document.processing_status in _ACTIVE_STATUSES:
+            db.commit()
             return document
 
         started = time.perf_counter()
@@ -81,21 +83,24 @@ class DocumentProcessingService:
             update(Document)
             .where(
                 Document.id == document.id,
-                Document.processing_status.not_in([status.value for status in _ACTIVE_STATUSES]),
+                or_(
+                    Document.processing_status.is_(None),
+                    Document.processing_status.not_in(
+                        [status.value for status in _ACTIVE_STATUSES]
+                    ),
+                ),
             )
             .values(
                 processing_status=ProcessingStatus.PREPROCESSING,
                 error_code=None,
                 error_message=None,
-                processing_version=Document.processing_version + 1,
             )
             .returning(Document.id)
         )
-        db.commit()
         if claimed_document_id is None:
+            db.commit()
             db.refresh(document)
             return document
-        invalidate_document_reviews(db, document.id)
         invalidate_document_project_verification(db, document)
         db.commit()
         db.refresh(document)
@@ -163,7 +168,8 @@ class DocumentProcessingService:
             return document
         except Exception:
             db.rollback()
-            logger.exception("document_processing_failed", extra={"document_id": str(document.id)})
+            # Provider/decoder exception strings can contain document text or paths.
+            logger.error("document_processing_failed", extra={"document_id": str(document.id)})
             self._fail(
                 db,
                 document,
@@ -186,10 +192,18 @@ class DocumentProcessingService:
         was a real scan -- the scan page yielded 0 characters and every field
         on it was lost.
         """
+        import asyncio
+
+        from app.services.storage.local import detected_mime
+
         path = self.storage.path_for(document.storage_key)
+        mime_type = detected_mime(path)
+        is_pdf = mime_type == "application/pdf"
         embedded_pages: list[OCRPage] = []
-        if document.mime_type == "application/pdf":
-            embedded_pages = self.pdf.extract_text(path).pages
+        if is_pdf:
+            embedded_pages = (await asyncio.to_thread(self.pdf.extract_text, path)).pages
+            if not embedded_pages:
+                raise OCRProviderError(ProcessingErrorCode.OCR_EMPTY_RESULT)
 
         # Prefer a real text layer page by page: it carries exact characters
         # and no recognition error. Only pages without a usable layer are
@@ -200,8 +214,15 @@ class DocumentProcessingService:
         needs_ocr = [
             page.page_number for page in embedded_pages if page.page_number not in usable_by_page
         ]
-        if document.mime_type != "application/pdf":
-            needs_ocr = []
+        if not is_pdf:
+            # A PNG/JPEG upload has no PDF page grid to enumerate, so it never
+            # appears in `embedded_pages` and the loop above cannot produce a
+            # single page for it. Enumerating candidates *from the text layer
+            # alone* therefore skipped OCR for every image: the document
+            # finished COMPLETED with zero characters, an UNKNOWN type and no
+            # fields, while looking like it had succeeded. A non-PDF upload is
+            # exactly one page, and that page can only be read by OCR.
+            needs_ocr = [1]
 
         pages = list(usable_by_page.values())
         source_path = "embedded_text"
@@ -210,9 +231,11 @@ class DocumentProcessingService:
         if needs_ocr:
             self._set_status(db, document, ProcessingStatus.OCR_PROCESSING)
             ocr_pages = await get_ocr_provider(self.settings).extract_document(
-                path, document.mime_type, document.original_filename
+                path, mime_type, document.original_filename
             )
             by_page = {page.page_number: page for page in ocr_pages}
+            if len(by_page) != len(ocr_pages) or any(number not in by_page for number in needs_ocr):
+                raise OCRProviderError(ProcessingErrorCode.OCR_INVALID_RESPONSE)
             for page_number in needs_ocr:
                 ocr_page = by_page.get(page_number)
                 if ocr_page is not None:
@@ -242,6 +265,11 @@ class DocumentProcessingService:
             pages=pages,
             assembled_text=assemble_document_text(pages),
         )
+        if not result.pages or not result.assembled_text.strip():
+            raise OCRProviderError(ProcessingErrorCode.OCR_EMPTY_RESULT)
+        expected_pages = len(embedded_pages) if is_pdf else 1
+        if result.page_count != expected_pages:
+            raise OCRProviderError(ProcessingErrorCode.OCR_INVALID_RESPONSE)
         self._set_status(db, document, ProcessingStatus.OCR_COMPLETED)
         logger.info(
             "document_source_selected",
@@ -267,30 +295,8 @@ class DocumentProcessingService:
         classification: ClassificationResult,
         fields: list[ExtractedValue],
     ) -> tuple[list[ValidationIssue], Project | None]:
-        submission = db.get(Submission, document.submission_id)
-        project = db.get(Project, submission.project_id) if submission else None
-        duplicate = bool(
-            db.scalar(
-                select(Document.id)
-                .where(
-                    Document.submission_id == document.submission_id,
-                    Document.checksum_sha256 == document.checksum_sha256,
-                    Document.id != document.id,
-                )
-                .limit(1)
-            )
-        )
-        configured_rules = self._load_configured_rules(
-            db, project, classification.predicted_type.value
-        )
-        issues = self.validator.validate_document(
-            None,
-            classification.predicted_type,
-            fields,
-            project.applicant_name if project else None,
-            project.company_name if project else None,
-            duplicate,
-            configured_rules,
+        issues, project = validate_effective_document(
+            db, document, classification.predicted_type, policy_gated_fields(fields)
         )
         logger.info(
             "validation_completed",
@@ -312,6 +318,10 @@ class DocumentProcessingService:
         issues: list[ValidationIssue],
         project: Project | None,
     ) -> None:
+        lock_document_project(db, document)
+        db.refresh(document)
+        invalidate_document_project_verification(db, document)
+        invalidate_document_reviews(db, document.id)
         self._delete_derived_rows(db, document.id)
         for page in source_result.pages:
             page_provider = (
@@ -377,16 +387,16 @@ class DocumentProcessingService:
         document.error_code = None
         document.error_message = None
         document.processing_status = ProcessingStatus.COMPLETED
+        document.processing_version += 1
         db.commit()
         db.refresh(document)
 
     def _fail(
         self, db: Session, document: Document, code: ProcessingErrorCode, message: str
     ) -> None:
-        self._delete_derived_rows(db, document.id)
-        document.document_type = DocumentType.UNKNOWN
-        document.classification_confidence = None
-        document.classification_meta = None
+        lock_document_project(db, document)
+        db.refresh(document)
+        invalidate_document_project_verification(db, document)
         document.processing_status = ProcessingStatus.FAILED
         document.error_code = code
         document.error_message = message
@@ -395,25 +405,7 @@ class DocumentProcessingService:
 
     def _delete_derived_rows(self, db: Session, document_id: uuid.UUID) -> None:
         for model in (OCRResult, ExtractedField, ValidationResult):
-            db.execute(delete(model).where(model.document_id == document_id))
-
-    def _load_configured_rules(
-        self, db: Session, project: Project | None, document_type: str
-    ) -> list[ConfiguredRule] | None:
-        if project is None or project.checklist_id is None:
-            return None
-        requirement = db.scalar(
-            select(DocumentRequirement).where(
-                DocumentRequirement.checklist_id == project.checklist_id,
-                DocumentRequirement.document_type == document_type,
-            )
-        )
-        if requirement is None:
-            return None
-        rows = db.scalars(
-            select(ValidationRule).where(ValidationRule.requirement_id == requirement.id)
-        ).all()
-        return [
-            ConfiguredRule(RuleType(row.rule_type), Severity(row.severity), row.params or {})
-            for row in rows
-        ]
+            statement = delete(model).where(model.document_id == document_id)
+            if model is ValidationResult:
+                statement = statement.where(or_(model.scope.is_(None), model.scope != "SUBMISSION"))
+            db.execute(statement)

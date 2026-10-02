@@ -31,6 +31,9 @@ class OCRLine:
     text: str
     confidence: float | None = None
     bounding_box: BoundingBox | None = None
+    polygon: tuple[tuple[float, float], ...] | None = None
+    detection_confidence: float | None = None
+    orientation_degrees: float | None = None
 
 
 @dataclass

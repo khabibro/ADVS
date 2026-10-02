@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,7 +11,14 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./advs_test.db"
     storage_path: Path = Path("./storage")
     max_upload_size_mb: int = 20
-    max_pdf_pages: int = 30
+    max_pdf_pages: int = Field(default=30, ge=1)
+    # A4 at 288 DPI is about 8 MP. Allow up to ~3 such pages per image,
+    # while bounding both skinny dimensions and total decoded RGB allocation.
+    max_image_dimension: int = Field(default=16000, ge=1)
+    max_image_pixels: int = Field(default=25_000_000, ge=1)
+    max_pdf_render_pixels: int = Field(default=250_000_000, ge=1)
+    max_ocr_temp_bytes: int = Field(default=100_000_000, ge=1)
+    ocr_timeout_seconds: float = Field(default=120.0, gt=0)
     web_url: str = "http://localhost:3000"
     admin_url: str = "http://localhost:3002"
     api_url: str = "http://localhost:8000/api/v1"

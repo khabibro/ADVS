@@ -147,7 +147,8 @@ def test_full_pipeline_graduation_certificate_success(client: TestClient, db_ses
     assert fields["university_name"]["normalized_value"] == "한국대학교"
     assert fields["graduation_date"]["normalized_value"] == "2024-02-20"
     assert fields["graduation_date"]["extraction_method"] == "regex_date"
-    assert detail["overall_status"] == "READY"
+    assert detail["overall_status"] == "REVIEW_REQUIRED"
+    assert "OCR_REQUIRES_CONFIRMATION" in fields["applicant_name"]["assessment_reasons"]
 
 
 def test_full_pipeline_business_registration_success(client: TestClient, db_session) -> None:
@@ -166,7 +167,10 @@ def test_full_pipeline_business_registration_success(client: TestClient, db_sess
     assert evidence["confidence"] == 0.99
     assert evidence["coordinate_space"] == "pixel"
     assert detail["missing_expected_fields"] == []
-    assert detail["overall_status"] == "READY"
+    assert detail["overall_status"] == "REVIEW_REQUIRED"
+    assert (
+        "OCR_REQUIRES_CONFIRMATION" in fields["business_registration_number"]["assessment_reasons"]
+    )
 
 
 def test_full_pipeline_unknown_document(client: TestClient, db_session) -> None:
@@ -208,6 +212,17 @@ def test_full_pipeline_expired_sme_certificate_needs_correction(
     detail = _detail(client, document["id"])
     fields = {f["field_name"]: f for f in detail["extracted_fields"]}
     assert fields["valid_until"]["normalized_value"] == "2020-01-01"
+    assert detail["overall_status"] == "REVIEW_REQUIRED"
+    assert "EXPIRED_DOCUMENT" not in {v["code"] for v in detail["validation_results"]}
+    confirmation = client.post(
+        f"/api/v1/projects/{project['id']}/documents/{document['id']}/fields/valid_until/review",
+        json={
+            "decision": "CONFIRMED",
+            "expected_processing_version": processed["processing_version"],
+        },
+    )
+    assert confirmation.status_code == 201
+    detail = _detail(client, document["id"])
     assert detail["overall_status"] == "NEEDS_CORRECTION"
     codes = {v["code"] for v in detail["validation_results"]}
     assert "EXPIRED_DOCUMENT" in codes
@@ -413,7 +428,7 @@ def test_reprocessing_replaces_changed_classification_fields_and_evidence(
     assert db_session.query(OCRResult).filter_by(document_id=document_id).count() == 1
 
 
-def test_failed_reprocessing_does_not_leave_old_successful_result(
+def test_failed_reprocessing_preserves_last_good_result_but_marks_failure(
     client: TestClient, db_session
 ) -> None:
     project = _create_project(client, db_session)
@@ -421,17 +436,24 @@ def test_failed_reprocessing_does_not_leave_old_successful_result(
     _process(client, document["id"])
     row = db_session.get(Document, uuid.UUID(document["id"]))
     assert db_session.query(ExtractedField).filter_by(document_id=row.id).count() > 0
+    previous_ids = {
+        field.id for field in db_session.query(ExtractedField).filter_by(document_id=row.id)
+    }
+    previous_version = row.processing_version
 
     row.original_filename = "ocr_failure_scan.pdf"
     db_session.commit()
     processed = _process(client, document["id"])
 
     assert processed["processing_status"] == "FAILED"
-    assert processed["document_type"] == "UNKNOWN"
-    assert processed["classification_meta"] is None
-    assert db_session.query(OCRResult).filter_by(document_id=row.id).count() == 0
-    assert db_session.query(ExtractedField).filter_by(document_id=row.id).count() == 0
-    assert db_session.query(ValidationResult).filter_by(document_id=row.id).count() == 0
+    assert processed["document_type"] == "BUSINESS_REGISTRATION_CERTIFICATE"
+    assert processed["classification_meta"] is not None
+    assert processed["processing_version"] == previous_version
+    assert db_session.query(OCRResult).filter_by(document_id=row.id).count() == 1
+    assert {
+        field.id for field in db_session.query(ExtractedField).filter_by(document_id=row.id)
+    } == previous_ids
+    assert _detail(client, document["id"])["overall_status"] == "REVIEW_REQUIRED"
 
 
 def test_late_transaction_failure_rolls_back_and_leaves_coherent_failed_state(
@@ -444,6 +466,10 @@ def test_late_transaction_failure_rolls_back_and_leaves_coherent_failed_state(
     _process(client, document["id"])
     document_id = uuid.UUID(document["id"])
 
+    previous_ids = {
+        field.id for field in db_session.query(ExtractedField).filter_by(document_id=document_id)
+    }
+
     def fail_after_deleting_rows(self, db, row, *_args, **_kwargs):
         self._delete_derived_rows(db, row.id)
         db.flush()
@@ -455,9 +481,11 @@ def test_late_transaction_failure_rolls_back_and_leaves_coherent_failed_state(
     assert processed["processing_status"] == "FAILED"
     assert processed["error_code"] == "PROCESSING_FAILED"
     assert "controlled" not in processed["error_message"]
-    assert db_session.query(OCRResult).filter_by(document_id=document_id).count() == 0
-    assert db_session.query(ExtractedField).filter_by(document_id=document_id).count() == 0
-    assert db_session.query(ValidationResult).filter_by(document_id=document_id).count() == 0
+    assert db_session.query(OCRResult).filter_by(document_id=document_id).count() == 1
+    assert {
+        field.id for field in db_session.query(ExtractedField).filter_by(document_id=document_id)
+    } == previous_ids
+    assert _detail(client, document["id"])["overall_status"] == "REVIEW_REQUIRED"
 
 
 def test_process_missing_document_returns_safe_404(client: TestClient) -> None:

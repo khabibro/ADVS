@@ -1,5 +1,6 @@
 import io
 
+import fitz
 import pytest
 from fastapi import HTTPException
 from starlette.datastructures import Headers, UploadFile
@@ -29,7 +30,9 @@ def _service(tmp_path) -> LocalStorageService:
     return LocalStorageService(Settings(storage_path=tmp_path / "storage"))
 
 
-_VALID_PDF = b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>"
+with fitz.open() as _pdf:
+    _pdf.new_page()
+    _VALID_PDF = _pdf.tobytes()
 
 
 @pytest.mark.asyncio

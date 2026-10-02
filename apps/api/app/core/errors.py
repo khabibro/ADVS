@@ -9,6 +9,7 @@ class ApiErrorCode:
     EMPTY_FILE = "EMPTY_FILE"
     CORRUPT_DOCUMENT = "CORRUPT_DOCUMENT"
     TOO_MANY_PAGES = "TOO_MANY_PAGES"
+    PIXEL_BUDGET_EXCEEDED = "PIXEL_BUDGET_EXCEEDED"
     RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND"
     OCR_PROVIDER_ERROR = "OCR_PROVIDER_ERROR"
     OCR_TIMEOUT = "OCR_TIMEOUT"
@@ -34,6 +35,8 @@ class ProcessingErrorCode(StrEnum):
     UNSUPPORTED_FILE = "UNSUPPORTED_FILE"
     CORRUPT_DOCUMENT = "CORRUPT_DOCUMENT"
     PROCESSING_FAILED = "PROCESSING_FAILED"
+    RESOURCE_LIMIT = "RESOURCE_LIMIT"
+    OCR_BUSY = "OCR_BUSY"
 
 
 # Safe, user-facing messages. Never persist raw exception text (may contain
@@ -50,6 +53,8 @@ PROCESSING_ERROR_MESSAGES: dict[ProcessingErrorCode, str] = {
     ProcessingErrorCode.UNSUPPORTED_FILE: "File format is not supported.",
     ProcessingErrorCode.CORRUPT_DOCUMENT: "File could not be opened; it may be corrupt.",
     ProcessingErrorCode.PROCESSING_FAILED: "Document processing failed unexpectedly.",
+    ProcessingErrorCode.RESOURCE_LIMIT: "Document exceeds the configured processing resource budget.",
+    ProcessingErrorCode.OCR_BUSY: "The local OCR worker is busy; retry after the current job completes.",
 }
 
 

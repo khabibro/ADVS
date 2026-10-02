@@ -1,18 +1,23 @@
+import math
 import os
-import shutil
 import tempfile
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from functools import cached_property
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
 import fitz
+from PIL import Image
 
 from app.core.config import Settings
 from app.core.errors import ProcessingErrorCode
 from app.document_intelligence.ocr.models import BoundingBox, OCRLine, OCRPage, OCRProviderError
 from app.document_intelligence.ocr.text_assembly import assemble_page_text
+from app.document_intelligence.ocr.worker import run_ocr
+from app.document_intelligence.preprocessing.processor import ImagePreprocessor
 
 # Deterministic synthetic fixtures for mock/dev/test use. Selected by a
 # filename hint so integration tests can exercise every document type
@@ -49,7 +54,7 @@ _DEFAULT_MOCK_FIXTURE = "graduation"
 # Special filename hint that makes the mock provider raise, simulating an
 # upstream OCR failure end-to-end without touching a real provider.
 _OCR_FAILURE_HINT = "ocr_failure"
-_PROVIDER_CACHE: dict[tuple[str, str, str, str, str, str], object] = {}
+_PROVIDER_CACHE: dict[tuple, object] = {}
 
 
 class OCRProvider(ABC):
@@ -110,6 +115,7 @@ class PaddleOCRProvider(OCRProvider):
     provider_name = "paddle"
 
     def __init__(self, settings: Settings):
+        self.settings = settings
         self.device = settings.paddle_ocr_device
         self.lang = settings.paddle_ocr_lang
         self.rec_model_name = settings.paddle_ocr_rec_model_name
@@ -261,54 +267,121 @@ class PaddleOCRProvider(OCRProvider):
     async def extract_document(
         self, path: Path, mime_type: str, original_filename: str = ""
     ) -> list[OCRPage]:
+        return await run_ocr(
+            lambda: self._extract_document(path, mime_type), self.settings.ocr_timeout_seconds
+        )
+
+    def _extract_document(self, path: Path, mime_type: str) -> list[OCRPage]:
         started = time.perf_counter()
+        pages: list[OCRPage] = []
         try:
-            image_paths = self._input_images(path, mime_type)
-            pages = [
-                self._normalize_page(raw=self._predict(image_path), page_number=idx, duration_ms=0)
-                for idx, image_path in enumerate(image_paths, start=1)
-            ]
-            pages = self._retry_with_orientation(pages, image_paths)
+            for idx, image_path, transform in self._input_images(path, mime_type):
+                page_start = time.perf_counter()
+                page = self._normalize_page(
+                    raw=self._predict(image_path), page_number=idx, duration_ms=0
+                )
+                page = self._retry_with_orientation([page], [image_path])[0]
+                page.page_number = idx
+                page.duration_ms = int((time.perf_counter() - page_start) * 1000)
+                page.metadata["transform"] = {**transform, **page.metadata.get("transform", {})}
+                pages.append(page)
         except OCRProviderError:
             raise
         except Exception as exc:
             raise OCRProviderError(ProcessingErrorCode.OCR_PROCESSING_ERROR) from exc
-        finally:
-            if mime_type == "application/pdf":
-                rendered_pages = locals().get("image_paths", [])
-                if rendered_pages:
-                    rendered_dir = rendered_pages[0].parent
-                    if rendered_dir.name.startswith("advs_paddle_"):
-                        shutil.rmtree(rendered_dir, ignore_errors=True)
-
         duration_ms = int((time.perf_counter() - started) * 1000)
         for page in pages:
-            page.duration_ms = duration_ms
+            page.metadata["document_duration_ms"] = duration_ms
         if not pages or not any(page.text.strip() for page in pages):
             raise OCRProviderError(ProcessingErrorCode.OCR_EMPTY_RESULT)
         return pages
 
-    def _input_images(self, path: Path, mime_type: str) -> list[Path]:
+    def _input_images(self, path: Path, mime_type: str) -> Iterator[tuple[int, Path, dict]]:
         if mime_type != "application/pdf":
-            return [path]
-
-        output_dir = Path(tempfile.mkdtemp(prefix="advs_paddle_"))
-        rendered: list[Path] = []
+            # An image carries its own EXIF orientation, which the OCR loader
+            # ignores, and may be in a codec the OCR engine cannot open at
+            # all. Fix both before the detector sees the pixels, and only when
+            # something is actually wrong, so a normal JPEG or PNG takes
+            # exactly the same path as before.
+            with Image.open(path) as image:
+                self._check_pixels(*image.size)
+                transform = {
+                    "exif_orientation": image.getexif().get(274, 1),
+                    "source_width": image.width,
+                    "source_height": image.height,
+                    "coordinate_reference": "prepared_image",
+                }
+            preprocessor = ImagePreprocessor()
+            if preprocessor.needs_preparation(path):
+                with tempfile.TemporaryDirectory(prefix="advs_paddle_") as directory:
+                    prepared = preprocessor.prepare(path, Path(directory))
+                    if prepared is None:
+                        raise OCRProviderError(ProcessingErrorCode.CORRUPT_DOCUMENT)
+                    self._check_temp(prepared)
+                    yield 1, prepared, transform
+            else:
+                yield 1, path, transform
+            return
         try:
-            with fitz.open(path) as doc:
+            with (
+                fitz.open(path) as doc,
+                tempfile.TemporaryDirectory(prefix="advs_paddle_") as directory,
+            ):
+                if (
+                    doc.needs_pass
+                    or not doc.page_count
+                    or doc.page_count > self.settings.max_pdf_pages
+                ):
+                    raise OCRProviderError(ProcessingErrorCode.RESOURCE_LIMIT)
+                total = 0
                 for idx, page in enumerate(doc, start=1):
+                    width, height = (
+                        math.ceil(page.rect.width * self.render_scale),
+                        math.ceil(page.rect.height * self.render_scale),
+                    )
+                    self._check_pixels(width, height)
+                    total += width * height
+                    if total > self.settings.max_pdf_render_pixels:
+                        raise OCRProviderError(ProcessingErrorCode.RESOURCE_LIMIT)
                     pix = page.get_pixmap(
                         matrix=fitz.Matrix(self.render_scale, self.render_scale), alpha=False
                     )
-                    image_path = output_dir / f"page_{idx}.png"
+                    image_path = Path(directory) / "page.png"
                     pix.save(image_path)
-                    rendered.append(image_path)
+                    del pix
+                    self._check_temp(image_path)
+                    try:
+                        yield (
+                            idx,
+                            image_path,
+                            {
+                                "pdf_rotation_degrees": page.rotation,
+                                "render_scale": self.render_scale,
+                                "coordinate_reference": "rendered_image",
+                            },
+                        )
+                    finally:
+                        image_path.unlink(missing_ok=True)
+        except OCRProviderError:
+            raise
         except Exception as exc:
-            shutil.rmtree(output_dir, ignore_errors=True)
             raise OCRProviderError(ProcessingErrorCode.PDF_RENDER_ERROR) from exc
-        return rendered
+
+    def _check_pixels(self, width: int, height: int) -> None:
+        if (
+            min(width, height) < 1
+            or max(width, height) > self.settings.max_image_dimension
+            or width * height > self.settings.max_image_pixels
+        ):
+            raise OCRProviderError(ProcessingErrorCode.RESOURCE_LIMIT)
+
+    def _check_temp(self, path: Path) -> None:
+        if path.stat().st_size > self.settings.max_ocr_temp_bytes:
+            raise OCRProviderError(ProcessingErrorCode.RESOURCE_LIMIT)
 
     def _normalize_page(self, raw: Any, page_number: int, duration_ms: int) -> OCRPage:
+        if not isinstance(raw, (list, dict)):
+            raw = list(raw)
         lines = self._extract_lines(raw)
         text = assemble_page_text(lines)
         confidences = [line.confidence for line in lines if line.confidence is not None]
@@ -326,8 +399,25 @@ class PaddleOCRProvider(OCRProvider):
                 "device": self.device,
                 "render_dpi": int(72 * self.render_scale),
                 "doc_orientation": self.doc_orientation,
+                "provider_version": version("paddleocr"),
+                "source": "ocr",
+                "coordinate_space": "pixel",
+                "transform": self._transform_metadata(raw),
             },
         )
+
+    @staticmethod
+    def _transform_metadata(raw: Any) -> dict:
+        item = raw[0] if isinstance(raw, list) and raw else raw
+        if not isinstance(item, dict):
+            return {}
+        preprocessor = item.get("doc_preprocessor_res")
+        if not isinstance(preprocessor, dict):
+            return {}
+        return {
+            "orientation_degrees": preprocessor.get("angle"),
+            "coordinate_reference": "provider_preprocessed_image",
+        }
 
     def _extract_lines(self, raw: Any) -> list[OCRLine]:
         items = self._flatten_result(raw)
@@ -346,15 +436,19 @@ class PaddleOCRProvider(OCRProvider):
                 expanded: list[Any] = []
                 for item in raw:
                     if "rec_texts" in item:
-                        texts = item.get("rec_texts") or []
-                        scores = item.get("rec_scores") or []
-                        boxes = (
-                            item.get("rec_polys")
-                            or item.get("dt_polys")
-                            or item.get("rec_boxes")
-                            or []
-                        )
-                        expanded.extend(zip(boxes, texts, scores, strict=False))
+                        texts = self._present(item, "rec_texts", default=[])
+                        scores = self._present(item, "rec_scores", default=[])
+                        boxes = self._present(item, "rec_polys", "rec_boxes", default=[])
+                        # Missing quality or geometry must not silently drop
+                        # observations through a truncating zip().
+                        for index, text in enumerate(texts):
+                            expanded.append(
+                                {
+                                    "text": text,
+                                    "confidence": scores[index] if index < len(scores) else None,
+                                    "poly": boxes[index] if index < len(boxes) else None,
+                                }
+                            )
                     else:
                         expanded.append(item)
                 return expanded
@@ -363,14 +457,24 @@ class PaddleOCRProvider(OCRProvider):
             return self._flatten_result([raw])
         raise OCRProviderError(ProcessingErrorCode.OCR_INVALID_RESPONSE)
 
+    @staticmethod
+    def _present(item: dict, *keys: str, default: Any = None) -> Any:
+        return next((item[key] for key in keys if item.get(key) is not None), default)
+
     def _item_to_line(self, item: Any) -> OCRLine | None:
         if isinstance(item, dict):
-            text = item.get("text") or item.get("rec_text") or item.get("transcription")
-            confidence = item.get("confidence") or item.get("score") or item.get("rec_score")
-            box = item.get("box") or item.get("poly") or item.get("points") or item.get("dt_poly")
+            text = self._present(item, "text", "rec_text", "transcription")
+            confidence = self._present(item, "confidence", "score", "rec_score")
+            box = self._present(item, "box", "poly", "points", "dt_poly")
             if text is None:
                 return None
-            return OCRLine(str(text), self._confidence(confidence), self._bbox(box))
+            return OCRLine(
+                str(text),
+                self._confidence(confidence),
+                self._bbox(box),
+                polygon=self._polygon(box),
+                detection_confidence=self._confidence(item.get("detection_confidence")),
+            )
 
         if isinstance(item, (list, tuple)) and len(item) >= 2:
             box = item[0]
@@ -381,21 +485,41 @@ class PaddleOCRProvider(OCRProvider):
             else:
                 text = text_part
                 confidence = item[2] if len(item) > 2 else None
-            return OCRLine(str(text), self._confidence(confidence), self._bbox(box))
+            return OCRLine(
+                str(text), self._confidence(confidence), self._bbox(box), polygon=self._polygon(box)
+            )
         return None
 
     def _confidence(self, value: Any) -> float | None:
         try:
-            return float(value) if value is not None else None
+            number = float(value) if value is not None else None
+            return (
+                number
+                if number is not None and math.isfinite(number) and 0 <= number <= 1
+                else None
+            )
         except (TypeError, ValueError):
             return None
+
+    def _polygon(self, value: Any) -> tuple[tuple[float, float], ...] | None:
+        if isinstance(value, dict):
+            value = self._present(value, "points", "vertices")
+        if hasattr(value, "tolist"):
+            value = value.tolist()
+        if not isinstance(value, (list, tuple)) or len(value) < 3:
+            return None
+        try:
+            polygon = tuple((float(point[0]), float(point[1])) for point in value)
+        except (TypeError, ValueError, IndexError):
+            return None
+        return polygon if all(math.isfinite(v) for point in polygon for v in point) else None
 
     def _bbox(self, value: Any) -> BoundingBox | None:
         if value is None:
             return None
-        points = value
+        points = value.tolist() if hasattr(value, "tolist") else value
         if isinstance(value, dict):
-            points = value.get("points") or value.get("vertices")
+            points = self._present(value, "points", "vertices")
         try:
             if len(points) == 4 and all(isinstance(v, (int, float)) for v in points):
                 x1, y1, x2, y2 = [float(v) for v in points]
@@ -404,11 +528,13 @@ class PaddleOCRProvider(OCRProvider):
             ys = [float(point[1]) for point in points]
         except (TypeError, ValueError, IndexError):
             return None
+        if not xs or not ys or not all(math.isfinite(v) for v in [*xs, *ys]):
+            return None
         return BoundingBox(x=min(xs), y=min(ys), width=max(xs) - min(xs), height=max(ys) - min(ys))
 
     async def health_check(self) -> bool:
         try:
-            _ = self._engine
+            await run_ocr(lambda: self._engine, self.settings.ocr_timeout_seconds)
             return True
         except OCRProviderError:
             return False
@@ -417,7 +543,7 @@ class PaddleOCRProvider(OCRProvider):
 def get_ocr_provider(settings: Settings) -> OCRProvider:
     provider = settings.ocr_provider.lower().strip()
     if provider == "mock":
-        key = ("mock", "", "", "", "", "")
+        key: tuple = ("mock", "", "", "", "", "")
         if key not in _PROVIDER_CACHE:
             _PROVIDER_CACHE[key] = MockOCRProvider()
         return _PROVIDER_CACHE[key]  # type: ignore[return-value]
@@ -429,6 +555,14 @@ def get_ocr_provider(settings: Settings) -> OCRProvider:
             settings.paddle_ocr_rec_model_name,
             settings.paddle_ocr_det_model_name,
             settings.paddle_ocr_cache_dir,
+            settings.paddle_ocr_render_dpi,
+            settings.paddle_ocr_doc_orientation,
+            settings.max_image_dimension,
+            settings.max_image_pixels,
+            settings.max_pdf_render_pixels,
+            settings.max_pdf_pages,
+            settings.max_ocr_temp_bytes,
+            settings.ocr_timeout_seconds,
         )
         if key not in _PROVIDER_CACHE:
             _PROVIDER_CACHE[key] = PaddleOCRProvider(settings)
