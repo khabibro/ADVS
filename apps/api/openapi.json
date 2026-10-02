@@ -1074,6 +1074,10 @@
             "type": "string",
             "title": "Processing Status"
           },
+          "processing_version": {
+            "type": "integer",
+            "title": "Processing Version"
+          },
           "document_type": {
             "$ref": "#/components/schemas/DocumentType"
           },
@@ -1168,6 +1172,7 @@
           "mime_type",
           "size_bytes",
           "processing_status",
+          "processing_version",
           "document_type",
           "classification_confidence",
           "error_code",
@@ -1198,6 +1203,10 @@
           "processing_status": {
             "type": "string",
             "title": "Processing Status"
+          },
+          "processing_version": {
+            "type": "integer",
+            "title": "Processing Version"
           },
           "document_type": {
             "$ref": "#/components/schemas/DocumentType"
@@ -1265,6 +1274,7 @@
           "mime_type",
           "size_bytes",
           "processing_status",
+          "processing_version",
           "document_type",
           "classification_confidence",
           "error_code",
@@ -1305,7 +1315,12 @@
           "EVIDENCE_MISSING",
           "OCR_CONFIDENCE_UNAVAILABLE",
           "OCR_CONFIDENCE_BELOW_POLICY",
-          "EXTRACTION_MARKED_FOR_REVIEW"
+          "EXTRACTION_MARKED_FOR_REVIEW",
+          "OCR_REQUIRES_CONFIRMATION",
+          "SEMANTIC_INFERENCE",
+          "SOURCE_PROVENANCE_INCOMPLETE",
+          "HUMAN_REJECTED",
+          "HUMAN_CANNOT_DETERMINE"
         ],
         "title": "EvidenceAssessmentReason"
       },
@@ -1356,6 +1371,53 @@
           "coordinate_space": {
             "type": "string",
             "title": "Coordinate Space"
+          },
+          "polygon": {
+            "anyOf": [
+              {
+                "items": {
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "type": "array",
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polygon"
+          },
+          "detection_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detection Confidence"
+          },
+          "transform": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transform"
           }
         },
         "type": "object",
@@ -1531,6 +1593,11 @@
       },
       "FieldReviewCreate": {
         "properties": {
+          "expected_processing_version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Expected Processing Version"
+          },
           "decision": {
             "$ref": "#/components/schemas/FieldReviewDecision"
           },
@@ -1572,6 +1639,7 @@
         },
         "type": "object",
         "required": [
+          "expected_processing_version",
           "decision"
         ],
         "title": "FieldReviewCreate"
@@ -1917,6 +1985,10 @@
             "format": "uuid",
             "title": "Document Id"
           },
+          "processing_version": {
+            "type": "integer",
+            "title": "Processing Version"
+          },
           "document_type": {
             "$ref": "#/components/schemas/DocumentType"
           },
@@ -2049,6 +2121,7 @@
         "type": "object",
         "required": [
           "document_id",
+          "processing_version",
           "document_type",
           "field_id",
           "field_name",

@@ -52,6 +52,7 @@ function doc(overrides: Partial<Document> = {}): Document {
     mime_type: "application/pdf",
     size_bytes: 2048,
     processing_status: "COMPLETED",
+    processing_version: 1,
     document_type: "BUSINESS_REGISTRATION_CERTIFICATE",
     document_type_display_name: "사업자등록증",
     classification_confidence: 0.9,

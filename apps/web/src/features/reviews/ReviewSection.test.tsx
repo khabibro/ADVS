@@ -22,6 +22,7 @@ const verification: Verification = {
 };
 
 const withValue: ReviewItem = {
+  processing_version: 1,
   document_id: "d",
   document_type: "BUSINESS_REGISTRATION_CERTIFICATE",
   field_id: "f",

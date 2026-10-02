@@ -377,6 +377,8 @@ export interface components {
             size_bytes: number;
             /** Processing Status */
             processing_status: string;
+            /** Processing Version */
+            processing_version: number;
             document_type: components["schemas"]["DocumentType"];
             /**
              * Document Type Display Name
@@ -431,6 +433,8 @@ export interface components {
             size_bytes: number;
             /** Processing Status */
             processing_status: string;
+            /** Processing Version */
+            processing_version: number;
             document_type: components["schemas"]["DocumentType"];
             /**
              * Document Type Display Name
@@ -467,7 +471,7 @@ export interface components {
          * EvidenceAssessmentReason
          * @enum {string}
          */
-        EvidenceAssessmentReason: "FIELD_MISSING" | "EVIDENCE_MISSING" | "OCR_CONFIDENCE_UNAVAILABLE" | "OCR_CONFIDENCE_BELOW_POLICY" | "EXTRACTION_MARKED_FOR_REVIEW";
+        EvidenceAssessmentReason: "FIELD_MISSING" | "EVIDENCE_MISSING" | "OCR_CONFIDENCE_UNAVAILABLE" | "OCR_CONFIDENCE_BELOW_POLICY" | "EXTRACTION_MARKED_FOR_REVIEW" | "OCR_REQUIRES_CONFIRMATION" | "SEMANTIC_INFERENCE" | "SOURCE_PROVENANCE_INCOMPLETE" | "HUMAN_REJECTED" | "HUMAN_CANNOT_DETERMINE";
         /**
          * EvidenceAssessmentState
          * @enum {string}
@@ -486,6 +490,17 @@ export interface components {
             source_kind: string;
             /** Coordinate Space */
             coordinate_space: string;
+            /** Polygon */
+            polygon?: [
+                number,
+                number
+            ][] | null;
+            /** Detection Confidence */
+            detection_confidence?: number | null;
+            /** Transform */
+            transform?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** FieldRead */
         FieldRead: {
@@ -522,6 +537,8 @@ export interface components {
         };
         /** FieldReviewCreate */
         FieldReviewCreate: {
+            /** Expected Processing Version */
+            expected_processing_version: number;
             decision: components["schemas"]["FieldReviewDecision"];
             /** Corrected Value */
             corrected_value?: string | null;
@@ -643,6 +660,8 @@ export interface components {
              * Format: uuid
              */
             document_id: string;
+            /** Processing Version */
+            processing_version: number;
             document_type: components["schemas"]["DocumentType"];
             /** Field Id */
             field_id: string | null;

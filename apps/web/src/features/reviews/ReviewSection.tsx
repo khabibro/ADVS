@@ -59,6 +59,7 @@ function ReviewEditor({
       documentId: item.document_id,
       fieldName: item.field_name,
       body: {
+        expected_processing_version: item.processing_version,
         decision,
         corrected_value: needsValue ? correctedValue.trim() : null,
         reviewer_label: reviewerLabel.trim() || null,

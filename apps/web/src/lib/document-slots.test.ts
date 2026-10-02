@@ -61,6 +61,7 @@ function doc(overrides: Partial<Document> = {}): Document {
     mime_type: "application/pdf",
     size_bytes: 1000,
     processing_status: "COMPLETED",
+    processing_version: 1,
     document_type: "UNKNOWN",
     document_type_display_name: "알 수 없는 문서",
     classification_confidence: null,

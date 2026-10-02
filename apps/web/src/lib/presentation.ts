@@ -333,6 +333,11 @@ export const assessmentReasonLabels: Record<EvidenceAssessmentReason, string> =
     EVIDENCE_MISSING: "값을 뒷받침하는 근거가 없습니다.",
     OCR_CONFIDENCE_UNAVAILABLE: "인식 신뢰도를 확인할 수 없습니다.",
     OCR_CONFIDENCE_BELOW_POLICY: "인식 신뢰도가 자동 사용 기준보다 낮습니다.",
+    OCR_REQUIRES_CONFIRMATION: "인식된 값을 원본과 대조해 확인해 주세요.",
+    SEMANTIC_INFERENCE: "문맥으로 추론한 값이므로 확인이 필요합니다.",
+    SOURCE_PROVENANCE_INCOMPLETE: "출처 정보를 확인해야 합니다.",
+    HUMAN_REJECTED: "인식 결과가 거부되었습니다. 올바른 값을 확인해 주세요.",
+    HUMAN_CANNOT_DETERMINE: "값을 확인할 수 없어 추가 확인이 필요합니다.",
     EXTRACTION_MARKED_FOR_REVIEW:
       "추출 과정에서 직접 확인이 필요한 항목으로 표시됐습니다.",
   };
@@ -347,6 +352,9 @@ export const reviewQueueStatusLabels: Record<string, string> = {
   PENDING: "확인 대기",
   IN_REVIEW: "검토 중",
   RESOLVED: "검토 완료",
+  REJECTED: "값 재확인 필요",
+  CANNOT_DETERMINE: "추가 확인 필요",
+  STALE: "새 근거 확인 필요",
 };
 
 /* ------------------------------------------------------------------ *
