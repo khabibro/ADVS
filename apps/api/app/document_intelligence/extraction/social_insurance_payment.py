@@ -15,6 +15,6 @@ class SocialInsurancePaymentCertificateExtractor(BaseDocumentExtractor):
             self.business_number_field(
                 text, "business_registration_number", ["사업자등록번호", "등록번호"]
             ),
-            self.date_field(text, "issue_date", ["발급일", "발급일자", "발행일자"]),
+            self.issue_date_field(text, ["발급일", "발급일자", "발행일자"]),
             self.valid_until_field(text, ["증명서유효기간", "유효기한", "유효기간"]),
         ]

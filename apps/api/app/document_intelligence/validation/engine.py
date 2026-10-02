@@ -31,11 +31,24 @@ class ConfiguredRule:
     params: dict
 
 
+def _has_required_field_rule(configured_rules: list[ConfiguredRule] | None) -> bool:
+    """True when the checklist actually states what a document must supply.
+
+    Only this rule type redefines "required". DATE_NOT_EXPIRED,
+    ISSUE_DATE_MAX_AGE and the rest constrain values that were read; a
+    checklist made only of those has expressed no opinion about missing
+    fields, so it must not silence the missing-field net.
+    """
+    return any(rule.rule_type == RuleType.REQUIRED_FIELD for rule in (configured_rules or []))
+
+
 def comparable(value: str | None) -> str:
     return re.sub(r"[\s\W_]+", "", (value or "").lower())
 
 
 class ValidationEngine:
+    """Deterministic rules over policy-gated fields; uncertainty is not failure."""
+
     engine_version = VALIDATION_ENGINE_VERSION
 
     def validate_document(
@@ -75,41 +88,57 @@ class ValidationEngine:
                 )
             )
         if applicant_name and by_name.get("applicant_name"):
-            actual = by_name["applicant_name"].normalized_value
+            actual = self._supported_value(by_name.get("applicant_name"))
             passed = comparable(applicant_name) == comparable(actual)
             issues.append(
                 ValidationIssue(
                     RuleType.APPLICANT_NAME_MATCH,
                     passed,
-                    Severity.ERROR,
+                    Severity.ERROR if actual is not None else Severity.WARNING,
                     applicant_name,
                     actual,
                     "신청인 이름 일치 여부",
-                    "APPLICANT_NAME_MISMATCH" if not passed else "APPLICANT_NAME_MATCH",
+                    "REQUIRED_FIELD_UNRESOLVED"
+                    if actual is None
+                    else "APPLICANT_NAME_MISMATCH"
+                    if not passed
+                    else "APPLICANT_NAME_MATCH",
                 )
             )
         if company_name and by_name.get("company_name"):
-            actual = by_name["company_name"].normalized_value
+            actual = self._supported_value(by_name.get("company_name"))
             passed = comparable(company_name) == comparable(actual)
             issues.append(
                 ValidationIssue(
                     RuleType.COMPANY_NAME_MATCH,
                     passed,
-                    Severity.ERROR,
+                    Severity.ERROR if actual is not None else Severity.WARNING,
                     company_name,
                     actual,
                     "회사명 일치 여부",
-                    "COMPANY_NAME_MISMATCH" if not passed else "COMPANY_NAME_MATCH",
+                    "REQUIRED_FIELD_UNRESOLVED"
+                    if actual is None
+                    else "COMPANY_NAME_MISMATCH"
+                    if not passed
+                    else "COMPANY_NAME_MATCH",
                 )
             )
 
         issues.extend(self._always_on_expiration_issues(by_name, configured_rules))
 
-        if configured_rules is None:
-            # No checklist/requirement matched this document: fall back to
-            # the MVP default of flagging every uncertain/missing field.
+        # A checklist that says nothing about required fields must not switch
+        # the "this field could not be read" net off. Previously *any*
+        # configured rule replaced the net, so a checklist built only from
+        # rules this engine cannot execute at document scope -- DATE_COMPARISON
+        # and NUMERIC_COMPARISON are submission-scope types -- produced zero
+        # issues, and a document with every field unresolved was reported
+        # READY. The net is suppressed only when the checklist actually
+        # expresses a REQUIRED_FIELD rule, which is the one thing that
+        # genuinely redefines what a document must supply.
+        suppress_default_net = _has_required_field_rule(configured_rules)
+        if not suppress_default_net:
             issues.extend(self._default_required_field_issues(by_name))
-        else:
+        if configured_rules is not None:
             for rule in configured_rules:
                 issues.extend(self._apply_configured_rule(rule, by_name, actual_type))
         return issues
@@ -126,7 +155,7 @@ class ValidationEngine:
         DATE_NOT_EXPIRED rule for the same field takes over instead of
         duplicating it."""
         field = by_name.get("valid_until")
-        if field is None or field.normalized_value is None:
+        if self._supported_value(field) is None:
             return []
         already_configured = any(
             rule.rule_type == RuleType.DATE_NOT_EXPIRED
@@ -135,6 +164,7 @@ class ValidationEngine:
         )
         if already_configured:
             return []
+        assert field is not None and field.normalized_value is not None
         passed = date.fromisoformat(field.normalized_value) >= date.today()
         return [
             ValidationIssue(
@@ -189,7 +219,7 @@ class ValidationEngine:
                 "MISSING_REQUIRED_FIELD",
             )
             for name, field in by_name.items()
-            if field.needs_review and field.normalized_value is None
+            if self._supported_value(field) is None
         ]
 
     def _apply_configured_rule(
@@ -214,12 +244,12 @@ class ValidationEngine:
         issues = []
         for name in targets:
             field = by_name.get(name)
-            if field is None or (field.needs_review and field.normalized_value is None):
+            if self._supported_value(field) is None:
                 issues.append(
                     ValidationIssue(
                         RuleType.REQUIRED_FIELD,
                         False,
-                        rule.severity,
+                        Severity.WARNING,
                         name,
                         None,
                         f"{name} 필드를 확인해야 합니다.",
@@ -233,13 +263,13 @@ class ValidationEngine:
     ) -> list[ValidationIssue]:
         field_name = rule.params.get("field", "valid_until")
         field = by_name.get(field_name)
-        value = field.normalized_value if field else None
+        value = self._supported_value(field)
         if value is None:
             return [
                 ValidationIssue(
                     RuleType.DATE_NOT_EXPIRED,
                     False,
-                    rule.severity,
+                    Severity.WARNING,
                     "not expired",
                     None,
                     f"{field_name} 값을 확인할 수 없습니다.",
@@ -265,13 +295,13 @@ class ValidationEngine:
         field_name = rule.params.get("field", "issue_date")
         max_age_days = int(rule.params.get("max_age_days", 90))
         field = by_name.get(field_name)
-        value = field.normalized_value if field else None
+        value = self._supported_value(field)
         if value is None:
             return [
                 ValidationIssue(
                     RuleType.ISSUE_DATE_MAX_AGE,
                     False,
-                    rule.severity,
+                    Severity.WARNING,
                     f"<= {max_age_days}d",
                     None,
                     f"{field_name} 값을 확인할 수 없습니다.",
@@ -297,14 +327,14 @@ class ValidationEngine:
     ) -> list[ValidationIssue]:
         field_name = rule.params.get("field")
         field = by_name.get(field_name) if field_name else None
-        actual = field.normalized_value if field else None
+        actual = self._supported_value(field)
         expected = rule.params.get("equals") or rule.params.get("contains")
         if not expected or actual is None:
             return [
                 ValidationIssue(
                     RuleType.CUSTOM_TEXT_RULE,
                     False,
-                    rule.severity,
+                    Severity.WARNING,
                     expected,
                     actual,
                     "사용자 정의 규칙을 확인해야 합니다.",
@@ -334,11 +364,23 @@ class ValidationEngine:
         field_name = rule.params.get("field", "business_registration_number")
         expected = rule.params.get("expected_value")
         field = by_name.get(field_name)
-        actual = field.normalized_value if field else None
+        actual = self._supported_value(field)
         if not expected:
             # Not enough configuration to compare against -- skip rather
             # than guess at a match.
             return []
+        if actual is None:
+            return [
+                ValidationIssue(
+                    rule.rule_type,
+                    False,
+                    Severity.WARNING,
+                    None,
+                    None,
+                    "비교할 값을 확인해야 합니다.",
+                    "REQUIRED_FIELD_UNRESOLVED",
+                )
+            ]
         passed = comparable(actual) == comparable(expected)
         return [
             ValidationIssue(
@@ -351,6 +393,18 @@ class ValidationEngine:
                 "BUSINESS_NUMBER_MISMATCH" if not passed else "BUSINESS_NUMBER_MATCH",
             )
         ]
+
+    @staticmethod
+    def _supported_value(field: ExtractedValue | None) -> str | None:
+        if field is None or field.needs_review or field.normalized_value is None:
+            return None
+        value = field.normalized_value
+        if field.field_name.endswith("_date") or field.field_name in {"valid_from", "valid_until"}:
+            try:
+                date.fromisoformat(value)
+            except ValueError:
+                return None
+        return value
 
 
 _RULE_HANDLERS = {

@@ -26,5 +26,5 @@ class BusinessRegistrationExtractor(BaseDocumentExtractor):
             self.text_field(text, "business_type", ["업태"]),
             self.text_field(text, "business_item", ["종목"]),
             # 개업연월일 is a business start date, never an issue date.
-            self.date_field(text, "issue_date", ["발급일자", "발급일", "발행일자"]),
+            self.issue_date_field(text, ["발급일자", "발급일", "발행일자"]),
         ]

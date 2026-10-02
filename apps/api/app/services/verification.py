@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import uuid
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime
 
 from sqlalchemy import delete, select
@@ -15,6 +17,7 @@ from app.core.domain import (
     RuleType,
     Severity,
 )
+from app.document_intelligence.evidence_sufficiency import EVIDENCE_POLICY_VERSION
 from app.document_intelligence.validation.submission import (
     DocumentSnapshot,
     FieldSnapshot,
@@ -36,6 +39,8 @@ from app.models.entities import (
     Submission,
     ValidationResult,
 )
+from app.services.consistency import acquire_project_lock, lock_project
+from app.services.requirements import required_fields
 from app.services.reviews import EffectiveFieldResolver
 
 SUBMISSION_SCOPE = "SUBMISSION"
@@ -50,6 +55,7 @@ class StoredSubmissionVerification:
 
 def invalidate_submission_verification(db: Session, project_id: uuid.UUID) -> None:
     """Invalidate the latest submission decision after any input mutation."""
+    acquire_project_lock(db, project_id)
     db.execute(
         delete(ValidationResult).where(
             ValidationResult.project_id == project_id,
@@ -79,25 +85,39 @@ class SubmissionVerificationService:
     def verify(
         self, db: Session, project_id: uuid.UUID, evaluation_date: date
     ) -> StoredSubmissionVerification:
+        lock_project(db, project_id)
         project = self._load_project(db, project_id)
         if project is None:
             raise LookupError("project not found")
         if project.checklist_id is None or project.checklist is None:
             raise ValueError("project has no workflow")
-        requirements = self._requirements(project.checklist)
-        documents = self._documents(db, project_id)
-        result = self.engine.verify(
-            project_id=project.id,
-            workflow_id=project.checklist_id,
-            requirements=requirements,
-            documents=documents,
-            context=VerificationContext(evaluation_date=evaluation_date),
-        )
+        try:
+            requirements = self._requirements(project.checklist)
+            if not requirements:
+                raise RuleConfigurationError("Workflow has no document requirements")
+            documents = self._documents(db, project_id)
+            result = self.engine.verify(
+                project_id=project.id,
+                workflow_id=project.checklist_id,
+                requirements=requirements,
+                documents=documents,
+                context=VerificationContext(
+                    evaluation_date=evaluation_date,
+                    applicant_name=project.applicant_name,
+                    company_name=project.company_name,
+                ),
+            )
+        except RuleConfigurationError:
+            invalidate_submission_verification(db, project.id)
+            db.commit()
+            raise
         evaluated_at = datetime.now(UTC)
-        self._persist(db, project, result, evaluated_at)
+        snapshot = self._snapshot(project, requirements, documents)
+        self._persist(db, project, result, evaluated_at, snapshot)
         return StoredSubmissionVerification(result, evaluated_at, True)
 
     def get_latest(self, db: Session, project_id: uuid.UUID) -> StoredSubmissionVerification:
+        lock_project(db, project_id)
         project = self._load_project(db, project_id)
         if project is None:
             raise LookupError("project not found")
@@ -113,6 +133,21 @@ class SubmissionVerificationService:
         )
         rows.sort(key=lambda row: int((row.details or {}).get("result_index", 0)))
         if not rows or project.checklist_id is None:
+            if project.status == OverallStatus.READY.value:
+                project.status = OverallStatus.REVIEW_REQUIRED.value
+                db.commit()
+            return StoredSubmissionVerification(None, None, False)
+        try:
+            snapshot = self._snapshot(
+                project, self._requirements(project.checklist), self._documents(db, project_id)
+            )
+        except RuleConfigurationError:
+            invalidate_submission_verification(db, project.id)
+            db.commit()
+            return StoredSubmissionVerification(None, None, False)
+        if any((row.details or {}).get("input_snapshot") != snapshot for row in rows):
+            invalidate_submission_verification(db, project.id)
+            db.commit()
             return StoredSubmissionVerification(None, None, False)
         evaluation_date_value = rows[0].details.get("evaluation_date") if rows[0].details else None
         if not evaluation_date_value:
@@ -139,6 +174,7 @@ class SubmissionVerificationService:
                 .selectinload(DocumentRequirement.rules)
             )
             .where(Project.id == project_id)
+            .execution_options(populate_existing=True)
         )
 
     def _requirements(self, checklist: Checklist) -> list[RequirementSnapshot]:
@@ -146,6 +182,7 @@ class SubmissionVerificationService:
             RuleType.FIELD_COMPARISON,
             RuleType.DATE_COMPARISON,
             RuleType.NUMERIC_COMPARISON,
+            RuleType.ISSUE_DATE_MAX_AGE,
         }
         snapshots = []
         for requirement in checklist.requirements:
@@ -157,6 +194,21 @@ class SubmissionVerificationService:
                     raise RuleConfigurationError(
                         f"Unsupported persisted rule type: {row.rule_type}"
                     ) from exc
+                params = row.params or {}
+                if rule_type == RuleType.DATE_NOT_EXPIRED:
+                    rule_type = RuleType.DATE_COMPARISON
+                    params = {
+                        "document_type": requirement.document_type,
+                        "field": params.get("field", "valid_until"),
+                        "operator": "ON_OR_AFTER",
+                        "comparison_source": "EVALUATION_DATE",
+                    }
+                elif rule_type == RuleType.ISSUE_DATE_MAX_AGE:
+                    params = {
+                        **params,
+                        "document_type": requirement.document_type,
+                        "field": params.get("field", "issue_date"),
+                    }
                 if rule_type in submission_types:
                     try:
                         severity = Severity(row.severity)
@@ -169,8 +221,14 @@ class SubmissionVerificationService:
                             id=row.id,
                             rule_type=rule_type,
                             severity=severity,
-                            params=row.params or {},
+                            params=params,
                         )
+                    )
+                elif rule_type != RuleType.REQUIRED_FIELD:
+                    # A document-scope rule that has not been implemented over
+                    # effective submission inputs must not silently authorize READY.
+                    raise RuleConfigurationError(
+                        f"Rule {rule_type.value} is not supported for submission verification; configure an explicit comparison rule"
                     )
             snapshots.append(
                 RequirementSnapshot(
@@ -178,6 +236,7 @@ class SubmissionVerificationService:
                     document_type=DocumentType(requirement.document_type),
                     required=requirement.required,
                     rules=tuple(rules),
+                    required_fields=required_fields(requirement),
                 )
             )
         return snapshots
@@ -189,6 +248,7 @@ class SubmissionVerificationService:
             .options(selectinload(Document.extracted_fields))
             .where(Submission.project_id == project_id)
             .order_by(Document.created_at, Document.id)
+            .execution_options(populate_existing=True)
         ).all()
         document_ids = [row.id for row in rows]
         reviews = (
@@ -229,12 +289,45 @@ class SubmissionVerificationService:
                 DocumentSnapshot(
                     id=row.id,
                     document_type=DocumentType(row.document_type),
-                    processing_status=ProcessingStatus(row.processing_status),
+                    processing_status=ProcessingStatus(
+                        row.processing_status or ProcessingStatus.UPLOADED
+                    ),
                     checksum_sha256=row.checksum_sha256,
                     fields=fields,
+                    processing_version=row.processing_version,
+                    classification_needs_review=bool(
+                        (row.classification_meta or {}).get("needs_review")
+                    ),
+                    created_at=row.created_at.isoformat(),
                 )
             )
         return snapshots
+
+    def _snapshot(
+        self,
+        project: Project,
+        requirements: list[RequirementSnapshot],
+        documents: list[DocumentSnapshot],
+    ) -> dict:
+        # Hash includes effective values/review IDs, assessment policy, workflow
+        # rules, identity inputs, generation and operational state. Persist no PII.
+        inputs = {
+            "workflow": str(project.checklist_id),
+            "requirements": [asdict(item) for item in requirements],
+            "documents": [asdict(item) for item in documents],
+            "applicant_name": project.applicant_name,
+            "company_name": project.company_name,
+            "engine": self.engine.version,
+            "evidence_policy": EVIDENCE_POLICY_VERSION,
+        }
+        encoded = json.dumps(inputs, sort_keys=True, default=str, separators=(",", ":"))
+        return {
+            "sha256": hashlib.sha256(encoded.encode()).hexdigest(),
+            "workflow_id": str(project.checklist_id),
+            "document_versions": {str(item.id): item.processing_version for item in documents},
+            "engine_version": self.engine.version,
+            "evidence_policy_version": EVIDENCE_POLICY_VERSION,
+        }
 
     def _persist(
         self,
@@ -242,12 +335,14 @@ class SubmissionVerificationService:
         project: Project,
         result: SubmissionVerificationResult,
         evaluated_at: datetime,
+        snapshot: dict,
     ) -> None:
         invalidate_submission_verification(db, project.id)
         for result_index, item in enumerate(result.rule_results):
             issue = item.issue
             details = {
                 "evaluation_date": result.evaluation_date.isoformat(),
+                "input_snapshot": snapshot,
                 "engine_version": self.engine.version,
                 "rule_id": str(item.rule_id) if item.rule_id else None,
                 "document_id": str(item.document_id) if item.document_id else None,

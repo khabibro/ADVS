@@ -1,7 +1,8 @@
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, File, Query, UploadFile, status
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import get_settings
@@ -15,16 +16,20 @@ from app.core.domain import (
 from app.core.errors import ApiErrorCode, api_error
 from app.db.session import get_db
 from app.document_intelligence.evidence_sufficiency import FieldReviewDecision
+from app.document_intelligence.extraction.base import ExtractedValue
 from app.document_intelligence.results import CanonicalDocumentResult
 from app.document_intelligence.validation.engine import ValidationEngine
 from app.document_intelligence.validation.submission import RuleConfigurationError
 from app.models.entities import (
+    AuditLog,
     Checklist,
     Document,
     DocumentRequirement,
+    FieldReview,
     Project,
     Submission,
     User,
+    ValidationResult,
 )
 from app.schemas.api import (
     ChecklistCreate,
@@ -39,15 +44,18 @@ from app.schemas.api import (
     ReviewItemRead,
     RuleEvaluationRead,
     SubmissionVerificationRead,
+    ValidationRead,
     VerificationIssueRead,
     VerificationRequest,
     WorkflowDocumentRequirementRead,
     WorkflowRead,
     WorkflowSummary,
 )
-from app.services.processing import DocumentProcessingService
-from app.services.reviews import FieldReviewService, ReviewValidationError
-from app.services.storage.local import LocalStorageService, sanitize_filename
+from app.services.consistency import lock_project
+from app.services.document_validation import validate_effective_document
+from app.services.processing import _ACTIVE_STATUSES, DocumentProcessingService
+from app.services.reviews import FieldReviewService, ReviewValidationError, StaleReviewError
+from app.services.storage.local import LocalStorageService, canonical_mime, sanitize_filename
 from app.services.verification import (
     StoredSubmissionVerification,
     SubmissionVerificationService,
@@ -166,6 +174,9 @@ def list_projects(db: Session = Depends(get_db)):
         .options(selectinload(Project.checklist).selectinload(Checklist.requirements))
         .order_by(Project.created_at.desc())
     ).all()
+    for project in sorted(projects, key=lambda item: str(item.id)):
+        if project.status == OverallStatus.READY:
+            submission_verification_service.get_latest(db, project.id)
     return [_project_read(project) for project in projects]
 
 
@@ -198,11 +209,14 @@ def get_project(project_id: uuid.UUID, db: Session = Depends(get_db)):
     )
     if not project:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
+    if project.status == OverallStatus.READY:
+        submission_verification_service.get_latest(db, project.id)
     return _project_read(project)
 
 
 @router.patch("/projects/{project_id}", response_model=ProjectRead)
 def update_project(project_id: uuid.UUID, payload: ProjectCreate, db: Session = Depends(get_db)):
+    lock_project(db, project_id)
     project = db.scalar(
         select(Project)
         .options(selectinload(Project.checklist).selectinload(Checklist.requirements))
@@ -235,10 +249,38 @@ def get_workflow(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
 
 @router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_project(project_id: uuid.UUID, db: Session = Depends(get_db)):
-    project = db.get(Project, project_id)
-    if project:
-        db.delete(project)
-        db.commit()
+    project = lock_project(db, project_id)
+    if project is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
+    documents = db.scalars(
+        select(Document).join(Submission).where(Submission.project_id == project_id)
+    ).all()
+    if any(document.processing_status in _ACTIVE_STATUSES for document in documents):
+        db.rollback()
+        raise api_error(
+            "PROCESSING_IN_PROGRESS",
+            "Wait for document processing before deleting the project",
+            409,
+        )
+    keys = [document.storage_key for document in documents]
+    document_ids = [document.id for document in documents]
+    db.execute(delete(FieldReview).where(FieldReview.project_id == project_id))
+    db.execute(delete(ValidationResult).where(ValidationResult.project_id == project_id))
+    db.execute(update(AuditLog).where(AuditLog.project_id == project_id).values(project_id=None))
+    if document_ids:
+        db.execute(
+            update(AuditLog).where(AuditLog.document_id.in_(document_ids)).values(document_id=None)
+        )
+    db.delete(project)
+    db.commit()
+    storage = LocalStorageService(get_settings())
+    for key in keys:
+        try:
+            storage.path_for(key).unlink(missing_ok=True)
+        except OSError:
+            logging.getLogger(__name__).error(
+                "stored_file_cleanup_failed", extra={"project_id": str(project_id)}
+            )
 
 
 @router.get("/checklists", response_model=list[ChecklistRead])
@@ -285,6 +327,7 @@ def update_checklist(
 async def upload_document(
     project_id: uuid.UUID, file: UploadFile = File(...), db: Session = Depends(get_db)
 ):
+    lock_project(db, project_id)
     project = db.scalar(
         select(Project).options(selectinload(Project.submissions)).where(Project.id == project_id)
     )
@@ -301,19 +344,26 @@ async def upload_document(
         submission_id=submission.id,
         original_filename=sanitize_filename(file.filename or "upload"),
         storage_key=storage_key,
-        mime_type=file.content_type or "",
+        mime_type=canonical_mime(storage_key),
         size_bytes=size,
         checksum_sha256=checksum,
     )
-    db.add(doc)
-    invalidate_submission_verification(db, project.id)
-    db.commit()
+    try:
+        db.add(doc)
+        invalidate_submission_verification(db, project.id)
+        db.commit()
+    except BaseException:
+        db.rollback()
+        LocalStorageService(get_settings()).path_for(storage_key).unlink(missing_ok=True)
+        raise
     db.refresh(doc)
     return doc
 
 
 @router.get("/projects/{project_id}/documents", response_model=list[DocumentRead])
 def list_documents(project_id: uuid.UUID, db: Session = Depends(get_db)):
+    if db.get(Project, project_id) is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
     return db.scalars(
         select(Document)
         .join(Submission)
@@ -336,14 +386,6 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
     if not document:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Document not found", 404)
     detail = DocumentDetail.model_validate(document)
-    validation_status = ValidationEngine().overall_status(document.validation_results)
-    if (
-        document.processing_status != ProcessingStatus.COMPLETED
-        or document.document_type == DocumentType.UNKNOWN
-    ):
-        detail.overall_status = OverallStatus.REVIEW_REQUIRED
-    else:
-        detail.overall_status = validation_status
     canonical = CanonicalDocumentResult.from_persisted(
         document,
         verification_status=detail.overall_status,
@@ -356,11 +398,23 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
         if item.is_current and item.processing_version == document.processing_version
     }
     detail.extracted_fields = []
-    for item in document.extracted_fields:
+    by_name = {item.field_name: item for item in document.extracted_fields}
+    for name in sorted(set(by_name) | set(current_reviews)):
+        item = by_name.get(name)
         effective = field_review_service.resolver.resolve(
-            item, current_reviews.get(item.field_name), document.processing_version
+            item, current_reviews.get(name), document.processing_version
         )
-        field_read = FieldRead.model_validate(item)
+        field_read = (
+            FieldRead.model_validate(item)
+            if item
+            else FieldRead(
+                field_name=name,
+                raw_value=None,
+                normalized_value=None,
+                confidence=None,
+                needs_review=True,
+            )
+        )
         field_read.evidence_assessment = effective.assessment.state
         field_read.assessment_reasons = list(effective.assessment.reasons)
         field_read.policy_version = effective.assessment.policy_version
@@ -370,6 +424,37 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
             FieldReviewDecision(effective.review.decision) if effective.review else None
         )
         detail.extracted_fields.append(field_read)
+    detail.missing_expected_fields = [
+        name
+        for name in detail.missing_expected_fields
+        if not any(
+            field.field_name == name and field.effective_normalized_value is not None
+            for field in detail.extracted_fields
+        )
+    ]
+    effective_fields = [
+        ExtractedValue(
+            field.field_name,
+            field.raw_value,
+            field.effective_normalized_value,
+            field.confidence,
+            field.effective_normalized_value is None,
+        )
+        for field in detail.extracted_fields
+    ]
+    issues, _ = validate_effective_document(
+        db, document, DocumentType(document.document_type), effective_fields
+    )
+    detail.validation_results = [
+        ValidationRead.model_validate(issue, from_attributes=True) for issue in issues
+    ]
+    detail.overall_status = (
+        ValidationEngine().overall_status(issues)
+        if document.processing_status == ProcessingStatus.COMPLETED
+        and document.document_type != DocumentType.UNKNOWN
+        and not (document.classification_meta or {}).get("needs_review")
+        else OverallStatus.REVIEW_REQUIRED
+    )
     return detail
 
 
@@ -464,7 +549,11 @@ def review_field(
             corrected_value=payload.corrected_value,
             reviewer_label=payload.reviewer_label,
             note=payload.note,
+            expected_processing_version=payload.expected_processing_version,
         )
+    except StaleReviewError as exc:
+        db.rollback()
+        raise api_error("STALE_PROCESSING_VERSION", str(exc), 409) from exc
     except ReviewValidationError as exc:
         db.rollback()
         raise api_error(ApiErrorCode.VALIDATION_FAILED, str(exc), 400) from exc

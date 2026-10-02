@@ -78,6 +78,7 @@ class DocumentRead(BaseModel):
     mime_type: str
     size_bytes: int
     processing_status: str
+    processing_version: int
     document_type: DocumentType
     document_type_display_name: str = ""
     classification_confidence: float | None
@@ -107,6 +108,9 @@ class EvidenceRead(BaseModel):
     confidence: float | None = None
     source_kind: str
     coordinate_space: str
+    polygon: list[tuple[float, float]] | None = None
+    detection_confidence: float | None = None
+    transform: dict | None = None
 
 
 class FieldRead(BaseModel):
@@ -129,6 +133,7 @@ class FieldRead(BaseModel):
 
 
 class FieldReviewCreate(BaseModel):
+    expected_processing_version: int = Field(ge=0)
     decision: FieldReviewDecision
     corrected_value: str | None = None
     reviewer_label: str | None = Field(default=None, max_length=120)
@@ -168,6 +173,7 @@ class FieldReviewRead(BaseModel):
 
 class ReviewItemRead(BaseModel):
     document_id: uuid.UUID
+    processing_version: int
     document_type: DocumentType
     field_id: uuid.UUID | None
     field_name: str

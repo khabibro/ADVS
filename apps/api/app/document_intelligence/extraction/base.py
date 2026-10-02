@@ -1,7 +1,6 @@
 import re
-import unicodedata
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from app.core.domain import DocumentType
 from app.document_intelligence.evidence import CoordinateSpace, EvidenceRef, EvidenceSourceKind
@@ -12,21 +11,49 @@ from app.document_intelligence.extraction.fields import (
 )
 from app.document_intelligence.normalization.field_normalizer import (
     BUSINESS_NUMBER_RE,
-    DATE_RE,
+    canonicalize_numeric_text,
     normalize_business_number,
     normalize_date,
     normalize_gpa,
     normalize_gpa_scale,
+    normalize_lexical_text,
     normalize_text_field,
+    split_date_range,
 )
 from app.document_intelligence.ocr.layout import TextRow, build_rows
 from app.document_intelligence.ocr.models import OCRDocumentResult, OCRLine, OCRPage
 from app.document_intelligence.ocr.text_assembly import order_lines
 
-EXTRACTOR_VERSION = "heuristic-v4"
+EXTRACTOR_VERSION = "evidence-v5"
 
 _COLON_RE = re.compile(r"[：﹕꞉︓]")
 _WHITESPACE_RE = re.compile(r"[ \t]+")
+# A row whose entire content is one date and nothing else. Korean official
+# certificates print the issue date as a bare line inside the issuance block
+# (above the signing officer's name and stamp) far more often than they label
+# it, so "a label must exist" is not a complete model of the layout.
+_DATE_ONLY_RE = re.compile(r"^\s*(20\d{2}\s*[.\-/년\s]\s*\d{1,2}\s*[.\-/월\s]\s*\d{1,2}\s*일?)\s*$")
+# What makes a bare date an *issue* date rather than any other date: the
+# issuance block names its issuer -- either the institution, or the officer
+# who signs for it. Matched against whitespace-compacted row text because
+# these rows are heavily letter-spaced ("경 북 대 학 교 총", "총 괄 세 무 서 장").
+#
+# Two closed categories, both drawn from issuers actually observed on the
+# certificate types in scope: institution nouns (universities and schools, tax
+# and local-government offices, the social-insurance agency, industry
+# associations, the SME ministry) and Korean officer-title suffixes
+# (장/서장/국장/과장/팀장/부장). Adding an issuer means adding it here; that is
+# the maintenance point.
+_ISSUANCE_ANCHOR_RE = re.compile(
+    r"대학교|대학|학교|청|공단|기관|협회|기업부"
+    r"|총장|교장|서장|국장|과장|팀장|부장|校長|處長"
+    r"|주무관|담당자"
+)
+# How far below the date the issuer may appear and still be the same block.
+# Issuance blocks are short -- a date, then the signatory and stamp -- so a
+# small window is enough to catch them without reaching into the body, where
+# unrelated dates and institution names also occur.
+_ISSUANCE_ANCHOR_LOOKAHEAD = 3
 _KNOWN_LABELS = [
     "졸업증명서",
     "경력증명서",
@@ -121,9 +148,8 @@ class ExtractionCandidate:
     score: float = 0.0
     has_explicit_separator: bool = False
     value_from_other_segment: bool = False
-    """True when the value was resolved from a *different* detected box than
-    the one that carried the label, i.e. the pairing was decided by layout
-    geometry rather than by text adjacency."""
+    """True only for a separately boxed value with verified right-side geometry."""
+    relation: str = "label_match"
 
 
 @dataclass(frozen=True)
@@ -144,6 +170,9 @@ def _evidence_for(
         confidence=line.confidence,
         source_kind=source_kind,
         coordinate_space=coordinate_space,
+        polygon=line.polygon,
+        detection_confidence=line.detection_confidence,
+        transform=page.metadata.get("transform"),
     )
 
 
@@ -163,14 +192,16 @@ def _source_observations(source: ExtractionInput) -> list[_RowObservation]:
             if line.strip()
         ]
 
-    source_kind: EvidenceSourceKind = (
-        "embedded_pdf_text" if source.provider == "direct_pdf_text" else "ocr"
-    )
-    coordinate_space: CoordinateSpace = (
-        "pdf_point" if source_kind == "embedded_pdf_text" else "pixel"
-    )
     observations: list[_RowObservation] = []
     for page in source.pages:
+        source_kind: EvidenceSourceKind = (
+            "embedded_pdf_text"
+            if page.metadata.get("source", source.provider) == "direct_pdf_text"
+            else "ocr"
+        )
+        coordinate_space: CoordinateSpace = (
+            "pdf_point" if source_kind == "embedded_pdf_text" else "pixel"
+        )
         ordered = order_lines(page.lines) or [
             OCRLine(text=line) for line in page.text.splitlines() if line.strip()
         ]
@@ -232,7 +263,7 @@ def _label_pattern(label: str) -> str:
 
 
 def _normalize_extraction_text(text: str) -> str:
-    normalized = unicodedata.normalize("NFKC", text)
+    normalized = normalize_lexical_text(text)
     normalized = _COLON_RE.sub(":", normalized)
     return "\n".join(_WHITESPACE_RE.sub(" ", line).strip() for line in normalized.splitlines())
 
@@ -296,6 +327,16 @@ def _next_line_value_allowed(value: str) -> bool:
 _MAX_LABEL_SEGMENTS = 5
 
 
+def _right_associated(label: OCRLine, value: OCRLine) -> bool:
+    """Same row, to the right, bounded by text height (source-unit independent)."""
+    a, b = label.bounding_box, value.bounding_box
+    if a is None or b is None or min(a.height, b.height) <= 0:
+        return False
+    overlap = min(a.y + a.height, b.y + b.height) - max(a.y, b.y)
+    gap = b.x - (a.x + a.width)
+    return overlap >= max(a.height, b.height) * 0.5 and 0 <= gap <= 12 * min(a.height, b.height)
+
+
 def _row_candidates(
     observation: _RowObservation, labels: list[str], row_index: int
 ) -> list[ExtractionCandidate]:
@@ -314,6 +355,13 @@ def _row_candidates(
         for span in range(1, _MAX_LABEL_SEGMENTS + 1):
             end = start + span
             if end > len(segments):
+                break
+            if span > 1 and not all(
+                _right_associated(left, right)
+                for left, right in zip(
+                    segments[start : end - 1], segments[start + 1 : end], strict=True
+                )
+            ):
                 break
             label_run_text = " ".join(segment.text for segment in segments[start:end])
             normalized_run = _normalize_extraction_text(label_run_text)
@@ -343,6 +391,8 @@ def _row_candidates(
                 elif end < len(segments):
                     # Label ends mid-segment: value is a later segment on the
                     # same visual row, so the two are geometrically separated.
+                    if not _right_associated(segments[end - 1], segments[end]):
+                        break
                     value = _normalize_extraction_text(segments[end].text)
                     value_evidence = observation.evidence[end : end + 1]
                     separated = True
@@ -350,6 +400,22 @@ def _row_candidates(
                 else:
                     value = ""
                     value_evidence = ()
+
+                if not value and end < len(segments):
+                    # A label box that *ends* on its colon ("기업명:") with the
+                    # value in the next box on the same row. Tables and ruled
+                    # layouts put the label and the value in separate cells far
+                    # more often than in the same box, and treating this as "no
+                    # value here" abandoned the row: a real SME confirmation
+                    # certificate lost its company name, its representative and
+                    # its entire validity range to it. The value is
+                    # geometrically separated, exactly like the case above.
+                    if not _right_associated(segments[end - 1], segments[end]):
+                        break
+                    value = _normalize_extraction_text(segments[end].text)
+                    value_evidence = observation.evidence[end : end + 1]
+                    separated = True
+                    from_other_segment = True
 
                 value = _strip_trailing_labels(value, labels)
                 if not value:
@@ -373,6 +439,7 @@ def _row_candidates(
                         ).total,
                         has_explicit_separator=explicit,
                         value_from_other_segment=from_other_segment,
+                        relation="spatial_right_of_label" if from_other_segment else "label_match",
                     )
                 )
                 break
@@ -421,6 +488,7 @@ def _below_row_candidates(
                     ).total
                     - 10.0,
                     has_explicit_separator=False,
+                    relation="label_next_row",
                 )
             )
     return candidates
@@ -456,6 +524,7 @@ def rank_candidates(
                     ).total,
                     has_explicit_separator=candidate.has_explicit_separator,
                     value_from_other_segment=candidate.value_from_other_segment,
+                    relation=candidate.relation,
                 )
             )
     ranked.extend(
@@ -480,14 +549,31 @@ def candidate_after_label(
     """
     if field_name is None:
         observations = _source_observations(source)
+        found = []
         for row_index, observation in enumerate(observations):
-            found = _row_candidates(observation, labels, row_index)
-            if found:
-                return found[0]
-        below = _below_row_candidates(observations, labels, len(observations))
-        return below[0] if below else None
-    ranked = rank_candidates(source, labels, field_name)
-    return ranked[0] if ranked else None
+            found.extend(_row_candidates(observation, labels, row_index))
+        ranked = found or _below_row_candidates(observations, labels, len(observations))
+    else:
+        ranked = rank_candidates(source, labels, field_name)
+    if not ranked:
+        return None
+    # Evidence class decides priority first. Within that class, a unique top
+    # score can pick the primary field printed earlier on a form; exact ties
+    # remain unresolved instead of guessing.
+    explicit = [candidate for candidate in ranked if candidate.has_explicit_separator]
+    strongest = explicit or [c for c in ranked if c.relation != "label_next_row"] or ranked
+    values = {_compact(normalize_lexical_text(candidate.value)) for candidate in strongest}
+    if len(values) == 1:
+        return strongest[0]
+    if not any(
+        evidence is not None and evidence.bounding_box is not None
+        for candidate in strongest
+        for evidence in candidate.evidence
+    ):
+        return None
+    top_score = strongest[0].score
+    tied_top = [candidate for candidate in strongest if abs(candidate.score - top_score) < 0.000001]
+    return strongest[0] if len(tied_top) == 1 else None
 
 
 def candidate_right_of_label(
@@ -525,12 +611,11 @@ def candidate_right_of_label(
             ):
                 continue
             value_box = value_evidence.bounding_box
-            overlap = min(label_box.y + label_box.height, value_box.y + value_box.height) - max(
-                label_box.y, value_box.y
-            )
-            minimum_overlap = min(label_box.height, value_box.height) * 0.4
             horizontal_gap = value_box.x - (label_box.x + label_box.width)
-            if overlap < minimum_overlap or horizontal_gap < -4 or horizontal_gap > 600:
+            if not _right_associated(
+                OCRLine(label_text, bounding_box=label_box),
+                OCRLine(value_text, bounding_box=value_box),
+            ):
                 continue
             label_center = label_box.y + label_box.height / 2
             value_center = value_box.y + value_box.height / 2
@@ -542,6 +627,8 @@ def candidate_right_of_label(
             return ExtractionCandidate(
                 _strip_trailing_labels(_normalize_extraction_text(value), labels),
                 [label_evidence, evidence],
+                value_from_other_segment=True,
+                relation="spatial_right_of_label",
             )
     return None
 
@@ -562,19 +649,90 @@ def after_label(source: ExtractionInput, labels: list[str]) -> str | None:
     return candidate.value if candidate else None
 
 
+def standalone_date_candidate(source: ExtractionInput) -> ExtractionCandidate | None:
+    """The one unambiguous issue date in an otherwise unlabelled issuance block.
+
+    Certificates in this domain print their issue date as a bare line above the
+    signing officer's name and stamp, with no issue-date label at all. Requiring
+    a label therefore loses the field on most real documents.
+
+    Two conditions must both hold, and both exist to refuse rather than to
+    gain coverage:
+
+    * **Ambiguity is fatal.** Every bare date on the document must normalize
+      to the same value. Several different bare dates -- a birth date printed
+      alone, a validity start printed alone -- mean the document is not telling
+      us which one issued it, and the field stays unresolved.
+    * **The date must be in an issuance block.** The rows just below it must
+      name an issuer (an institution or a signing officer). A lone date sitting
+      in a transcript body next to grades is not an issue date, however unique
+      it is.
+
+    Both failures leave the field unresolved, which routes to human review.
+    That is the correct outcome: a guessed issue date silently satisfies every
+    downstream date rule.
+    """
+    observations = _source_observations(source)
+    values: dict[str, ExtractionCandidate] = {}
+    for observation in observations:
+        text = canonicalize_numeric_text(observation.row.text).strip()
+        if not _DATE_ONLY_RE.match(text):
+            continue
+        normalized = normalize_date(text)
+        if normalized is None:
+            continue
+        evidence = next((item for item in observation.evidence if item is not None), None)
+        values.setdefault(
+            normalized,
+            ExtractionCandidate(
+                text,
+                [evidence] if evidence is not None else [],
+                score=0.0,
+                has_explicit_separator=False,
+                value_from_other_segment=False,
+            ),
+        )
+    if len(values) != 1:
+        return None
+    candidate = next(iter(values.values()))
+    for index, observation in enumerate(observations):
+        if canonicalize_numeric_text(observation.row.text).strip() != candidate.value:
+            continue
+        # A label immediately preceding a bare date owns that date. It is
+        # not an unlabelled issuance block (e.g. graduation or employment).
+        if index and any(
+            _compact(observations[index - 1].row.text).rstrip(":") == _compact(label)
+            for label in _KNOWN_LABELS
+            if not _DOCUMENT_TITLE_RE.search(_compact(label))
+        ):
+            continue
+        if _followed_by_issuer(observations, index):
+            return candidate
+    return None
+
+
+def _followed_by_issuer(observations: list[_RowObservation], index: int) -> bool:
+    """True when the next few rows name an issuer, i.e. this date sits in the
+    issuance block rather than in the document body."""
+    following = observations[index + 1 : index + 1 + _ISSUANCE_ANCHOR_LOOKAHEAD]
+    if not following:
+        return False
+    # Never look past a page boundary: an issuance block does not continue on
+    # the next page, so a cross-page match would be a coincidence.
+    page_number = observations[index].row.page_number
+    for observation in following:
+        if observation.row.page_number != page_number:
+            return False
+        if _ISSUANCE_ANCHOR_RE.search(_compact(observation.row.text)):
+            return True
+    return False
+
+
 def split_range(raw: str | None) -> tuple[str | None, str | None]:
     """Splits a 'start ~ end' style range. Returns (None, None) when no
     range separator is present -- callers decide whether to treat the whole
     string as a single value instead."""
-    if not raw:
-        return None, None
-    normalized = _normalize_extraction_text(raw)
-    if not re.search(r"~|–|—|부터|에서", normalized):
-        return None, None
-    matches = list(DATE_RE.finditer(normalized))
-    if len(matches) >= 2:
-        return matches[0].group(0).strip(), matches[1].group(0).strip()
-    return None, None
+    return split_date_range(raw)
 
 
 class BaseDocumentExtractor(ABC):
@@ -636,8 +794,7 @@ class BaseDocumentExtractor(ABC):
         ):
             return self.missing(field_name)
         assert raw is not None
-        geometry_resolved = used_spatial_candidate or (candidate.value_from_other_segment)
-        method = "spatial_right_of_label" if geometry_resolved else "label_match"
+        method = "spatial_right_of_label" if used_spatial_candidate else candidate.relation
         return self._value(field_name, raw, normalized, method, candidate)
 
     def date_field(
@@ -651,13 +808,37 @@ class BaseDocumentExtractor(ABC):
         assert raw is not None
         return self._value(field_name, raw, normalized, "regex_date", candidate)
 
+    def issue_date_field(self, text: ExtractionInput, labels: list[str]) -> ExtractedValue:
+        """Explicit opt-in for issuance-block inference; never used by other dates."""
+        labelled = self.date_field(text, "issue_date", labels)
+        if labelled.normalized_value is not None:
+            return labelled
+        if any(re.search(_label_pattern(label), source_text(text)) for label in labels):
+            return labelled
+        candidate = standalone_date_candidate(text)
+        normalized = normalize_date(candidate.value) if candidate else None
+        if candidate is None or normalized is None:
+            return labelled
+        return replace(
+            self._value(
+                "issue_date", candidate.value, normalized, "document_semantic_issue_date", candidate
+            ),
+            needs_review=True,
+        )
+
     def business_number_field(
         self, text: ExtractionInput, field_name: str, labels: list[str]
     ) -> ExtractedValue:
         candidate = candidate_after_label(text, labels)
         raw_context = candidate.value if candidate else None
-        match = BUSINESS_NUMBER_RE.search(raw_context) if raw_context else None
-        raw_value = match.group(0) if match else None
+        match = (
+            BUSINESS_NUMBER_RE.search(canonicalize_numeric_text(raw_context))
+            if raw_context
+            else None
+        )
+        raw_value = raw_context[match.start() : match.end()] if match and raw_context else None
+        if normalize_business_number(raw_context) is None:
+            return self.missing(field_name)
         normalized = normalize_business_number(raw_value)
         if candidate is None or normalized is None:
             return self.missing(field_name)

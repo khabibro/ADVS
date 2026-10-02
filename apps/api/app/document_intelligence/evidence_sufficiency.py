@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
 
-EVIDENCE_POLICY_VERSION = "evidence-policy-v1"
+EVIDENCE_POLICY_VERSION = "evidence-policy-v2"
 
 
 class EvidenceAssessmentState(StrEnum):
@@ -19,6 +19,11 @@ class EvidenceAssessmentReason(StrEnum):
     OCR_CONFIDENCE_UNAVAILABLE = "OCR_CONFIDENCE_UNAVAILABLE"
     OCR_CONFIDENCE_BELOW_POLICY = "OCR_CONFIDENCE_BELOW_POLICY"
     EXTRACTION_MARKED_FOR_REVIEW = "EXTRACTION_MARKED_FOR_REVIEW"
+    OCR_REQUIRES_CONFIRMATION = "OCR_REQUIRES_CONFIRMATION"
+    SEMANTIC_INFERENCE = "SEMANTIC_INFERENCE"
+    SOURCE_PROVENANCE_INCOMPLETE = "SOURCE_PROVENANCE_INCOMPLETE"
+    HUMAN_REJECTED = "HUMAN_REJECTED"
+    HUMAN_CANNOT_DETERMINE = "HUMAN_CANNOT_DETERMINE"
 
 
 class EffectiveValueSource(StrEnum):
@@ -56,6 +61,7 @@ class EvidenceSufficiencyPolicy:
         needs_review: bool,
         evidence: list[dict[str, Any]] | None,
         field_confidence: float | None,
+        extraction_method: str | None = None,
     ) -> EvidenceAssessment:
         if normalized_value is None:
             return EvidenceAssessment(
@@ -73,8 +79,16 @@ class EvidenceSufficiencyPolicy:
         reasons: list[EvidenceAssessmentReason] = []
         if needs_review:
             reasons.append(EvidenceAssessmentReason.EXTRACTION_MARKED_FOR_REVIEW)
+        if extraction_method and "semantic" in extraction_method:
+            reasons.append(EvidenceAssessmentReason.SEMANTIC_INFERENCE)
+        if any(item.get("source_kind") not in {"ocr", "embedded_pdf_text"} for item in evidence):
+            reasons.append(EvidenceAssessmentReason.SOURCE_PROVENANCE_INCOMPLETE)
         ocr_evidence = [item for item in evidence if item.get("source_kind", "ocr") == "ocr"]
         if ocr_evidence:
+            # Recognition confidence is only a diagnostic. No calibrated field
+            # correctness estimator exists; OCR-only values need independent human
+            # confirmation before deterministic rules consume them.
+            reasons.append(EvidenceAssessmentReason.OCR_REQUIRES_CONFIRMATION)
             confidences = [
                 float(item["confidence"])
                 for item in ocr_evidence

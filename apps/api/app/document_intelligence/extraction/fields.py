@@ -49,15 +49,6 @@ _INSTITUTION_SUFFIXES = (
     "고등학교",
     "중학교",
     "초등학교",
-    "학부",
-    "법인",
-    "주식회사",
-    "(주)",
-    "㈜",
-    "센터",
-    "협회",
-    "법인사",
-    "지점",
 )
 
 # Suffixes that make it a department / major rather than a university.
@@ -65,7 +56,6 @@ _DEPARTMENT_SUFFIXES = (
     "학과",
     "학부",
     "전공",
-    "과",
     "전공과",
 )
 

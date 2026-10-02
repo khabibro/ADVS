@@ -93,6 +93,17 @@ def _project(db_session, *, transcript: bool = False):
             ]
         )
     project = Project(owner_id=user.id, checklist_id=workflow.id, name="Phase 7")
+    # These focused workflows deliberately require only their rule inputs.
+    # Default identity/completeness behavior is tested separately by Astra.
+    for required_item in [requirement] if transcript else [reference, target]:
+        db_session.add(
+            ValidationRule(
+                requirement_id=required_item.id,
+                rule_type=RuleType.REQUIRED_FIELD.value,
+                severity=Severity.WARNING.value,
+                params={"field": "gpa" if transcript else "business_registration_number"},
+            )
+        )
     db_session.add(project)
     db_session.flush()
     submission = Submission(project_id=project.id)
@@ -137,7 +148,9 @@ def _document(
                         "source_text": "redacted fixture",
                         "bounding_box": None,
                         "confidence": confidence,
-                        "source_kind": "ocr",
+                        "source_kind": "ocr"
+                        if confidence is not None and confidence < 0.9
+                        else "embedded_pdf_text",
                         "coordinate_space": "pixel",
                     }
                 ]
@@ -168,7 +181,11 @@ def _review(
     decision: str,
     corrected_value: str | None = None,
 ):
-    payload = {"decision": decision, "reviewer_label": "reviewer-1"}
+    payload = {
+        "decision": decision,
+        "reviewer_label": "reviewer-1",
+        "expected_processing_version": 1,
+    }
     if corrected_value is not None:
         payload["corrected_value"] = corrected_value
     return client.post(
@@ -427,7 +444,10 @@ def test_review_queue_is_rule_dependent_and_project_isolated(
     forbidden = _review(client, other.id, document.id, "gpa", "CONFIRMED")
     assert queue.status_code == 200
     assert [item["field_name"] for item in queue.json()] == ["gpa"]
-    assert queue.json()[0]["assessment_reasons"] == ["OCR_CONFIDENCE_BELOW_POLICY"]
+    assert queue.json()[0]["assessment_reasons"] == [
+        "OCR_REQUIRES_CONFIRMATION",
+        "OCR_CONFIDENCE_BELOW_POLICY",
+    ]
     assert forbidden.status_code == 404
 
 
@@ -521,7 +541,7 @@ def test_review_request_decision_combinations_and_unknown_targets(
     unknown_field = _review(client, project.id, document.id, "not_a_field", "CONFIRMED")
     invalid_id = client.post(
         f"/api/v1/projects/{project.id}/documents/{uuid.uuid4()}/fields/gpa/review",
-        json={"decision": "CONFIRMED"},
+        json={"decision": "CONFIRMED", "expected_processing_version": 1},
     )
     assert bad_confirm.status_code == 422
     assert unknown_field.status_code == 400

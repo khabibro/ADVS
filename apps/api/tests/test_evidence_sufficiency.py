@@ -42,9 +42,13 @@ def test_evidence_policy_distinguishes_sufficient_uncertain_and_unavailable() ->
         normalized_value=None, needs_review=True, evidence=None, field_confidence=None
     )
 
-    assert high.state == EvidenceAssessmentState.SUFFICIENT
+    assert high.state == EvidenceAssessmentState.REVIEW_REQUIRED
+    assert high.reasons == (EvidenceAssessmentReason.OCR_REQUIRES_CONFIRMATION,)
     assert low.state == EvidenceAssessmentState.REVIEW_REQUIRED
-    assert low.reasons == (EvidenceAssessmentReason.OCR_CONFIDENCE_BELOW_POLICY,)
+    assert low.reasons == (
+        EvidenceAssessmentReason.OCR_REQUIRES_CONFIRMATION,
+        EvidenceAssessmentReason.OCR_CONFIDENCE_BELOW_POLICY,
+    )
     assert missing.state == EvidenceAssessmentState.UNAVAILABLE
     assert missing.reasons == (EvidenceAssessmentReason.FIELD_MISSING,)
 

@@ -468,8 +468,8 @@ def test_unknown_does_not_satisfy_known_requirement() -> None:
         [requirement(DocumentType.SME_CONFIRMATION_CERTIFICATE)],
         [document(DocumentType.UNKNOWN, {})],
     )
-    assert result.status == OverallStatus.NEEDS_CORRECTION
-    assert issue_codes(result) == {"MISSING_REQUIRED_DOCUMENT"}
+    assert result.status == OverallStatus.REVIEW_REQUIRED
+    assert issue_codes(result) == {"UNCLASSIFIED_DOCUMENT_REQUIRES_REVIEW"}
 
 
 def test_required_enrollment_missing_needs_correction() -> None:

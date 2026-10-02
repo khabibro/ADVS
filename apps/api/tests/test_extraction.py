@@ -145,15 +145,14 @@ def test_career_extraction_falls_back_to_range_label() -> None:
 def test_career_extraction_multiple_periods_flagged_for_review() -> None:
     """Regression test for a P1.5 baseline finding (UNSUPPORTED_LAYOUT):
     when more than one employment period is present, the extractor must not
-    silently present a confident single value -- it still returns its
-    best-effort (first) period but flags it for review."""
+    silently select one period. Multiple conflicting periods abstain."""
     text = (
         "경력증명서\n성명 김철수\n회사명 한국테크\n"
         "재직기간 2018-04-17 ~ 2019-05-21\n재직기간 2019-07-20 ~ 2020-05-15"
     )
     fields = by_name(CareerCertificateExtractor().extract(text))
-    assert fields["employment_start_date"].normalized_value == "2018-04-17"
-    assert fields["employment_end_date"].normalized_value == "2019-05-21"
+    assert fields["employment_start_date"].normalized_value is None
+    assert fields["employment_end_date"].normalized_value is None
     assert fields["employment_start_date"].needs_review is True
     assert fields["employment_end_date"].needs_review is True
 

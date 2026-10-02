@@ -32,7 +32,7 @@ def _squash(text: str) -> str:
     return _WHITESPACE_RE.sub("", text)
 
 
-CLASSIFIER_VERSION = "heuristic-v3"
+CLASSIFIER_VERSION = "heuristic-v4-abstain"
 
 TITLE = 5.0
 IDENTIFIER = 3.0
@@ -212,6 +212,8 @@ class DocumentClassifier:
         denom = winner_score + runner_score
         confidence = min(winner_score / denom, 0.99) if denom > 0 else 0.0
         ambiguous = runner_score > 0 and (winner_score - runner_score) <= AMBIGUITY_MARGIN
+        if ambiguous:
+            return _unknown(scores, evidence)
 
         return ClassificationResult(
             predicted_type=winner_type,

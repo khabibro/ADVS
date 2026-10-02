@@ -27,7 +27,7 @@ class TranscriptExtractor(BaseDocumentExtractor):
             ),
             self._university_name(text),
             self.text_field(text, "student_id", ["학번"]),
-            self.date_field(text, "issue_date", ["발급일", "발급일자", "발행일자"]),
+            self.issue_date_field(text, ["발급일", "발급일자", "발행일자"]),
             self.gpa_field(text, "gpa", gpa_labels),
             self.gpa_scale_field(text, "gpa_scale", gpa_labels),
         ]

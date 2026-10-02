@@ -58,7 +58,13 @@ def _business_project(db_session):
                 requirement_id=reference.id,
                 rule_type=RuleType.REQUIRED_FIELD.value,
                 severity=Severity.WARNING.value,
-                params={},
+                params={"field": "business_registration_number"},
+            ),
+            ValidationRule(
+                requirement_id=target.id,
+                rule_type=RuleType.REQUIRED_FIELD.value,
+                severity=Severity.WARNING.value,
+                params={"field": "business_registration_number"},
             ),
             ValidationRule(
                 requirement_id=target.id,
@@ -282,7 +288,9 @@ def test_reprocessing_invalidates_stale_ready(client: TestClient, db_session) ->
 
 def test_invalid_persisted_rule_returns_safe_api_error(client: TestClient, db_session) -> None:
     project, submission, target_requirement = _business_project(db_session)
-    bad_rule = target_requirement.rules[0]
+    bad_rule = next(
+        rule for rule in target_requirement.rules if rule.rule_type == RuleType.FIELD_COMPARISON
+    )
     bad_rule.params = {**bad_rule.params, "source_field": "not_a_field"}
     _document(
         db_session,

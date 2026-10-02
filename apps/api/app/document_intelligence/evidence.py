@@ -22,6 +22,9 @@ class EvidenceRef:
     confidence: float | None = None
     source_kind: EvidenceSourceKind = "ocr"
     coordinate_space: CoordinateSpace = "pixel"
+    polygon: tuple[tuple[float, float], ...] | None = None
+    detection_confidence: float | None = None
+    transform: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

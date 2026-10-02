@@ -26,7 +26,7 @@ class SMEConfirmationExtractor(BaseDocumentExtractor):
             self.text_field(
                 text, "certificate_number", ["발급번호", "확인번호", "증명서번호", "일련번호"]
             ),
-            self.date_field(text, "issue_date", ["발급일", "발급일자", "발행일자"]),
+            self.issue_date_field(text, ["발급일", "발급일자", "발행일자"]),
             self._validity_date_field(validity_candidate, "valid_from", 0),
             self._validity_date_field(validity_candidate, "valid_until", 1),
         ]

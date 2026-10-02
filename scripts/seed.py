@@ -40,7 +40,7 @@ def upsert_workflow(
         project_ids = [
             row[0] for row in db.query(Project.id).filter(Project.checklist_id == workflow.id).all()
         ]
-        for project_id in project_ids:
+        for project_id in sorted(project_ids, key=str):
             invalidate_submission_verification(db, project_id)
 
     workflow.requirements.clear()

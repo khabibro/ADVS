@@ -58,6 +58,7 @@ def test_document_api_serializes_enum_and_canonical_display_name() -> None:
         mime_type="application/pdf",
         size_bytes=1,
         processing_status="COMPLETED",
+        processing_version=0,
         document_type=DocumentType.UNKNOWN,
         classification_confidence=None,
         error_code=None,

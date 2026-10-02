@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -22,7 +22,7 @@ from app.document_intelligence.evidence_sufficiency import (
     EvidenceAssessmentState,
 )
 
-SUBMISSION_VERIFICATION_VERSION = "rules-v1"
+SUBMISSION_VERIFICATION_VERSION = "rules-v2"
 
 
 class RuleConfigurationError(ValueError):
@@ -32,6 +32,8 @@ class RuleConfigurationError(ValueError):
 @dataclass(frozen=True)
 class VerificationContext:
     evaluation_date: date
+    applicant_name: str | None = None
+    company_name: str | None = None
 
 
 @dataclass(frozen=True)
@@ -54,6 +56,9 @@ class DocumentSnapshot:
     processing_status: ProcessingStatus
     checksum_sha256: str
     fields: dict[str, FieldSnapshot] = field(default_factory=dict)
+    processing_version: int = 0
+    classification_needs_review: bool = False
+    created_at: str = ""
 
 
 @dataclass(frozen=True)
@@ -70,6 +75,7 @@ class RequirementSnapshot:
     document_type: DocumentType
     required: bool
     rules: tuple[SubmissionRule, ...] = ()
+    required_fields: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -150,6 +156,18 @@ class SubmissionVerificationEngine:
         selected, availability_results = self._resolve_documents(requirements, documents)
         results = list(availability_results)
         for requirement in sorted(requirements, key=lambda item: item.document_type.value):
+            document = selected.get(requirement.document_type)
+            if document is not None:
+                for name in requirement.required_fields:
+                    rule = SubmissionRule(
+                        requirement.id, RuleType.REQUIRED_FIELD, Severity.WARNING, {}
+                    )
+                    unresolved = self._unresolved_field(
+                        rule, document, document.fields.get(name), name
+                    )
+                    if unresolved:
+                        results.append(unresolved)
+                results.extend(self._document_conditions(document, requirement, context))
             for rule in sorted(
                 requirement.rules,
                 key=lambda item: (item.rule_type.value, str(sorted(item.params.items()))),
@@ -168,6 +186,11 @@ class SubmissionVerificationEngine:
     def validate_configuration(self, requirements: list[RequirementSnapshot]) -> None:
         requirement_types = {item.document_type for item in requirements}
         for requirement in requirements:
+            if any(
+                name not in EXPECTED_FIELDS[requirement.document_type]
+                for name in requirement.required_fields
+            ):
+                raise RuleConfigurationError("Unknown workflow-required field")
             for rule in requirement.rules:
                 if rule.rule_type == RuleType.FIELD_COMPARISON:
                     self._validate_field_comparison(rule, requirement_types)
@@ -189,6 +212,18 @@ class SubmissionVerificationEngine:
                         },
                         "decimal",
                     )
+                elif rule.rule_type == RuleType.ISSUE_DATE_MAX_AGE:
+                    document_type = self._document_type_param(rule, "document_type")
+                    self._field_param(rule, "field", document_type)
+                    days = rule.params.get("max_age_days", 90)
+                    if (
+                        document_type not in requirement_types
+                        or type(days) is not int
+                        or not 0 <= days <= 36500
+                    ):
+                        raise RuleConfigurationError(
+                            "Issue-date age must be an integer from 0 to 36500 days for a workflow document"
+                        )
                 else:
                     raise RuleConfigurationError(
                         f"Unsupported submission rule type: {rule.rule_type}"
@@ -245,9 +280,11 @@ class SubmissionVerificationEngine:
             raise RuleConfigurationError("Numeric rule requires an expected value")
         else:
             try:
-                Decimal(str(expected))
+                configured_decimal = Decimal(str(expected))
             except InvalidOperation as exc:
                 raise RuleConfigurationError("Invalid configured decimal") from exc
+            if not configured_decimal.is_finite():
+                raise RuleConfigurationError("Configured decimal must be finite")
 
     def _document_type_param(self, rule: SubmissionRule, key: str) -> DocumentType:
         try:
@@ -276,9 +313,47 @@ class SubmissionVerificationEngine:
         results: list[RuleEvaluationResult] = []
         for requirement in sorted(requirements, key=lambda item: item.document_type.value):
             typed = [doc for doc in documents if doc.document_type == requirement.document_type]
+            if (
+                not requirement.required
+                and not requirement.rules
+                and not requirement.required_fields
+            ):
+                selected[requirement.document_type] = None
+                results.append(
+                    RuleEvaluationResult(
+                        None,
+                        RuleType.REQUIRED_DOCUMENT,
+                        RuleOutcome.NOT_APPLICABLE,
+                        document_type=requirement.document_type,
+                    )
+                )
+                continue
+            uncertain = [doc for doc in typed if doc.classification_needs_review]
+            if uncertain:
+                selected[requirement.document_type] = None
+                issue = VerificationIssue(
+                    "CLASSIFICATION_REQUIRES_REVIEW",
+                    OverallStatus.REVIEW_REQUIRED,
+                    "서류 유형을 확인해야 합니다.",
+                    document_type=requirement.document_type,
+                )
+                results.append(
+                    RuleEvaluationResult(
+                        None,
+                        RuleType.REQUIRED_DOCUMENT,
+                        RuleOutcome.UNRESOLVED,
+                        issue,
+                        document_type=requirement.document_type,
+                    )
+                )
+                continue
             completed = [
                 doc for doc in typed if doc.processing_status == ProcessingStatus.COMPLETED
             ]
+            if len(completed) != len(typed):
+                # Do not choose an older completed upload while a competing
+                # document of that workflow type is running or has failed.
+                completed = []
             unique_checksums = {doc.checksum_sha256 for doc in completed}
             if len(completed) > 1 and len(unique_checksums) > 1:
                 issue = VerificationIssue(
@@ -299,7 +374,35 @@ class SubmissionVerificationEngine:
                 )
                 continue
             if completed:
-                chosen = sorted(completed, key=lambda item: str(item.id))[0]
+                # Even byte-identical documents can have competing reviewed values.
+                signatures = {
+                    tuple(
+                        sorted(
+                            (name, item.normalized_value, str(item.assessment_state))
+                            for name, item in doc.fields.items()
+                        )
+                    )
+                    for doc in completed
+                }
+                if len(signatures) > 1:
+                    selected[requirement.document_type] = None
+                    issue = VerificationIssue(
+                        "DUPLICATE_RESULTS_CONFLICT",
+                        OverallStatus.REVIEW_REQUIRED,
+                        "중복 서류의 검토 결과가 달라 확인이 필요합니다.",
+                        document_type=requirement.document_type,
+                    )
+                    results.append(
+                        RuleEvaluationResult(
+                            None,
+                            RuleType.DUPLICATE_DOCUMENT,
+                            RuleOutcome.UNRESOLVED,
+                            issue,
+                            document_type=requirement.document_type,
+                        )
+                    )
+                    continue
+                chosen = min(completed, key=lambda item: item.created_at)
                 selected[requirement.document_type] = chosen
                 results.append(
                     RuleEvaluationResult(
@@ -347,17 +450,26 @@ class SubmissionVerificationEngine:
                 continue
             selected[requirement.document_type] = None
             if requirement.required:
+                unknown_present = any(
+                    doc.document_type == DocumentType.UNKNOWN for doc in documents
+                )
                 issue = VerificationIssue(
-                    code="MISSING_REQUIRED_DOCUMENT",
-                    status_effect=OverallStatus.NEEDS_CORRECTION,
-                    message="필수서류가 누락되었습니다.",
+                    code="UNCLASSIFIED_DOCUMENT_REQUIRES_REVIEW"
+                    if unknown_present
+                    else "MISSING_REQUIRED_DOCUMENT",
+                    status_effect=OverallStatus.REVIEW_REQUIRED
+                    if unknown_present
+                    else OverallStatus.NEEDS_CORRECTION,
+                    message="미분류 서류가 있어 필수서류 여부를 확인해야 합니다."
+                    if unknown_present
+                    else "필수서류가 누락되었습니다.",
                     document_type=requirement.document_type,
                 )
                 results.append(
                     RuleEvaluationResult(
                         None,
                         RuleType.REQUIRED_DOCUMENT,
-                        RuleOutcome.FAIL,
+                        RuleOutcome.UNRESOLVED if unknown_present else RuleOutcome.FAIL,
                         issue,
                         document_type=requirement.document_type,
                     )
@@ -373,6 +485,88 @@ class SubmissionVerificationEngine:
                 )
         return selected, results
 
+    def _document_conditions(
+        self,
+        document: DocumentSnapshot,
+        requirement: RequirementSnapshot,
+        context: VerificationContext,
+    ) -> list[RuleEvaluationResult]:
+        """Re-evaluate applicable conditions using effective evidence, not stale machine issues."""
+        results: list[RuleEvaluationResult] = []
+        for name, expected, rule_type, code in (
+            (
+                "student_name"
+                if document.document_type
+                in {DocumentType.ENROLLMENT_CERTIFICATE, DocumentType.TRANSCRIPT}
+                else "applicant_name",
+                context.applicant_name,
+                RuleType.APPLICANT_NAME_MATCH,
+                "APPLICANT_NAME_MISMATCH",
+            ),
+            (
+                "workplace_name"
+                if document.document_type == DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE
+                else "company_name",
+                context.company_name,
+                RuleType.COMPANY_NAME_MATCH,
+                "COMPANY_NAME_MISMATCH",
+            ),
+        ):
+            if not expected or name not in EXPECTED_FIELDS[document.document_type]:
+                continue
+            rule = SubmissionRule(requirement.id, rule_type, Severity.ERROR, {})
+            snapshot = document.fields.get(name)
+            unresolved = self._unresolved_field(rule, document, snapshot, name)
+            if unresolved:
+                results.append(unresolved)
+            elif snapshot and snapshot.normalized_value != expected:
+                issue = VerificationIssue(
+                    code,
+                    OverallStatus.NEEDS_CORRECTION,
+                    "제출자 정보와 일치하지 않습니다.",
+                    document.id,
+                    document.document_type,
+                    name,
+                )
+                results.append(
+                    RuleEvaluationResult(
+                        requirement.id,
+                        rule_type,
+                        RuleOutcome.FAIL,
+                        issue,
+                        document.id,
+                        document.document_type,
+                        name,
+                    )
+                )
+        if (
+            requirement.required
+            and "valid_until" in requirement.required_fields
+            and not any(
+                rule.rule_type == RuleType.DATE_COMPARISON
+                and rule.params.get("field") == "valid_until"
+                for rule in requirement.rules
+            )
+        ):
+            results.append(
+                self._date_comparison(
+                    SubmissionRule(
+                        requirement.id,
+                        RuleType.DATE_COMPARISON,
+                        Severity.ERROR,
+                        {
+                            "document_type": document.document_type.value,
+                            "field": "valid_until",
+                            "operator": "ON_OR_AFTER",
+                            "comparison_source": "EVALUATION_DATE",
+                        },
+                    ),
+                    {document.document_type: document},
+                    context,
+                )
+            )
+        return results
+
     def _evaluate_rule(
         self,
         rule: SubmissionRule,
@@ -385,6 +579,22 @@ class SubmissionVerificationEngine:
             return self._date_comparison(rule, selected, context)
         if rule.rule_type == RuleType.NUMERIC_COMPARISON:
             return self._numeric_comparison(rule, selected)
+        if rule.rule_type == RuleType.ISSUE_DATE_MAX_AGE:
+            lower = context.evaluation_date - timedelta(days=rule.params.get("max_age_days", 90))
+            for operator, expected in (
+                ("ON_OR_AFTER", lower),
+                ("ON_OR_BEFORE", context.evaluation_date),
+            ):
+                bound = SubmissionRule(
+                    rule.id,
+                    rule.rule_type,
+                    rule.severity,
+                    {**rule.params, "operator": operator, "expected_value": expected.isoformat()},
+                )
+                result = self._date_comparison(bound, selected, context)
+                if result.outcome != RuleOutcome.PASS:
+                    return result
+            return result
         raise RuleConfigurationError(f"Unsupported submission rule type: {rule.rule_type}")
 
     def _field_comparison(
@@ -566,6 +776,8 @@ class SubmissionVerificationEngine:
         try:
             actual = Decimal(snapshot.normalized_value)
             expected = Decimal(str(rule.params["expected_value"]))
+            if not actual.is_finite() or not expected.is_finite():
+                raise InvalidOperation
         except InvalidOperation:
             unresolved = self._unresolved_field(rule, document, None, field_name, snapshot.id)
             assert unresolved is not None

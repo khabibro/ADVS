@@ -36,9 +36,15 @@ from app.models.entities import (
     Project,
     Submission,
 )
+from app.services.consistency import lock_project
+from app.services.requirements import required_fields
 
 
 class ReviewValidationError(ValueError):
+    pass
+
+
+class StaleReviewError(ReviewValidationError):
     pass
 
 
@@ -89,6 +95,7 @@ class EffectiveFieldResolver:
             needs_review=field.needs_review if field else True,
             evidence=field.evidence if field else None,
             field_confidence=field.confidence if field else None,
+            extraction_method=field.extraction_method if field else None,
         )
         current = (
             review
@@ -128,7 +135,11 @@ class EffectiveFieldResolver:
             )
         assessment = EvidenceAssessment(
             EvidenceAssessmentState.UNAVAILABLE,
-            (EvidenceAssessmentReason.FIELD_MISSING,),
+            (
+                EvidenceAssessmentReason.HUMAN_REJECTED
+                if decision == FieldReviewDecision.REJECTED
+                else EvidenceAssessmentReason.HUMAN_CANNOT_DETERMINE,
+            ),
             None,
         )
         return EffectiveFieldValue(None, EffectiveValueSource.UNAVAILABLE, assessment, current)
@@ -141,16 +152,18 @@ class FieldReviewService:
     def target(
         self, db: Session, project_id: uuid.UUID, document_id: uuid.UUID, field_name: str
     ) -> ReviewTarget | None:
+        lock_project(db, project_id)
         document = db.scalar(
             select(Document)
             .join(Submission)
             .options(selectinload(Document.extracted_fields))
             .where(Document.id == document_id, Submission.project_id == project_id)
+            .execution_options(populate_existing=True)
         )
         if document is None:
             return None
         if ProcessingStatus(document.processing_status) != ProcessingStatus.COMPLETED:
-            raise ReviewValidationError("Document processing is not completed")
+            raise StaleReviewError("Document processing is not completed; reload current evidence")
         try:
             document_type = DocumentType(document.document_type)
         except ValueError:
@@ -183,7 +196,16 @@ class FieldReviewService:
         corrected_value: str | None,
         reviewer_label: str | None,
         note: str | None,
+        expected_processing_version: int,
     ) -> FieldReview:
+        # Re-read under the same project transaction lock even for service callers
+        # that constructed their target before another processing attempt.
+        fresh = self.target(db, target.project.id, target.document.id, target.field_name)
+        if fresh is None:
+            raise StaleReviewError("Review target no longer exists")
+        target = fresh
+        if target.document.processing_version != expected_processing_version:
+            raise StaleReviewError("Processing version changed; reload current evidence")
         field = target.field
         if decision == FieldReviewDecision.CONFIRMED:
             if corrected_value is not None:
@@ -264,6 +286,10 @@ class FieldReviewService:
         if checklist is None:
             return dependencies
         for requirement in checklist.requirements:
+            dependencies.update(
+                (DocumentType(requirement.document_type), name)
+                for name in required_fields(requirement)
+            )
             for rule in requirement.rules:
                 params: dict[str, Any] = rule.params or {}
                 rule_type = RuleType(rule.rule_type)
@@ -276,6 +302,20 @@ class FieldReviewService:
                     )
                 elif rule_type in {RuleType.DATE_COMPARISON, RuleType.NUMERIC_COMPARISON}:
                     dependencies.add((DocumentType(params["document_type"]), str(params["field"])))
+                elif rule_type in {RuleType.DATE_NOT_EXPIRED, RuleType.ISSUE_DATE_MAX_AGE}:
+                    dependencies.add(
+                        (
+                            DocumentType(requirement.document_type),
+                            str(
+                                params.get(
+                                    "field",
+                                    "valid_until"
+                                    if rule_type == RuleType.DATE_NOT_EXPIRED
+                                    else "issue_date",
+                                )
+                            ),
+                        )
+                    )
         return dependencies
 
     def project_with_rules(self, db: Session, project_id: uuid.UUID) -> Project | None:
@@ -334,7 +374,11 @@ class FieldReviewService:
                 if effective.assessment.state == EvidenceAssessmentState.SUFFICIENT:
                     continue
                 queue_status = (
-                    "RESOLVED"
+                    (
+                        "REJECTED"
+                        if effective.review.decision == FieldReviewDecision.REJECTED
+                        else "CANNOT_DETERMINE"
+                    )
                     if effective.review is not None
                     else "STALE"
                     if (document.id, field_name) in stale_targets
@@ -343,6 +387,7 @@ class FieldReviewService:
                 items.append(
                     {
                         "document_id": document.id,
+                        "processing_version": document.processing_version,
                         "document_type": document_type,
                         "field_id": field.id if field else None,
                         "field_name": field_name,

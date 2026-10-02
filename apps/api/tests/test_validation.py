@@ -71,7 +71,7 @@ def test_required_field_rule_targets_specific_field() -> None:
     issues = engine.validate_document(
         None, DocumentType.SME_CONFIRMATION_CERTIFICATE, fields, configured_rules=rules
     )
-    assert engine.overall_status(issues) == OverallStatus.NEEDS_CORRECTION
+    assert engine.overall_status(issues) == OverallStatus.REVIEW_REQUIRED
 
 
 def test_required_field_rule_without_target_uses_document_schema() -> None:

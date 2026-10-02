@@ -52,7 +52,7 @@ class CareerCertificateExtractor(BaseDocumentExtractor):
             self.text_field(text, "position", ["직위", "직급"]),
             start,
             end,
-            self.date_field(text, "issue_date", ["발급일자", "발행일자"]),
+            self.issue_date_field(text, ["발급일자", "발행일자"]),
         ]
 
     def _from_range(self, text: ExtractionInput) -> tuple[ExtractedValue, ExtractedValue]:
