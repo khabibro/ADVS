@@ -4,7 +4,7 @@ import tempfile
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
-from functools import cached_property
+from functools import cached_property, partial
 from importlib.metadata import version
 from pathlib import Path
 from typing import Any
@@ -267,20 +267,20 @@ class PaddleOCRProvider(OCRProvider):
     async def extract_document(
         self, path: Path, mime_type: str, original_filename: str = ""
     ) -> list[OCRPage]:
-        return await run_ocr(
-            lambda: self._extract_document(path, mime_type), self.settings.ocr_timeout_seconds
-        )
+        return await self._extract_document(path, mime_type)
 
-    def _extract_document(self, path: Path, mime_type: str) -> list[OCRPage]:
+    async def _extract_document(self, path: Path, mime_type: str) -> list[OCRPage]:
         started = time.perf_counter()
         pages: list[OCRPage] = []
         try:
             for idx, image_path, transform in self._input_images(path, mime_type):
                 page_start = time.perf_counter()
-                page = self._normalize_page(
-                    raw=self._predict(image_path), page_number=idx, duration_ms=0
+                raw = await run_ocr(
+                    partial(self._predict, image_path),
+                    self.settings.ocr_timeout_seconds,
                 )
-                page = self._retry_with_orientation([page], [image_path])[0]
+                page = self._normalize_page(raw=raw, page_number=idx, duration_ms=0)
+                page = await self._retry_page_with_orientation(page, image_path)
                 page.page_number = idx
                 page.duration_ms = int((time.perf_counter() - page_start) * 1000)
                 page.metadata["transform"] = {**transform, **page.metadata.get("transform", {})}
@@ -295,6 +295,22 @@ class PaddleOCRProvider(OCRProvider):
         if not pages or not any(page.text.strip() for page in pages):
             raise OCRProviderError(ProcessingErrorCode.OCR_EMPTY_RESULT)
         return pages
+
+    async def _retry_page_with_orientation(self, page: OCRPage, image_path: Path) -> OCRPage:
+        if not self.doc_orientation or not self._looks_orientation_broken([page]):
+            return page
+        try:
+            raw = await run_ocr(
+                partial(self._predict, image_path, orientation=True),
+                self.settings.ocr_timeout_seconds,
+            )
+            retried = self._normalize_page(raw=raw, page_number=page.page_number, duration_ms=0)
+        except Exception:
+            # A retry must never turn a usable result into a failure.
+            return page
+        if self._recognition_quality([retried]) > self._recognition_quality([page]):
+            return retried
+        return page
 
     def _input_images(self, path: Path, mime_type: str) -> Iterator[tuple[int, Path, dict]]:
         if mime_type != "application/pdf":
@@ -335,17 +351,16 @@ class PaddleOCRProvider(OCRProvider):
                     raise OCRProviderError(ProcessingErrorCode.RESOURCE_LIMIT)
                 total = 0
                 for idx, page in enumerate(doc, start=1):
+                    scale, scale_reason = self._page_render_scale(page)
                     width, height = (
-                        math.ceil(page.rect.width * self.render_scale),
-                        math.ceil(page.rect.height * self.render_scale),
+                        math.ceil(page.rect.width * scale),
+                        math.ceil(page.rect.height * scale),
                     )
                     self._check_pixels(width, height)
                     total += width * height
                     if total > self.settings.max_pdf_render_pixels:
                         raise OCRProviderError(ProcessingErrorCode.RESOURCE_LIMIT)
-                    pix = page.get_pixmap(
-                        matrix=fitz.Matrix(self.render_scale, self.render_scale), alpha=False
-                    )
+                    pix = page.get_pixmap(matrix=fitz.Matrix(scale, scale), alpha=False)
                     image_path = Path(directory) / "page.png"
                     pix.save(image_path)
                     del pix
@@ -356,7 +371,9 @@ class PaddleOCRProvider(OCRProvider):
                             image_path,
                             {
                                 "pdf_rotation_degrees": page.rotation,
-                                "render_scale": self.render_scale,
+                                "render_scale": scale,
+                                "render_scale_reason": scale_reason,
+                                "effective_render_dpi": int(72 * scale),
                                 "coordinate_reference": "rendered_image",
                             },
                         )
@@ -374,6 +391,69 @@ class PaddleOCRProvider(OCRProvider):
             or width * height > self.settings.max_image_pixels
         ):
             raise OCRProviderError(ProcessingErrorCode.RESOURCE_LIMIT)
+
+    _MIN_RENDER_SCALE = 1.5
+
+    def _page_render_scale(self, page: Any) -> tuple[float, str]:
+        """Scale to render one PDF page at, and the reason for it.
+
+        The pixel budget is a statement about decode cost, not about document
+        validity. A page box routinely overstates the resolution of the raster
+        it wraps: scanners and print-to-PDF pipelines emit page boxes far
+        larger than the image inside them, so projecting the configured render
+        DPI onto the box multiplies memory and OCR time by the oversampling
+        factor while producing no additional evidence.
+
+        So the budget is applied against the resolution the page actually
+        carries. When the configured DPI would push a page past the budget,
+        the scale drops to that page's own resolution -- never below it, so no
+        detail is lost. A page that fits the budget renders exactly as before,
+        and a vector page with no embedded raster is never downscaled.
+        """
+        scale = self.render_scale
+        if not self._exceeds_page_budget(page, scale):
+            return scale, "configured_render_dpi"
+        source_scale = self._source_raster_scale(page)
+        if source_scale is None or source_scale >= scale:
+            return scale, "configured_render_dpi"
+        return max(self._MIN_RENDER_SCALE, source_scale), "source_resolution_fit"
+
+    def _exceeds_page_budget(self, page: Any, scale: float) -> bool:
+        width = math.ceil(page.rect.width * scale)
+        height = math.ceil(page.rect.height * scale)
+        return (
+            max(width, height) > self.settings.max_image_dimension
+            or width * height > self.settings.max_image_pixels
+        )
+
+    def _source_raster_scale(self, page: Any) -> float | None:
+        """Scale at which the page's embedded raster is reproduced 1:1.
+
+        Returns None for a vector page, where the render DPI is the only
+        resolution in play and must not be reduced.
+        """
+        try:
+            infos = page.get_image_info(xrefs=True)
+        except Exception:
+            return None
+        rotation = int(getattr(page, "rotation", 0)) % 180
+        scale: float | None = None
+        for info in infos or []:
+            bbox = info.get("bbox")
+            width_px = info.get("width")
+            height_px = info.get("height")
+            if not bbox or not width_px or not height_px:
+                continue
+            placed_w = float(bbox[2]) - float(bbox[0])
+            placed_h = float(bbox[3]) - float(bbox[1])
+            if placed_w <= 0 or placed_h <= 0:
+                continue
+            if rotation:
+                placed_w, placed_h = placed_h, placed_w
+            # Never render below the finest content on the page.
+            candidate = min(float(width_px) / placed_w, float(height_px) / placed_h)
+            scale = candidate if scale is None else max(scale, candidate)
+        return scale
 
     def _check_temp(self, path: Path) -> None:
         if path.stat().st_size > self.settings.max_ocr_temp_bytes:

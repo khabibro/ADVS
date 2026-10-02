@@ -10,7 +10,12 @@ from typing import Any
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session, selectinload
 
-from app.core.domain import EXPECTED_FIELDS, DocumentType, ProcessingStatus, RuleType
+from app.core.domain import (
+    REVIEWABLE_FIELDS,
+    DocumentType,
+    ProcessingStatus,
+    RuleType,
+)
 from app.document_intelligence.evidence_sufficiency import (
     EVIDENCE_POLICY_VERSION,
     EffectiveValueSource,
@@ -168,7 +173,7 @@ class FieldReviewService:
             document_type = DocumentType(document.document_type)
         except ValueError:
             return None
-        if field_name not in EXPECTED_FIELDS[document_type]:
+        if field_name not in REVIEWABLE_FIELDS[document_type]:
             raise ReviewValidationError("Unknown canonical field for document type")
         project = db.get(Project, project_id)
         if project is None:

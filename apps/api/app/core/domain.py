@@ -124,6 +124,42 @@ EXPECTED_FIELDS: dict[DocumentType, list[str]] = {
     DocumentType.UNKNOWN: [],
 }
 
+OPTIONAL_SUPPORTED_FIELDS: dict[DocumentType, list[str]] = {
+    DocumentType.GRADUATION_CERTIFICATE: [],
+    DocumentType.CAREER_CERTIFICATE: [],
+    DocumentType.BUSINESS_REGISTRATION_CERTIFICATE: [
+        "representative_name",
+        "business_address",
+        "business_type",
+        "business_item",
+        "issue_date",
+    ],
+    DocumentType.SME_CONFIRMATION_CERTIFICATE: [
+        "representative_name",
+        "certificate_number",
+        "issue_date",
+    ],
+    DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE: ["issue_date"],
+    DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE: ["issue_date"],
+    DocumentType.ENROLLMENT_CERTIFICATE: [],
+    DocumentType.TRANSCRIPT: [],
+    DocumentType.UNKNOWN: [],
+}
+
+
+def _field_union(required: list[str], optional: list[str]) -> list[str]:
+    result = list(required)
+    result.extend(field for field in optional if field not in result)
+    return result
+
+
+SUPPORTED_FIELDS: dict[DocumentType, list[str]] = {
+    document_type: _field_union(fields, OPTIONAL_SUPPORTED_FIELDS[document_type])
+    for document_type, fields in EXPECTED_FIELDS.items()
+}
+
+REVIEWABLE_FIELDS: dict[DocumentType, list[str]] = SUPPORTED_FIELDS
+
 
 DOCUMENT_TYPE_DISPLAY_NAMES: dict[DocumentType, str] = {
     DocumentType.GRADUATION_CERTIFICATE: "졸업증명서",

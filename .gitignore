@@ -49,3 +49,7 @@ evaluation/backend_audit/work/
 # ground-truth annotations transcribed from the owner's own documents. These
 # contain real names, student ids and business registration numbers.
 evaluation/backend_round2/work/
+
+# Local private runtime for evaluation runs: per-run ground-truth manifests,
+# raw OCR text and machine output for real (sensitive) documents. Never commit.
+evaluation/private_runtime/

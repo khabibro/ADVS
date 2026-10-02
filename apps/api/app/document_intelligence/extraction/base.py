@@ -337,6 +337,15 @@ def _right_associated(label: OCRLine, value: OCRLine) -> bool:
     return overlap >= max(a.height, b.height) * 0.5 and 0 <= gap <= 12 * min(a.height, b.height)
 
 
+def _below_associated(label: OCRLine, value: OCRLine) -> bool:
+    """Adjacent visual rows, close enough to be a local label/value pair."""
+    a, b = label.bounding_box, value.bounding_box
+    if a is None or b is None or min(a.height, b.height) <= 0:
+        return True
+    gap = b.y - (a.y + a.height)
+    return 0 <= gap <= 3 * max(a.height, b.height)
+
+
 def _row_candidates(
     observation: _RowObservation, labels: list[str], row_index: int
 ) -> list[ExtractionCandidate]:
@@ -350,6 +359,7 @@ def _row_candidates(
     row = observation.row
     segments = row.segments
     candidates: list[ExtractionCandidate] = []
+    ordered_labels = sorted(labels, key=lambda label: len(_compact(label)), reverse=True)
 
     for start in range(len(segments)):
         for span in range(1, _MAX_LABEL_SEGMENTS + 1):
@@ -365,7 +375,7 @@ def _row_candidates(
                 break
             label_run_text = " ".join(segment.text for segment in segments[start:end])
             normalized_run = _normalize_extraction_text(label_run_text)
-            for label in labels:
+            for label in ordered_labels:
                 match = re.search(rf"(?:^|[ \t]){_label_pattern(label)}", normalized_run)
                 if not match:
                     continue
@@ -460,6 +470,8 @@ def _below_row_candidates(
         if following.row.page_number != observation.row.page_number:
             continue
         if len(following.row.segments) != 1:
+            continue
+        if not _below_associated(observation.row.segments[-1], following.row.segments[0]):
             continue
         next_value = _normalize_extraction_text(following.row.text)
         if not _next_line_value_allowed(next_value):
@@ -728,6 +740,40 @@ def _followed_by_issuer(observations: list[_RowObservation], index: int) -> bool
     return False
 
 
+def _has_unresolved_label_before_candidate(
+    source: ExtractionInput, labels: list[str], candidate: ExtractionCandidate
+) -> bool:
+    """True when an issue-date label before the inferred bare date failed locally.
+
+    A footer or verification notice elsewhere on the page must not globally
+    disable a valid issuance-block date. A real issue-date label that appears
+    before that date and could not produce a value is different: falling back
+    would hide local evidence loss behind a plausible bare date.
+    """
+    candidate_date = normalize_date(candidate.value)
+    if candidate_date is None:
+        return False
+    observations = _source_observations(source)
+    candidate_index: int | None = None
+    for index, observation in enumerate(observations):
+        if (
+            normalize_date(canonicalize_numeric_text(observation.row.text).strip())
+            == candidate_date
+        ):
+            candidate_index = index
+            break
+    if candidate_index is None:
+        return False
+    page_number = observations[candidate_index].row.page_number
+    for observation in observations[:candidate_index]:
+        if observation.row.page_number != page_number:
+            continue
+        normalized = _normalize_extraction_text(observation.row.text)
+        if any(re.search(_label_pattern(label), normalized) for label in labels):
+            return True
+    return False
+
+
 def split_range(raw: str | None) -> tuple[str | None, str | None]:
     """Splits a 'start ~ end' style range. Returns (None, None) when no
     range separator is present -- callers decide whether to treat the whole
@@ -813,11 +859,11 @@ class BaseDocumentExtractor(ABC):
         labelled = self.date_field(text, "issue_date", labels)
         if labelled.normalized_value is not None:
             return labelled
-        if any(re.search(_label_pattern(label), source_text(text)) for label in labels):
-            return labelled
         candidate = standalone_date_candidate(text)
         normalized = normalize_date(candidate.value) if candidate else None
         if candidate is None or normalized is None:
+            return labelled
+        if _has_unresolved_label_before_candidate(text, labels, candidate):
             return labelled
         return replace(
             self._value(

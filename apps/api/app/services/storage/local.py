@@ -1,4 +1,5 @@
 import hashlib
+import math
 import re
 import unicodedata
 import uuid
@@ -131,19 +132,21 @@ class LocalStorageService:
                     page_count = doc.page_count
                     if doc.needs_pass or page_count < 1:
                         raise ValueError("Encrypted or empty PDF")
-                    scale = max(1.5, min(self.settings.paddle_ocr_render_dpi / 72, 6.0))
-                    total_pixels = 0
                     for page in doc:
-                        width, height = (
-                            int(page.rect.width * scale + 1),
-                            int(page.rect.height * scale + 1),
-                        )
-                        self._validate_dimensions(width, height)
-                        total_pixels += width * height
-                    if total_pixels > self.settings.max_pdf_render_pixels:
+                        width, height = math.ceil(page.rect.width), math.ceil(page.rect.height)
+                        if (
+                            width < 1
+                            or height < 1
+                            or max(width, height) > self.settings.max_image_dimension
+                        ):
+                            raise api_error(
+                                ApiErrorCode.PIXEL_BUDGET_EXCEEDED,
+                                "PDF page exceeds upload dimension budget.",
+                            )
+                    if page_count > self.max_pdf_pages:
                         raise api_error(
-                            ApiErrorCode.PIXEL_BUDGET_EXCEEDED,
-                            "PDF exceeds total render pixel budget.",
+                            ApiErrorCode.TOO_MANY_PAGES,
+                            f"PDF exceeds the maximum of {self.max_pdf_pages} pages.",
                         )
             else:
                 with warnings.catch_warnings():
@@ -178,7 +181,7 @@ class LocalStorageService:
             raise api_error(
                 ApiErrorCode.CORRUPT_DOCUMENT, "File could not be opened; it may be corrupt."
             ) from exc
-        if page_count > self.max_pdf_pages:
+        if ext != ".pdf" and page_count > self.max_pdf_pages:
             path.unlink(missing_ok=True)
             raise api_error(
                 ApiErrorCode.TOO_MANY_PAGES,

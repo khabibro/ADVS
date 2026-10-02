@@ -56,7 +56,7 @@ async def test_renamed_image_and_over_budget_image_leave_no_orphans(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_pdf_render_budget_and_encryption_are_checked_at_ingestion(tmp_path):
+async def test_pdf_upload_validation_is_independent_from_ocr_render_budget(tmp_path):
     storage = LocalStorageService(Settings(storage_path=tmp_path, max_pdf_render_pixels=100))
     with fitz.open() as pdf:
         pdf.new_page()
@@ -64,11 +64,11 @@ async def test_pdf_render_budget_and_encryption_are_checked_at_ingestion(tmp_pat
         encrypted = pdf.tobytes(
             encryption=fitz.PDF_ENCRYPT_AES_256, owner_pw="synthetic", user_pw="synthetic"
         )
-    for data, code in [(content, "PIXEL_BUDGET_EXCEEDED"), (encrypted, "CORRUPT_DOCUMENT")]:
-        with pytest.raises(HTTPException) as failure:
-            await storage.save_upload(upload(data, "sample.pdf", "application/pdf"))
-        assert failure.value.detail["code"] == code
-    assert list(tmp_path.iterdir()) == []
+    key, _, _ = await storage.save_upload(upload(content, "sample.pdf", "application/pdf"))
+    assert storage.path_for(key).exists()
+    with pytest.raises(HTTPException) as failure:
+        await storage.save_upload(upload(encrypted, "sample.pdf", "application/pdf"))
+    assert failure.value.detail["code"] == "CORRUPT_DOCUMENT"
 
 
 @pytest.mark.asyncio
@@ -139,7 +139,7 @@ def test_provider_retains_zero_confidence_polygon_and_missing_metadata():
 
 
 @pytest.mark.asyncio
-async def test_timeout_keeps_capacity_until_worker_exits_and_loop_is_responsive():
+async def test_timeout_waits_for_worker_recovery_without_terminal_busy():
     entered, release, exited = threading.Event(), threading.Event(), threading.Event()
 
     def slow():
@@ -157,12 +157,14 @@ async def test_timeout_keeps_capacity_until_worker_exits_and_loop_is_responsive(
         with pytest.raises(OCRProviderError) as timeout:
             await task
         assert timeout.value.code == ProcessingErrorCode.OCR_TIMEOUT
-        with pytest.raises(OCRProviderError) as busy:
-            await run_ocr(lambda: None, 1)
-        assert busy.value.code == ProcessingErrorCode.OCR_BUSY
-    finally:
+        second = asyncio.create_task(run_ocr(lambda: "after", 1))
+        await asyncio.sleep(0)
+        assert not second.done()
         release.set()
         assert await asyncio.to_thread(exited.wait, 1)
+        assert await second == "after"
+    finally:
+        release.set()
 
 
 @pytest.mark.asyncio

@@ -1,0 +1,28 @@
+{
+  "captured_at": "2026-10-02 Asia/Seoul",
+  "branch": "main",
+  "head": "f641fee2031641f3da0983d57d27460607c7f89e",
+  "baseline_quality_gates": {
+    "git_diff_check": "PASS",
+    "ruff_check": "PASS",
+    "ruff_format_check": "PASS",
+    "mypy": "PASS",
+    "pytest": "PASS: 340 passed before P0 edits",
+    "frontend_lint": "PASS before P0 edits",
+    "frontend_typecheck": "PASS before P0 edits",
+    "frontend_test": "PASS before P0 edits: 94 passed",
+    "frontend_build": "PASS before P0 edits",
+    "env_validate": "PASS",
+    "security_audit": "PASS"
+  },
+  "reported_old_red_tests": {
+    "clean_721cc9d_targeted_reproduction": "NOT_REPRODUCED",
+    "current_main_before_p0_edits": "NOT_REPRODUCED; backend suite green",
+    "re_rechecked_in_final_validation": "NOT_REPRODUCED on any committed revision; full suite green at 350 passed"
+  },
+  "realistic_dataset": {
+    "status": "RESOLVED",
+    "note": "The earlier BLOCKED status was a harness path-resolution defect. The real 7-document corpus was evaluated; see realistic_after.json and historical_comparison.md.",
+    "denominator_changed": false
+  }
+}

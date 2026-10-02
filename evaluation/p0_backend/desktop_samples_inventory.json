@@ -1,0 +1,192 @@
+{
+  "schema_version": "p0-desktop-samples-inventory-v1",
+  "source_directory_label": "owner Desktop samples folder (absolute path deliberately not recorded)",
+  "note": "Contains no names, identifiers, addresses or document text. Filenames are omitted; each sample is addressed only by its stable internal id.",
+  "total_files": 7,
+  "unique_sha256": 7,
+  "duplicate_sha256": [],
+  "records": [
+    {
+      "sample_id": "DS-001",
+      "historical_sample_ids": [
+        "REAL-001",
+        "R2-01"
+      ],
+      "extension": ".pdf",
+      "size_bytes": 320926,
+      "sha256": "fd0438a39c1840adf59062c078f03e1cfb4f2ce04dff54a41c77bf3bbc0e8cad",
+      "detected_mime": "application/pdf",
+      "pages": 1,
+      "input_kind": "scanned_pdf",
+      "embedded_pdf_text_chars": 0,
+      "born_digital": false,
+      "dimensions": {
+        "width_pt": 1117.0,
+        "height_pt": 1408.0
+      },
+      "orientation": "portrait",
+      "document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "evaluation_category": "SUPPORTED_CURRENT_DOMAIN",
+      "supported": true,
+      "safe_to_process": true,
+      "provenance": "EXACT_HISTORICAL_MATCH",
+      "decisive_evidence": "sha256 matches the recorded real-document inventory and the frozen round-2 manifest"
+    },
+    {
+      "sample_id": "DS-002",
+      "historical_sample_ids": [
+        "REAL-002",
+        "R2-02"
+      ],
+      "extension": ".png",
+      "size_bytes": 195020,
+      "sha256": "62508e58e0e397649b33ca75fde1931810d4cfb9cd8adc44251081eb0e6a7d3c",
+      "detected_mime": "image/png",
+      "pages": 1,
+      "input_kind": "scanned_image",
+      "embedded_pdf_text_chars": 0,
+      "born_digital": false,
+      "dimensions": {
+        "width_px": 595,
+        "height_px": 842
+      },
+      "orientation": "portrait",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "evaluation_category": "SUPPORTED_CURRENT_DOMAIN",
+      "supported": true,
+      "safe_to_process": true,
+      "provenance": "EXACT_HISTORICAL_MATCH",
+      "decisive_evidence": "sha256 matches the recorded real-document inventory and the frozen round-2 manifest"
+    },
+    {
+      "sample_id": "DS-003",
+      "historical_sample_ids": [
+        "REAL-003",
+        "R2-03"
+      ],
+      "extension": ".jpeg",
+      "size_bytes": 157846,
+      "sha256": "98350c274a78a526fc14eeda37044fe4e4a1020f43611b8c7ffc4aa1aa860a53",
+      "detected_mime": "image/jpeg",
+      "pages": 1,
+      "input_kind": "scanned_image",
+      "embedded_pdf_text_chars": 0,
+      "born_digital": false,
+      "dimensions": {
+        "width_px": 743,
+        "height_px": 1020
+      },
+      "orientation": "portrait",
+      "document_type": "TRANSCRIPT",
+      "evaluation_category": "SUPPORTED_CURRENT_DOMAIN",
+      "supported": true,
+      "safe_to_process": true,
+      "provenance": "EXACT_HISTORICAL_MATCH",
+      "decisive_evidence": "sha256 matches the recorded real-document inventory and the frozen round-2 manifest"
+    },
+    {
+      "sample_id": "DS-004",
+      "historical_sample_ids": [
+        "REAL-004",
+        "R2-04"
+      ],
+      "extension": ".pdf",
+      "size_bytes": 576127,
+      "sha256": "040d1ea8cf0f2bb1747b2e37c6a5ac21c33e3aa2a0207e60012129ac8d90c188",
+      "detected_mime": "application/pdf",
+      "pages": 1,
+      "input_kind": "scanned_pdf",
+      "embedded_pdf_text_chars": 0,
+      "born_digital": false,
+      "dimensions": {
+        "width_pt": 595.08,
+        "height_pt": 841.68
+      },
+      "orientation": "portrait",
+      "document_type": "TRANSCRIPT",
+      "evaluation_category": "SUPPORTED_CURRENT_DOMAIN",
+      "supported": true,
+      "safe_to_process": true,
+      "provenance": "EXACT_HISTORICAL_MATCH",
+      "decisive_evidence": "sha256 matches the recorded real-document inventory and the frozen round-2 manifest"
+    },
+    {
+      "sample_id": "DS-005",
+      "historical_sample_ids": [
+        "REAL-005",
+        "R2-05"
+      ],
+      "extension": ".webp",
+      "size_bytes": 151610,
+      "sha256": "fea33de7892df9b957d38f13ffad9b281397e81da30cc8e08715146f0db3122c",
+      "detected_mime": "image/webp",
+      "pages": 1,
+      "input_kind": "scanned_image",
+      "embedded_pdf_text_chars": 0,
+      "born_digital": false,
+      "dimensions": {
+        "width_px": 1200,
+        "height_px": 1854
+      },
+      "orientation": "portrait",
+      "document_type": "ENROLLMENT_CERTIFICATE",
+      "evaluation_category": "SUPPORTED_CURRENT_DOMAIN",
+      "supported": true,
+      "safe_to_process": true,
+      "provenance": "EXACT_HISTORICAL_MATCH",
+      "decisive_evidence": "sha256 matches the recorded real-document inventory and the frozen round-2 manifest"
+    },
+    {
+      "sample_id": "DS-006",
+      "historical_sample_ids": [
+        "REAL-006",
+        "R2-06"
+      ],
+      "extension": ".jpg",
+      "size_bytes": 63309,
+      "sha256": "e94ae848c6347e7492d79476aa45464fcd8dd1c01bef85d773945d15790e9352",
+      "detected_mime": "image/jpeg",
+      "pages": 1,
+      "input_kind": "scanned_image",
+      "embedded_pdf_text_chars": 0,
+      "born_digital": false,
+      "dimensions": {
+        "width_px": 400,
+        "height_px": 566
+      },
+      "orientation": "portrait",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "evaluation_category": "SUPPORTED_CURRENT_DOMAIN",
+      "supported": true,
+      "safe_to_process": true,
+      "provenance": "EXACT_HISTORICAL_MATCH",
+      "decisive_evidence": "sha256 matches the recorded real-document inventory and the frozen round-2 manifest"
+    },
+    {
+      "sample_id": "DS-007",
+      "historical_sample_ids": [
+        "REAL-007",
+        "R2-07"
+      ],
+      "extension": ".pdf",
+      "size_bytes": 334767,
+      "sha256": "25dac931280bba44612902c01e6f429c6c37101fd2d16c015e49c70b4965b41e",
+      "detected_mime": "application/pdf",
+      "pages": 1,
+      "input_kind": "scanned_pdf",
+      "embedded_pdf_text_chars": 0,
+      "born_digital": false,
+      "dimensions": {
+        "width_pt": 595.08,
+        "height_pt": 841.68
+      },
+      "orientation": "portrait",
+      "document_type": "ENROLLMENT_CERTIFICATE",
+      "evaluation_category": "SUPPORTED_CURRENT_DOMAIN",
+      "supported": true,
+      "safe_to_process": true,
+      "provenance": "EXACT_HISTORICAL_MATCH",
+      "decisive_evidence": "sha256 matches the recorded real-document inventory and the frozen round-2 manifest"
+    }
+  ]
+}

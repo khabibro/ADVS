@@ -5,7 +5,7 @@ can explicitly replace them with REQUIRED_FIELD rules; comparison rules still
 require their own inputs. Missing optional extractor fields do not block READY.
 """
 
-from app.core.domain import EXPECTED_FIELDS, DocumentType, RuleType
+from app.core.domain import EXPECTED_FIELDS, REVIEWABLE_FIELDS, DocumentType, RuleType
 from app.document_intelligence.validation.submission import RuleConfigurationError
 from app.models.entities import DocumentRequirement
 
@@ -57,7 +57,7 @@ def required_fields(requirement: DocumentRequirement) -> tuple[str, ...]:
     for rule in explicit:
         name = (rule.params or {}).get("field")
         names = [name] if name is not None else EXPECTED_FIELDS[document_type]
-        if any(item not in EXPECTED_FIELDS[document_type] for item in names):
+        if any(item not in REVIEWABLE_FIELDS[document_type] for item in names):
             raise RuleConfigurationError("Unknown workflow-required canonical field")
         result.update(names)
     return tuple(sorted(result))

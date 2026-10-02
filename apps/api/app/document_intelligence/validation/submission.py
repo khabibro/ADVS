@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import uuid
 from dataclasses import dataclass, field
 from datetime import date, timedelta
@@ -8,6 +9,7 @@ from typing import Any
 
 from app.core.domain import (
     EXPECTED_FIELDS,
+    REVIEWABLE_FIELDS,
     DocumentType,
     OverallStatus,
     ProcessingStatus,
@@ -21,6 +23,7 @@ from app.document_intelligence.evidence_sufficiency import (
     EvidenceAssessmentReason,
     EvidenceAssessmentState,
 )
+from app.document_intelligence.normalization.field_normalizer import normalize_lexical_text
 
 SUBMISSION_VERIFICATION_VERSION = "rules-v2"
 
@@ -134,6 +137,18 @@ def aggregate_status(issues: list[VerificationIssue]) -> OverallStatus:
     return OverallStatus.READY
 
 
+def _comparison_key(value: str, value_type: str) -> str:
+    """Comparison-only key.
+
+    This never rewrites the stored evidence or extracted normalized value. It
+    only removes formatting differences that are safe for equality checks.
+    """
+    normalized = normalize_lexical_text(value)
+    if value_type == "identifier":
+        return "".join(character for character in normalized if character.isalnum())
+    return re.sub(r"\s+", "", normalized)
+
+
 class SubmissionVerificationEngine:
     """Deterministic rules over persisted canonical document fields.
 
@@ -187,7 +202,7 @@ class SubmissionVerificationEngine:
         requirement_types = {item.document_type for item in requirements}
         for requirement in requirements:
             if any(
-                name not in EXPECTED_FIELDS[requirement.document_type]
+                name not in REVIEWABLE_FIELDS[requirement.document_type]
                 for name in requirement.required_fields
             ):
                 raise RuleConfigurationError("Unknown workflow-required field")
@@ -300,7 +315,7 @@ class SubmissionVerificationEngine:
 
     def _field_param(self, rule: SubmissionRule, key: str, document_type: DocumentType) -> str:
         value = rule.params.get(key)
-        if not isinstance(value, str) or value not in EXPECTED_FIELDS[document_type]:
+        if not isinstance(value, str) or value not in REVIEWABLE_FIELDS[document_type]:
             raise RuleConfigurationError(f"Unknown {key} for {document_type.value}")
         return value
 
@@ -639,7 +654,10 @@ class SubmissionVerificationEngine:
             return unresolved
         assert source_field is not None and source_field.normalized_value is not None
         assert target_field is not None and target_field.normalized_value is not None
-        passed = source_field.normalized_value == target_field.normalized_value
+        value_type = str(rule.params.get("value_type", "string"))
+        passed = _comparison_key(source_field.normalized_value, value_type) == _comparison_key(
+            target_field.normalized_value, value_type
+        )
         if passed:
             return RuleEvaluationResult(
                 rule.id,
