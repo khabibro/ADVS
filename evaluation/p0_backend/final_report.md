@@ -413,15 +413,74 @@ configuration UI.
 
 ## AC. Commit
 
-See the section recorded after the commit was created. The commit is a single
-commit, authored as `KHABIBILLO <khabibillionaire@gmail.com>`, with no
-backdating and no history rewrite.
+| Field | Value |
+|---|---|
+| Hash | `14de9a38e1a60e50547a52ab0285d905397bf4af` |
+| Short | `14de9a3` |
+| Message | `Stabilize backend document processing and verification` |
+| Author | `KHABIBILLO <khabibillionaire@gmail.com>` |
+| Timestamp | 2026-10-03 01:34:02 +0900 |
+| Contents | 33 files changed, 2656 insertions, 57 deletions |
+
+One commit. No history rewrite, no amend of prior work, no backdating, no empty
+commit. Files were staged explicitly by path; `git add .` was not used.
+
+Staged set, by category:
+
+- **P0_PRODUCTION** — `.gitignore`, and nine modules under
+  `apps/api/app/`: `core/domain.py`, `core/logging.py`,
+  `document_intelligence/extraction/base.py`,
+  `document_intelligence/ocr/providers.py`,
+  `document_intelligence/ocr/worker.py`,
+  `document_intelligence/validation/submission.py`,
+  `services/requirements.py`, `services/reviews.py`,
+  `services/storage/local.py`.
+- **P0_TEST** — `tests/test_p0_backend_stabilization.py` (new, 13 tests) and
+  `tests/test_astra_ingestion.py`.
+- **P0_SAFE_REPORT** — 22 files under `evaluation/p0_backend/`.
+
+Deliberately **not** staged, verified by explicit check:
+
+| Path | Category | Reason |
+|---|---|---|
+| `evaluation/backend_round2/work/` | PRIVATE | real ground truth and raw OCR; gitignored |
+| `evaluation/private_runtime/` | PRIVATE | this run's raw output; gitignored |
+| `evaluation/real_backend_validation/` | PREEXISTING, PII-bearing | earlier session's evidence; contains real identifiers; not audited to a safe standard here |
+| `evaluation/astra_backend/` | PREEXISTING | earlier session's evidence; out of scope |
+| `evaluation/backend_round2/` (rest) | PREEXISTING, PII-bearing | the local evaluation harness and its records; two of its JSON/MD files contain real institution names and dates |
+| `evaluation/results/round2_*` | PREEXISTING | earlier session's outputs |
+| `temp` | UNRELATED | a Mach-O binary present before this task |
+| `txt.txt` | UNRELATED | the task brief, not a project file |
+
+A programmatic scan compared every private ground-truth value and every source
+filename against all staged content and reported **zero matches**. One real
+institution name that an earlier session had copied into the new test file was
+found by that scan and replaced with an obviously fictional name before staging.
+
+Note that the evaluation harness itself is **not** committed. It lives under
+`evaluation/backend_round2/` alongside records that contain real values, so
+committing part of that directory would have created an inconsistent partial
+tree. The harness is versioned by the SHA-256 hashes recorded in
+`final_validation_start.md`, so the exact evaluator used here remains
+identifiable.
 
 ## AD. Push
 
-See the section recorded after the push. Push is to `origin main` on
-`git@github-khabibro:khabibro/ADVS.git`, authenticated as `khabibro`, with no
-force, after an explicit `git fetch origin`.
+| Field | Value |
+|---|---|
+| Remote | `git@github-khabibro:khabibro/ADVS.git` |
+| Branch | `main` |
+| Authenticated account | `khabibro` |
+| Result | `f641fee..14de9a3  main -> main` |
+| Force | no |
+
+`git fetch origin` was run first and confirmed `origin/main` had not diverged:
+the branch was linear and ahead by exactly one commit. No rebase, no merge, no
+force push.
+
+Post-push verification: `HEAD` and `origin/main` are both
+`14de9a38e1a60e50547a52ab0285d905397bf4af`, and the working tree is clean with
+respect to the branch.
 
 ## AE. Final worktree
 
