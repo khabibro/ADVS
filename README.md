@@ -2,7 +2,12 @@
 
 AI-Based Administrative Document Analysis and Automated Verification System.
 
-CURRENT PHASE: Phase 2 mentor-defined document domain.
+CURRENT PHASE (on `main`): Phase 2 mentor-defined document domain, plus P0
+backend stabilization and P1/P2.x OCR/extraction hardening. Four additional
+safety fixes and a from-scratch reproducible baseline exist on unmerged
+branches (`phase-b/safety-fixes`, `p2.2/issue-date-label-gate`) pending
+review. See `docs/ARCHITECTURE.md` §11 and `evaluation/README.md`'s phase
+history for the full picture.
 
 ADVS is a workflow-centric modular monorepo for uploading Korean administrative documents, extracting text through direct PDF text or OCR, classifying the document, extracting structured fields, and validating results against workflow-scoped checklist rules. A document is required only when the selected workflow requires it.
 
@@ -134,7 +139,9 @@ Services:
 
 ## Documentation
 
-Start with `docs/DOCUMENTATION_INDEX.md`.
+Start with `docs/DOCUMENTATION_INDEX.md`, or go directly to
+`docs/ARCHITECTURE.md` (system overview), `docs/GLOSSARY.md` (terms), or
+`docs/RECOMMENDATIONS.md` (proposed next steps, not implemented).
 
 ## OCR Evaluation
 

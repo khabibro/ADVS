@@ -3,7 +3,12 @@
 Start here for ADVS engineering work.
 
 ## Architecture
-- `architecture/ARCHITECTURE.md`
+- `ARCHITECTURE.md` — start here: system context, component map, pipeline
+  sequence, ERD, decision rules, document-type table, frontend, dormant
+  code, known limitations, extension guide
+- `GLOSSARY.md` — project/domain terms
+- `RECOMMENDATIONS.md` — proposed next steps (not implemented)
+- `architecture/ARCHITECTURE.md` — evidence-conventions detail
 - `architecture/DATA_MODEL.md`
 - `architecture/API_DESIGN.md`
 

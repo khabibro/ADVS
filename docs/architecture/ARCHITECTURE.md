@@ -1,5 +1,13 @@
 # Architecture
 
+> **See `docs/ARCHITECTURE.md` first.** That file is now the canonical,
+> more complete system-level overview (adds a system-context diagram, ERD,
+> sequence diagram, frontend architecture, dormant-code section, and a
+> known-limitations table cross-referenced to the independent audit's
+> F-00x findings). This file is kept for its evidence-conventions detail
+> (provenance, confidence, coordinate-space rules) which that file doesn't
+> repeat.
+
 ```mermaid
 flowchart LR
   UI[Next.js Frontend] --> API[FastAPI /api/v1]
