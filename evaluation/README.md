@@ -82,18 +82,19 @@ evaluation/
     synthetic/*.json           -- versioned gold labels (schema v1.1)
     recreated/*.json            -- same schema, source_class=RECREATED_FROM_PUBLIC_REFERENCE
     real/*.json                 -- gitignored; human-verified before scoring
-  results/                     -- JSON + CSV per run (gitignored except .gitkeep)
-  reports/                     -- Markdown reports (gitignored except .gitkeep)
+  results/                     -- JSON + CSV per run (fully tracked)
+  reports/                     -- Markdown reports (fully tracked)
   cache/                       -- reserved for future local evaluation caches
 ```
 
-`evaluation/results/` and `evaluation/reports/` are gitignore-exempt only for
-`.gitkeep` by convention in this repo's history of small synthetic-only
-artifacts, but the frozen baseline/final files
+`evaluation/results/` and `evaluation/reports/` have no `.gitignore` entry —
+every file in both, including routine per-run output, is tracked
+unconditionally (verified 2026-10-04: 44 and 7 tracked files, 0 untracked).
+The frozen baseline/final files
 (`baseline_2026-09-09*`, `final_2026-09-09*`, `baseline_2026-09-09b*`,
-`final_2026-09-09b*`) are intentionally committed as the historical record
-this task requires -- do not delete them, and never overwrite a `baseline_*`
-file with a later run.
+`final_2026-09-09b*`) still carry the same do-not-overwrite rule as before —
+do not delete them, and never overwrite a `baseline_*` file with a later
+run — but that rule is about discipline, not `.gitignore`.
 
 Submission bundles (cross-document, project-level validation) are not a
 separate file-based dataset: `apps/api/scripts/eval_lib/submissions.py`
@@ -101,6 +102,68 @@ defines each bundle in code, referencing the `subdoc_*` sample_ids that
 `eval_generate.py` produces (dedicated fixtures with controlled applicant/
 company identity for name/company-match and duplicate-detection testing).
 Run `make eval-submissions` after `make eval-generate`.
+
+## Phase history (`evaluation/<phase>/`)
+
+Everything below `datasets/`, `gold/`, `results/`, `reports/`, `baselines/`,
+`sources/`, and `cache/` (documented above) is the **wired toolkit** — driven
+by `make eval-*`/`make baseline*` and described in this file. Every other
+top-level directory under `evaluation/` is a **phase-history directory**:
+a self-contained, tracked set of Markdown reports (and, for the real-document
+phases, scripts) produced by one investigation phase of this capstone
+project. None of these are wired into `Makefile` or run by any command —
+they are read, not executed, and are kept as the project's evidentiary
+record. Ordered roughly by when each phase's own reports say the work
+happened (git history on `main` is compressed into a handful of batched
+commits, so commit dates are not a reliable ordering — several phases'
+work was committed together well after it was done):
+
+| Directory | Phase | What it is |
+|---|---|---|
+| `phase5/`, `phase6/` | Phase 5/6 | Early frontend-adjacent audit phases (~2026-09-22) |
+| `phase7/` | Phase 7 | Follow-on audit phase (~2026-09-28) |
+| `backend_audit/` | — | OCR/DPI ablation audit; `work/` subfolder is gitignored (rendered pages from a real scan) |
+| `phase8/` | Phase 8 | Frontend audit baseline (~2026-09-29) |
+| `astra_backend/` | — | Architecture-options research/comparison (dated 2026-09-29/30 in-report) |
+| `real_backend_validation/` | — | Independent real-document backend readiness audit (dated 2026-09-30 in-report) |
+| `p0_backend/` | P0 | Backend stabilization evidence (sanitized; samples addressed only by `DS-0xx`/`R2-0x`/`REAL-00x` ids) |
+| `p1_layout/` | P1 | Structural layout layer (dormant — see `docs/architecture/ARCHITECTURE.md` known limitations) |
+| `p2_1_ocr_diagnosis/` | P2.1 | OCR diagnosis for the mentor-defined document domain |
+| `p2_ocr/` | P2 | OCR-focused follow-up work |
+| `p2_2_targeted_improvement/` | P2.2 | Targeted-improvement scripts (gitignored as a whole directory — one script hardcodes transcribed real-document values; see `.gitignore`) |
+| `backend_round2/` | P2.1 (this session) | Real-corpus (REAL-001..007) adjudication round 2; `work/` subfolder is gitignored (real ground truth, diagnostics) — see "Gold label versions" below |
+| `system_audit/` | — | Independent full-system audit (this session) |
+| `phase_a_baseline/` | Phase A (this session) | Clean, reproducible baseline — `BASELINE_B0_pre_safety.md` is the precondition file every later phase checks for |
+| `cleanup/` | Cleanup/docs (this session) | This inventory and the `docs/` rewrite it precedes |
+
+Phase B (`evaluation/phase_b/`: four safety-fix measurements, before/after)
+exists only on the unmerged branch `phase-b/safety-fixes` — intentionally
+not part of `main` or this list until it is reviewed and merged.
+
+## Gold label versions — two separate systems, do not confuse them
+
+1. **Synthetic/recreated gold** (`evaluation/gold/synthetic/`,
+   `evaluation/gold/recreated/`, schema v1.1, documented below) — one JSON
+   file per generated sample, versioned only in the sense that the schema
+   itself has a version field. This is what `make eval-*` scores against.
+2. **Real-document round 2 gold** (`evaluation/backend_round2/work/
+   ground_truth*.json`, gitignored — real names/ids, never committed) —
+   a *different*, independently-evolving set of hand-adjudicated labels for
+   the 7-document real corpus (`REAL-001..007`, internally keyed `R2-01..
+   R2-07`). It has its own version history, unrelated to the schema
+   version above:
+   - **v1** (`ground_truth.json`) — first transcription pass.
+   - **v2** (`ground_truth_v2.json`) — frozen for this session's P2.1
+     adjudication; used as Phase A's `B0` baseline comparison point.
+   - **v3** (`ground_truth_v3.json`, under `evaluation/private_runtime/`)
+     — this session's adjudication of 3 disputed fields (REAL-003/`gpa`,
+     REAL-003/`gpa_scale`, REAL-004/`department`), re-derived from the
+     original document images rather than OCR, which also changed the
+     evaluated-field denominator from 33 to 35. See
+     `evaluation/backend_round2/` and `evaluation/phase_a_baseline/
+     BASELINE_B0_pre_safety.md` for the full adjudication record and
+     citation (safe ids and the id map only — no field values are
+     reproduced in any tracked file).
 
 ## Gold label schema (v1.1)
 
