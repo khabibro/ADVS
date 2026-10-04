@@ -4,6 +4,7 @@ from datetime import date
 
 from app.core.domain import EXPECTED_FIELDS, DocumentType, OverallStatus, RuleType, Severity
 from app.document_intelligence.extraction.base import ExtractedValue
+from app.document_intelligence.normalization.field_normalizer import strip_legal_entity_markers
 
 VALIDATION_ENGINE_VERSION = "heuristic-v2"
 
@@ -57,6 +58,15 @@ def _explicit_required_fields(
 
 def comparable(value: str | None) -> str:
     return re.sub(r"[\s\W_]+", "", (value or "").lower())
+
+
+def comparable_company_name(value: str | None) -> str:
+    """Like `comparable`, but a leading/trailing legal-entity marker
+    (주식회사 / (주) / ㈜ / ... -- audit F-002) is stripped first, so the
+    same company written with a different one of these compares equal.
+    Scoped to company_name/workplace_name comparisons only; business
+    numbers and every other field keep using plain `comparable`."""
+    return comparable(strip_legal_entity_markers(value))
 
 
 class ValidationEngine:
@@ -120,7 +130,7 @@ class ValidationEngine:
             )
         if company_name and by_name.get("company_name"):
             actual = self._supported_value(by_name.get("company_name"))
-            passed = comparable(company_name) == comparable(actual)
+            passed = comparable_company_name(company_name) == comparable_company_name(actual)
             issues.append(
                 ValidationIssue(
                     RuleType.COMPANY_NAME_MATCH,

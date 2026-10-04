@@ -23,7 +23,17 @@ from app.document_intelligence.evidence_sufficiency import (
     EvidenceAssessmentReason,
     EvidenceAssessmentState,
 )
-from app.document_intelligence.normalization.field_normalizer import normalize_lexical_text
+from app.document_intelligence.normalization.field_normalizer import (
+    normalize_lexical_text,
+    strip_legal_entity_markers,
+)
+
+# Fields where a leading/trailing legal-entity marker (주식회사 / (주) / ㈜ /
+# ...) is noise, not a real difference (audit F-002) -- the same company
+# routinely carries a different one of these across different certificate
+# types. Scoped narrowly: business numbers and every other compared field
+# are unaffected.
+_COMPANY_NAME_FIELDS = frozenset({"company_name", "workplace_name"})
 
 SUBMISSION_VERIFICATION_VERSION = "rules-v2"
 
@@ -655,8 +665,12 @@ class SubmissionVerificationEngine:
         assert source_field is not None and source_field.normalized_value is not None
         assert target_field is not None and target_field.normalized_value is not None
         value_type = str(rule.params.get("value_type", "string"))
-        passed = _comparison_key(source_field.normalized_value, value_type) == _comparison_key(
-            target_field.normalized_value, value_type
+        source_value, target_value = source_field.normalized_value, target_field.normalized_value
+        if source_name in _COMPANY_NAME_FIELDS or target_name in _COMPANY_NAME_FIELDS:
+            source_value = strip_legal_entity_markers(source_value)
+            target_value = strip_legal_entity_markers(target_value)
+        passed = _comparison_key(source_value, value_type) == _comparison_key(
+            target_value, value_type
         )
         if passed:
             return RuleEvaluationResult(

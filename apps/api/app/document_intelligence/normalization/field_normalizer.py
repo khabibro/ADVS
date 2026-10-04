@@ -134,6 +134,60 @@ def normalize_gpa_scale(value: str | None) -> str | None:
     return format(scale.normalize(), "f")
 
 
+# Korean/English legal-entity markers that appear at the very start or end
+# of a company name and mean nothing beyond "this is a company" -- the same
+# company is routinely printed with a different one of these across
+# different certificate types (audit F-002: 주식회사 X / (주)X / X(주) /
+# ㈜X all named the same company and compared unequal). Longer markers are
+# listed before a shorter one they contain (유한책임회사 before 유한회사)
+# so the longer, more specific marker is tried first.
+LEGAL_ENTITY_MARKERS: tuple[str, ...] = (
+    "유한책임회사",
+    "주식회사",
+    "유한회사",
+    "합자회사",
+    "합명회사",
+    "사단법인",
+    "재단법인",
+    "(주)",
+    "(유)",
+    "(사)",
+    "(재)",
+    "㈜",
+    "Co., Ltd.",
+    "Co.,Ltd.",
+    "Co., Ltd",
+    "Co.,Ltd",
+    "Inc.",
+    "Corp.",
+)
+
+
+def strip_legal_entity_markers(value: str | None) -> str:
+    """Remove a legal-entity marker from a name's start or end, as a whole
+    token only -- never from the middle, and never a partial match.
+
+    `주원상사` does not start with `주식회사`, and `한주테크` does not end
+    with any marker, so neither is altered: this only ever removes a
+    marker that is the *entire* leading or trailing token, not merely a
+    shared syllable. Safe to apply repeatedly (handles a marker at both
+    ends); returns "" for no input rather than None, since this feeds a
+    comparison key, not a stored value.
+    """
+    text = (value or "").strip()
+    changed = True
+    while changed:
+        changed = False
+        for marker in LEGAL_ENTITY_MARKERS:
+            if text.startswith(marker):
+                text = text[len(marker) :].strip()
+                changed = True
+            elif text.endswith(marker):
+                text = text[: -len(marker)].strip()
+                changed = True
+    return text
+
+
 def normalize_text_field(value: str | None) -> str | None:
     """Conservative cleanup for names/organizations: collapse internal
     whitespace and strip stray leading/trailing OCR punctuation. Never
