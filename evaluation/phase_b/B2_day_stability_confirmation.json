@@ -1,0 +1,22 @@
+{
+  "note": "server clock mocked in this process only; production file not edited",
+  "oct5": {
+    "overall_status": "REVIEW_REQUIRED",
+    "issue_codes": [
+      "MISSING_REQUIRED_FIELD"
+    ]
+  },
+  "oct6": {
+    "overall_status": "REVIEW_REQUIRED",
+    "issue_codes": [
+      "MISSING_REQUIRED_FIELD"
+    ]
+  },
+  "60_days_later": {
+    "overall_status": "REVIEW_REQUIRED",
+    "issue_codes": [
+      "MISSING_REQUIRED_FIELD"
+    ]
+  },
+  "stable_across_server_clock": true
+}
