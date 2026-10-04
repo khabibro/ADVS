@@ -136,6 +136,22 @@ SIGNALS: dict[DocumentType, list[Signal]] = {
     ],
 }
 
+# Real Korean administrative documents this system does not model, each
+# named here because its own title is a superstring or close variant of a
+# TITLE-weight signal above and so could otherwise win that type's score by
+# plain substring containment (audit F-003: 지방세납세증명서 contains
+# "납세증명서", the national-tax TITLE signal, and classified as
+# NATIONAL_TAX_PAYMENT_CERTIFICATE at confidence 0.9 with no review flag).
+# DECISION_2 (UNDECIDED -> default applied): checked before scoring: any
+# match aborts classification to UNKNOWN with needs_review=True
+# unconditionally, regardless of what else matches. No new DocumentType is
+# added for these -- the system correctly has no opinion about them.
+UNSUPPORTED_LOOK_ALIKE_TITLES: tuple[str, ...] = (
+    "지방세납세증명서",  # looks like 국세 납세증명서 (NATIONAL_TAX_PAYMENT_CERTIFICATE)
+    "휴학증명서",  # looks like 재학증명서 (ENROLLMENT_CERTIFICATE)
+    "졸업예정증명서",  # looks like 졸업증명서 (GRADUATION_CERTIFICATE)
+)
+
 
 @dataclass
 class ClassificationAlternative:
@@ -191,6 +207,8 @@ class DocumentClassifier:
                 extra={"filename_length": len(filename)},
             )
         haystack = _squash(text)
+        if any(marker in haystack for marker in UNSUPPORTED_LOOK_ALIKE_TITLES):
+            return _unknown({}, {})
         scores: dict[DocumentType, float] = {}
         evidence: dict[DocumentType, list[str]] = {}
         has_strong_signal: dict[DocumentType, bool] = {}
