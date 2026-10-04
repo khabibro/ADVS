@@ -93,6 +93,33 @@ def ready_case(db_session):
         ],
     )
     db_session.add(field)
+    # B-1 (audit F-001): TRANSCRIPT's other default-required fields
+    # (student_name, university_name, issue_date) are no longer exempted
+    # just because this checklist names an explicit REQUIRED_FIELD(gpa)
+    # rule -- they're additive, not replaced -- so this "ready" fixture
+    # needs them resolved too, or it is genuinely incomplete.
+    for name, value in {
+        "student_name": "가상학생",
+        "university_name": "가상대학교",
+        "issue_date": "2026-09-01",
+    }.items():
+        db_session.add(
+            ExtractedField(
+                document_id=document.id,
+                field_name=name,
+                raw_value=value,
+                normalized_value=value,
+                needs_review=False,
+                evidence=[
+                    {
+                        "source_kind": "embedded_pdf_text",
+                        "page_number": 1,
+                        "source_text": "synthetic",
+                        "coordinate_space": "pdf_points",
+                    }
+                ],
+            )
+        )
     db_session.commit()
     return project.id, document.id, field.id, requirement.id
 
@@ -126,6 +153,12 @@ def test_workflow_default_required_fields_and_explicit_override(db_session, read
     requirement.rules.clear()
     document = db_session.get(Document, document_id)
     document.document_type = "ENROLLMENT_CERTIFICATE"
+    # Reset: this test repurposes ready_case's TRANSCRIPT-shaped document
+    # (and its now-additive default fields, see ready_case) into a clean
+    # ENROLLMENT_CERTIFICATE case of its own.
+    for existing in list(document.extracted_fields):
+        db_session.delete(existing)
+    db_session.flush()
     for name, value in {"student_name": "가상학생", "issue_date": "2026-09-29"}.items():
         db_session.add(
             ExtractedField(
@@ -141,12 +174,35 @@ def test_workflow_default_required_fields_and_explicit_override(db_session, read
     result = verify(project_id).result
     assert result.status == OverallStatus.REVIEW_REQUIRED
     assert {issue.field_name for issue in result.issues} == {"university_name"}
+    # B-1 (audit F-001): an explicit REQUIRED_FIELD rule ADDS to this
+    # document type's default required fields -- it does not replace them.
+    # student_name is already resolved, so naming it explicitly changes
+    # nothing; university_name is still a default-required field this rule
+    # doesn't name, and stays flagged. (Before the fix, adding *any*
+    # REQUIRED_FIELD rule silently dropped the check for every field it
+    # didn't name, including university_name, and this went to READY.)
     db_session.add(
         ValidationRule(
             requirement_id=requirement_id,
             rule_type="REQUIRED_FIELD",
             severity="WARNING",
             params={"field": "student_name"},
+        )
+    )
+    db_session.commit()
+    still_missing = verify(project_id).result
+    assert still_missing.status == OverallStatus.REVIEW_REQUIRED
+    assert {issue.field_name for issue in still_missing.issues} == {"university_name"}
+    # Resolving the remaining default field (no new rule needed -- it was
+    # never exempted) reaches READY once it's actually supplied.
+    db_session.add(
+        ExtractedField(
+            document_id=document_id,
+            field_name="university_name",
+            raw_value="가상대학교",
+            normalized_value="가상대학교",
+            needs_review=False,
+            evidence=[{"source_kind": "embedded_pdf_text"}],
         )
     )
     db_session.commit()

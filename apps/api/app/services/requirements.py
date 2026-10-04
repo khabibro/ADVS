@@ -1,8 +1,13 @@
 """Workflow readiness requirements, separate from extractor capabilities.
 
-These conservative defaults cover identity and applicable validity. A workflow
-can explicitly replace them with REQUIRED_FIELD rules; comparison rules still
-require their own inputs. Missing optional extractor fields do not block READY.
+These conservative defaults cover identity and applicable validity. A
+workflow's explicit REQUIRED_FIELD rules ADD to them -- naming a field
+lets the checklist set that field's own severity/params, but it does not
+drop the check for every default field it doesn't name (audit F-001: one
+REQUIRED_FIELD(company_name) rule used to silently disable the net for
+every other field of the document, including an unresolved valid_until
+with no other protection). Comparison rules still require their own
+inputs. Missing optional extractor fields do not block READY.
 """
 
 from app.core.domain import EXPECTED_FIELDS, REVIEWABLE_FIELDS, DocumentType, RuleType
@@ -51,9 +56,9 @@ DEFAULT_REQUIRED_FIELDS: dict[DocumentType, tuple[str, ...]] = {
 def required_fields(requirement: DocumentRequirement) -> tuple[str, ...]:
     document_type = DocumentType(requirement.document_type)
     explicit = [rule for rule in requirement.rules if rule.rule_type == RuleType.REQUIRED_FIELD]
-    if not explicit:
-        return DEFAULT_REQUIRED_FIELDS[document_type] if requirement.required else ()
-    result: set[str] = set()
+    result: set[str] = (
+        set(DEFAULT_REQUIRED_FIELDS[document_type]) if requirement.required else set()
+    )
     for rule in explicit:
         name = (rule.params or {}).get("field")
         names = [name] if name is not None else EXPECTED_FIELDS[document_type]

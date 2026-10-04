@@ -31,15 +31,28 @@ class ConfiguredRule:
     params: dict
 
 
-def _has_required_field_rule(configured_rules: list[ConfiguredRule] | None) -> bool:
-    """True when the checklist actually states what a document must supply.
+def _explicit_required_fields(
+    configured_rules: list[ConfiguredRule] | None, document_type: DocumentType
+) -> set[str]:
+    """Fields a configured REQUIRED_FIELD rule names explicitly.
 
-    Only this rule type redefines "required". DATE_NOT_EXPIRED,
+    A rule with no `field` param names every field in this document type's
+    own schema (mirrors `_handle_required_field`'s own default-target
+    resolution, so a blanket rule and an explicit per-field rule agree on
+    what "every field" means).
+
+    Only REQUIRED_FIELD redefines "required". DATE_NOT_EXPIRED,
     ISSUE_DATE_MAX_AGE and the rest constrain values that were read; a
     checklist made only of those has expressed no opinion about missing
-    fields, so it must not silence the missing-field net.
+    fields, so it must not silence the missing-field net (R2-02).
     """
-    return any(rule.rule_type == RuleType.REQUIRED_FIELD for rule in (configured_rules or []))
+    names: set[str] = set()
+    for rule in configured_rules or []:
+        if rule.rule_type != RuleType.REQUIRED_FIELD:
+            continue
+        field_name = rule.params.get("field")
+        names.update([field_name] if field_name else EXPECTED_FIELDS[document_type])
+    return names
 
 
 def comparable(value: str | None) -> str:
@@ -132,11 +145,27 @@ class ValidationEngine:
         # rules this engine cannot execute at document scope -- DATE_COMPARISON
         # and NUMERIC_COMPARISON are submission-scope types -- produced zero
         # issues, and a document with every field unresolved was reported
-        # READY. The net is suppressed only when the checklist actually
-        # expresses a REQUIRED_FIELD rule, which is the one thing that
-        # genuinely redefines what a document must supply.
-        suppress_default_net = _has_required_field_rule(configured_rules)
-        if not suppress_default_net:
+        # READY (R2-02).
+        #
+        # And a checklist that DOES express a REQUIRED_FIELD opinion must not
+        # have that opinion silently replace the net for every field it
+        # doesn't name (audit F-001): one REQUIRED_FIELD(company_name) rule
+        # used to disable the check for every other field of the document,
+        # including a missing valid_until with no other protection. An
+        # explicit rule now only ever *adds* to what's required -- the
+        # fields it names are checked below with their own configured
+        # severity; every other field in this document type's own schema
+        # stays covered by the default net, narrowed to that schema (not
+        # every extracted field) so optional fields still don't silently
+        # become required just because the checklist has *an* opinion.
+        explicit_required = _explicit_required_fields(configured_rules, actual_type)
+        if explicit_required:
+            issues.extend(
+                self._default_required_field_issues(
+                    by_name, restrict_to=set(EXPECTED_FIELDS[actual_type]) - explicit_required
+                )
+            )
+        else:
             issues.extend(self._default_required_field_issues(by_name))
         if configured_rules is not None:
             for rule in configured_rules:
@@ -206,8 +235,11 @@ class ValidationEngine:
         return OverallStatus.READY
 
     def _default_required_field_issues(
-        self, by_name: dict[str, ExtractedValue]
+        self, by_name: dict[str, ExtractedValue], restrict_to: set[str] | None = None
     ) -> list[ValidationIssue]:
+        names = (
+            by_name.items() if restrict_to is None else ((n, by_name.get(n)) for n in restrict_to)
+        )
         return [
             ValidationIssue(
                 RuleType.REQUIRED_FIELD,
@@ -218,7 +250,7 @@ class ValidationEngine:
                 f"{name} 필드를 확인해야 합니다.",
                 "MISSING_REQUIRED_FIELD",
             )
-            for name, field in by_name.items()
+            for name, field in names
             if self._supported_value(field) is None
         ]
 
@@ -245,6 +277,15 @@ class ValidationEngine:
         for name in targets:
             field = by_name.get(name)
             if self._supported_value(field) is None:
+                # Always WARNING, never the rule's own configured severity:
+                # a *missing* value is a review signal, not a deterministic
+                # failure, no matter how an admin configured this rule --
+                # see test_missing_or_uncertain_value_never_becomes_deterministic_failure.
+                # "An explicit rule may change severity... for the field it
+                # names" (B-1) refers to other rule types (DATE_NOT_EXPIRED,
+                # ISSUE_DATE_MAX_AGE, ...) that already honor configured
+                # severity for a value that *was* read; REQUIRED_FIELD's own
+                # missing-value severity stays fixed.
                 issues.append(
                     ValidationIssue(
                         RuleType.REQUIRED_FIELD,

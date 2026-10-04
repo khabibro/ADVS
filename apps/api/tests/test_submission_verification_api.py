@@ -153,13 +153,18 @@ def test_verify_and_read_persisted_result_without_ocr(client: TestClient, db_ses
         db_session,
         submission,
         DocumentType.BUSINESS_REGISTRATION_CERTIFICATE,
-        {"business_registration_number": "1234567890"},
+        {"business_registration_number": "1234567890", "company_name": "테스트상사"},
     )
     _document(
         db_session,
         submission,
         DocumentType.SME_CONFIRMATION_CERTIFICATE,
-        {"business_registration_number": "1234567890", "valid_until": "2026-12-31"},
+        {
+            "business_registration_number": "1234567890",
+            "valid_until": "2026-12-31",
+            "company_name": "테스트상사",
+            "valid_from": "2026-01-01",
+        },
     )
     db_session.commit()
 
@@ -183,13 +188,18 @@ def test_reverification_replaces_results_and_corrected_mismatch_disappears(
         db_session,
         submission,
         DocumentType.BUSINESS_REGISTRATION_CERTIFICATE,
-        {"business_registration_number": "1234567890"},
+        {"business_registration_number": "1234567890", "company_name": "테스트상사"},
     )
     target = _document(
         db_session,
         submission,
         DocumentType.SME_CONFIRMATION_CERTIFICATE,
-        {"business_registration_number": "9999999999", "valid_until": "2026-12-31"},
+        {
+            "business_registration_number": "9999999999",
+            "valid_until": "2026-12-31",
+            "company_name": "테스트상사",
+            "valid_from": "2026-01-01",
+        },
     )
     db_session.commit()
 
@@ -227,13 +237,18 @@ def test_upload_invalidates_stale_ready(client: TestClient, db_session) -> None:
         db_session,
         submission,
         DocumentType.BUSINESS_REGISTRATION_CERTIFICATE,
-        {"business_registration_number": "1234567890"},
+        {"business_registration_number": "1234567890", "company_name": "테스트상사"},
     )
     _document(
         db_session,
         submission,
         DocumentType.SME_CONFIRMATION_CERTIFICATE,
-        {"business_registration_number": "1234567890", "valid_until": "2026-12-31"},
+        {
+            "business_registration_number": "1234567890",
+            "valid_until": "2026-12-31",
+            "company_name": "테스트상사",
+            "valid_from": "2026-01-01",
+        },
     )
     db_session.commit()
     assert _verify(client, project.id)["status"] == "READY"
@@ -263,13 +278,18 @@ def test_reprocessing_invalidates_stale_ready(client: TestClient, db_session) ->
         db_session,
         submission,
         DocumentType.BUSINESS_REGISTRATION_CERTIFICATE,
-        {"business_registration_number": "1234567890"},
+        {"business_registration_number": "1234567890", "company_name": "테스트상사"},
     )
     target = _document(
         db_session,
         submission,
         DocumentType.SME_CONFIRMATION_CERTIFICATE,
-        {"business_registration_number": "1234567890", "valid_until": "2026-12-31"},
+        {
+            "business_registration_number": "1234567890",
+            "valid_until": "2026-12-31",
+            "company_name": "테스트상사",
+            "valid_from": "2026-01-01",
+        },
     )
     db_session.commit()
     assert _verify(client, project.id)["status"] == "READY"
@@ -296,13 +316,18 @@ def test_invalid_persisted_rule_returns_safe_api_error(client: TestClient, db_se
         db_session,
         submission,
         DocumentType.BUSINESS_REGISTRATION_CERTIFICATE,
-        {"business_registration_number": "1234567890"},
+        {"business_registration_number": "1234567890", "company_name": "테스트상사"},
     )
     _document(
         db_session,
         submission,
         DocumentType.SME_CONFIRMATION_CERTIFICATE,
-        {"business_registration_number": "1234567890", "valid_until": "2026-12-31"},
+        {
+            "business_registration_number": "1234567890",
+            "valid_until": "2026-12-31",
+            "company_name": "테스트상사",
+            "valid_from": "2026-01-01",
+        },
     )
     db_session.commit()
 

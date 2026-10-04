@@ -131,6 +131,33 @@ def test_human_correction_recomputes_document_expiry(client, db_session, ready_c
     field = db_session.get(ExtractedField, field_id)
     field.field_name = "valid_until"
     field.raw_value = field.normalized_value = "2000-01-01"
+    # B-1 (audit F-001): SME_CONFIRMATION_CERTIFICATE's other default
+    # fields (company_name, business_registration_number, valid_from) are
+    # no longer exempted just because this checklist names an explicit
+    # REQUIRED_FIELD(valid_until) rule -- additive, not replaced -- so this
+    # repurposed document needs them resolved to reach READY below.
+    for name, value in {
+        "company_name": "가상상사",
+        "business_registration_number": "1234500018",
+        "valid_from": "1999-01-01",
+    }.items():
+        db_session.add(
+            ExtractedField(
+                document_id=document_id,
+                field_name=name,
+                raw_value=value,
+                normalized_value=value,
+                needs_review=False,
+                evidence=[
+                    {
+                        "source_kind": "embedded_pdf_text",
+                        "page_number": 1,
+                        "source_text": "synthetic",
+                        "coordinate_space": "pdf_points",
+                    }
+                ],
+            )
+        )
     db_session.commit()
     assert (
         client.get(f"/api/v1/documents/{document_id}").json()["overall_status"]
@@ -166,9 +193,17 @@ def test_unsupported_persisted_rule_cannot_silently_authorize_ready(db_session, 
 
 
 def test_issue_age_uses_evaluation_date_and_unavailable_never_fails(db_session, ready_case):
-    project_id, _, field_id, requirement_id = ready_case
+    project_id, document_id, field_id, requirement_id = ready_case
     requirement = db_session.get(DocumentRequirement, requirement_id)
     requirement.rules[0].params = {"field": "issue_date"}
+    # ready_case already carries its own issue_date (and student_name,
+    # university_name) rows; this test repurposes the gpa row into
+    # issue_date instead, which would otherwise leave two issue_date rows
+    # on the same document. Drop the fixture's fixed one so only the row
+    # this test actually manipulates exists.
+    db_session.query(ExtractedField).filter(
+        ExtractedField.document_id == document_id, ExtractedField.field_name == "issue_date"
+    ).delete()
     db_session.add(
         ValidationRule(
             requirement_id=requirement_id,

@@ -58,10 +58,26 @@ def configured_document_rules(
         ConfiguredRule(RuleType(row.rule_type), Severity(row.severity), row.params or {})
         for row in requirement.rules
     ]
-    if not any(rule.rule_type == RuleType.REQUIRED_FIELD for rule in configured):
+    # Explicit REQUIRED_FIELD rules ADD to this requirement's default
+    # fields; they do not replace the check for a default field they don't
+    # name (audit F-001). A bare rule (no `field` param) already names
+    # every field in the document type's own schema -- see
+    # _explicit_required_fields in validation/engine.py, which this
+    # mirrors -- so it alone still covers everything without an auto-fill.
+    explicitly_named = {
+        rule.params.get("field")
+        for rule in configured
+        if rule.rule_type == RuleType.REQUIRED_FIELD and rule.params.get("field")
+    }
+    has_blanket_rule = any(
+        rule.rule_type == RuleType.REQUIRED_FIELD and not rule.params.get("field")
+        for rule in configured
+    )
+    if not has_blanket_rule:
         configured.extend(
             ConfiguredRule(RuleType.REQUIRED_FIELD, Severity.WARNING, {"field": name})
             for name in required_fields(requirement)
+            if name not in explicitly_named
         )
     return configured
 

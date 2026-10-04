@@ -31,10 +31,16 @@ def _project(db_session, *, transcript: bool = False):
     db_session.add_all([user, workflow])
     db_session.flush()
     if transcript:
+        # required=False, matching the real seeded student checklist
+        # (scripts/seed.py): TRANSCRIPT is optional there too. This also
+        # means DEFAULT_REQUIRED_FIELDS does not apply (see
+        # services/requirements.py::required_fields), so these
+        # single-field-focused fixtures stay focused on gpa -- the
+        # explicit REQUIRED_FIELD(gpa) rule below is unaffected either way.
         requirement = DocumentRequirement(
             checklist_id=workflow.id,
             document_type=DocumentType.TRANSCRIPT.value,
-            required=True,
+            required=False,
         )
         db_session.add(requirement)
         db_session.flush()
@@ -202,7 +208,10 @@ def test_confirm_low_confidence_value_preserves_machine_and_enables_rule(
         db_session,
         submission,
         DocumentType.BUSINESS_REGISTRATION_CERTIFICATE,
-        {"business_registration_number": ("1234567890", 0.95)},
+        {
+            "business_registration_number": ("1234567890", 0.95),
+            "company_name": ("테스트상사", 0.95),
+        },
     )
     target, target_fields = _document(
         db_session,
@@ -211,6 +220,8 @@ def test_confirm_low_confidence_value_preserves_machine_and_enables_rule(
         {
             "business_registration_number": ("1234567890", 0.80),
             "valid_until": ("2026-12-31", 0.95),
+            "company_name": ("테스트상사", 0.95),
+            "valid_from": ("2026-01-01", 0.95),
         },
     )
     db_session.commit()
@@ -261,7 +272,10 @@ def test_correct_false_mismatch_normalizes_without_mutating_machine(
         db_session,
         submission,
         DocumentType.BUSINESS_REGISTRATION_CERTIFICATE,
-        {"business_registration_number": ("1234567890", 0.95)},
+        {
+            "business_registration_number": ("1234567890", 0.95),
+            "company_name": ("테스트상사", 0.95),
+        },
     )
     target, fields = _document(
         db_session,
@@ -270,6 +284,8 @@ def test_correct_false_mismatch_normalizes_without_mutating_machine(
         {
             "business_registration_number": ("9999999999", 0.80),
             "valid_until": ("2026-12-31", 0.95),
+            "company_name": ("테스트상사", 0.95),
+            "valid_from": ("2026-01-01", 0.95),
         },
     )
     response = _review(
@@ -333,7 +349,10 @@ def test_fill_missing_valid_until_then_rules_decide(
         db_session,
         submission,
         DocumentType.BUSINESS_REGISTRATION_CERTIFICATE,
-        {"business_registration_number": ("1234567890", 0.95)},
+        {
+            "business_registration_number": ("1234567890", 0.95),
+            "company_name": ("테스트상사", 0.95),
+        },
     )
     target, _ = _document(
         db_session,
@@ -342,6 +361,8 @@ def test_fill_missing_valid_until_then_rules_decide(
         {
             "business_registration_number": ("1234567890", 0.95),
             "valid_until": (None, None),
+            "company_name": ("테스트상사", 0.95),
+            "valid_from": ("2026-01-01", 0.95),
         },
     )
     response = _review(client, project.id, target.id, "valid_until", "CORRECTED", value)
@@ -401,7 +422,10 @@ def test_confirm_real_mismatch_still_fails_business_rule(client: TestClient, db_
         db_session,
         submission,
         DocumentType.BUSINESS_REGISTRATION_CERTIFICATE,
-        {"business_registration_number": ("1234567890", 0.80)},
+        {
+            "business_registration_number": ("1234567890", 0.80),
+            "company_name": ("테스트상사", 0.95),
+        },
     )
     target, _ = _document(
         db_session,
@@ -410,6 +434,8 @@ def test_confirm_real_mismatch_still_fails_business_rule(client: TestClient, db_
         {
             "business_registration_number": ("9999999999", 0.80),
             "valid_until": ("2026-12-31", 0.95),
+            "company_name": ("테스트상사", 0.95),
+            "valid_from": ("2026-01-01", 0.95),
         },
     )
     assert (
