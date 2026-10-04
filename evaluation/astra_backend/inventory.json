@@ -1,0 +1,203 @@
+{
+  "dataset_version": "desktop-2026-09-29-v1",
+  "total_files": 7,
+  "unique_byte_files": 7,
+  "probable_visual_duplicates": 0,
+  "visual_duplicate_method": "All seven rendered originals visually inspected; distinct identities/layouts, no re-encoded copy found.",
+  "prior_round2_matches": 7,
+  "independent_new_coverage": 0,
+  "holdout": "NO RELIABLE HOLDOUT POSSIBLE",
+  "types": {
+    "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE": 1,
+    "BUSINESS_REGISTRATION_CERTIFICATE": 1,
+    "TRANSCRIPT": 2,
+    "ENROLLMENT_CERTIFICATE": 2,
+    "SME_CONFIRMATION_CERTIFICATE": 1
+  },
+  "layout_families": {
+    "full_table_label_left_value_right": 1,
+    "letter_spaced_labels_key_value": 4,
+    "dense_multi_column_table": 1,
+    "three_column_course_table": 1
+  },
+  "samples": [
+    {
+      "sample_id": "ASTRA-R01",
+      "extension": ".pdf",
+      "mime": "application/pdf",
+      "size": 320926,
+      "page_count": 1,
+      "source_kind": "scanned_pdf",
+      "width": null,
+      "height": null,
+      "dpi": null,
+      "document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "layout_family": "full_table_label_left_value_right",
+      "table_presence": true,
+      "seal_presence": true,
+      "rotation": "upright",
+      "skew": "not quantitatively measured",
+      "quality": "legible scan; stamp interference",
+      "ground_truth_exists": true,
+      "safe_for_local_testing": true,
+      "cloud_authorized": false,
+      "matched_prior_round2_hash": true,
+      "page_dimensions_points": [
+        {
+          "width_points": 1117.0,
+          "height_points": 1408.0
+        }
+      ]
+    },
+    {
+      "sample_id": "ASTRA-R02",
+      "extension": ".png",
+      "mime": "image/png",
+      "size": 195020,
+      "page_count": 1,
+      "source_kind": "image",
+      "width": 595,
+      "height": 842,
+      "dpi": [
+        96.012,
+        96.012
+      ],
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "layout_family": "letter_spaced_labels_key_value",
+      "table_presence": false,
+      "seal_presence": true,
+      "rotation": "upright",
+      "skew": "not quantitatively measured",
+      "quality": "low native resolution",
+      "ground_truth_exists": true,
+      "safe_for_local_testing": true,
+      "cloud_authorized": false,
+      "matched_prior_round2_hash": true
+    },
+    {
+      "sample_id": "ASTRA-R03",
+      "extension": ".jpeg",
+      "mime": "image/jpeg",
+      "size": 157846,
+      "page_count": 1,
+      "source_kind": "image",
+      "width": 743,
+      "height": 1020,
+      "dpi": null,
+      "document_type": "TRANSCRIPT",
+      "layout_family": "dense_multi_column_table",
+      "table_presence": true,
+      "seal_presence": true,
+      "rotation": "upright",
+      "skew": "not quantitatively measured",
+      "quality": "low native resolution",
+      "ground_truth_exists": true,
+      "safe_for_local_testing": true,
+      "cloud_authorized": false,
+      "matched_prior_round2_hash": true
+    },
+    {
+      "sample_id": "ASTRA-R04",
+      "extension": ".pdf",
+      "mime": "application/pdf",
+      "size": 576127,
+      "page_count": 1,
+      "source_kind": "scanned_pdf",
+      "width": null,
+      "height": null,
+      "dpi": null,
+      "document_type": "TRANSCRIPT",
+      "layout_family": "three_column_course_table",
+      "table_presence": true,
+      "seal_presence": true,
+      "rotation": "upright",
+      "skew": "not quantitatively measured",
+      "quality": "legible scan; stamp interference",
+      "ground_truth_exists": true,
+      "safe_for_local_testing": true,
+      "cloud_authorized": false,
+      "matched_prior_round2_hash": true,
+      "page_dimensions_points": [
+        {
+          "width_points": 595.0800170898438,
+          "height_points": 841.6799926757812
+        }
+      ]
+    },
+    {
+      "sample_id": "ASTRA-R05",
+      "extension": ".webp",
+      "mime": "image/webp",
+      "size": 151610,
+      "page_count": 1,
+      "source_kind": "image",
+      "width": 1200,
+      "height": 1854,
+      "dpi": null,
+      "document_type": "ENROLLMENT_CERTIFICATE",
+      "layout_family": "letter_spaced_labels_key_value",
+      "table_presence": false,
+      "seal_presence": true,
+      "rotation": "upright",
+      "skew": "not quantitatively measured",
+      "quality": "legible scan; stamp interference",
+      "ground_truth_exists": true,
+      "safe_for_local_testing": true,
+      "cloud_authorized": false,
+      "matched_prior_round2_hash": true
+    },
+    {
+      "sample_id": "ASTRA-R06",
+      "extension": ".jpg",
+      "mime": "image/jpeg",
+      "size": 63309,
+      "page_count": 1,
+      "source_kind": "image",
+      "width": 400,
+      "height": 566,
+      "dpi": [
+        96,
+        96
+      ],
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "layout_family": "letter_spaced_labels_key_value",
+      "table_presence": false,
+      "seal_presence": true,
+      "rotation": "upright",
+      "skew": "not quantitatively measured",
+      "quality": "low native resolution",
+      "ground_truth_exists": true,
+      "safe_for_local_testing": true,
+      "cloud_authorized": false,
+      "matched_prior_round2_hash": true
+    },
+    {
+      "sample_id": "ASTRA-R07",
+      "extension": ".pdf",
+      "mime": "application/pdf",
+      "size": 334767,
+      "page_count": 1,
+      "source_kind": "scanned_pdf",
+      "width": null,
+      "height": null,
+      "dpi": null,
+      "document_type": "ENROLLMENT_CERTIFICATE",
+      "layout_family": "letter_spaced_labels_key_value",
+      "table_presence": false,
+      "seal_presence": true,
+      "rotation": "upright",
+      "skew": "not quantitatively measured",
+      "quality": "legible scan; stamp interference",
+      "ground_truth_exists": true,
+      "safe_for_local_testing": true,
+      "cloud_authorized": false,
+      "matched_prior_round2_hash": true,
+      "page_dimensions_points": [
+        {
+          "width_points": 595.0800170898438,
+          "height_points": 841.6799926757812
+        }
+      ]
+    }
+  ]
+}

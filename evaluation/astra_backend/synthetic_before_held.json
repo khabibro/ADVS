@@ -1,0 +1,2953 @@
+{
+  "SYNTHETIC_REALISTIC": {
+    "scorer_version": "astra-safety-1.0",
+    "dataset_version": "generated-manifest-v1",
+    "ground_truth_version": "existing-generated-gold-v1.1",
+    "run_metadata": {
+      "mode": "gold_text_no_OCR",
+      "backend_tree_sha256": "84e0414316cc09c3f5d86d249d096bc8e021ecece161353c72f04b6c4af2f43b",
+      "gold_sha256": "62d891a49adcb6480455cb8b89249d46762b6a1ff420784d4c71c33871b9c005"
+    },
+    "counts": {
+      "classification_correct": 24,
+      "classification_abstained": 0,
+      "processing_failures": 0,
+      "CORRECT": 137,
+      "populated": 151,
+      "present_assertions": 153,
+      "populated_unlabelled": 12,
+      "populated_ambiguous": 0,
+      "unresolved_required": 14,
+      "with_evidence": 0,
+      "review_documents": 5,
+      "document_success": 17,
+      "CORRECTLY_ABSTAINED": 3,
+      "INCORRECT": 2,
+      "UNRESOLVED": 14,
+      "NOT_EVALUATED": 12
+    },
+    "metrics": {
+      "SUPPORTED_FIELD_PRECISION": 0.9072847682119205,
+      "SUPPORTED_FIELD_RECALL": 0.8954248366013072,
+      "WRONG_NON_NULL_COUNT": 2,
+      "CORRECT_ABSTENTION_COUNT": 3,
+      "UNRESOLVED_REQUIRED_COUNT": 14,
+      "EVIDENCE_COVERAGE": 0.0,
+      "CLASSIFICATION_ACCURACY": 1.0,
+      "CLASSIFICATION_ABSTENTION_RATE": 0.0,
+      "DOCUMENT_SUCCESS_RATE": 0.7083333333333334,
+      "REVIEW_RATE": 0.20833333333333334,
+      "FALSE_READY_COUNT": null,
+      "FALSE_NEEDS_CORRECTION_COUNT": null
+    },
+    "per_field": {
+      "applicant_name": {
+        "CORRECT": 12,
+        "populated": 12
+      },
+      "degree": {
+        "CORRECT": 5,
+        "populated": 5,
+        "CORRECTLY_ABSTAINED": 1
+      },
+      "department": {
+        "CORRECT": 5,
+        "populated": 5,
+        "CORRECTLY_ABSTAINED": 1
+      },
+      "graduation_date": {
+        "CORRECT": 6,
+        "populated": 6
+      },
+      "issue_date": {
+        "CORRECT": 22,
+        "populated": 22,
+        "UNRESOLVED": 2
+      },
+      "university_name": {
+        "CORRECT": 6,
+        "populated": 6
+      },
+      "company_name": {
+        "CORRECT": 18,
+        "populated": 18
+      },
+      "employment_end_date": {
+        "CORRECT": 5,
+        "populated": 6,
+        "INCORRECT": 1
+      },
+      "employment_start_date": {
+        "CORRECT": 5,
+        "populated": 6,
+        "INCORRECT": 1
+      },
+      "position": {
+        "CORRECT": 6,
+        "populated": 6
+      },
+      "business_address": {
+        "CORRECT": 6,
+        "populated": 6
+      },
+      "business_item": {
+        "CORRECT": 6,
+        "populated": 6
+      },
+      "business_registration_number": {
+        "CORRECT": 12,
+        "populated": 12
+      },
+      "business_type": {
+        "CORRECT": 6,
+        "populated": 6
+      },
+      "representative_name": {
+        "CORRECT": 12,
+        "populated": 12
+      },
+      "certificate_number": {
+        "CORRECTLY_ABSTAINED": 1,
+        "populated": 5,
+        "CORRECT": 5
+      },
+      "expiration_date": {
+        "UNRESOLVED": 6,
+        "populated": 0
+      },
+      "valid_from": {
+        "NOT_EVALUATED": 6,
+        "populated": 6
+      },
+      "valid_until": {
+        "NOT_EVALUATED": 6,
+        "populated": 6
+      },
+      "validity_period": {
+        "UNRESOLVED": 6,
+        "populated": 0
+      }
+    },
+    "confusion_matrix": {
+      "GRADUATION_CERTIFICATE": {
+        "GRADUATION_CERTIFICATE": 6
+      },
+      "CAREER_CERTIFICATE": {
+        "CAREER_CERTIFICATE": 6
+      },
+      "BUSINESS_REGISTRATION_CERTIFICATE": {
+        "BUSINESS_REGISTRATION_CERTIFICATE": 6
+      },
+      "SME_CONFIRMATION_CERTIFICATE": {
+        "SME_CONFIRMATION_CERTIFICATE": 6
+      }
+    },
+    "documents": [
+      {
+        "sample_id": "graduation_007",
+        "document_type": "GRADUATION_CERTIFICATE",
+        "predicted_type": "GRADUATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "degree",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "department",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "graduation_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "university_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 20.385083043947816
+      },
+      {
+        "sample_id": "graduation_008",
+        "document_type": "GRADUATION_CERTIFICATE",
+        "predicted_type": "GRADUATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "REVIEW_REQUIRED",
+        "project_status": null,
+        "review_required": true,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "degree",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "department",
+            "expected_state": "ABSENT",
+            "verdict": "CORRECTLY_ABSTAINED",
+            "populated": false,
+            "required": true,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "graduation_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "university_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 2.372166025452316
+      },
+      {
+        "sample_id": "graduation_009",
+        "document_type": "GRADUATION_CERTIFICATE",
+        "predicted_type": "GRADUATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "REVIEW_REQUIRED",
+        "project_status": null,
+        "review_required": true,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "degree",
+            "expected_state": "ABSENT",
+            "verdict": "CORRECTLY_ABSTAINED",
+            "populated": false,
+            "required": true,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "department",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "graduation_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "university_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.0044589871540666
+      },
+      {
+        "sample_id": "graduation_017",
+        "document_type": "GRADUATION_CERTIFICATE",
+        "predicted_type": "GRADUATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "degree",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "department",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "graduation_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "university_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.3947499683126807
+      },
+      {
+        "sample_id": "graduation_018",
+        "document_type": "GRADUATION_CERTIFICATE",
+        "predicted_type": "GRADUATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "degree",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "department",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "graduation_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "university_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 2.4551249807700515
+      },
+      {
+        "sample_id": "graduation_019",
+        "document_type": "GRADUATION_CERTIFICATE",
+        "predicted_type": "GRADUATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "degree",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "department",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "graduation_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "university_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.117000007070601
+      },
+      {
+        "sample_id": "career_007",
+        "document_type": "CAREER_CERTIFICATE",
+        "predicted_type": "CAREER_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "employment_end_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date_range"
+          },
+          {
+            "field": "employment_start_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date_range"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "position",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 2.3741250624880195
+      },
+      {
+        "sample_id": "career_008",
+        "document_type": "CAREER_CERTIFICATE",
+        "predicted_type": "CAREER_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "employment_end_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date_range"
+          },
+          {
+            "field": "employment_start_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date_range"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "position",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 3.2126670703291893
+      },
+      {
+        "sample_id": "career_009",
+        "document_type": "CAREER_CERTIFICATE",
+        "predicted_type": "CAREER_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "employment_end_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "employment_start_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "position",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.0665829759091139
+      },
+      {
+        "sample_id": "career_017",
+        "document_type": "CAREER_CERTIFICATE",
+        "predicted_type": "CAREER_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "employment_end_date",
+            "expected_state": "PRESENT",
+            "verdict": "INCORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date_range"
+          },
+          {
+            "field": "employment_start_date",
+            "expected_state": "PRESENT",
+            "verdict": "INCORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date_range"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "position",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.7337080789729953
+      },
+      {
+        "sample_id": "career_018",
+        "document_type": "CAREER_CERTIFICATE",
+        "predicted_type": "CAREER_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "employment_end_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "employment_start_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "position",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 2.7322499081492424
+      },
+      {
+        "sample_id": "career_019",
+        "document_type": "CAREER_CERTIFICATE",
+        "predicted_type": "CAREER_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "employment_end_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date_range"
+          },
+          {
+            "field": "employment_start_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date_range"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "position",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.2923750327900052
+      },
+      {
+        "sample_id": "business_007",
+        "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "predicted_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "business_address",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "business_item",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "business_registration_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_business_number"
+          },
+          {
+            "field": "business_type",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "representative_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 3.0377500224858522
+      },
+      {
+        "sample_id": "business_008",
+        "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "predicted_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "business_address",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "business_item",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "business_registration_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_business_number"
+          },
+          {
+            "field": "business_type",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "representative_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 4.410333931446075
+      },
+      {
+        "sample_id": "business_009",
+        "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "predicted_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "business_address",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "business_item",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "business_registration_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_business_number"
+          },
+          {
+            "field": "business_type",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "representative_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.669582910835743
+      },
+      {
+        "sample_id": "business_017",
+        "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "predicted_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "business_address",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "business_item",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "business_registration_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_business_number"
+          },
+          {
+            "field": "business_type",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "representative_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 2.1791249746456742
+      },
+      {
+        "sample_id": "business_018",
+        "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "predicted_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "business_address",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "business_item",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "business_registration_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_business_number"
+          },
+          {
+            "field": "business_type",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "representative_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 3.76270804554224
+      },
+      {
+        "sample_id": "business_019",
+        "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "predicted_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "business_address",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "business_item",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "business_registration_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_business_number"
+          },
+          {
+            "field": "business_type",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "representative_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.6377499559894204
+      },
+      {
+        "sample_id": "sme_007",
+        "document_type": "SME_CONFIRMATION_CERTIFICATE",
+        "predicted_type": "SME_CONFIRMATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "REVIEW_REQUIRED",
+        "project_status": null,
+        "review_required": true,
+        "fields": [
+          {
+            "field": "business_registration_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_business_number"
+          },
+          {
+            "field": "certificate_number",
+            "expected_state": "ABSENT",
+            "verdict": "CORRECTLY_ABSTAINED",
+            "populated": false,
+            "required": true,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "expiration_date",
+            "expected_state": "PRESENT",
+            "verdict": "UNRESOLVED",
+            "populated": false,
+            "required": true,
+            "needs_review": null,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "representative_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "valid_from",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "valid_until",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "validity_period",
+            "expected_state": "PRESENT",
+            "verdict": "UNRESOLVED",
+            "populated": false,
+            "required": true,
+            "needs_review": null,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.5892500523477793
+      },
+      {
+        "sample_id": "sme_008",
+        "document_type": "SME_CONFIRMATION_CERTIFICATE",
+        "predicted_type": "SME_CONFIRMATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "NEEDS_CORRECTION",
+        "project_status": null,
+        "review_required": true,
+        "fields": [
+          {
+            "field": "business_registration_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_business_number"
+          },
+          {
+            "field": "certificate_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "expiration_date",
+            "expected_state": "PRESENT",
+            "verdict": "UNRESOLVED",
+            "populated": false,
+            "required": true,
+            "needs_review": null,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "UNRESOLVED",
+            "populated": false,
+            "required": true,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "representative_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "valid_from",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "valid_until",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "validity_period",
+            "expected_state": "PRESENT",
+            "verdict": "UNRESOLVED",
+            "populated": false,
+            "required": true,
+            "needs_review": null,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 2.6885829865932465
+      },
+      {
+        "sample_id": "sme_009",
+        "document_type": "SME_CONFIRMATION_CERTIFICATE",
+        "predicted_type": "SME_CONFIRMATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "business_registration_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_business_number"
+          },
+          {
+            "field": "certificate_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "expiration_date",
+            "expected_state": "PRESENT",
+            "verdict": "UNRESOLVED",
+            "populated": false,
+            "required": true,
+            "needs_review": null,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "representative_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "valid_from",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "valid_until",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "validity_period",
+            "expected_state": "PRESENT",
+            "verdict": "UNRESOLVED",
+            "populated": false,
+            "required": true,
+            "needs_review": null,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.2041659792885184
+      },
+      {
+        "sample_id": "sme_017",
+        "document_type": "SME_CONFIRMATION_CERTIFICATE",
+        "predicted_type": "SME_CONFIRMATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "business_registration_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_business_number"
+          },
+          {
+            "field": "certificate_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "expiration_date",
+            "expected_state": "PRESENT",
+            "verdict": "UNRESOLVED",
+            "populated": false,
+            "required": true,
+            "needs_review": null,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "representative_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "valid_from",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "valid_until",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "validity_period",
+            "expected_state": "PRESENT",
+            "verdict": "UNRESOLVED",
+            "populated": false,
+            "required": true,
+            "needs_review": null,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.3978340430185199
+      },
+      {
+        "sample_id": "sme_018",
+        "document_type": "SME_CONFIRMATION_CERTIFICATE",
+        "predicted_type": "SME_CONFIRMATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "REVIEW_REQUIRED",
+        "project_status": null,
+        "review_required": true,
+        "fields": [
+          {
+            "field": "business_registration_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_business_number"
+          },
+          {
+            "field": "certificate_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "expiration_date",
+            "expected_state": "PRESENT",
+            "verdict": "UNRESOLVED",
+            "populated": false,
+            "required": true,
+            "needs_review": null,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "UNRESOLVED",
+            "populated": false,
+            "required": true,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "representative_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "valid_from",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "valid_until",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "validity_period",
+            "expected_state": "PRESENT",
+            "verdict": "UNRESOLVED",
+            "populated": false,
+            "required": true,
+            "needs_review": null,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 2.6562080020084977
+      },
+      {
+        "sample_id": "sme_019",
+        "document_type": "SME_CONFIRMATION_CERTIFICATE",
+        "predicted_type": "SME_CONFIRMATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "business_registration_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_business_number"
+          },
+          {
+            "field": "certificate_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "expiration_date",
+            "expected_state": "PRESENT",
+            "verdict": "UNRESOLVED",
+            "populated": false,
+            "required": true,
+            "needs_review": null,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "representative_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "valid_from",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "valid_until",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "validity_period",
+            "expected_state": "PRESENT",
+            "verdict": "UNRESOLVED",
+            "populated": false,
+            "required": true,
+            "needs_review": null,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.221959013491869
+      }
+    ],
+    "latency_ms": {
+      "median": 1.9564165268093348,
+      "min": 1.0044589871540666,
+      "max": 20.385083043947816
+    }
+  },
+  "NEGATIVE_OUT_OF_SCOPE": {
+    "scorer_version": "astra-safety-1.0",
+    "dataset_version": "generated-manifest-v1",
+    "ground_truth_version": "existing-generated-gold-v1.1",
+    "run_metadata": {
+      "mode": "gold_text_no_OCR",
+      "backend_tree_sha256": "84e0414316cc09c3f5d86d249d096bc8e021ecece161353c72f04b6c4af2f43b",
+      "gold_sha256": "c0f670ebdf37a04c931d2ca63d7718095efe9eb365dc88a219c14efe3928bbb3"
+    },
+    "counts": {
+      "classification_correct": 3,
+      "classification_abstained": 3,
+      "processing_failures": 0,
+      "NOT_EVALUATED": 18,
+      "populated": 8,
+      "present_assertions": 0,
+      "populated_unlabelled": 8,
+      "populated_ambiguous": 0,
+      "unresolved_required": 0,
+      "with_evidence": 0,
+      "review_documents": 3,
+      "document_success": 3
+    },
+    "metrics": {
+      "SUPPORTED_FIELD_PRECISION": 0.0,
+      "SUPPORTED_FIELD_RECALL": null,
+      "WRONG_NON_NULL_COUNT": 0,
+      "CORRECT_ABSTENTION_COUNT": 0,
+      "UNRESOLVED_REQUIRED_COUNT": 0,
+      "EVIDENCE_COVERAGE": 0.0,
+      "CLASSIFICATION_ACCURACY": 0.5,
+      "CLASSIFICATION_ABSTENTION_RATE": 0.5,
+      "DOCUMENT_SUCCESS_RATE": 0.5,
+      "REVIEW_RATE": 0.5,
+      "FALSE_READY_COUNT": null,
+      "FALSE_NEEDS_CORRECTION_COUNT": null
+    },
+    "per_field": {
+      "applicant_name": {
+        "NOT_EVALUATED": 2,
+        "populated": 2
+      },
+      "degree": {
+        "NOT_EVALUATED": 2,
+        "populated": 0
+      },
+      "department": {
+        "NOT_EVALUATED": 2,
+        "populated": 0
+      },
+      "graduation_date": {
+        "NOT_EVALUATED": 2,
+        "populated": 0
+      },
+      "issue_date": {
+        "NOT_EVALUATED": 3,
+        "populated": 0
+      },
+      "university_name": {
+        "NOT_EVALUATED": 3,
+        "populated": 3
+      },
+      "gpa": {
+        "NOT_EVALUATED": 1,
+        "populated": 1
+      },
+      "gpa_scale": {
+        "NOT_EVALUATED": 1,
+        "populated": 1
+      },
+      "student_id": {
+        "NOT_EVALUATED": 1,
+        "populated": 0
+      },
+      "student_name": {
+        "NOT_EVALUATED": 1,
+        "populated": 1
+      }
+    },
+    "confusion_matrix": {
+      "UNKNOWN": {
+        "GRADUATION_CERTIFICATE": 2,
+        "TRANSCRIPT": 1,
+        "UNKNOWN": 3
+      }
+    },
+    "documents": [
+      {
+        "sample_id": "unknown_007",
+        "document_type": "UNKNOWN",
+        "predicted_type": "GRADUATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "REVIEW_REQUIRED",
+        "project_status": null,
+        "review_required": true,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "degree",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": false,
+            "required": false,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "department",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": false,
+            "required": false,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "graduation_date",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": false,
+            "required": false,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "issue_date",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": false,
+            "required": false,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "university_name",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 0.8834999753162265
+      },
+      {
+        "sample_id": "unknown_008",
+        "document_type": "UNKNOWN",
+        "predicted_type": "TRANSCRIPT",
+        "processing_status": "COMPLETED",
+        "document_status": "REVIEW_REQUIRED",
+        "project_status": null,
+        "review_required": true,
+        "fields": [
+          {
+            "field": "gpa",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_gpa"
+          },
+          {
+            "field": "gpa_scale",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_gpa"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": false,
+            "required": false,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "student_id",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": false,
+            "required": false,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "student_name",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "university_name",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.5009160852059722
+      },
+      {
+        "sample_id": "unknown_009",
+        "document_type": "UNKNOWN",
+        "predicted_type": "UNKNOWN",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [],
+        "negative_assertions": [],
+        "process_ms": 0.02562499139457941
+      },
+      {
+        "sample_id": "unknown_017",
+        "document_type": "UNKNOWN",
+        "predicted_type": "UNKNOWN",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [],
+        "negative_assertions": [],
+        "process_ms": 0.03166694659739733
+      },
+      {
+        "sample_id": "unknown_018",
+        "document_type": "UNKNOWN",
+        "predicted_type": "UNKNOWN",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [],
+        "negative_assertions": [],
+        "process_ms": 0.02108304761350155
+      },
+      {
+        "sample_id": "unknown_019",
+        "document_type": "UNKNOWN",
+        "predicted_type": "GRADUATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "REVIEW_REQUIRED",
+        "project_status": null,
+        "review_required": true,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "degree",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": false,
+            "required": false,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "department",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": false,
+            "required": false,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "graduation_date",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": false,
+            "required": false,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "issue_date",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": false,
+            "required": false,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "university_name",
+            "expected_state": null,
+            "verdict": "NOT_EVALUATED",
+            "populated": true,
+            "required": false,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 0.8642079774290323
+      }
+    ],
+    "latency_ms": {
+      "median": 0.4479374620132148,
+      "min": 0.02108304761350155,
+      "max": 1.5009160852059722
+    }
+  },
+  "RECREATED_FROM_PUBLIC_REFERENCE": {
+    "scorer_version": "astra-safety-1.0",
+    "dataset_version": "generated-manifest-v1",
+    "ground_truth_version": "existing-generated-gold-v1.1",
+    "run_metadata": {
+      "mode": "gold_text_no_OCR",
+      "backend_tree_sha256": "84e0414316cc09c3f5d86d249d096bc8e021ecece161353c72f04b6c4af2f43b",
+      "gold_sha256": "9380b5178f4d09ba55d3b9bc0ea7b4fb5c0e02c86148718704b92953d6bcc98b"
+    },
+    "counts": {
+      "classification_correct": 2,
+      "classification_abstained": 0,
+      "processing_failures": 0,
+      "CORRECT": 12,
+      "populated": 12,
+      "present_assertions": 12,
+      "populated_unlabelled": 0,
+      "populated_ambiguous": 0,
+      "unresolved_required": 0,
+      "with_evidence": 0,
+      "review_documents": 1,
+      "document_success": 2,
+      "CORRECTLY_ABSTAINED": 1
+    },
+    "metrics": {
+      "SUPPORTED_FIELD_PRECISION": 1.0,
+      "SUPPORTED_FIELD_RECALL": 1.0,
+      "WRONG_NON_NULL_COUNT": 0,
+      "CORRECT_ABSTENTION_COUNT": 1,
+      "UNRESOLVED_REQUIRED_COUNT": 0,
+      "EVIDENCE_COVERAGE": 0.0,
+      "CLASSIFICATION_ACCURACY": 1.0,
+      "CLASSIFICATION_ABSTENTION_RATE": 0.0,
+      "DOCUMENT_SUCCESS_RATE": 1.0,
+      "REVIEW_RATE": 0.5,
+      "FALSE_READY_COUNT": null,
+      "FALSE_NEEDS_CORRECTION_COUNT": null
+    },
+    "per_field": {
+      "business_address": {
+        "CORRECT": 1,
+        "populated": 1
+      },
+      "business_item": {
+        "CORRECT": 1,
+        "populated": 1
+      },
+      "business_registration_number": {
+        "CORRECT": 1,
+        "populated": 1
+      },
+      "business_type": {
+        "CORRECT": 1,
+        "populated": 1
+      },
+      "company_name": {
+        "CORRECT": 1,
+        "populated": 1
+      },
+      "issue_date": {
+        "CORRECT": 2,
+        "populated": 2
+      },
+      "representative_name": {
+        "CORRECT": 1,
+        "populated": 1
+      },
+      "applicant_name": {
+        "CORRECT": 1,
+        "populated": 1
+      },
+      "degree": {
+        "CORRECT": 1,
+        "populated": 1
+      },
+      "department": {
+        "CORRECT": 1,
+        "populated": 1
+      },
+      "graduation_date": {
+        "CORRECTLY_ABSTAINED": 1,
+        "populated": 0
+      },
+      "university_name": {
+        "CORRECT": 1,
+        "populated": 1
+      }
+    },
+    "confusion_matrix": {
+      "BUSINESS_REGISTRATION_CERTIFICATE": {
+        "BUSINESS_REGISTRATION_CERTIFICATE": 1
+      },
+      "GRADUATION_CERTIFICATE": {
+        "GRADUATION_CERTIFICATE": 1
+      }
+    },
+    "documents": [
+      {
+        "sample_id": "recreated_business_002",
+        "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "predicted_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "READY",
+        "project_status": null,
+        "review_required": false,
+        "fields": [
+          {
+            "field": "business_address",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "business_item",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "business_registration_number",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_business_number"
+          },
+          {
+            "field": "business_type",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "company_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "representative_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.9915419397875667
+      },
+      {
+        "sample_id": "recreated_graduation_001",
+        "document_type": "GRADUATION_CERTIFICATE",
+        "predicted_type": "GRADUATION_CERTIFICATE",
+        "processing_status": "COMPLETED",
+        "document_status": "REVIEW_REQUIRED",
+        "project_status": null,
+        "review_required": true,
+        "fields": [
+          {
+            "field": "applicant_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "degree",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "department",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          },
+          {
+            "field": "graduation_date",
+            "expected_state": "ABSENT",
+            "verdict": "CORRECTLY_ABSTAINED",
+            "populated": false,
+            "required": true,
+            "needs_review": true,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": null
+          },
+          {
+            "field": "issue_date",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "regex_date"
+          },
+          {
+            "field": "university_name",
+            "expected_state": "PRESENT",
+            "verdict": "CORRECT",
+            "populated": true,
+            "required": true,
+            "needs_review": false,
+            "evidence_count": 0,
+            "evidence_assessment": null,
+            "extraction_method": "label_match"
+          }
+        ],
+        "negative_assertions": [],
+        "process_ms": 1.664416049607098
+      }
+    ],
+    "latency_ms": {
+      "median": 1.8279789946973324,
+      "min": 1.664416049607098,
+      "max": 1.9915419397875667
+    }
+  }
+}

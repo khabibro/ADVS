@@ -1,0 +1,51 @@
+[
+  {
+    "check": "L0 a Korean-capable font is available for the synthetic fixture",
+    "expected": "a path",
+    "actual": "/Library/Fonts/Arial Unicode.ttf",
+    "verdict": "PASS",
+    "note": ""
+  },
+  {
+    "check": "L1 fixture is genuinely mixed (page1 text layer, page2 raster only)",
+    "expected": "page1 has Korean text, page2 has none",
+    "actual": "chars_per_page=[101, 0] images_per_page=[0, 1]",
+    "verdict": "PASS",
+    "note": ""
+  },
+  {
+    "check": "L2 mixed PDF processes to COMPLETED",
+    "expected": "COMPLETED",
+    "actual": "COMPLETED/None",
+    "verdict": "PASS",
+    "note": ""
+  },
+  {
+    "check": "L3 mixed PDF classified from its digital page",
+    "expected": "SME_CONFIRMATION_CERTIFICATE",
+    "actual": "SME_CONFIRMATION_CERTIFICATE",
+    "verdict": "PASS",
+    "note": ""
+  },
+  {
+    "check": "L4 page-1 fields carry source_kind=embedded_pdf_text and pdf_point geometry",
+    "expected": "embedded_pdf_text + pdf_point for page-1 fields",
+    "actual": "<redacted>",
+    "verdict": "INFO",
+    "note": ""
+  },
+  {
+    "check": "L5 the document is NOT mislabelled as wholly OCR",
+    "expected": "at least one field attributed to embedded_pdf_text",
+    "actual": "<redacted>",
+    "verdict": "PASS",
+    "note": ""
+  },
+  {
+    "check": "L6 embedded-text fields bypass the OCR_REQUIRES_CONFIRMATION gate (conf=1.0)",
+    "expected": "SUFFICIENT without human review",
+    "actual": "<redacted>",
+    "verdict": "INFO",
+    "note": "this is the only route by which ADVS can reach READY without human review"
+  }
+]

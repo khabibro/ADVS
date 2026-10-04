@@ -1,0 +1,1797 @@
+{
+  "reproducibility": {
+    "evaluated_at": "2026-09-29T02:20:39.832066+00:00",
+    "git_commit": "721cc9d",
+    "classifier_version": "heuristic-v3",
+    "extractor_version": "heuristic-v4",
+    "validation_engine_version": "heuristic-v2",
+    "mode": "mock",
+    "split": "held_out",
+    "sample_count": 32
+  },
+  "classification": {
+    "total": 32,
+    "correct": 29,
+    "incorrect": 3,
+    "unknown_predicted": 3,
+    "review_rate": 0.15625,
+    "accuracy": 0.90625,
+    "per_class_accuracy": {
+      "GRADUATION_CERTIFICATE": {
+        "correct": 7,
+        "total": 7,
+        "accuracy": 1.0
+      },
+      "CAREER_CERTIFICATE": {
+        "correct": 6,
+        "total": 6,
+        "accuracy": 1.0
+      },
+      "BUSINESS_REGISTRATION_CERTIFICATE": {
+        "correct": 7,
+        "total": 7,
+        "accuracy": 1.0
+      },
+      "SME_CONFIRMATION_CERTIFICATE": {
+        "correct": 6,
+        "total": 6,
+        "accuracy": 1.0
+      },
+      "UNKNOWN": {
+        "correct": 3,
+        "total": 6,
+        "accuracy": 0.5
+      }
+    },
+    "confusion_matrix": {
+      "GRADUATION_CERTIFICATE": {
+        "GRADUATION_CERTIFICATE": 7,
+        "CAREER_CERTIFICATE": 0,
+        "BUSINESS_REGISTRATION_CERTIFICATE": 0,
+        "SME_CONFIRMATION_CERTIFICATE": 0,
+        "UNKNOWN": 0
+      },
+      "CAREER_CERTIFICATE": {
+        "GRADUATION_CERTIFICATE": 0,
+        "CAREER_CERTIFICATE": 6,
+        "BUSINESS_REGISTRATION_CERTIFICATE": 0,
+        "SME_CONFIRMATION_CERTIFICATE": 0,
+        "UNKNOWN": 0
+      },
+      "BUSINESS_REGISTRATION_CERTIFICATE": {
+        "GRADUATION_CERTIFICATE": 0,
+        "CAREER_CERTIFICATE": 0,
+        "BUSINESS_REGISTRATION_CERTIFICATE": 7,
+        "SME_CONFIRMATION_CERTIFICATE": 0,
+        "UNKNOWN": 0
+      },
+      "SME_CONFIRMATION_CERTIFICATE": {
+        "GRADUATION_CERTIFICATE": 0,
+        "CAREER_CERTIFICATE": 0,
+        "BUSINESS_REGISTRATION_CERTIFICATE": 0,
+        "SME_CONFIRMATION_CERTIFICATE": 6,
+        "UNKNOWN": 0
+      },
+      "UNKNOWN": {
+        "GRADUATION_CERTIFICATE": 2,
+        "CAREER_CERTIFICATE": 0,
+        "BUSINESS_REGISTRATION_CERTIFICATE": 0,
+        "SME_CONFIRMATION_CERTIFICATE": 0,
+        "UNKNOWN": 3,
+        "TRANSCRIPT": 1
+      }
+    },
+    "confidence_analysis": {
+      "correct_score_mean": 9.974137931034482,
+      "incorrect_score_mean": 6.0,
+      "correct_count": 29,
+      "incorrect_count": 3
+    }
+  },
+  "extraction": {
+    "field_total": 169,
+    "field_correct": 140,
+    "field_missing": 14,
+    "field_false_value": 15,
+    "field_accuracy": 0.8284023668639053,
+    "missing_value_rate": 0.08284023668639054,
+    "false_value_rate": 0.08875739644970414,
+    "per_field": {
+      "applicant_name": {
+        "correct": 13,
+        "missing": 0,
+        "false_value": 0,
+        "total": 13
+      },
+      "university_name": {
+        "correct": 7,
+        "missing": 0,
+        "false_value": 0,
+        "total": 7
+      },
+      "department": {
+        "correct": 7,
+        "missing": 0,
+        "false_value": 0,
+        "total": 7
+      },
+      "degree": {
+        "correct": 7,
+        "missing": 0,
+        "false_value": 0,
+        "total": 7
+      },
+      "graduation_date": {
+        "correct": 7,
+        "missing": 0,
+        "false_value": 0,
+        "total": 7
+      },
+      "issue_date": {
+        "correct": 24,
+        "missing": 2,
+        "false_value": 0,
+        "total": 26
+      },
+      "company_name": {
+        "correct": 19,
+        "missing": 0,
+        "false_value": 0,
+        "total": 19
+      },
+      "position": {
+        "correct": 6,
+        "missing": 0,
+        "false_value": 0,
+        "total": 6
+      },
+      "employment_start_date": {
+        "correct": 5,
+        "missing": 0,
+        "false_value": 1,
+        "total": 6
+      },
+      "employment_end_date": {
+        "correct": 5,
+        "missing": 0,
+        "false_value": 1,
+        "total": 6
+      },
+      "representative_name": {
+        "correct": 13,
+        "missing": 0,
+        "false_value": 0,
+        "total": 13
+      },
+      "business_registration_number": {
+        "correct": 0,
+        "missing": 0,
+        "false_value": 13,
+        "total": 13
+      },
+      "business_address": {
+        "correct": 7,
+        "missing": 0,
+        "false_value": 0,
+        "total": 7
+      },
+      "business_type": {
+        "correct": 7,
+        "missing": 0,
+        "false_value": 0,
+        "total": 7
+      },
+      "business_item": {
+        "correct": 7,
+        "missing": 0,
+        "false_value": 0,
+        "total": 7
+      },
+      "certificate_number": {
+        "correct": 6,
+        "missing": 0,
+        "false_value": 0,
+        "total": 6
+      },
+      "expiration_date": {
+        "correct": 0,
+        "missing": 6,
+        "false_value": 0,
+        "total": 6
+      },
+      "validity_period": {
+        "correct": 0,
+        "missing": 6,
+        "false_value": 0,
+        "total": 6
+      }
+    },
+    "per_document_type": {
+      "GRADUATION_CERTIFICATE": {
+        "documents": 7,
+        "documents_all_correct": 7,
+        "fields_total": 42,
+        "fields_correct": 42
+      },
+      "CAREER_CERTIFICATE": {
+        "documents": 6,
+        "documents_all_correct": 5,
+        "fields_total": 36,
+        "fields_correct": 34
+      },
+      "BUSINESS_REGISTRATION_CERTIFICATE": {
+        "documents": 7,
+        "documents_all_correct": 0,
+        "fields_total": 49,
+        "fields_correct": 42
+      },
+      "SME_CONFIRMATION_CERTIFICATE": {
+        "documents": 6,
+        "documents_all_correct": 0,
+        "fields_total": 42,
+        "fields_correct": 22
+      }
+    },
+    "document_level_success_count": 12,
+    "document_level_total": 26,
+    "document_level_success_rate": 0.46153846153846156
+  },
+  "validation": {
+    "total": 26,
+    "correct": 25,
+    "accuracy": 0.9615384615384616,
+    "confusion_matrix": {
+      "READY": {
+        "READY": 20,
+        "REVIEW_REQUIRED": 1,
+        "NEEDS_CORRECTION": 0
+      },
+      "REVIEW_REQUIRED": {
+        "READY": 0,
+        "REVIEW_REQUIRED": 4,
+        "NEEDS_CORRECTION": 0
+      },
+      "NEEDS_CORRECTION": {
+        "READY": 0,
+        "REVIEW_REQUIRED": 0,
+        "NEEDS_CORRECTION": 1
+      }
+    },
+    "false_ready_count": 0,
+    "false_ready_samples": [],
+    "false_pass_count": 0,
+    "false_pass_samples": [],
+    "false_needs_correction_count": 0,
+    "false_needs_correction_samples": []
+  },
+  "failure_categories": {
+    "total_failing_samples": 29,
+    "by_category": {
+      "VALIDATION_RULE_ERROR": {
+        "count": 12,
+        "pct": 0.41379310344827586
+      },
+      "EXTRACTION_PATTERN_ERROR": {
+        "count": 8,
+        "pct": 0.27586206896551724
+      },
+      "EXTRACTION_LABEL_ERROR": {
+        "count": 5,
+        "pct": 0.1724137931034483
+      },
+      "AMBIGUOUS_DOCUMENT": {
+        "count": 3,
+        "pct": 0.10344827586206896
+      },
+      "UNSUPPORTED_LAYOUT": {
+        "count": 1,
+        "pct": 0.034482758620689655
+      }
+    }
+  },
+  "samples": [
+    {
+      "sample_id": "graduation_007",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "GRADUATION_CERTIFICATE",
+      "document_type_pred": "GRADUATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 11.5,
+      "classification_confidence": 0.8518518518518519,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 6,
+      "document_level_extraction_success": true,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "VALIDATION_RULE_ERROR",
+      "failure_reason": "Validation status gold=PASS pred=READY despite correct classification/extraction.",
+      "processing_ms": 20.838,
+      "layout_variant": "reordered",
+      "quality": "compressed",
+      "input_format": "jpg",
+      "notes": "label spacing variant applied",
+      "fields": [
+        {
+          "field_name": "applicant_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "university_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "department",
+          "status": "correct"
+        },
+        {
+          "field_name": "degree",
+          "status": "correct"
+        },
+        {
+          "field_name": "graduation_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "graduation_008",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "GRADUATION_CERTIFICATE",
+      "document_type_pred": "GRADUATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 10.5,
+      "classification_confidence": 0.9130434782608695,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 6,
+      "document_level_extraction_success": true,
+      "validation_gold": "REVIEW",
+      "validation_pred": "REVIEW_REQUIRED",
+      "validation_correct": true,
+      "failure_category": "VALIDATION_RULE_ERROR",
+      "failure_reason": "Validation status gold=REVIEW pred=REVIEW_REQUIRED despite correct classification/extraction.",
+      "processing_ms": 2.373,
+      "layout_variant": "vertical",
+      "quality": "clean",
+      "input_format": "text_pdf",
+      "notes": "omitted field to test missing-value handling",
+      "fields": [
+        {
+          "field_name": "applicant_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "university_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "department",
+          "status": "correct"
+        },
+        {
+          "field_name": "degree",
+          "status": "correct"
+        },
+        {
+          "field_name": "graduation_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "graduation_009",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "GRADUATION_CERTIFICATE",
+      "document_type_pred": "GRADUATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 10.5,
+      "classification_confidence": 0.84,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 6,
+      "document_level_extraction_success": true,
+      "validation_gold": "REVIEW",
+      "validation_pred": "REVIEW_REQUIRED",
+      "validation_correct": true,
+      "failure_category": "VALIDATION_RULE_ERROR",
+      "failure_reason": "Validation status gold=REVIEW pred=REVIEW_REQUIRED despite correct classification/extraction.",
+      "processing_ms": 0.993,
+      "layout_variant": "compact",
+      "quality": "low_contrast",
+      "input_format": "scanned_pdf",
+      "notes": "omitted field to test missing-value handling",
+      "fields": [
+        {
+          "field_name": "applicant_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "university_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "department",
+          "status": "correct"
+        },
+        {
+          "field_name": "degree",
+          "status": "correct"
+        },
+        {
+          "field_name": "graduation_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "graduation_017",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "GRADUATION_CERTIFICATE",
+      "document_type_pred": "GRADUATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 11.5,
+      "classification_confidence": 0.8518518518518519,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 6,
+      "document_level_extraction_success": true,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "VALIDATION_RULE_ERROR",
+      "failure_reason": "Validation status gold=PASS pred=READY despite correct classification/extraction.",
+      "processing_ms": 1.468,
+      "layout_variant": "reordered",
+      "quality": "low_resolution",
+      "input_format": "scanned_pdf",
+      "notes": "",
+      "fields": [
+        {
+          "field_name": "applicant_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "university_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "department",
+          "status": "correct"
+        },
+        {
+          "field_name": "degree",
+          "status": "correct"
+        },
+        {
+          "field_name": "graduation_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "graduation_018",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "GRADUATION_CERTIFICATE",
+      "document_type_pred": "GRADUATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 11.5,
+      "classification_confidence": 0.8518518518518519,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 6,
+      "document_level_extraction_success": true,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "VALIDATION_RULE_ERROR",
+      "failure_reason": "Validation status gold=PASS pred=READY despite correct classification/extraction.",
+      "processing_ms": 2.444,
+      "layout_variant": "vertical",
+      "quality": "clean",
+      "input_format": "png",
+      "notes": "",
+      "fields": [
+        {
+          "field_name": "applicant_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "university_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "department",
+          "status": "correct"
+        },
+        {
+          "field_name": "degree",
+          "status": "correct"
+        },
+        {
+          "field_name": "graduation_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "graduation_019",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "GRADUATION_CERTIFICATE",
+      "document_type_pred": "GRADUATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 11.5,
+      "classification_confidence": 0.8518518518518519,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 6,
+      "document_level_extraction_success": true,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "VALIDATION_RULE_ERROR",
+      "failure_reason": "Validation status gold=PASS pred=READY despite correct classification/extraction.",
+      "processing_ms": 1.109,
+      "layout_variant": "compact",
+      "quality": "compressed",
+      "input_format": "jpg",
+      "notes": "label spacing variant applied",
+      "fields": [
+        {
+          "field_name": "applicant_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "university_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "department",
+          "status": "correct"
+        },
+        {
+          "field_name": "degree",
+          "status": "correct"
+        },
+        {
+          "field_name": "graduation_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "career_007",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "CAREER_CERTIFICATE",
+      "document_type_pred": "CAREER_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 10.25,
+      "classification_confidence": 0.99,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 6,
+      "document_level_extraction_success": true,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "VALIDATION_RULE_ERROR",
+      "failure_reason": "Validation status gold=PASS pred=READY despite correct classification/extraction.",
+      "processing_ms": 2.429,
+      "layout_variant": "reordered",
+      "quality": "compressed",
+      "input_format": "jpg",
+      "notes": "label spacing variant applied",
+      "fields": [
+        {
+          "field_name": "applicant_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "position",
+          "status": "correct"
+        },
+        {
+          "field_name": "employment_start_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "employment_end_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "career_008",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "CAREER_CERTIFICATE",
+      "document_type_pred": "CAREER_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 10.25,
+      "classification_confidence": 0.99,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 6,
+      "document_level_extraction_success": true,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "VALIDATION_RULE_ERROR",
+      "failure_reason": "Validation status gold=PASS pred=READY despite correct classification/extraction.",
+      "processing_ms": 3.368,
+      "layout_variant": "vertical",
+      "quality": "clean",
+      "input_format": "text_pdf",
+      "notes": "multiple employment periods present; only first period is supported",
+      "fields": [
+        {
+          "field_name": "applicant_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "position",
+          "status": "correct"
+        },
+        {
+          "field_name": "employment_start_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "employment_end_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "career_009",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "CAREER_CERTIFICATE",
+      "document_type_pred": "CAREER_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 7.25,
+      "classification_confidence": 0.99,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 6,
+      "document_level_extraction_success": true,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "VALIDATION_RULE_ERROR",
+      "failure_reason": "Validation status gold=PASS pred=READY despite correct classification/extraction.",
+      "processing_ms": 1.087,
+      "layout_variant": "compact",
+      "quality": "low_contrast",
+      "input_format": "scanned_pdf",
+      "notes": "",
+      "fields": [
+        {
+          "field_name": "applicant_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "position",
+          "status": "correct"
+        },
+        {
+          "field_name": "employment_start_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "employment_end_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "career_017",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "CAREER_CERTIFICATE",
+      "document_type_pred": "CAREER_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 10.25,
+      "classification_confidence": 0.99,
+      "classification_needs_review": false,
+      "required_fields_correct": 4,
+      "required_fields_total": 6,
+      "document_level_extraction_success": false,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "UNSUPPORTED_LAYOUT",
+      "failure_reason": "Multiple employment periods present (documented single-period limitation). Fields: employment_start_date, employment_end_date",
+      "processing_ms": 1.676,
+      "layout_variant": "reordered",
+      "quality": "low_resolution",
+      "input_format": "scanned_pdf",
+      "notes": "multiple employment periods present; only first period is supported",
+      "fields": [
+        {
+          "field_name": "applicant_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "position",
+          "status": "correct"
+        },
+        {
+          "field_name": "employment_start_date",
+          "status": "false_value"
+        },
+        {
+          "field_name": "employment_end_date",
+          "status": "false_value"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "career_018",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "CAREER_CERTIFICATE",
+      "document_type_pred": "CAREER_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 7.25,
+      "classification_confidence": 0.99,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 6,
+      "document_level_extraction_success": true,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "VALIDATION_RULE_ERROR",
+      "failure_reason": "Validation status gold=PASS pred=READY despite correct classification/extraction.",
+      "processing_ms": 2.64,
+      "layout_variant": "vertical",
+      "quality": "clean",
+      "input_format": "png",
+      "notes": "",
+      "fields": [
+        {
+          "field_name": "applicant_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "position",
+          "status": "correct"
+        },
+        {
+          "field_name": "employment_start_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "employment_end_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "career_019",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "CAREER_CERTIFICATE",
+      "document_type_pred": "CAREER_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 10.25,
+      "classification_confidence": 0.99,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 6,
+      "document_level_extraction_success": true,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "VALIDATION_RULE_ERROR",
+      "failure_reason": "Validation status gold=PASS pred=READY despite correct classification/extraction.",
+      "processing_ms": 1.312,
+      "layout_variant": "compact",
+      "quality": "compressed",
+      "input_format": "jpg",
+      "notes": "label spacing variant applied",
+      "fields": [
+        {
+          "field_name": "applicant_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "position",
+          "status": "correct"
+        },
+        {
+          "field_name": "employment_start_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "employment_end_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "business_007",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "document_type_pred": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 13.0,
+      "classification_confidence": 0.9285714285714286,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 7,
+      "document_level_extraction_success": false,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "EXTRACTION_LABEL_ERROR",
+      "failure_reason": "A label was rendered with an internal whitespace variant not recognized by exact label matching. Fields: business_registration_number",
+      "processing_ms": 2.995,
+      "layout_variant": "reordered",
+      "quality": "compressed",
+      "input_format": "jpg",
+      "notes": "label spacing variant applied",
+      "fields": [
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "representative_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_registration_number",
+          "status": "false_value"
+        },
+        {
+          "field_name": "business_address",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_type",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_item",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "business_008",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "document_type_pred": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 13.0,
+      "classification_confidence": 0.9285714285714286,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 7,
+      "document_level_extraction_success": false,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "EXTRACTION_PATTERN_ERROR",
+      "failure_reason": "Layout 'vertical' separates label/value across lines or packs multiple pairs onto one line, which the same-line label-match pattern does not support. Fields: business_registration_number",
+      "processing_ms": 4.533,
+      "layout_variant": "vertical",
+      "quality": "clean",
+      "input_format": "text_pdf",
+      "notes": "includes an unrelated 10-digit-shaped number (phone) near the business fields",
+      "fields": [
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "representative_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_registration_number",
+          "status": "false_value"
+        },
+        {
+          "field_name": "business_address",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_type",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_item",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "business_009",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "document_type_pred": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 13.0,
+      "classification_confidence": 0.9285714285714286,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 7,
+      "document_level_extraction_success": false,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "EXTRACTION_PATTERN_ERROR",
+      "failure_reason": "Layout 'compact' separates label/value across lines or packs multiple pairs onto one line, which the same-line label-match pattern does not support. Fields: business_registration_number",
+      "processing_ms": 1.574,
+      "layout_variant": "compact",
+      "quality": "low_contrast",
+      "input_format": "scanned_pdf",
+      "notes": "",
+      "fields": [
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "representative_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_registration_number",
+          "status": "false_value"
+        },
+        {
+          "field_name": "business_address",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_type",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_item",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "business_017",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "document_type_pred": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 13.0,
+      "classification_confidence": 0.9285714285714286,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 7,
+      "document_level_extraction_success": false,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "EXTRACTION_LABEL_ERROR",
+      "failure_reason": "Field(s) not matched as expected: business_registration_number",
+      "processing_ms": 2.161,
+      "layout_variant": "reordered",
+      "quality": "low_resolution",
+      "input_format": "scanned_pdf",
+      "notes": "includes an unrelated 10-digit-shaped number (phone) near the business fields",
+      "fields": [
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "representative_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_registration_number",
+          "status": "false_value"
+        },
+        {
+          "field_name": "business_address",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_type",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_item",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "business_018",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "document_type_pred": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 13.0,
+      "classification_confidence": 0.9285714285714286,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 7,
+      "document_level_extraction_success": false,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "EXTRACTION_PATTERN_ERROR",
+      "failure_reason": "Layout 'vertical' separates label/value across lines or packs multiple pairs onto one line, which the same-line label-match pattern does not support. Fields: business_registration_number",
+      "processing_ms": 3.641,
+      "layout_variant": "vertical",
+      "quality": "clean",
+      "input_format": "png",
+      "notes": "",
+      "fields": [
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "representative_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_registration_number",
+          "status": "false_value"
+        },
+        {
+          "field_name": "business_address",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_type",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_item",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "business_019",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "document_type_pred": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 13.0,
+      "classification_confidence": 0.9285714285714286,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 7,
+      "document_level_extraction_success": false,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "EXTRACTION_PATTERN_ERROR",
+      "failure_reason": "Layout 'compact' separates label/value across lines or packs multiple pairs onto one line, which the same-line label-match pattern does not support. Fields: business_registration_number",
+      "processing_ms": 1.596,
+      "layout_variant": "compact",
+      "quality": "compressed",
+      "input_format": "jpg",
+      "notes": "label spacing variant applied",
+      "fields": [
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "representative_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_registration_number",
+          "status": "false_value"
+        },
+        {
+          "field_name": "business_address",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_type",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_item",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "sme_007",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "SME_CONFIRMATION_CERTIFICATE",
+      "document_type_pred": "SME_CONFIRMATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 11.25,
+      "classification_confidence": 0.7377049180327869,
+      "classification_needs_review": false,
+      "required_fields_correct": 4,
+      "required_fields_total": 7,
+      "document_level_extraction_success": false,
+      "validation_gold": "REVIEW",
+      "validation_pred": "REVIEW_REQUIRED",
+      "validation_correct": true,
+      "failure_category": "EXTRACTION_LABEL_ERROR",
+      "failure_reason": "A label was rendered with an internal whitespace variant not recognized by exact label matching. Fields: business_registration_number, expiration_date, validity_period",
+      "processing_ms": 1.507,
+      "layout_variant": "reordered",
+      "quality": "compressed",
+      "input_format": "jpg",
+      "notes": "omitted field to test missing-value handling; label spacing variant applied",
+      "fields": [
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "representative_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_registration_number",
+          "status": "false_value"
+        },
+        {
+          "field_name": "certificate_number",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "expiration_date",
+          "status": "missing"
+        },
+        {
+          "field_name": "validity_period",
+          "status": "missing"
+        }
+      ]
+    },
+    {
+      "sample_id": "sme_008",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "SME_CONFIRMATION_CERTIFICATE",
+      "document_type_pred": "SME_CONFIRMATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 11.25,
+      "classification_confidence": 0.7377049180327869,
+      "classification_needs_review": false,
+      "required_fields_correct": 3,
+      "required_fields_total": 7,
+      "document_level_extraction_success": false,
+      "validation_gold": "NEEDS_CORRECTION",
+      "validation_pred": "NEEDS_CORRECTION",
+      "validation_correct": true,
+      "failure_category": "EXTRACTION_PATTERN_ERROR",
+      "failure_reason": "Layout 'vertical' separates label/value across lines or packs multiple pairs onto one line, which the same-line label-match pattern does not support. Fields: business_registration_number, issue_date, expiration_date, validity_period",
+      "processing_ms": 2.647,
+      "layout_variant": "vertical",
+      "quality": "clean",
+      "input_format": "text_pdf",
+      "notes": "expired certificate",
+      "fields": [
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "representative_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_registration_number",
+          "status": "false_value"
+        },
+        {
+          "field_name": "certificate_number",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "missing"
+        },
+        {
+          "field_name": "expiration_date",
+          "status": "missing"
+        },
+        {
+          "field_name": "validity_period",
+          "status": "missing"
+        }
+      ]
+    },
+    {
+      "sample_id": "sme_009",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "SME_CONFIRMATION_CERTIFICATE",
+      "document_type_pred": "SME_CONFIRMATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 11.25,
+      "classification_confidence": 0.7377049180327869,
+      "classification_needs_review": false,
+      "required_fields_correct": 4,
+      "required_fields_total": 7,
+      "document_level_extraction_success": false,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "EXTRACTION_PATTERN_ERROR",
+      "failure_reason": "Layout 'compact' separates label/value across lines or packs multiple pairs onto one line, which the same-line label-match pattern does not support. Fields: business_registration_number, expiration_date, validity_period",
+      "processing_ms": 1.146,
+      "layout_variant": "compact",
+      "quality": "low_contrast",
+      "input_format": "scanned_pdf",
+      "notes": "",
+      "fields": [
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "representative_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_registration_number",
+          "status": "false_value"
+        },
+        {
+          "field_name": "certificate_number",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "expiration_date",
+          "status": "missing"
+        },
+        {
+          "field_name": "validity_period",
+          "status": "missing"
+        }
+      ]
+    },
+    {
+      "sample_id": "sme_017",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "SME_CONFIRMATION_CERTIFICATE",
+      "document_type_pred": "SME_CONFIRMATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 11.25,
+      "classification_confidence": 0.7377049180327869,
+      "classification_needs_review": false,
+      "required_fields_correct": 4,
+      "required_fields_total": 7,
+      "document_level_extraction_success": false,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "EXTRACTION_LABEL_ERROR",
+      "failure_reason": "Field(s) not matched as expected: business_registration_number, expiration_date, validity_period",
+      "processing_ms": 1.392,
+      "layout_variant": "reordered",
+      "quality": "low_resolution",
+      "input_format": "scanned_pdf",
+      "notes": "",
+      "fields": [
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "representative_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_registration_number",
+          "status": "false_value"
+        },
+        {
+          "field_name": "certificate_number",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "expiration_date",
+          "status": "missing"
+        },
+        {
+          "field_name": "validity_period",
+          "status": "missing"
+        }
+      ]
+    },
+    {
+      "sample_id": "sme_018",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "SME_CONFIRMATION_CERTIFICATE",
+      "document_type_pred": "SME_CONFIRMATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 11.25,
+      "classification_confidence": 0.7377049180327869,
+      "classification_needs_review": false,
+      "required_fields_correct": 3,
+      "required_fields_total": 7,
+      "document_level_extraction_success": false,
+      "validation_gold": "PASS",
+      "validation_pred": "REVIEW_REQUIRED",
+      "validation_correct": false,
+      "failure_category": "EXTRACTION_PATTERN_ERROR",
+      "failure_reason": "Layout 'vertical' separates label/value across lines or packs multiple pairs onto one line, which the same-line label-match pattern does not support. Fields: business_registration_number, issue_date, expiration_date, validity_period",
+      "processing_ms": 2.515,
+      "layout_variant": "vertical",
+      "quality": "clean",
+      "input_format": "png",
+      "notes": "",
+      "fields": [
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "representative_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_registration_number",
+          "status": "false_value"
+        },
+        {
+          "field_name": "certificate_number",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "missing"
+        },
+        {
+          "field_name": "expiration_date",
+          "status": "missing"
+        },
+        {
+          "field_name": "validity_period",
+          "status": "missing"
+        }
+      ]
+    },
+    {
+      "sample_id": "sme_019",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "SME_CONFIRMATION_CERTIFICATE",
+      "document_type_pred": "SME_CONFIRMATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 11.25,
+      "classification_confidence": 0.7377049180327869,
+      "classification_needs_review": false,
+      "required_fields_correct": 4,
+      "required_fields_total": 7,
+      "document_level_extraction_success": false,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "EXTRACTION_PATTERN_ERROR",
+      "failure_reason": "Layout 'compact' separates label/value across lines or packs multiple pairs onto one line, which the same-line label-match pattern does not support. Fields: business_registration_number, expiration_date, validity_period",
+      "processing_ms": 1.147,
+      "layout_variant": "compact",
+      "quality": "compressed",
+      "input_format": "jpg",
+      "notes": "label spacing variant applied",
+      "fields": [
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "representative_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_registration_number",
+          "status": "false_value"
+        },
+        {
+          "field_name": "certificate_number",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "expiration_date",
+          "status": "missing"
+        },
+        {
+          "field_name": "validity_period",
+          "status": "missing"
+        }
+      ]
+    },
+    {
+      "sample_id": "unknown_007",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "UNKNOWN",
+      "document_type_pred": "GRADUATION_CERTIFICATE",
+      "classification_correct": false,
+      "classification_score": 6.5,
+      "classification_confidence": 0.5098039215686274,
+      "classification_needs_review": true,
+      "required_fields_correct": 0,
+      "required_fields_total": 0,
+      "document_level_extraction_success": true,
+      "validation_gold": null,
+      "validation_pred": null,
+      "validation_correct": null,
+      "failure_category": "AMBIGUOUS_DOCUMENT",
+      "failure_reason": "Deliberately ambiguous/near-miss negative example; forcing a supported type here would be the real error, not this UNKNOWN/mismatch.",
+      "processing_ms": 0.856,
+      "layout_variant": "verbatim",
+      "quality": "compressed",
+      "input_format": "jpg",
+      "notes": "ambiguous/near-miss example",
+      "fields": []
+    },
+    {
+      "sample_id": "unknown_008",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "UNKNOWN",
+      "document_type_pred": "TRANSCRIPT",
+      "classification_correct": false,
+      "classification_score": 5.0,
+      "classification_confidence": 0.6896551724137931,
+      "classification_needs_review": false,
+      "required_fields_correct": 0,
+      "required_fields_total": 0,
+      "document_level_extraction_success": true,
+      "validation_gold": null,
+      "validation_pred": null,
+      "validation_correct": null,
+      "failure_category": "AMBIGUOUS_DOCUMENT",
+      "failure_reason": "Deliberately ambiguous/near-miss negative example; forcing a supported type here would be the real error, not this UNKNOWN/mismatch.",
+      "processing_ms": 1.428,
+      "layout_variant": "verbatim",
+      "quality": "clean",
+      "input_format": "text_pdf",
+      "notes": "ambiguous/near-miss example",
+      "fields": []
+    },
+    {
+      "sample_id": "unknown_009",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "UNKNOWN",
+      "document_type_pred": "UNKNOWN",
+      "classification_correct": true,
+      "classification_score": 0.0,
+      "classification_confidence": 0.0,
+      "classification_needs_review": true,
+      "required_fields_correct": 0,
+      "required_fields_total": 0,
+      "document_level_extraction_success": true,
+      "validation_gold": null,
+      "validation_pred": null,
+      "validation_correct": null,
+      "failure_category": null,
+      "failure_reason": "",
+      "processing_ms": 0.022,
+      "layout_variant": "verbatim",
+      "quality": "low_contrast",
+      "input_format": "scanned_pdf",
+      "notes": "ambiguous/near-miss example",
+      "fields": []
+    },
+    {
+      "sample_id": "unknown_017",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "UNKNOWN",
+      "document_type_pred": "UNKNOWN",
+      "classification_correct": true,
+      "classification_score": 0.0,
+      "classification_confidence": 0.0,
+      "classification_needs_review": true,
+      "required_fields_correct": 0,
+      "required_fields_total": 0,
+      "document_level_extraction_success": true,
+      "validation_gold": null,
+      "validation_pred": null,
+      "validation_correct": null,
+      "failure_category": null,
+      "failure_reason": "",
+      "processing_ms": 0.019,
+      "layout_variant": "verbatim",
+      "quality": "low_resolution",
+      "input_format": "scanned_pdf",
+      "notes": "ambiguous/near-miss example",
+      "fields": []
+    },
+    {
+      "sample_id": "unknown_018",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "UNKNOWN",
+      "document_type_pred": "UNKNOWN",
+      "classification_correct": true,
+      "classification_score": 0.0,
+      "classification_confidence": 0.0,
+      "classification_needs_review": true,
+      "required_fields_correct": 0,
+      "required_fields_total": 0,
+      "document_level_extraction_success": true,
+      "validation_gold": null,
+      "validation_pred": null,
+      "validation_correct": null,
+      "failure_category": null,
+      "failure_reason": "",
+      "processing_ms": 0.016,
+      "layout_variant": "verbatim",
+      "quality": "clean",
+      "input_format": "png",
+      "notes": "ambiguous/near-miss example",
+      "fields": []
+    },
+    {
+      "sample_id": "unknown_019",
+      "source": "synthetic",
+      "split": "held_out",
+      "document_type_gold": "UNKNOWN",
+      "document_type_pred": "GRADUATION_CERTIFICATE",
+      "classification_correct": false,
+      "classification_score": 6.5,
+      "classification_confidence": 0.5098039215686274,
+      "classification_needs_review": true,
+      "required_fields_correct": 0,
+      "required_fields_total": 0,
+      "document_level_extraction_success": true,
+      "validation_gold": null,
+      "validation_pred": null,
+      "validation_correct": null,
+      "failure_category": "AMBIGUOUS_DOCUMENT",
+      "failure_reason": "Deliberately ambiguous/near-miss negative example; forcing a supported type here would be the real error, not this UNKNOWN/mismatch.",
+      "processing_ms": 0.821,
+      "layout_variant": "verbatim",
+      "quality": "compressed",
+      "input_format": "jpg",
+      "notes": "ambiguous/near-miss example",
+      "fields": []
+    },
+    {
+      "sample_id": "recreated_business_002",
+      "source": "recreated",
+      "split": "held_out",
+      "document_type_gold": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "document_type_pred": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 13.0,
+      "classification_confidence": 0.9285714285714286,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 7,
+      "document_level_extraction_success": false,
+      "validation_gold": "PASS",
+      "validation_pred": "READY",
+      "validation_correct": true,
+      "failure_category": "EXTRACTION_LABEL_ERROR",
+      "failure_reason": "Field(s) not matched as expected: business_registration_number",
+      "processing_ms": 2.024,
+      "layout_variant": "table",
+      "quality": "clean",
+      "input_format": "png",
+      "notes": "recreated from official law.go.kr annexed-form wording (label '상호'/'대표자 성명')",
+      "fields": [
+        {
+          "field_name": "company_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "representative_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_registration_number",
+          "status": "false_value"
+        },
+        {
+          "field_name": "business_address",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_type",
+          "status": "correct"
+        },
+        {
+          "field_name": "business_item",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    },
+    {
+      "sample_id": "recreated_graduation_001",
+      "source": "recreated",
+      "split": "held_out",
+      "document_type_gold": "GRADUATION_CERTIFICATE",
+      "document_type_pred": "GRADUATION_CERTIFICATE",
+      "classification_correct": true,
+      "classification_score": 8.25,
+      "classification_confidence": 0.8048780487804879,
+      "classification_needs_review": false,
+      "required_fields_correct": 6,
+      "required_fields_total": 6,
+      "document_level_extraction_success": true,
+      "validation_gold": "REVIEW",
+      "validation_pred": "REVIEW_REQUIRED",
+      "validation_correct": true,
+      "failure_category": "VALIDATION_RULE_ERROR",
+      "failure_reason": "Validation status gold=REVIEW pred=REVIEW_REQUIRED despite correct classification/extraction.",
+      "processing_ms": 1.734,
+      "layout_variant": "reordered",
+      "quality": "clean",
+      "input_format": "text_pdf",
+      "notes": "recreated using the real alternate title '학위수여증명서' (degree conferment certificate); its date label '학위수여일자' is not in the graduation_date label list ('졸업일자'/'졸업 연월일'), so graduation_date is expected to be genuinely absent, not a test-harness bug",
+      "fields": [
+        {
+          "field_name": "applicant_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "university_name",
+          "status": "correct"
+        },
+        {
+          "field_name": "department",
+          "status": "correct"
+        },
+        {
+          "field_name": "degree",
+          "status": "correct"
+        },
+        {
+          "field_name": "graduation_date",
+          "status": "correct"
+        },
+        {
+          "field_name": "issue_date",
+          "status": "correct"
+        }
+      ]
+    }
+  ],
+  "skipped_unverified_or_no_gold_text": 0
+}

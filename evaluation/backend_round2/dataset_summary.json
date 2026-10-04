@@ -1,0 +1,135 @@
+{
+  "schema_version": "round2-dataset-summary-v1",
+  "baseline_commit": "721cc9dfa6ba9d0691ddb355ea62912ab3ea128a",
+  "evaluation_date": "2026-09-29",
+  "source": "seven files placed by the project owner at the top level of ~/Desktop",
+  "discovery_note": "Korean filenames are stored NFD on this filesystem. Discovery is Unicode-tolerant (NFC/NFD resolution plus a normalised scan); exact byte matching would have found nothing.",
+  "samples": [
+    {
+      "sample_id": "R2-01",
+      "document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "source_category": "synthetic-placeholder",
+      "sensitivity": "none",
+      "layout_family": "full_table_label_left_value_right",
+      "file": {
+        "nfc_filename": "4대 사회보험료 완납증명서.pdf",
+        "bytes": 320926,
+        "sha256_12": "fd0438a39c18"
+      },
+      "pages": 1,
+      "ground_truth_fields": 4,
+      "ground_truth_verified": 4,
+      "negative_assertions": 1,
+      "baseline_processing_status": "COMPLETED",
+      "final_processing_status": "COMPLETED"
+    },
+    {
+      "sample_id": "R2-02",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "source_category": "near-real",
+      "sensitivity": "none",
+      "layout_family": "letter_spaced_labels_key_value",
+      "file": {
+        "nfc_filename": "사업자등록증.png",
+        "bytes": 195020,
+        "sha256_12": "62508e58e0e3"
+      },
+      "pages": 1,
+      "ground_truth_fields": 4,
+      "ground_truth_verified": 4,
+      "negative_assertions": 1,
+      "baseline_processing_status": "COMPLETED",
+      "final_processing_status": "COMPLETED"
+    },
+    {
+      "sample_id": "R2-03",
+      "document_type": "TRANSCRIPT",
+      "source_category": "real",
+      "sensitivity": "high-personal",
+      "layout_family": "dense_multi_column_table",
+      "file": {
+        "nfc_filename": "성적증명서.jpeg",
+        "bytes": 157846,
+        "sha256_12": "98350c274a78"
+      },
+      "pages": 1,
+      "ground_truth_fields": 6,
+      "ground_truth_verified": 5,
+      "negative_assertions": 0,
+      "baseline_processing_status": "COMPLETED",
+      "final_processing_status": "COMPLETED"
+    },
+    {
+      "sample_id": "R2-04",
+      "document_type": "TRANSCRIPT",
+      "source_category": "near-real",
+      "sensitivity": "none",
+      "layout_family": "three_column_course_table",
+      "file": {
+        "nfc_filename": "성적증명서.pdf",
+        "bytes": 576127,
+        "sha256_12": "040d1ea8cf0f"
+      },
+      "pages": 1,
+      "ground_truth_fields": 7,
+      "ground_truth_verified": 6,
+      "negative_assertions": 0,
+      "baseline_processing_status": "COMPLETED",
+      "final_processing_status": "COMPLETED"
+    },
+    {
+      "sample_id": "R2-05",
+      "document_type": "ENROLLMENT_CERTIFICATE",
+      "source_category": "real",
+      "sensitivity": "high-personal",
+      "layout_family": "letter_spaced_labels_key_value",
+      "file": {
+        "nfc_filename": "재학증명서.webp",
+        "bytes": 151610,
+        "sha256_12": "fea33de7892d"
+      },
+      "pages": 1,
+      "ground_truth_fields": 5,
+      "ground_truth_verified": 4,
+      "negative_assertions": 0,
+      "baseline_processing_status": "NOT_UPLOADED",
+      "final_processing_status": "COMPLETED"
+    },
+    {
+      "sample_id": "R2-06",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "source_category": "near-real",
+      "sensitivity": "low",
+      "layout_family": "letter_spaced_labels_key_value",
+      "file": {
+        "nfc_filename": "중소기업확인서.jpg",
+        "bytes": 63309,
+        "sha256_12": "e94ae848c634"
+      },
+      "pages": 1,
+      "ground_truth_fields": 6,
+      "ground_truth_verified": 6,
+      "negative_assertions": 1,
+      "baseline_processing_status": "COMPLETED",
+      "final_processing_status": "COMPLETED"
+    },
+    {
+      "sample_id": "R2-07",
+      "document_type": "ENROLLMENT_CERTIFICATE",
+      "source_category": "near-real",
+      "sensitivity": "none",
+      "layout_family": "letter_spaced_labels_key_value",
+      "file": {
+        "nfc_filename": "재학증명서.pdf",
+        "bytes": 334767,
+        "sha256_12": "25dac931280b"
+      },
+      "pages": 1,
+      "ground_truth_fields": 5,
+      "ground_truth_verified": 4,
+      "negative_assertions": 0,
+      "baseline_processing_status": "COMPLETED",
+      "final_processing_status": "COMPLETED"
+    }
+  ]
+}

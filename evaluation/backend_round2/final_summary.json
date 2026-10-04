@@ -1,0 +1,267 @@
+{
+  "label": "final",
+  "baseline_commit": "721cc9dfa6ba9d0691ddb355ea62912ab3ea128a",
+  "generated_at": "2026-09-29T02:26:21.072557+00:00",
+  "dataset": {
+    "documents": 7,
+    "upload_rejected": 0,
+    "processed_completed": 7,
+    "pages": 7,
+    "ocr_characters": 6324
+  },
+  "classification": {
+    "predicted_distribution": {
+      "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE": 1,
+      "BUSINESS_REGISTRATION_CERTIFICATE": 1,
+      "TRANSCRIPT": 2,
+      "ENROLLMENT_CERTIFICATE": 2,
+      "SME_CONFIRMATION_CERTIFICATE": 1
+    },
+    "confusion_matrix": {
+      "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE": {
+        "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE": 1
+      },
+      "BUSINESS_REGISTRATION_CERTIFICATE": {
+        "BUSINESS_REGISTRATION_CERTIFICATE": 1
+      },
+      "TRANSCRIPT": {
+        "TRANSCRIPT": 2
+      },
+      "ENROLLMENT_CERTIFICATE": {
+        "ENROLLMENT_CERTIFICATE": 2
+      },
+      "SME_CONFIRMATION_CERTIFICATE": {
+        "SME_CONFIRMATION_CERTIFICATE": 1
+      }
+    },
+    "correct_type": 7,
+    "accuracy_over_processed": 1.0,
+    "unknown_or_unprocessed": 0
+  },
+  "extraction": {
+    "verdicts": {
+      "CORRECT": 17,
+      "INCORRECT": 1,
+      "UNRESOLVED": 16,
+      "NOT_EVALUATED": 7
+    },
+    "evaluated_fields": 34,
+    "field_precision": 0.9444,
+    "field_recall": 0.5,
+    "by_field": {
+      "business_address": {
+        "NOT_EVALUATED": 1
+      },
+      "business_item": {
+        "NOT_EVALUATED": 1
+      },
+      "business_registration_number": {
+        "UNRESOLVED": 1,
+        "CORRECT": 2
+      },
+      "business_type": {
+        "NOT_EVALUATED": 1
+      },
+      "certificate_number": {
+        "NOT_EVALUATED": 1
+      },
+      "company_name": {
+        "UNRESOLVED": 1,
+        "CORRECT": 1
+      },
+      "department": {
+        "NOT_EVALUATED": 2,
+        "UNRESOLVED": 1
+      },
+      "gpa": {
+        "UNRESOLVED": 1,
+        "CORRECT": 1
+      },
+      "gpa_scale": {
+        "NOT_EVALUATED": 1,
+        "CORRECT": 1
+      },
+      "issue_date": {
+        "UNRESOLVED": 3,
+        "CORRECT": 4
+      },
+      "representative_name": {
+        "UNRESOLVED": 2
+      },
+      "student_id": {
+        "CORRECT": 2,
+        "UNRESOLVED": 2
+      },
+      "student_name": {
+        "INCORRECT": 1,
+        "UNRESOLVED": 1,
+        "CORRECT": 2
+      },
+      "university_name": {
+        "CORRECT": 1,
+        "UNRESOLVED": 3
+      },
+      "valid_from": {
+        "CORRECT": 1
+      },
+      "valid_until": {
+        "UNRESOLVED": 1,
+        "CORRECT": 1
+      },
+      "workplace_name": {
+        "CORRECT": 1
+      }
+    },
+    "by_document_type": {
+      "BUSINESS_REGISTRATION_CERTIFICATE": {
+        "documents": 1,
+        "correct_type": 1,
+        "fields_correct": 1
+      },
+      "ENROLLMENT_CERTIFICATE": {
+        "documents": 2,
+        "correct_type": 2,
+        "fields_correct": 5
+      },
+      "SME_CONFIRMATION_CERTIFICATE": {
+        "documents": 1,
+        "correct_type": 1,
+        "fields_correct": 5
+      },
+      "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE": {
+        "documents": 1,
+        "correct_type": 1,
+        "fields_correct": 1
+      },
+      "TRANSCRIPT": {
+        "documents": 2,
+        "correct_type": 2,
+        "fields_incorrect": 1,
+        "fields_correct": 5
+      }
+    }
+  },
+  "safety": {
+    "wrong_non_null_values": 1,
+    "wrong_non_null_detail": [
+      {
+        "sample_id": "R2-03",
+        "document_type": "TRANSCRIPT",
+        "field": "student_name",
+        "confidence": 0.9165999293327332,
+        "evidence_count": 5,
+        "evidence_assessment": "SUFFICIENT"
+      }
+    ],
+    "unresolved_fields": 16,
+    "unresolved_detail": [
+      {
+        "sample_id": "R2-01",
+        "document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+        "field": "business_registration_number",
+        "gt_category": "VERIFIED"
+      },
+      {
+        "sample_id": "R2-01",
+        "document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+        "field": "issue_date",
+        "gt_category": "VERIFIED"
+      },
+      {
+        "sample_id": "R2-01",
+        "document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+        "field": "valid_until",
+        "gt_category": "VERIFIED_ABSENT"
+      },
+      {
+        "sample_id": "R2-02",
+        "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "field": "company_name",
+        "gt_category": "VERIFIED"
+      },
+      {
+        "sample_id": "R2-02",
+        "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "field": "representative_name",
+        "gt_category": "VERIFIED"
+      },
+      {
+        "sample_id": "R2-02",
+        "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "field": "issue_date",
+        "gt_category": "VERIFIED"
+      },
+      {
+        "sample_id": "R2-03",
+        "document_type": "TRANSCRIPT",
+        "field": "issue_date",
+        "gt_category": "VERIFIED"
+      },
+      {
+        "sample_id": "R2-03",
+        "document_type": "TRANSCRIPT",
+        "field": "gpa",
+        "gt_category": "VERIFIED"
+      },
+      {
+        "sample_id": "R2-04",
+        "document_type": "TRANSCRIPT",
+        "field": "student_name",
+        "gt_category": "VERIFIED"
+      },
+      {
+        "sample_id": "R2-04",
+        "document_type": "TRANSCRIPT",
+        "field": "university_name",
+        "gt_category": "VERIFIED"
+      },
+      {
+        "sample_id": "R2-04",
+        "document_type": "TRANSCRIPT",
+        "field": "student_id",
+        "gt_category": "VERIFIED"
+      },
+      {
+        "sample_id": "R2-05",
+        "document_type": "ENROLLMENT_CERTIFICATE",
+        "field": "university_name",
+        "gt_category": "VERIFIED"
+      },
+      {
+        "sample_id": "R2-05",
+        "document_type": "ENROLLMENT_CERTIFICATE",
+        "field": "department",
+        "gt_category": "PARTIAL"
+      },
+      {
+        "sample_id": "R2-06",
+        "document_type": "SME_CONFIRMATION_CERTIFICATE",
+        "field": "representative_name",
+        "gt_category": "VERIFIED"
+      },
+      {
+        "sample_id": "R2-07",
+        "document_type": "ENROLLMENT_CERTIFICATE",
+        "field": "university_name",
+        "gt_category": "VERIFIED"
+      },
+      {
+        "sample_id": "R2-07",
+        "document_type": "ENROLLMENT_CERTIFICATE",
+        "field": "student_id",
+        "gt_category": "VERIFIED_ABSENT"
+      }
+    ],
+    "false_ready_documents": 0,
+    "false_ready_detail": [],
+    "negative_assertion_violations": 0,
+    "negative_assertion_detail": []
+  },
+  "performance": {
+    "documents_processed": 7,
+    "total_ms": 97510.9,
+    "mean_ms": 13930.1,
+    "max_ms": 26480.1,
+    "ms_per_page": 13930.1
+  }
+}

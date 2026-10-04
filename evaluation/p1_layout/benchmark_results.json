@@ -1,0 +1,72 @@
+{
+  "schema_version": "p1-benchmark-v1",
+  "hardware": {
+    "platform": "macOS 26.6.2",
+    "arch": "arm64",
+    "device": "cpu",
+    "gpu": false
+  },
+  "dataset": {
+    "files": 7,
+    "unique_sha256": 7,
+    "pages": 7,
+    "all_scanned": true
+  },
+  "gold_sha256": "ff4b226c946b78d79ee320c3e30fd349ca715a7db18c403159088e9b05e53893",
+  "candidates": {
+    "A_current": {
+      "description": "P0 pipeline unchanged: OCR + 1-D visual rows + label association",
+      "recall": 0.4706,
+      "precision": 0.9412,
+      "wrong_non_null": 1,
+      "false_ready": 0,
+      "additional_correct_fields": 0,
+      "table_capability": "none",
+      "notes": "reference point"
+    },
+    "B_geometry_structure": {
+      "description": "P0 plus derived columns, sections and header/value pairing",
+      "recall": 0.4706,
+      "precision": 0.9412,
+      "wrong_non_null": 1,
+      "false_ready": 0,
+      "additional_correct_fields": 0,
+      "table_capability": "column bands, section scoping, header/value pairing",
+      "measured_effect": "structure is real and correct; no field outcome changes",
+      "rejected_sources": [
+        "issuer_block_token",
+        "section_scoped_value"
+      ],
+      "notes": "all candidate sources disabled after producing wrong values"
+    },
+    "C_pp_structurev3": {
+      "description": "PaddleOCR LayoutDetection PP-DocLayout-S",
+      "layout_detection": {
+        "init_seconds_cached": 0.5,
+        "per_page_seconds": {
+          "min": 0.09,
+          "max": 0.17
+        },
+        "regions_per_page": {
+          "P1-001": 2,
+          "P1-002": 10,
+          "P1-003": 1,
+          "P1-004": 1,
+          "P1-005": 3,
+          "P1-006": 4,
+          "P1-007": 9
+        }
+      },
+      "table_recognition": "BLOCKED_ENVIRONMENT",
+      "table_recognition_blocker": "TableRecognitionPipelineV2 requires the paddlex[ocr] extra, which is not installed in the project environment",
+      "table_recognition_extra_probe": "an isolated venv could not inherit the project interpreter's site-packages, so installing the extra would have required a full re-installation of paddlepaddle; not performed",
+      "korean_support": "none documented for layout or table models",
+      "decision": "rejected"
+    }
+  },
+  "ocr_vs_layout_split_over_17_unresolved_fields": {
+    "label_text_absent_from_ocr": 8,
+    "label_text_present_in_ocr": 8,
+    "correctly_absent_per_gold": 1
+  }
+}

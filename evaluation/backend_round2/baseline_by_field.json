@@ -1,0 +1,44 @@
+{
+  "business_registration_number": {
+    "UNRESOLVED": 3
+  },
+  "company_name": {
+    "UNRESOLVED": 2
+  },
+  "department": {
+    "NOT_EVALUATED": 2
+  },
+  "gpa": {
+    "UNRESOLVED": 1,
+    "CORRECT": 1
+  },
+  "gpa_scale": {
+    "NOT_EVALUATED": 1,
+    "CORRECT": 1
+  },
+  "issue_date": {
+    "UNRESOLVED": 6
+  },
+  "representative_name": {
+    "UNRESOLVED": 2
+  },
+  "student_id": {
+    "UNRESOLVED": 3
+  },
+  "student_name": {
+    "UNRESOLVED": 2,
+    "CORRECT": 1
+  },
+  "university_name": {
+    "UNRESOLVED": 3
+  },
+  "valid_from": {
+    "UNRESOLVED": 1
+  },
+  "valid_until": {
+    "UNRESOLVED": 2
+  },
+  "workplace_name": {
+    "CORRECT": 1
+  }
+}

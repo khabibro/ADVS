@@ -1,0 +1,17 @@
+{
+  "schema_version": "p2-observation-baseline-v1",
+  "dataset": "dataset_manifest.json",
+  "documents": 7,
+  "pages": 7,
+  "ocr_lines": 650,
+  "lines_with_bounding_box": 650,
+  "fresh_capture_text_matches_frozen_p1_cache": {"pages": 7, "total": 7, "line_text": 7, "line_text_total": 7},
+  "fresh_capture_median_page_ocr_ms": 12716,
+  "fresh_capture_max_page_ocr_ms": 39331,
+  "observation_gold_available": false,
+  "label_detection_rate": null,
+  "value_detection_rate": null,
+  "label_recognition_rate": null,
+  "value_recognition_rate": null,
+  "reason_unscored": "No independently reviewed box-level visible-text annotation exists; raw text agreement with a previous OCR cache does not establish correctness."
+}

@@ -1,0 +1,73 @@
+[
+  {
+    "check": "K1 two DIFFERENT documents processed concurrently",
+    "expected": "both COMPLETED (or one explicit OCR_BUSY)",
+    "actual": "[('A', 200, 0.03), ('B', 200, 6.65)] -> A=FAILED/OCR_BUSY B=COMPLETED/None",
+    "verdict": "FAIL",
+    "note": "single-worker OCR capacity serialises them; both succeed"
+  },
+  {
+    "check": "K2 4 concurrent /process calls on the SAME document",
+    "expected": "exactly one processing attempt runs; final state COMPLETED",
+    "actual": "<redacted>",
+    "verdict": "PASS",
+    "note": "<redacted>"
+  },
+  {
+    "check": "K3 concurrent process leaves no duplicate/partial field rows",
+    "expected": "unique field names == field count",
+    "actual": true,
+    "verdict": "PASS",
+    "note": ""
+  },
+  {
+    "check": "K4 a second document submitted while OCR is busy",
+    "expected": "queued/retryable, or an explicit non-destructive busy state",
+    "actual": "short=FAILED/OCR_BUSY long=COMPLETED",
+    "verdict": "FAIL",
+    "note": "<redacted>"
+  },
+  {
+    "check": "K5 the FAILED-by-capacity document is recoverable by re-processing",
+    "expected": "COMPLETED after a manual retry",
+    "actual": "COMPLETED version=1",
+    "verdict": "PASS",
+    "note": ""
+  },
+  {
+    "check": "K6 OCR capacity is 1 per process: max documents/hour at measured latency",
+    "expected": "informational",
+    "actual": "sequential OCR latency measured below; ocr_timeout=",
+    "verdict": "INFO",
+    "note": ""
+  },
+  {
+    "check": "K7 state snapshot taken before restart",
+    "expected": "n/a",
+    "actual": {
+      "projects": 50,
+      "documents": 42,
+      "project_statuses": [
+        "NEEDS_CORRECTION",
+        "READY",
+        "REVIEW_REQUIRED"
+      ]
+    },
+    "verdict": "INFO",
+    "note": ""
+  },
+  {
+    "check": "K8 mixed PDF (digital page 1 + scanned page 2) completes",
+    "expected": "COMPLETED",
+    "actual": "COMPLETED None type=UNKNOWN in 24.0s",
+    "verdict": "PASS",
+    "note": "first attempt in the earlier run failed OCR_TIMEOUT; this is the warm retry"
+  },
+  {
+    "check": "K9 mixed PDF: per-field evidence source_kind distinguishes embedded vs OCR",
+    "expected": "evidence_kind set is non-empty and truthful",
+    "actual": "kinds=[]",
+    "verdict": "FAIL",
+    "note": ""
+  }
+]

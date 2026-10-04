@@ -1,0 +1,1812 @@
+{
+  "mode": "baseline",
+  "note": "sanitized: no raw OCR text, no field values, no PII",
+  "records": [
+    {
+      "sample_id": "REAL-001",
+      "workflow_key": "BUSINESS",
+      "project_id": "f37eea73-164d-46dd-a4bb-d724019dc4a8",
+      "document_id": null,
+      "upload_http": 400,
+      "upload_ms": 4.2,
+      "process_ms": null,
+      "processing_status": "UPLOAD_REJECTED",
+      "upload_error": {
+        "detail": {
+          "code": "PIXEL_BUDGET_EXCEEDED",
+          "message": "Page exceeds image dimension/pixel budget."
+        }
+      },
+      "document_type": null,
+      "fields": [],
+      "project_status_after": "REVIEW_REQUIRED",
+      "verification_status": null,
+      "verification_issues": [],
+      "verification_rule_results": [],
+      "review_item_count": 0,
+      "review_items": []
+    },
+    {
+      "sample_id": "REAL-002",
+      "workflow_key": "BUSINESS",
+      "project_id": "6da876a7-014a-49eb-9041-98826cd992ee",
+      "document_id": "c2c2db54-97fc-4dba-bf5f-3f289b731759",
+      "upload_http": 201,
+      "upload_ms": 6.1,
+      "process_http": 200,
+      "process_ms": 4778.0,
+      "processing_status": "COMPLETED",
+      "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "document_overall_status": "REVIEW_REQUIRED",
+      "classification_confidence": 0.99,
+      "classification_needs_review": false,
+      "classification_score": 9.0,
+      "classification_evidence": [
+        "사업자등록증",
+        "사업장 소재지",
+        "업태",
+        "종목",
+        "개업연월일"
+      ],
+      "classification_alternatives": [
+        {
+          "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+          "score": 9.0
+        }
+      ],
+      "missing_expected_fields": [
+        "company_name"
+      ],
+      "document_validation_results": [
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        }
+      ],
+      "fields": [
+        {
+          "field_name": "business_address",
+          "raw_present": true,
+          "normalized_present": true,
+          "machine_normalized_present": true,
+          "effective_normalized_present": false,
+          "confidence": 0.9118732213973999,
+          "machine_needs_review": false,
+          "evidence_assessment": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 1,
+          "evidence_kinds": [
+            "ocr"
+          ],
+          "evidence_has_geometry": true,
+          "extraction_method": "label_match"
+        },
+        {
+          "field_name": "business_item",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "business_registration_number",
+          "raw_present": true,
+          "normalized_present": true,
+          "machine_normalized_present": true,
+          "effective_normalized_present": false,
+          "confidence": 0.9715538024902344,
+          "machine_needs_review": false,
+          "evidence_assessment": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 1,
+          "evidence_kinds": [
+            "ocr"
+          ],
+          "evidence_has_geometry": true,
+          "extraction_method": "regex_business_number"
+        },
+        {
+          "field_name": "business_type",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "company_name",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "issue_date",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "representative_name",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        }
+      ],
+      "verify_http": 200,
+      "verification_status": "NEEDS_CORRECTION",
+      "verification_is_current": true,
+      "verification_issues": [
+        {
+          "code": "MISSING_REQUIRED_DOCUMENT",
+          "status_effect": "NEEDS_CORRECTION",
+          "field_name": null,
+          "document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE"
+        },
+        {
+          "code": "MISSING_REQUIRED_DOCUMENT",
+          "status_effect": "NEEDS_CORRECTION",
+          "field_name": null,
+          "document_type": "SME_CONFIRMATION_CERTIFICATE"
+        },
+        {
+          "code": "MISSING_REQUIRED_DOCUMENT",
+          "status_effect": "NEEDS_CORRECTION",
+          "field_name": null,
+          "document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE"
+        },
+        {
+          "code": "REQUIRED_FIELD_UNRESOLVED",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "company_name",
+          "document_type": "BUSINESS_REGISTRATION_CERTIFICATE"
+        },
+        {
+          "code": "OCR_UNCERTAIN",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "business_registration_number",
+          "document_type": "BUSINESS_REGISTRATION_CERTIFICATE"
+        }
+      ],
+      "verification_rule_results": [
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "PASS",
+          "field_name": null
+        },
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "FAIL",
+          "field_name": null
+        },
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "FAIL",
+          "field_name": null
+        },
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "FAIL",
+          "field_name": null
+        },
+        {
+          "rule_type": "REQUIRED_FIELD",
+          "outcome": "UNRESOLVED",
+          "field_name": "company_name"
+        },
+        {
+          "rule_type": "REQUIRED_FIELD",
+          "outcome": "UNRESOLVED",
+          "field_name": "business_registration_number"
+        },
+        {
+          "rule_type": "DATE_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "valid_until"
+        },
+        {
+          "rule_type": "FIELD_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "business_registration_number"
+        },
+        {
+          "rule_type": "FIELD_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "company_name"
+        },
+        {
+          "rule_type": "DATE_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "valid_until"
+        },
+        {
+          "rule_type": "FIELD_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "business_registration_number"
+        },
+        {
+          "rule_type": "FIELD_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "company_name"
+        },
+        {
+          "rule_type": "DATE_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "valid_until"
+        },
+        {
+          "rule_type": "FIELD_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "business_registration_number"
+        },
+        {
+          "rule_type": "FIELD_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "company_name"
+        }
+      ],
+      "project_status_after": "NEEDS_CORRECTION",
+      "review_item_count": 2,
+      "review_items": [
+        {
+          "field_name": "business_registration_number",
+          "assessment_state": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "queue_status": "PENDING"
+        },
+        {
+          "field_name": "company_name",
+          "assessment_state": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "queue_status": "PENDING"
+        }
+      ],
+      "verification_read_status": "NEEDS_CORRECTION",
+      "verification_read_is_current": true
+    },
+    {
+      "sample_id": "REAL-003",
+      "workflow_key": "STUDENT",
+      "project_id": "5a78e7a9-2a2c-49d7-b060-609364a171f6",
+      "document_id": "859eb502-b1b4-4215-af06-e4ef052f2c04",
+      "upload_http": 201,
+      "upload_ms": 5.3,
+      "process_http": 200,
+      "process_ms": 26210.5,
+      "processing_status": "COMPLETED",
+      "document_type": "TRANSCRIPT",
+      "document_overall_status": "REVIEW_REQUIRED",
+      "classification_confidence": 0.7741935483870968,
+      "classification_needs_review": false,
+      "classification_score": 12.0,
+      "classification_evidence": [
+        "성적증명서",
+        "평점평균",
+        "총평점",
+        "학번"
+      ],
+      "classification_alternatives": [
+        {
+          "document_type": "TRANSCRIPT",
+          "score": 12.0
+        },
+        {
+          "document_type": "GRADUATION_CERTIFICATE",
+          "score": 3.5
+        },
+        {
+          "document_type": "ENROLLMENT_CERTIFICATE",
+          "score": 3.0
+        }
+      ],
+      "missing_expected_fields": [
+        "issue_date",
+        "gpa",
+        "gpa_scale"
+      ],
+      "document_validation_results": [
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        }
+      ],
+      "fields": [
+        {
+          "field_name": "gpa",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "gpa_scale",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "issue_date",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "student_id",
+          "raw_present": true,
+          "normalized_present": true,
+          "machine_normalized_present": true,
+          "effective_normalized_present": false,
+          "confidence": 0.9165999293327332,
+          "machine_needs_review": false,
+          "evidence_assessment": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 3,
+          "evidence_kinds": [
+            "ocr"
+          ],
+          "evidence_has_geometry": true,
+          "extraction_method": "spatial_right_of_label"
+        },
+        {
+          "field_name": "student_name",
+          "raw_present": true,
+          "normalized_present": true,
+          "machine_normalized_present": true,
+          "effective_normalized_present": false,
+          "confidence": 0.9165999293327332,
+          "machine_needs_review": false,
+          "evidence_assessment": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 5,
+          "evidence_kinds": [
+            "ocr"
+          ],
+          "evidence_has_geometry": true,
+          "extraction_method": "spatial_right_of_label"
+        },
+        {
+          "field_name": "university_name",
+          "raw_present": true,
+          "normalized_present": true,
+          "machine_normalized_present": true,
+          "effective_normalized_present": false,
+          "confidence": 0.9199498295783997,
+          "machine_needs_review": false,
+          "evidence_assessment": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 1,
+          "evidence_kinds": [
+            "ocr"
+          ],
+          "evidence_has_geometry": true,
+          "extraction_method": "standalone_university_name"
+        }
+      ],
+      "verify_http": 200,
+      "verification_status": "NEEDS_CORRECTION",
+      "verification_is_current": true,
+      "verification_issues": [
+        {
+          "code": "MISSING_REQUIRED_DOCUMENT",
+          "status_effect": "NEEDS_CORRECTION",
+          "field_name": null,
+          "document_type": "ENROLLMENT_CERTIFICATE"
+        },
+        {
+          "code": "REQUIRED_FIELD_UNRESOLVED",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "issue_date",
+          "document_type": "TRANSCRIPT"
+        },
+        {
+          "code": "REQUIRED_FIELD_UNRESOLVED",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "gpa",
+          "document_type": "TRANSCRIPT"
+        }
+      ],
+      "verification_rule_results": [
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "FAIL",
+          "field_name": null
+        },
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "PASS",
+          "field_name": null
+        },
+        {
+          "rule_type": "DATE_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "issue_date"
+        },
+        {
+          "rule_type": "DATE_COMPARISON",
+          "outcome": "UNRESOLVED",
+          "field_name": "issue_date"
+        },
+        {
+          "rule_type": "NUMERIC_COMPARISON",
+          "outcome": "UNRESOLVED",
+          "field_name": "gpa"
+        }
+      ],
+      "project_status_after": "NEEDS_CORRECTION",
+      "review_item_count": 2,
+      "review_items": [
+        {
+          "field_name": "gpa",
+          "assessment_state": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "queue_status": "PENDING"
+        },
+        {
+          "field_name": "issue_date",
+          "assessment_state": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "queue_status": "PENDING"
+        }
+      ],
+      "verification_read_status": "NEEDS_CORRECTION",
+      "verification_read_is_current": true
+    },
+    {
+      "sample_id": "REAL-004",
+      "workflow_key": "STUDENT",
+      "project_id": "810205cc-7a54-404e-9dae-047380335c78",
+      "document_id": "c91cf63e-f3e5-4dee-94eb-2c15a7205253",
+      "upload_http": 201,
+      "upload_ms": 5.1,
+      "process_http": 200,
+      "process_ms": 26613.7,
+      "processing_status": "COMPLETED",
+      "document_type": "TRANSCRIPT",
+      "document_overall_status": "REVIEW_REQUIRED",
+      "classification_confidence": 0.7804878048780488,
+      "classification_needs_review": false,
+      "classification_score": 8.0,
+      "classification_evidence": [
+        "성적증명서",
+        "평점평균"
+      ],
+      "classification_alternatives": [
+        {
+          "document_type": "TRANSCRIPT",
+          "score": 8.0
+        },
+        {
+          "document_type": "GRADUATION_CERTIFICATE",
+          "score": 2.25
+        },
+        {
+          "document_type": "ENROLLMENT_CERTIFICATE",
+          "score": 2.0
+        }
+      ],
+      "missing_expected_fields": [
+        "student_name",
+        "university_name",
+        "student_id",
+        "issue_date",
+        "gpa",
+        "gpa_scale"
+      ],
+      "document_validation_results": [
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        }
+      ],
+      "fields": [
+        {
+          "field_name": "gpa",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "gpa_scale",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "issue_date",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "student_id",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "student_name",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "university_name",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        }
+      ],
+      "verify_http": 200,
+      "verification_status": "NEEDS_CORRECTION",
+      "verification_is_current": true,
+      "verification_issues": [
+        {
+          "code": "MISSING_REQUIRED_DOCUMENT",
+          "status_effect": "NEEDS_CORRECTION",
+          "field_name": null,
+          "document_type": "ENROLLMENT_CERTIFICATE"
+        },
+        {
+          "code": "REQUIRED_FIELD_UNRESOLVED",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "issue_date",
+          "document_type": "TRANSCRIPT"
+        },
+        {
+          "code": "REQUIRED_FIELD_UNRESOLVED",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "gpa",
+          "document_type": "TRANSCRIPT"
+        }
+      ],
+      "verification_rule_results": [
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "FAIL",
+          "field_name": null
+        },
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "PASS",
+          "field_name": null
+        },
+        {
+          "rule_type": "DATE_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "issue_date"
+        },
+        {
+          "rule_type": "DATE_COMPARISON",
+          "outcome": "UNRESOLVED",
+          "field_name": "issue_date"
+        },
+        {
+          "rule_type": "NUMERIC_COMPARISON",
+          "outcome": "UNRESOLVED",
+          "field_name": "gpa"
+        }
+      ],
+      "project_status_after": "NEEDS_CORRECTION",
+      "review_item_count": 2,
+      "review_items": [
+        {
+          "field_name": "gpa",
+          "assessment_state": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "queue_status": "PENDING"
+        },
+        {
+          "field_name": "issue_date",
+          "assessment_state": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "queue_status": "PENDING"
+        }
+      ],
+      "verification_read_status": "NEEDS_CORRECTION",
+      "verification_read_is_current": true
+    },
+    {
+      "sample_id": "REAL-005",
+      "workflow_key": "STUDENT",
+      "project_id": "a052640a-fa3e-45e1-b65e-76d6ccb1bcdd",
+      "document_id": "b095a8b8-e2bd-48e1-b4fb-6fdf7ee254cb",
+      "upload_http": 201,
+      "upload_ms": 21.9,
+      "process_http": 200,
+      "process_ms": 5476.1,
+      "processing_status": "COMPLETED",
+      "document_type": "ENROLLMENT_CERTIFICATE",
+      "document_overall_status": "REVIEW_REQUIRED",
+      "classification_confidence": 0.8275862068965517,
+      "classification_needs_review": false,
+      "classification_score": 6.0,
+      "classification_evidence": [
+        "재학증명서",
+        "대학교"
+      ],
+      "classification_alternatives": [
+        {
+          "document_type": "ENROLLMENT_CERTIFICATE",
+          "score": 6.0
+        },
+        {
+          "document_type": "GRADUATION_CERTIFICATE",
+          "score": 1.25
+        }
+      ],
+      "missing_expected_fields": [
+        "university_name",
+        "department",
+        "issue_date"
+      ],
+      "document_validation_results": [
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        }
+      ],
+      "fields": [
+        {
+          "field_name": "department",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "issue_date",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "student_id",
+          "raw_present": true,
+          "normalized_present": true,
+          "machine_normalized_present": true,
+          "effective_normalized_present": false,
+          "confidence": 0.9809102416038513,
+          "machine_needs_review": false,
+          "evidence_assessment": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 2,
+          "evidence_kinds": [
+            "ocr"
+          ],
+          "evidence_has_geometry": true,
+          "extraction_method": "label_match"
+        },
+        {
+          "field_name": "student_name",
+          "raw_present": true,
+          "normalized_present": true,
+          "machine_normalized_present": true,
+          "effective_normalized_present": false,
+          "confidence": 0.9168673753738403,
+          "machine_needs_review": false,
+          "evidence_assessment": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 2,
+          "evidence_kinds": [
+            "ocr"
+          ],
+          "evidence_has_geometry": true,
+          "extraction_method": "label_match"
+        },
+        {
+          "field_name": "university_name",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        }
+      ],
+      "verify_http": 200,
+      "verification_status": "REVIEW_REQUIRED",
+      "verification_is_current": true,
+      "verification_issues": [
+        {
+          "code": "OCR_UNCERTAIN",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "student_name",
+          "document_type": "ENROLLMENT_CERTIFICATE"
+        },
+        {
+          "code": "REQUIRED_FIELD_UNRESOLVED",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "university_name",
+          "document_type": "ENROLLMENT_CERTIFICATE"
+        },
+        {
+          "code": "REQUIRED_FIELD_UNRESOLVED",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "issue_date",
+          "document_type": "ENROLLMENT_CERTIFICATE"
+        },
+        {
+          "code": "REQUIRED_FIELD_UNRESOLVED",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "issue_date",
+          "document_type": "ENROLLMENT_CERTIFICATE"
+        }
+      ],
+      "verification_rule_results": [
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "PASS",
+          "field_name": null
+        },
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": null
+        },
+        {
+          "rule_type": "REQUIRED_FIELD",
+          "outcome": "UNRESOLVED",
+          "field_name": "student_name"
+        },
+        {
+          "rule_type": "REQUIRED_FIELD",
+          "outcome": "UNRESOLVED",
+          "field_name": "university_name"
+        },
+        {
+          "rule_type": "REQUIRED_FIELD",
+          "outcome": "UNRESOLVED",
+          "field_name": "issue_date"
+        },
+        {
+          "rule_type": "DATE_COMPARISON",
+          "outcome": "UNRESOLVED",
+          "field_name": "issue_date"
+        },
+        {
+          "rule_type": "DATE_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "issue_date"
+        },
+        {
+          "rule_type": "NUMERIC_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "gpa"
+        }
+      ],
+      "project_status_after": "REVIEW_REQUIRED",
+      "review_item_count": 3,
+      "review_items": [
+        {
+          "field_name": "issue_date",
+          "assessment_state": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "queue_status": "PENDING"
+        },
+        {
+          "field_name": "student_name",
+          "assessment_state": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "queue_status": "PENDING"
+        },
+        {
+          "field_name": "university_name",
+          "assessment_state": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "queue_status": "PENDING"
+        }
+      ],
+      "verification_read_status": "REVIEW_REQUIRED",
+      "verification_read_is_current": true
+    },
+    {
+      "sample_id": "REAL-006",
+      "workflow_key": "BUSINESS",
+      "project_id": "ef1adf75-8685-4017-889f-6714728e2c54",
+      "document_id": "0be07be8-824a-4c68-b70a-dca9257560d4",
+      "upload_http": 201,
+      "upload_ms": 3.7,
+      "process_http": 200,
+      "process_ms": 4453.6,
+      "processing_status": "COMPLETED",
+      "document_type": "SME_CONFIRMATION_CERTIFICATE",
+      "document_overall_status": "REVIEW_REQUIRED",
+      "classification_confidence": 0.7377049180327869,
+      "classification_needs_review": false,
+      "classification_score": 11.25,
+      "classification_evidence": [
+        "중소기업확인서",
+        "유효기간",
+        "중소기업",
+        "기업명",
+        "사업자등록번호",
+        "확인서"
+      ],
+      "classification_alternatives": [
+        {
+          "document_type": "SME_CONFIRMATION_CERTIFICATE",
+          "score": 11.25
+        },
+        {
+          "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
+          "score": 4.0
+        },
+        {
+          "document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+          "score": 1.0
+        },
+        {
+          "document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+          "score": 1.0
+        }
+      ],
+      "missing_expected_fields": [],
+      "document_validation_results": [
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        }
+      ],
+      "fields": [
+        {
+          "field_name": "business_registration_number",
+          "raw_present": true,
+          "normalized_present": true,
+          "machine_normalized_present": true,
+          "effective_normalized_present": false,
+          "confidence": 0.9775822758674622,
+          "machine_needs_review": false,
+          "evidence_assessment": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 1,
+          "evidence_kinds": [
+            "ocr"
+          ],
+          "evidence_has_geometry": true,
+          "extraction_method": "regex_business_number"
+        },
+        {
+          "field_name": "certificate_number",
+          "raw_present": true,
+          "normalized_present": true,
+          "machine_normalized_present": true,
+          "effective_normalized_present": false,
+          "confidence": 0.948935329914093,
+          "machine_needs_review": false,
+          "evidence_assessment": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 1,
+          "evidence_kinds": [
+            "ocr"
+          ],
+          "evidence_has_geometry": true,
+          "extraction_method": "label_match"
+        },
+        {
+          "field_name": "company_name",
+          "raw_present": true,
+          "normalized_present": true,
+          "machine_normalized_present": true,
+          "effective_normalized_present": false,
+          "confidence": 0.9659761190414429,
+          "machine_needs_review": false,
+          "evidence_assessment": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 2,
+          "evidence_kinds": [
+            "ocr"
+          ],
+          "evidence_has_geometry": true,
+          "extraction_method": "spatial_right_of_label"
+        },
+        {
+          "field_name": "issue_date",
+          "raw_present": true,
+          "normalized_present": true,
+          "machine_normalized_present": true,
+          "effective_normalized_present": false,
+          "confidence": 0.9994022250175476,
+          "machine_needs_review": true,
+          "evidence_assessment": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "EXTRACTION_MARKED_FOR_REVIEW",
+            "SEMANTIC_INFERENCE",
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 1,
+          "evidence_kinds": [
+            "ocr"
+          ],
+          "evidence_has_geometry": true,
+          "extraction_method": "document_semantic_issue_date"
+        },
+        {
+          "field_name": "representative_name",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "valid_from",
+          "raw_present": true,
+          "normalized_present": true,
+          "machine_normalized_present": true,
+          "effective_normalized_present": false,
+          "confidence": 0.9048495888710022,
+          "machine_needs_review": false,
+          "evidence_assessment": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 2,
+          "evidence_kinds": [
+            "ocr"
+          ],
+          "evidence_has_geometry": true,
+          "extraction_method": "regex_date"
+        },
+        {
+          "field_name": "valid_until",
+          "raw_present": true,
+          "normalized_present": true,
+          "machine_normalized_present": true,
+          "effective_normalized_present": false,
+          "confidence": 0.9048495888710022,
+          "machine_needs_review": false,
+          "evidence_assessment": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 2,
+          "evidence_kinds": [
+            "ocr"
+          ],
+          "evidence_has_geometry": true,
+          "extraction_method": "regex_date"
+        }
+      ],
+      "verify_http": 200,
+      "verification_status": "NEEDS_CORRECTION",
+      "verification_is_current": true,
+      "verification_issues": [
+        {
+          "code": "MISSING_REQUIRED_DOCUMENT",
+          "status_effect": "NEEDS_CORRECTION",
+          "field_name": null,
+          "document_type": "BUSINESS_REGISTRATION_CERTIFICATE"
+        },
+        {
+          "code": "MISSING_REQUIRED_DOCUMENT",
+          "status_effect": "NEEDS_CORRECTION",
+          "field_name": null,
+          "document_type": "NATIONAL_TAX_PAYMENT_CERTIFICATE"
+        },
+        {
+          "code": "MISSING_REQUIRED_DOCUMENT",
+          "status_effect": "NEEDS_CORRECTION",
+          "field_name": null,
+          "document_type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE"
+        },
+        {
+          "code": "OCR_UNCERTAIN",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "company_name",
+          "document_type": "SME_CONFIRMATION_CERTIFICATE"
+        },
+        {
+          "code": "OCR_UNCERTAIN",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "business_registration_number",
+          "document_type": "SME_CONFIRMATION_CERTIFICATE"
+        },
+        {
+          "code": "OCR_UNCERTAIN",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "valid_from",
+          "document_type": "SME_CONFIRMATION_CERTIFICATE"
+        },
+        {
+          "code": "OCR_UNCERTAIN",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "valid_until",
+          "document_type": "SME_CONFIRMATION_CERTIFICATE"
+        },
+        {
+          "code": "OCR_UNCERTAIN",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "valid_until",
+          "document_type": "SME_CONFIRMATION_CERTIFICATE"
+        }
+      ],
+      "verification_rule_results": [
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "FAIL",
+          "field_name": null
+        },
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "FAIL",
+          "field_name": null
+        },
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "PASS",
+          "field_name": null
+        },
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "FAIL",
+          "field_name": null
+        },
+        {
+          "rule_type": "DATE_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "valid_until"
+        },
+        {
+          "rule_type": "FIELD_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "business_registration_number"
+        },
+        {
+          "rule_type": "FIELD_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "company_name"
+        },
+        {
+          "rule_type": "REQUIRED_FIELD",
+          "outcome": "UNRESOLVED",
+          "field_name": "company_name"
+        },
+        {
+          "rule_type": "REQUIRED_FIELD",
+          "outcome": "UNRESOLVED",
+          "field_name": "business_registration_number"
+        },
+        {
+          "rule_type": "REQUIRED_FIELD",
+          "outcome": "UNRESOLVED",
+          "field_name": "valid_from"
+        },
+        {
+          "rule_type": "REQUIRED_FIELD",
+          "outcome": "UNRESOLVED",
+          "field_name": "valid_until"
+        },
+        {
+          "rule_type": "DATE_COMPARISON",
+          "outcome": "UNRESOLVED",
+          "field_name": "valid_until"
+        },
+        {
+          "rule_type": "FIELD_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "business_registration_number"
+        },
+        {
+          "rule_type": "FIELD_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "company_name"
+        },
+        {
+          "rule_type": "DATE_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "valid_until"
+        },
+        {
+          "rule_type": "FIELD_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "business_registration_number"
+        },
+        {
+          "rule_type": "FIELD_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "company_name"
+        }
+      ],
+      "project_status_after": "NEEDS_CORRECTION",
+      "review_item_count": 4,
+      "review_items": [
+        {
+          "field_name": "business_registration_number",
+          "assessment_state": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "queue_status": "PENDING"
+        },
+        {
+          "field_name": "company_name",
+          "assessment_state": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "queue_status": "PENDING"
+        },
+        {
+          "field_name": "valid_from",
+          "assessment_state": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "queue_status": "PENDING"
+        },
+        {
+          "field_name": "valid_until",
+          "assessment_state": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "queue_status": "PENDING"
+        }
+      ],
+      "verification_read_status": "NEEDS_CORRECTION",
+      "verification_read_is_current": true
+    },
+    {
+      "sample_id": "REAL-007",
+      "workflow_key": "STUDENT",
+      "project_id": "d64c2c72-4413-43e7-bc05-8b059785006a",
+      "document_id": "fe370338-4521-4aa5-9324-bde4666875a9",
+      "upload_http": 201,
+      "upload_ms": 4.1,
+      "process_http": 200,
+      "process_ms": 8230.8,
+      "processing_status": "COMPLETED",
+      "document_type": "ENROLLMENT_CERTIFICATE",
+      "document_overall_status": "REVIEW_REQUIRED",
+      "classification_confidence": 0.7567567567567568,
+      "classification_needs_review": false,
+      "classification_score": 7.0,
+      "classification_evidence": [
+        "재학증명서",
+        "학과",
+        "대학교"
+      ],
+      "classification_alternatives": [
+        {
+          "document_type": "ENROLLMENT_CERTIFICATE",
+          "score": 7.0
+        },
+        {
+          "document_type": "GRADUATION_CERTIFICATE",
+          "score": 2.25
+        }
+      ],
+      "missing_expected_fields": [
+        "university_name",
+        "department",
+        "student_id",
+        "issue_date"
+      ],
+      "document_validation_results": [
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        },
+        {
+          "code": "MISSING_REQUIRED_FIELD",
+          "passed": false,
+          "severity": "WARNING"
+        }
+      ],
+      "fields": [
+        {
+          "field_name": "department",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "issue_date",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "student_id",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        },
+        {
+          "field_name": "student_name",
+          "raw_present": true,
+          "normalized_present": true,
+          "machine_normalized_present": true,
+          "effective_normalized_present": false,
+          "confidence": 0.9954562187194824,
+          "machine_needs_review": false,
+          "evidence_assessment": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 2,
+          "evidence_kinds": [
+            "ocr"
+          ],
+          "evidence_has_geometry": true,
+          "extraction_method": "label_match"
+        },
+        {
+          "field_name": "university_name",
+          "raw_present": false,
+          "normalized_present": false,
+          "machine_normalized_present": false,
+          "effective_normalized_present": false,
+          "confidence": null,
+          "machine_needs_review": true,
+          "evidence_assessment": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "policy_version": "evidence-policy-v2",
+          "effective_source": "UNAVAILABLE",
+          "current_review_decision": null,
+          "evidence_count": 0,
+          "evidence_kinds": [],
+          "evidence_has_geometry": true,
+          "extraction_method": null
+        }
+      ],
+      "verify_http": 200,
+      "verification_status": "REVIEW_REQUIRED",
+      "verification_is_current": true,
+      "verification_issues": [
+        {
+          "code": "OCR_UNCERTAIN",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "student_name",
+          "document_type": "ENROLLMENT_CERTIFICATE"
+        },
+        {
+          "code": "REQUIRED_FIELD_UNRESOLVED",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "university_name",
+          "document_type": "ENROLLMENT_CERTIFICATE"
+        },
+        {
+          "code": "REQUIRED_FIELD_UNRESOLVED",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "issue_date",
+          "document_type": "ENROLLMENT_CERTIFICATE"
+        },
+        {
+          "code": "REQUIRED_FIELD_UNRESOLVED",
+          "status_effect": "REVIEW_REQUIRED",
+          "field_name": "issue_date",
+          "document_type": "ENROLLMENT_CERTIFICATE"
+        }
+      ],
+      "verification_rule_results": [
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "PASS",
+          "field_name": null
+        },
+        {
+          "rule_type": "REQUIRED_DOCUMENT",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": null
+        },
+        {
+          "rule_type": "REQUIRED_FIELD",
+          "outcome": "UNRESOLVED",
+          "field_name": "student_name"
+        },
+        {
+          "rule_type": "REQUIRED_FIELD",
+          "outcome": "UNRESOLVED",
+          "field_name": "university_name"
+        },
+        {
+          "rule_type": "REQUIRED_FIELD",
+          "outcome": "UNRESOLVED",
+          "field_name": "issue_date"
+        },
+        {
+          "rule_type": "DATE_COMPARISON",
+          "outcome": "UNRESOLVED",
+          "field_name": "issue_date"
+        },
+        {
+          "rule_type": "DATE_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "issue_date"
+        },
+        {
+          "rule_type": "NUMERIC_COMPARISON",
+          "outcome": "NOT_APPLICABLE",
+          "field_name": "gpa"
+        }
+      ],
+      "project_status_after": "REVIEW_REQUIRED",
+      "review_item_count": 3,
+      "review_items": [
+        {
+          "field_name": "issue_date",
+          "assessment_state": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "queue_status": "PENDING"
+        },
+        {
+          "field_name": "student_name",
+          "assessment_state": "REVIEW_REQUIRED",
+          "assessment_reasons": [
+            "OCR_REQUIRES_CONFIRMATION"
+          ],
+          "queue_status": "PENDING"
+        },
+        {
+          "field_name": "university_name",
+          "assessment_state": "UNAVAILABLE",
+          "assessment_reasons": [
+            "FIELD_MISSING"
+          ],
+          "queue_status": "PENDING"
+        }
+      ],
+      "verification_read_status": "REVIEW_REQUIRED",
+      "verification_read_is_current": true
+    }
+  ]
+}

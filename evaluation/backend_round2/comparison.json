@@ -1,0 +1,88 @@
+{
+  "schema_version": "round2-comparison-v1",
+  "baseline_commit": "721cc9dfa6ba9d0691ddb355ea62912ab3ea128a",
+  "metric": {
+    "baseline": null,
+    "final": null,
+    "documents_uploaded": {
+      "baseline": 6,
+      "final": 7,
+      "delta": 1
+    },
+    "upload_rejected": {
+      "baseline": 1,
+      "final": 0,
+      "delta": -1
+    },
+    "processing_completed": {
+      "baseline": 6,
+      "final": 7,
+      "delta": 1
+    },
+    "classification_correct": {
+      "baseline": 3,
+      "final": 7,
+      "delta": 4
+    },
+    "classification_accuracy": {
+      "baseline": 0.5,
+      "final": 1.0,
+      "delta": 0.5
+    },
+    "unknown_or_unprocessed": {
+      "baseline": 3,
+      "final": 0,
+      "delta": -3
+    },
+    "fields_correct": {
+      "baseline": 4,
+      "final": 17,
+      "delta": 13
+    },
+    "fields_incorrect": {
+      "baseline": 0,
+      "final": 1,
+      "delta": 1
+    },
+    "fields_unresolved": {
+      "baseline": 25,
+      "final": 16,
+      "delta": -9
+    },
+    "fields_not_evaluated": {
+      "baseline": 3,
+      "final": 7,
+      "delta": 4
+    },
+    "field_precision": {
+      "baseline": 1.0,
+      "final": 0.9444,
+      "delta": -0.05559999999999998
+    },
+    "field_recall": {
+      "baseline": 0.1379,
+      "final": 0.5,
+      "delta": 0.3621
+    },
+    "false_ready_documents": {
+      "baseline": 3,
+      "final": 0,
+      "delta": -3
+    },
+    "wrong_non_null_values": {
+      "baseline": 0,
+      "final": 1,
+      "delta": 1
+    },
+    "negative_assertion_violations": {
+      "baseline": 0,
+      "final": 0,
+      "delta": 0
+    },
+    "total_processing_ms": {
+      "baseline": 55379.5,
+      "final": 97510.9,
+      "delta": 42131.399999999994
+    }
+  }
+}
