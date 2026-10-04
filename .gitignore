@@ -53,3 +53,10 @@ evaluation/backend_round2/work/
 # Local private runtime for evaluation runs: per-run ground-truth manifests,
 # raw OCR text and machine output for real (sensitive) documents. Never commit.
 evaluation/private_runtime/
+
+# Fictional test-variant document set (Phase B): ~45 MB of generated
+# PDF/image binaries, regenerable from _generator/ + manifest.json. Only
+# the answer key and generator scripts are tracked; the documents are not.
+evaluation/datasets/synthetic/test_variants/business/
+evaluation/datasets/synthetic/test_variants/student/
+evaluation/datasets/synthetic/test_variants/formats/
