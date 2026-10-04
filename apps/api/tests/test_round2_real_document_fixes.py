@@ -23,6 +23,7 @@ R2-05  ImagePreprocessor existed with zero callers while EXIF orientation --
 from __future__ import annotations
 
 import io
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -296,6 +297,7 @@ def test_expiration_check_still_runs_alongside_the_net() -> None:
         None,
         False,
         None,
+        date(2026, 1, 1),
     )
     assert "EXPIRED_DOCUMENT" in {issue.code for issue in issues}
     assert ValidationEngine().overall_status(issues) == OverallStatus.NEEDS_CORRECTION

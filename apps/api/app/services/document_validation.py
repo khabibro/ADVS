@@ -1,6 +1,8 @@
 """Document diagnostics computed from current effective, policy-gated values."""
 
 from dataclasses import replace
+from datetime import UTC, date
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -18,6 +20,29 @@ from app.document_intelligence.validation.engine import (
 )
 from app.models.entities import Document, DocumentRequirement, Project, Submission
 from app.services.requirements import required_fields
+
+_KST = ZoneInfo("Asia/Seoul")
+
+
+def submission_reference_date(submission: Submission | None) -> date | None:
+    """The submission's own calendar date in Asia/Seoul -- what "valid at
+    submission time" actually means (audit: validity/issue-date-age was
+    measured against the server's local `date.today()` instead, so
+    re-checking the same submission on a later day, or on a server in a
+    different timezone, could flip the result).
+
+    `Submission.created_at` is the submission's own timestamp (set once,
+    at creation, by the database -- see TimestampMixin); no new column or
+    migration is needed. A naive timestamp (should not occur given the
+    column is `DateTime(timezone=True)`, but SQLite does not always
+    enforce that) is treated as UTC rather than guessed at. Returns None,
+    never a guess, only if no submission is resolvable at all."""
+    if submission is None or submission.created_at is None:
+        return None
+    timestamp = submission.created_at
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.replace(tzinfo=UTC)
+    return timestamp.astimezone(_KST).date()
 
 
 def policy_gated_fields(fields: list[ExtractedValue]) -> list[ExtractedValue]:
@@ -106,5 +131,6 @@ def validate_effective_document(
         project.company_name if project else None,
         duplicate,
         configured_document_rules(db, project, document_type),
+        submission_reference_date(submission),
     )
     return issues, project

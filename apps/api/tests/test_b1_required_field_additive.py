@@ -14,6 +14,7 @@ silently become required), neither of which this fix may weaken.
 from __future__ import annotations
 
 import uuid
+from datetime import date
 
 from app.core.domain import DocumentType, RuleType, Severity
 from app.document_intelligence.extraction.base import ExtractedValue
@@ -102,7 +103,11 @@ def test_checklist_listing_every_field_explicitly_behaves_as_configured() -> Non
     ]
     fields = _sme_fields(valid_until_resolved=True)
     issues = engine.validate_document(
-        None, DocumentType.SME_CONFIRMATION_CERTIFICATE, fields, configured_rules=rules
+        None,
+        DocumentType.SME_CONFIRMATION_CERTIFICATE,
+        fields,
+        configured_rules=rules,
+        reference_date=date(2026, 1, 1),
     )
     # No MISSING_REQUIRED_FIELD issue: every field is present. The always-on
     # expiration check still independently reports (unrelated to this fix)

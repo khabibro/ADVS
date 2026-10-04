@@ -1,4 +1,5 @@
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 
@@ -83,7 +84,14 @@ class ValidationEngine:
         company_name: str | None = None,
         duplicate: bool = False,
         configured_rules: list[ConfiguredRule] | None = None,
+        reference_date: date | None = None,
     ) -> list[ValidationIssue]:
+        """`reference_date` is the submission's own date (Asia/Seoul),
+        never the server clock (audit: validity/issue-date-age was measured
+        against `date.today()`, so re-checking the same submission on a
+        later day could flip the result). `None` means genuinely unknown --
+        every date-dependent check below returns REVIEW_REQUIRED rather
+        than guessing, never a comparison against the server's local date."""
         by_name = {field.field_name: field for field in fields}
         issues: list[ValidationIssue] = []
         if expected_type and actual_type != expected_type:
@@ -147,7 +155,7 @@ class ValidationEngine:
                 )
             )
 
-        issues.extend(self._always_on_expiration_issues(by_name, configured_rules))
+        issues.extend(self._always_on_expiration_issues(by_name, configured_rules, reference_date))
 
         # A checklist that says nothing about required fields must not switch
         # the "this field could not be read" net off. Previously *any*
@@ -179,13 +187,16 @@ class ValidationEngine:
             issues.extend(self._default_required_field_issues(by_name))
         if configured_rules is not None:
             for rule in configured_rules:
-                issues.extend(self._apply_configured_rule(rule, by_name, actual_type))
+                issues.extend(
+                    self._apply_configured_rule(rule, by_name, actual_type, reference_date)
+                )
         return issues
 
     def _always_on_expiration_issues(
         self,
         by_name: dict[str, ExtractedValue],
         configured_rules: list[ConfiguredRule] | None,
+        reference_date: date | None,
     ) -> list[ValidationIssue]:
         """An expired document is invalid regardless of whether an admin
         remembered to configure a checklist rule for it -- unlike
@@ -204,7 +215,19 @@ class ValidationEngine:
         if already_configured:
             return []
         assert field is not None and field.normalized_value is not None
-        passed = date.fromisoformat(field.normalized_value) >= date.today()
+        if reference_date is None:
+            return [
+                ValidationIssue(
+                    RuleType.DATE_NOT_EXPIRED,
+                    False,
+                    Severity.WARNING,
+                    "not expired",
+                    field.normalized_value,
+                    "제출일을 확인할 수 없어 유효기간을 판단할 수 없습니다.",
+                    "REFERENCE_DATE_UNAVAILABLE",
+                )
+            ]
+        passed = date.fromisoformat(field.normalized_value) >= reference_date
         return [
             ValidationIssue(
                 RuleType.DATE_NOT_EXPIRED,
@@ -269,17 +292,19 @@ class ValidationEngine:
         rule: ConfiguredRule,
         by_name: dict[str, ExtractedValue],
         document_type: DocumentType,
+        reference_date: date | None,
     ) -> list[ValidationIssue]:
         if rule.rule_type == RuleType.REQUIRED_FIELD:
             return self._handle_required_field(rule, by_name, EXPECTED_FIELDS[document_type])
         handler = _RULE_HANDLERS.get(rule.rule_type)
-        return handler(self, rule, by_name) if handler else []
+        return handler(self, rule, by_name, reference_date) if handler else []
 
     def _handle_required_field(
         self,
         rule: ConfiguredRule,
         by_name: dict[str, ExtractedValue],
         default_fields: list[str] | None = None,
+        reference_date: date | None = None,
     ) -> list[ValidationIssue]:
         field_name = rule.params.get("field")
         targets = [field_name] if field_name else (default_fields or list(by_name.keys()))
@@ -310,7 +335,10 @@ class ValidationEngine:
         return issues
 
     def _handle_date_not_expired(
-        self, rule: ConfiguredRule, by_name: dict[str, ExtractedValue]
+        self,
+        rule: ConfiguredRule,
+        by_name: dict[str, ExtractedValue],
+        reference_date: date | None,
     ) -> list[ValidationIssue]:
         field_name = rule.params.get("field", "valid_until")
         field = by_name.get(field_name)
@@ -327,7 +355,19 @@ class ValidationEngine:
                     "MISSING_EXPIRATION_DATE",
                 )
             ]
-        passed = date.fromisoformat(value) >= date.today()
+        if reference_date is None:
+            return [
+                ValidationIssue(
+                    RuleType.DATE_NOT_EXPIRED,
+                    False,
+                    Severity.WARNING,
+                    "not expired",
+                    value,
+                    "제출일을 확인할 수 없어 유효기간을 판단할 수 없습니다.",
+                    "REFERENCE_DATE_UNAVAILABLE",
+                )
+            ]
+        passed = date.fromisoformat(value) >= reference_date
         return [
             ValidationIssue(
                 RuleType.DATE_NOT_EXPIRED,
@@ -341,7 +381,10 @@ class ValidationEngine:
         ]
 
     def _handle_issue_date_max_age(
-        self, rule: ConfiguredRule, by_name: dict[str, ExtractedValue]
+        self,
+        rule: ConfiguredRule,
+        by_name: dict[str, ExtractedValue],
+        reference_date: date | None,
     ) -> list[ValidationIssue]:
         field_name = rule.params.get("field", "issue_date")
         max_age_days = int(rule.params.get("max_age_days", 90))
@@ -359,7 +402,19 @@ class ValidationEngine:
                     "MISSING_ISSUE_DATE",
                 )
             ]
-        age_days = (date.today() - date.fromisoformat(value)).days
+        if reference_date is None:
+            return [
+                ValidationIssue(
+                    RuleType.ISSUE_DATE_MAX_AGE,
+                    False,
+                    Severity.WARNING,
+                    f"<= {max_age_days}d",
+                    value,
+                    "제출일을 확인할 수 없어 경과 기간을 판단할 수 없습니다.",
+                    "REFERENCE_DATE_UNAVAILABLE",
+                )
+            ]
+        age_days = (reference_date - date.fromisoformat(value)).days
         passed = 0 <= age_days <= max_age_days
         return [
             ValidationIssue(
@@ -374,7 +429,10 @@ class ValidationEngine:
         ]
 
     def _handle_custom_text_rule(
-        self, rule: ConfiguredRule, by_name: dict[str, ExtractedValue]
+        self,
+        rule: ConfiguredRule,
+        by_name: dict[str, ExtractedValue],
+        reference_date: date | None = None,
     ) -> list[ValidationIssue]:
         field_name = rule.params.get("field")
         field = by_name.get(field_name) if field_name else None
@@ -410,7 +468,10 @@ class ValidationEngine:
         ]
 
     def _handle_business_number_match(
-        self, rule: ConfiguredRule, by_name: dict[str, ExtractedValue]
+        self,
+        rule: ConfiguredRule,
+        by_name: dict[str, ExtractedValue],
+        reference_date: date | None = None,
     ) -> list[ValidationIssue]:
         field_name = rule.params.get("field", "business_registration_number")
         expected = rule.params.get("expected_value")
@@ -458,7 +519,7 @@ class ValidationEngine:
         return value
 
 
-_RULE_HANDLERS = {
+_RULE_HANDLERS: dict[RuleType, Callable[..., list[ValidationIssue]]] = {
     RuleType.REQUIRED_FIELD: ValidationEngine._handle_required_field,
     RuleType.DATE_NOT_EXPIRED: ValidationEngine._handle_date_not_expired,
     RuleType.ISSUE_DATE_MAX_AGE: ValidationEngine._handle_issue_date_max_age,

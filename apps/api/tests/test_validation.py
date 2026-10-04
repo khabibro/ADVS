@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 
 from app.core.domain import (
@@ -97,9 +99,27 @@ def test_date_not_expired_rule_expired_fails() -> None:
         ConfiguredRule(RuleType.DATE_NOT_EXPIRED, Severity.ERROR, {"field": "expiration_date"})
     ]
     issues = engine.validate_document(
-        None, DocumentType.SME_CONFIRMATION_CERTIFICATE, fields, configured_rules=rules
+        None,
+        DocumentType.SME_CONFIRMATION_CERTIFICATE,
+        fields,
+        configured_rules=rules,
+        reference_date=date(2026, 1, 1),
     )
     assert engine.overall_status(issues) == OverallStatus.NEEDS_CORRECTION
+
+
+def test_date_not_expired_rule_without_a_reference_date_reviews_not_guesses() -> None:
+    """B-2: a genuinely unknown submission date is REVIEW_REQUIRED, never a
+    comparison against the server clock."""
+    fields = [ExtractedValue("expiration_date", "2099-01-01", "2099-01-01", 0.6)]
+    rules = [
+        ConfiguredRule(RuleType.DATE_NOT_EXPIRED, Severity.ERROR, {"field": "expiration_date"})
+    ]
+    issues = engine.validate_document(
+        None, DocumentType.SME_CONFIRMATION_CERTIFICATE, fields, configured_rules=rules
+    )
+    assert any(i.code == "REFERENCE_DATE_UNAVAILABLE" for i in issues)
+    assert engine.overall_status(issues) == OverallStatus.REVIEW_REQUIRED
 
 
 def test_date_not_expired_rule_future_date_passes() -> None:
@@ -108,7 +128,26 @@ def test_date_not_expired_rule_future_date_passes() -> None:
         ConfiguredRule(RuleType.DATE_NOT_EXPIRED, Severity.ERROR, {"field": "expiration_date"})
     ]
     issues = engine.validate_document(
-        None, DocumentType.SME_CONFIRMATION_CERTIFICATE, fields, configured_rules=rules
+        None,
+        DocumentType.SME_CONFIRMATION_CERTIFICATE,
+        fields,
+        configured_rules=rules,
+        reference_date=date(2026, 1, 1),
+    )
+    assert engine.overall_status(issues) == OverallStatus.READY
+
+
+def test_date_not_expired_rule_is_inclusive_on_the_reference_date() -> None:
+    fields = [ExtractedValue("expiration_date", "2026-01-01", "2026-01-01", 0.6)]
+    rules = [
+        ConfiguredRule(RuleType.DATE_NOT_EXPIRED, Severity.ERROR, {"field": "expiration_date"})
+    ]
+    issues = engine.validate_document(
+        None,
+        DocumentType.SME_CONFIRMATION_CERTIFICATE,
+        fields,
+        configured_rules=rules,
+        reference_date=date(2026, 1, 1),
     )
     assert engine.overall_status(issues) == OverallStatus.READY
 
@@ -121,7 +160,11 @@ def test_issue_date_max_age_rule_too_old_fails() -> None:
         )
     ]
     issues = engine.validate_document(
-        None, DocumentType.SME_CONFIRMATION_CERTIFICATE, fields, configured_rules=rules
+        None,
+        DocumentType.SME_CONFIRMATION_CERTIFICATE,
+        fields,
+        configured_rules=rules,
+        reference_date=date(2026, 1, 1),
     )
     assert engine.overall_status(issues) == OverallStatus.NEEDS_CORRECTION
 
