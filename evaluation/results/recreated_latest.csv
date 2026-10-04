@@ -1,6 +1,0 @@
-sample_id,source_type,document_type_gold,document_type_pred,classification_correct,review,required_fields_correct,required_fields_total,validation_gold,validation_pred,failure_category,processing_ms
-recreated_business_000,recreated,BUSINESS_REGISTRATION_CERTIFICATE,BUSINESS_REGISTRATION_CERTIFICATE,True,False,7,7,PASS,PASS,,0.734
-recreated_business_001,recreated,BUSINESS_REGISTRATION_CERTIFICATE,BUSINESS_REGISTRATION_CERTIFICATE,True,False,7,7,PASS,PASS,,0.072
-recreated_business_002,recreated,BUSINESS_REGISTRATION_CERTIFICATE,BUSINESS_REGISTRATION_CERTIFICATE,True,False,7,7,PASS,PASS,,0.051
-recreated_graduation_000,recreated,GRADUATION_CERTIFICATE,GRADUATION_CERTIFICATE,True,False,6,6,REVIEW,REVIEW,,0.394
-recreated_graduation_001,recreated,GRADUATION_CERTIFICATE,GRADUATION_CERTIFICATE,True,False,6,6,REVIEW,REVIEW,,0.042

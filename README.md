@@ -31,6 +31,7 @@ This is not production-ready OCR/extraction. PaddleOCR is the only real OCR prov
 - `packages/contracts`: generated TypeScript contracts from FastAPI OpenAPI
 - `docs`: architecture, domain, operations, security, and planning documentation
 - `scripts`: environment validation and security audit automation
+- `evaluation`: the fictional test-variant manifest, Phase B harness, and retained reports
 - `tests/e2e`: reserved for end-to-end smoke tests
 
 ## Tech Stack
@@ -46,8 +47,7 @@ Infrastructure: Docker Compose, pnpm workspace, Turborepo for TypeScript tasks, 
 ```bash
 pnpm install
 cd apps/api
-python -m venv .venv
-source .venv/bin/activate
+source .venv312/bin/activate
 pip install -e ".[dev,paddle]"
 alembic upgrade head
 cd ../..
@@ -136,9 +136,21 @@ Services:
 
 Start with `docs/DOCUMENTATION_INDEX.md`.
 
-## OCR Evaluation
+## Test-Variant Evaluation
 
-Run `make eval-paddle` to process renderable benchmark samples through PaddleOCR and score the downstream classifier, extractors, and validator. Text-only evaluation (`make eval`) is useful for deterministic rule regression, but it is not OCR accuracy evidence.
+Evaluation uses only the fictional dataset in
+`evaluation/datasets/synthetic/test_variants/`. Run the retained Phase B
+harness against its digital variants with:
+
+```bash
+cd apps/api
+.venv312/bin/python ../../evaluation/phase_b/run_variants.py \
+	--output ../../evaluation/phase_b/test_variants_digital.json \
+	--versions digital --skip-ocr
+```
+
+Legacy datasets and evaluation outputs are recoverable in
+`~/ADVS_archive_20261004/` and are not part of the repository.
 
 ## Security and Privacy
 
