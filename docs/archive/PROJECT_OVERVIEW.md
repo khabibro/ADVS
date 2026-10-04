@@ -6,5 +6,5 @@ MVP boundary: no OCR training, no paid LLM requirement, no production auth, no o
 
 Primary users are university project members, industry reviewers at Flash21, and demo operators.
 
-Questions to Confirm with Flash21 are listed in `docs/ROADMAP.md`.
+Questions to Confirm with Flash21 are listed in `docs/archive/ROADMAP.md`.
 

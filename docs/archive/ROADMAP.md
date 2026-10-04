@@ -1,5 +1,12 @@
 # Roadmap
 
+> **Archived 2026-10-04.** Pre-dates the actual Phase 2 mentor-defined
+> document domain, P0 backend validation, P1 layout, P2.x OCR/extraction
+> work, and this session's Phase A/B safety work. The phase numbering here
+> (1A-1D, 2, 3) does not match how the project actually proceeded; kept for
+> historical reference only, not as a current plan. See
+> `docs/DOCUMENTATION_INDEX.md` for current docs.
+
 ## PHASE 1A - Codebase Bootstrap
 Monorepo, frontend, backend, DB, migrations, Docker, file upload, mock OCR, PaddleOCR interface, classifier framework, extractor framework, validation framework, dashboard skeleton, tests, docs.
 

@@ -25,9 +25,9 @@ Start here for ADVS engineering work.
 ## Security
 - `security/document-privacy.md`
 
-## Planning
-- `planning/ROADMAP.md`
-- `planning/DEVELOPMENT_PLAN.md`
-
-Archived bootstrap docs are retained under `archive/`.
+Archived bootstrap and planning docs are retained under `archive/`
+(`PROJECT_OVERVIEW.md`, `REQUIREMENTS.md`, `MEETING_NOTES_TEMPLATE.md`,
+`ROADMAP.md`, `DEVELOPMENT_PLAN.md` — the last two were moved here
+2026-10-04; their phase numbering pre-dates how the project actually
+proceeded).
 
