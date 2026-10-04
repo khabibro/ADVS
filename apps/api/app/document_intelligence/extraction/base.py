@@ -54,6 +54,12 @@ _ISSUANCE_ANCHOR_RE = re.compile(
 # small window is enough to catch them without reaching into the body, where
 # unrelated dates and institution names also occur.
 _ISSUANCE_ANCHOR_LOOKAHEAD = 3
+# Longest row that can *be* a field label, rather than contain one. The longest
+# label this module matches is a seven-syllable label with a parenthetical
+# qualifier, which reaches roughly 16 characters, so 24 leaves headroom above
+# any real label while staying far below a sentence. Mirrors the independent
+# heading-length bound in the structural layer, for the same reason.
+_LABEL_ROW_MAX_CHARS = 24
 _KNOWN_LABELS = [
     "졸업증명서",
     "경력증명서",
@@ -723,6 +729,32 @@ def standalone_date_candidate(source: ExtractionInput) -> ExtractionCandidate | 
     return None
 
 
+def _row_states_a_label(row_text: str) -> bool:
+    """True when a row's content is a field label rather than a sentence.
+
+    Korean certificates in this domain print the issue date inside an issuance
+    block that frequently also carries a sentence -- a social insurance payment
+    certificate states, in ordinary prose, that it confirms there are no
+    outstanding premiums -- and such a sentence routinely contains a date-label
+    word ("issued on") as part of its meaning.
+
+    Treating any row that merely *contains* the label as an unfulfilled label
+    field made the issuance-block date unreachable on those documents, even
+    though the date itself had been read correctly and unambiguously, and even
+    though every other guard -- one agreed value across the page, an issuer
+    below, no page crossing -- had passed. The field went missing rather than
+    wrong, which is the safe direction, but it is a false negative caused by
+    prose rather than by evidence.
+
+    A real label row is short and carries no digits of its own, because its
+    value lives in the next box. A sentence is neither.
+    """
+    stripped = row_text.strip()
+    if not stripped or len(stripped) > _LABEL_ROW_MAX_CHARS:
+        return False
+    return not any(character.isdigit() for character in stripped)
+
+
 def _followed_by_issuer(observations: list[_RowObservation], index: int) -> bool:
     """True when the next few rows name an issuer, i.e. this date sits in the
     issuance block rather than in the document body."""
@@ -749,6 +781,8 @@ def _has_unresolved_label_before_candidate(
     disable a valid issuance-block date. A real issue-date label that appears
     before that date and could not produce a value is different: falling back
     would hide local evidence loss behind a plausible bare date.
+
+    Only a row that *is* a label counts. See ``_row_states_a_label``.
     """
     candidate_date = normalize_date(candidate.value)
     if candidate_date is None:
@@ -767,6 +801,8 @@ def _has_unresolved_label_before_candidate(
     page_number = observations[candidate_index].row.page_number
     for observation in observations[:candidate_index]:
         if observation.row.page_number != page_number:
+            continue
+        if not _row_states_a_label(observation.row.text):
             continue
         normalized = _normalize_extraction_text(observation.row.text)
         if any(re.search(_label_pattern(label), normalized) for label in labels):
