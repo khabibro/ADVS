@@ -53,3 +53,8 @@ evaluation/backend_round2/work/
 # Local private runtime for evaluation runs: per-run ground-truth manifests,
 # raw OCR text and machine output for real (sensitive) documents. Never commit.
 evaluation/private_runtime/
+
+# P2.2 gold-adjudication scripts: some of these (adjudicate_gold.py) hardcode
+# transcribed values read from real documents directly in source, not in a
+# private_runtime/ data file. Never commit.
+evaluation/p2_2_targeted_improvement/
