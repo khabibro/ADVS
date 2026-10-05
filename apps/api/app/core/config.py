@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     # cannot be fetched; costs ~3 ms/page on CPU.
     paddle_ocr_doc_orientation: bool = True
     log_level: str = "INFO"
+    # Auto-acceptance of OCR values (see document_intelligence/auto_acceptance.py).
+    # S0 = off (every OCR field to a human) ... S6. Default on for Phase D.
+    auto_accept_strategy: str = "S5"
+    # Comma-separated workflow (checklist) ids for which auto-acceptance is switched off.
+    auto_accept_disabled_workflows: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
@@ -70,6 +75,12 @@ class Settings(BaseSettings):
             "app_env": self.app_env,
             "ocr_provider": self.ocr_provider,
             "max_upload_size_mb": self.max_upload_size_mb,
+        }
+
+    @property
+    def auto_accept_disabled_workflow_ids(self) -> set[str]:
+        return {
+            item.strip() for item in self.auto_accept_disabled_workflows.split(",") if item.strip()
         }
 
     @property

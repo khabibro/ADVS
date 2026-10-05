@@ -16,6 +16,7 @@ from app.core.domain import (
     ProcessingStatus,
     RuleType,
 )
+from app.document_intelligence.auto_acceptance import AutoDecision
 from app.document_intelligence.evidence_sufficiency import (
     EVIDENCE_POLICY_VERSION,
     EffectiveValueSource,
@@ -41,6 +42,7 @@ from app.models.entities import (
     Project,
     Submission,
 )
+from app.services.auto_acceptance import decisions_for_project
 from app.services.consistency import lock_project
 from app.services.requirements import required_fields
 
@@ -66,6 +68,7 @@ class EffectiveFieldValue:
     source: EffectiveValueSource
     assessment: EvidenceAssessment
     review: FieldReview | None
+    auto_acceptance: AutoDecision | None = None
 
 
 @dataclass(frozen=True)
@@ -94,6 +97,7 @@ class EffectiveFieldResolver:
         field: ExtractedField | None,
         review: FieldReview | None,
         processing_version: int,
+        auto: AutoDecision | None = None,
     ) -> EffectiveFieldValue:
         machine = self.policy.assess(
             normalized_value=field.normalized_value if field else None,
@@ -110,6 +114,29 @@ class EffectiveFieldResolver:
             and review.processing_version == processing_version
             else None
         )
+        if (
+            current is None
+            and auto is not None
+            and auto.accepted
+            and field is not None
+            and field.normalized_value is not None
+            and machine.state == EvidenceAssessmentState.REVIEW_REQUIRED
+            and set(machine.reasons) <= {EvidenceAssessmentReason.OCR_REQUIRES_CONFIRMATION}
+        ):
+            # An independent source confirmed the OCR value (see auto_acceptance.py).
+            # Machine evidence is untouched; only "does a human still need to look" changes.
+            return EffectiveFieldValue(
+                field.normalized_value,
+                EffectiveValueSource.MACHINE,
+                EvidenceAssessment(
+                    EvidenceAssessmentState.SUFFICIENT,
+                    (),
+                    machine.confidence,
+                    machine.policy_version,
+                ),
+                None,
+                auto,
+            )
         if current is None:
             return EffectiveFieldValue(
                 field.normalized_value
@@ -360,6 +387,7 @@ class FieldReviewService:
             .order_by(Document.created_at, Document.id)
         ).all()
         reviews = self.list_reviews(db, project_id, include_history=True)
+        decisions = decisions_for_project(db, project)
         current = {(item.document_id, item.field_name): item for item in reviews if item.is_current}
         stale_targets = {
             (item.document_id, item.field_name) for item in reviews if item.stale_at is not None
@@ -375,7 +403,12 @@ class FieldReviewService:
                     continue
                 field = fields.get(field_name)
                 review = current.get((document.id, field_name))
-                effective = self.resolver.resolve(field, review, document.processing_version)
+                effective = self.resolver.resolve(
+                    field,
+                    review,
+                    document.processing_version,
+                    decisions.get((document.id, field_name)),
+                )
                 if effective.assessment.state == EvidenceAssessmentState.SUFFICIENT:
                     continue
                 queue_status = (
@@ -416,6 +449,11 @@ class FieldReviewService:
                         ),
                         "effective_value": effective.normalized_value,
                         "effective_source": effective.source,
+                        "auto_acceptance": (
+                            decisions[(document.id, field_name)].to_dict()
+                            if (document.id, field_name) in decisions
+                            else None
+                        ),
                     }
                 )
         return items

@@ -32,6 +32,7 @@ from app.models.entities import (
     ValidationResult,
 )
 from app.schemas.api import (
+    AutoAcceptanceRead,
     ChecklistCreate,
     ChecklistRead,
     DocumentDetail,
@@ -51,8 +52,12 @@ from app.schemas.api import (
     WorkflowRead,
     WorkflowSummary,
 )
+from app.services.auto_acceptance import decisions_for_project
 from app.services.consistency import lock_project
-from app.services.document_validation import validate_effective_document
+from app.services.document_validation import (
+    submission_reference_date,
+    validate_effective_document,
+)
 from app.services.processing import _ACTIVE_STATUSES, DocumentProcessingService
 from app.services.reviews import FieldReviewService, ReviewValidationError, StaleReviewError
 from app.services.storage.local import LocalStorageService, canonical_mime, sanitize_filename
@@ -398,11 +403,15 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
         if item.is_current and item.processing_version == document.processing_version
     }
     detail.extracted_fields = []
+    submission = db.get(Submission, document.submission_id)
+    project = db.get(Project, submission.project_id) if submission else None
+    decisions = decisions_for_project(db, project, submission_reference_date(submission))
     by_name = {item.field_name: item for item in document.extracted_fields}
     for name in sorted(set(by_name) | set(current_reviews)):
         item = by_name.get(name)
+        decision = decisions.get((document.id, name))
         effective = field_review_service.resolver.resolve(
-            item, current_reviews.get(name), document.processing_version
+            item, current_reviews.get(name), document.processing_version, decision
         )
         field_read = (
             FieldRead.model_validate(item)
@@ -422,6 +431,9 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
         field_read.effective_source = effective.source
         field_read.current_review_decision = (
             FieldReviewDecision(effective.review.decision) if effective.review else None
+        )
+        field_read.auto_acceptance = (
+            AutoAcceptanceRead(**decision.to_dict()) if decision is not None else None
         )
         detail.extracted_fields.append(field_read)
     detail.missing_expected_fields = [

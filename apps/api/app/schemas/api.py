@@ -113,6 +113,19 @@ class EvidenceRead(BaseModel):
     transform: dict | None = None
 
 
+class AutoAcceptanceRead(BaseModel):
+    """Why an OCR value does (or does not) still need a human check."""
+
+    accepted: bool
+    strategy: str
+    policy_version: str
+    rule_id: str | None = None
+    sources: list[str] = []
+    corroborating_document_ids: list[uuid.UUID] = []
+    second_pass_value: str | None = None
+    reason: str | None = None
+
+
 class FieldRead(BaseModel):
     id: uuid.UUID | None = None
     field_name: str
@@ -129,6 +142,7 @@ class FieldRead(BaseModel):
     effective_normalized_value: str | None = None
     effective_source: EffectiveValueSource | None = None
     current_review_decision: FieldReviewDecision | None = None
+    auto_acceptance: AutoAcceptanceRead | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -191,6 +205,7 @@ class ReviewItemRead(BaseModel):
     current_review_decision: FieldReviewDecision | None
     effective_value: str | None
     effective_source: EffectiveValueSource
+    auto_acceptance: AutoAcceptanceRead | None = None
 
 
 class ValidationRead(BaseModel):

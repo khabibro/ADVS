@@ -1,4 +1,5 @@
 import logging
+import re
 import time
 import uuid
 from dataclasses import asdict
@@ -9,13 +10,24 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.domain import ProcessingStatus
 from app.core.errors import PROCESSING_ERROR_MESSAGES, ProcessingErrorCode
+from app.document_intelligence.auto_acceptance import (
+    SECOND_PASS_FIELDS,
+    STRATEGY_FEATURES,
+    parse_second_pass,
+    parse_strategy,
+)
 from app.document_intelligence.classification.classifier import (
     ClassificationResult,
     DocumentClassifier,
 )
 from app.document_intelligence.extraction.base import ExtractedValue
 from app.document_intelligence.extraction.registry import ExtractorRegistry
-from app.document_intelligence.ocr.models import OCRDocumentResult, OCRPage, OCRProviderError
+from app.document_intelligence.ocr.models import (
+    OCRDocumentResult,
+    OCRPage,
+    OCRProviderError,
+    RegionRequest,
+)
 from app.document_intelligence.ocr.providers import get_ocr_provider
 from app.document_intelligence.ocr.text_assembly import assemble_document_text
 from app.document_intelligence.preprocessing.processor import PdfProcessor, is_meaningful_text
@@ -48,6 +60,18 @@ _ACTIVE_STATUSES = {
     ProcessingStatus.EXTRACTING,
     ProcessingStatus.VALIDATING,
 }
+
+
+def _value_evidence(item: ExtractedValue):  # type: ignore[no-untyped-def]
+    """The evidence box that actually holds the value (not the label box)."""
+    value = item.normalized_value or ""
+    digits = re.sub(r"\D", "", value)
+    boxed = [entry for entry in (item.evidence or []) if entry.bounding_box is not None]
+    for entry in boxed:
+        source_digits = re.sub(r"\D", "", entry.source_text)
+        if value in entry.source_text or (digits and digits in source_digits):
+            return entry
+    return boxed[-1] if boxed else None
 
 
 class DocumentProcessingService:
@@ -124,6 +148,7 @@ class DocumentProcessingService:
 
             self._set_status(db, document, ProcessingStatus.EXTRACTING)
             fields = self.extractor.extract(classification.predicted_type, source_result)
+            await self._second_pass(document, source_result, fields)
             logger.info(
                 "extraction_completed",
                 extra={"document_id": str(document.id), "field_count": len(fields)},
@@ -177,6 +202,55 @@ class DocumentProcessingService:
                 PROCESSING_ERROR_MESSAGES[ProcessingErrorCode.PROCESSING_FAILED],
             )
             return document
+
+    async def _second_pass(
+        self, document: Document, source_result: OCRDocumentResult, fields: list[ExtractedValue]
+    ) -> None:
+        """Re-read the region of each OCR-read numeric/date field with different preprocessing
+        and store the reading with the page (see auto_acceptance.py). Best effort: a failed
+        second pass only means no corroboration from it."""
+        if not STRATEGY_FEATURES[parse_strategy(self.settings.auto_accept_strategy)].second_pass:
+            return
+        requests = []
+        for item in fields:
+            if (
+                item.field_name not in SECOND_PASS_FIELDS
+                or item.normalized_value is None
+                or item.needs_review
+                or not item.evidence
+                or not any(entry.source_kind == "ocr" for entry in item.evidence)
+            ):
+                continue
+            evidence = _value_evidence(item)
+            if evidence is not None and evidence.bounding_box is not None:
+                requests.append(
+                    RegionRequest(item.field_name, evidence.page_number, evidence.bounding_box)
+                )
+        if not requests:
+            return
+        try:
+            from app.services.storage.local import detected_mime
+
+            path = self.storage.path_for(document.storage_key)
+            readings = await get_ocr_provider(self.settings).read_regions(
+                path, detected_mime(path), requests
+            )
+        except Exception:
+            logger.warning("second_pass_failed", extra={"document_id": str(document.id)})
+            return
+        values = {item.field_name: item.normalized_value for item in fields}
+        pages = {page.page_number: page for page in source_result.pages}
+        for reading in readings:
+            page = pages.get(reading.page_number)
+            if page is None:
+                continue
+            page.metadata.setdefault("second_pass", {})[reading.field_name] = {
+                "text": reading.text,
+                "normalized": parse_second_pass(reading.field_name, reading.text),
+                "confidence": reading.confidence,
+                "preprocess": reading.preprocess,
+                "first_pass_value": values.get(reading.field_name),
+            }
 
     def _set_status(self, db: Session, document: Document, status: ProcessingStatus) -> None:
         document.processing_status = status
