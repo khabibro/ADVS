@@ -72,7 +72,7 @@ Single-document: 0 false auto-accepts and 0 false READY. Correlated: 0 / 0, with
 | OCR fields auto-accepted (scanned / images) | 0 / 0 | 71.7 % / 74.2 % (73.3 / 75.8 % with application values) |
 | false auto-accept | 0 | 0 |
 | review burden per submission (scanned / images) | 11.64 / 11.64 | 3.82 / 3.55 (**−67 % / −70 %**); 3.64 / 3.36 with application values |
-| auto-decided submissions (scanned / images) | 1/22, 1/22 | 4/22, 7/22 (10/22, 12/22… see `B1proj_report.md`) |
+| auto-decided submissions (scanned / images) | 1/22, 1/22 | 4/22, 7/22 (same with application values) |
 | false READY | 0 | **2 (S02, S09 digital — disputed, below)** |
 Highlights: scanned and image B01 reach READY by themselves; B02 images too; S01, S10 digital READY; S08 REVIEW_REQUIRED; B10 REVIEW_REQUIRED with the checksum code.
 
