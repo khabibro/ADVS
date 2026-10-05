@@ -9,7 +9,7 @@ from app.document_intelligence.extraction.base import (
 
 
 def department_without_college(value: ExtractedValue) -> ExtractedValue:
-    """소속 prints "단과대학 학과" ("공과대학 데이터공학과"); the department is the
+    """소속 prints "단과대학 학과" ("공과대학 기계공학과"); the department is the
     part after the college. Only a leading token ending in 대학 is dropped."""
     normalized = value.normalized_value
     if normalized is None:
