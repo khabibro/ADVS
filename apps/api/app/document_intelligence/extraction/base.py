@@ -1,5 +1,6 @@
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 
 from app.core.domain import DocumentType
@@ -21,12 +22,18 @@ from app.document_intelligence.normalization.field_normalizer import (
     split_date_range,
 )
 from app.document_intelligence.ocr.layout import TextRow, build_rows
-from app.document_intelligence.ocr.models import OCRDocumentResult, OCRLine, OCRPage
+from app.document_intelligence.ocr.models import (
+    BoundingBox,
+    OCRDocumentResult,
+    OCRLine,
+    OCRPage,
+)
 from app.document_intelligence.ocr.text_assembly import order_lines
 
 EXTRACTOR_VERSION = "evidence-v5"
 
 _COLON_RE = re.compile(r"[：﹕꞉︓]")
+_VALUE_CELL_COLON_RE = re.compile(r"^\s*:\s*")
 _WHITESPACE_RE = re.compile(r"[ \t]+")
 # A row whose entire content is one date and nothing else. Korean official
 # certificates print the issue date as a bare line inside the issuance block
@@ -296,6 +303,15 @@ def _strip_trailing_labels(value: str, active_labels: list[str]) -> str:
     return value[:earliest].strip() if earliest is not None else value.strip()
 
 
+def _strip_value_cell_colon(value: str) -> tuple[str, bool]:
+    """A value box that begins with ": " is the "label : value" form drawn as
+    two boxes (letter-spaced label cell, then ": value" cell -- the layout of
+    the 법인/개인 사업자등록증, 중소기업확인서 and 재학증명서 forms). The colon is
+    the separator, not part of the value."""
+    stripped = _VALUE_CELL_COLON_RE.sub("", value)
+    return stripped, stripped != value
+
+
 def _adjacent_value_allowed(label: str, value: str) -> bool:
     compact = _compact(value)
     if not compact:
@@ -376,13 +392,18 @@ def _row_candidates(
             label_run_text = " ".join(segment.text for segment in segments[start:end])
             normalized_run = _normalize_extraction_text(label_run_text)
             for label in ordered_labels:
-                match = re.search(rf"(?:^|[ \t]){_label_pattern(label)}", normalized_run)
+                # "(사업자등록번호)" -- a label printed inside parentheses, as on
+                # the 납세증명서 ("주민등록번호 (사업자등록번호)") -- is still
+                # that label.
+                match = re.search(rf"(?:^|[ \t(]){_label_pattern(label)}", normalized_run)
                 if not match:
                     continue
                 # Separator flags must be read from the *raw* tail: text
                 # normalization strips leading whitespace, which is exactly
                 # the signal that the value was separated from the label.
                 raw_tail = normalized_run[match.end() :]
+                if raw_tail.startswith(")") and "(" in normalized_run[: match.end()]:
+                    raw_tail = raw_tail[1:]
                 space_separated = bool(raw_tail[:1].isspace())
                 stripped_tail = raw_tail.lstrip()
                 colon_separated = stripped_tail.startswith(":")
@@ -404,6 +425,8 @@ def _row_candidates(
                     if not _right_associated(segments[end - 1], segments[end]):
                         break
                     value = _normalize_extraction_text(segments[end].text)
+                    value, cell_colon = _strip_value_cell_colon(value)
+                    explicit = explicit or cell_colon
                     value_evidence = observation.evidence[end : end + 1]
                     separated = True
                     from_other_segment = True
@@ -423,6 +446,8 @@ def _row_candidates(
                     if not _right_associated(segments[end - 1], segments[end]):
                         break
                     value = _normalize_extraction_text(segments[end].text)
+                    value, cell_colon = _strip_value_cell_colon(value)
+                    explicit = explicit or cell_colon
                     value_evidence = observation.evidence[end : end + 1]
                     separated = True
                     from_other_segment = True
@@ -637,11 +662,200 @@ def candidate_right_of_label(
         if candidates:
             _, _, value, evidence = min(candidates, key=lambda item: (item[0], item[1]))
             return ExtractionCandidate(
-                _strip_trailing_labels(_normalize_extraction_text(value), labels),
+                _strip_trailing_labels(
+                    _strip_value_cell_colon(_normalize_extraction_text(value))[0], labels
+                ),
                 [label_evidence, evidence],
                 value_from_other_segment=True,
                 relation="spatial_right_of_label",
             )
+    return None
+
+
+_GPA_WITH_SCALE_RE = re.compile(r"(\d(?:\.\d{1,3})?)\s*/\s*(\d(?:\.\d{1,3})?)")
+_CUMULATIVE_GPA_HEADERS = ("총평점평균", "누적평점평균", "전체평점평균", "총평균평점")
+_CUMULATIVE_CREDITS_LABEL = "총취득학점"
+_SEMESTER_GPA_RE = re.compile(r"평점평균\s*:?\s*(\d(?:\.\d{1,3})?\s*/\s*\d(?:\.\d{1,3})?)")
+_ISSUER_UNIVERSITY_RE = re.compile(r"([가-힣A-Za-z0-9㈜()·]{2,30}대학교)(?:총장)?")
+
+
+def _boxed(items: list[tuple[str, EvidenceRef | None]]) -> list[tuple[str, EvidenceRef]]:
+    return [
+        (text, evidence)
+        for text, evidence in items
+        if evidence is not None and evidence.bounding_box is not None
+    ]
+
+
+def cumulative_gpa_candidates(source: ExtractionInput) -> list[ExtractionCandidate]:
+    """Every cumulative ("all semesters") GPA the document prints, by layout cue.
+
+    A transcript prints a GPA per semester and one cumulative GPA. Two real
+    layouts mark the cumulative one:
+
+    * a summary table whose header cell reads 총평점평균 with the value in the
+      cell directly below it (header-cell association);
+    * a 총 취득학점 line, with the cumulative 평점평균 on the line right below it
+      in the same column.
+
+    Both need geometry; plain-text input yields nothing, so callers fall back
+    to the label path (which abstains when semesters conflict).
+    """
+    if isinstance(source, str):
+        return []
+    lines = _boxed(_source_lines(source))
+    found: list[ExtractionCandidate] = []
+    for text, evidence in lines:
+        compact = _compact(_normalize_extraction_text(text)).rstrip(":")
+        box = evidence.bounding_box
+        assert box is not None
+        if compact in _CUMULATIVE_GPA_HEADERS:
+            below = [
+                (other, other_evidence)
+                for other, other_evidence in lines
+                if other_evidence.page_number == evidence.page_number
+                and other_evidence.bounding_box is not None
+                and 0 <= other_evidence.bounding_box.y - (box.y + box.height) <= 3 * box.height
+                and _x_overlap(box, other_evidence.bounding_box)
+            ]
+            below.sort(key=lambda item: item[1].bounding_box.y)  # type: ignore[union-attr]
+            for other, other_evidence in below:
+                match = _GPA_WITH_SCALE_RE.fullmatch(_normalize_extraction_text(other).strip())
+                if match:
+                    found.append(
+                        ExtractionCandidate(
+                            match.group(0),
+                            [evidence, other_evidence],
+                            value_from_other_segment=True,
+                            relation="table_header_cell",
+                        )
+                    )
+                    break
+        elif compact.startswith(_CUMULATIVE_CREDITS_LABEL):
+            below_matches: list[tuple[float, ExtractionCandidate]] = []
+            for other, other_evidence in lines:
+                other_box = other_evidence.bounding_box
+                assert other_box is not None
+                if (
+                    other_evidence.page_number != evidence.page_number
+                    or not 0 < other_box.y - box.y <= 3 * max(box.height, other_box.height)
+                    or not _x_overlap(box, other_box)
+                ):
+                    continue
+                match = _SEMESTER_GPA_RE.search(_normalize_extraction_text(other))
+                if match:
+                    below_matches.append(
+                        (
+                            other_box.y - box.y,
+                            ExtractionCandidate(
+                                match.group(1),
+                                [evidence, other_evidence],
+                                has_explicit_separator=True,
+                                relation="after_total_credits",
+                            ),
+                        )
+                    )
+            if below_matches:
+                found.append(min(below_matches, key=lambda item: item[0])[1])
+    return found
+
+
+def _x_overlap(a: BoundingBox, b: BoundingBox) -> bool:
+    return min(a.x + a.width, b.x + b.width) - max(a.x, b.x) > 0
+
+
+def issuer_university_candidate(source: ExtractionInput) -> ExtractionCandidate | None:
+    """The university named by the issuer line ("OO대학교 총장", often
+    letter-spaced "O O 대 학 교 총 장"), the way 재학증명서/성적증명서 name
+    their school when no 대학교 label is printed. Several different
+    universities on one document -> no answer."""
+    names: dict[str, ExtractionCandidate] = {}
+    for text, evidence in _source_lines(source):
+        collapsed = _normalize_extraction_text(text).strip()
+        match = _ISSUER_UNIVERSITY_RE.fullmatch(_compact(collapsed))
+        if not match:
+            continue
+        tokens = collapsed.split()
+        if tokens and tokens[-1] == "총장":
+            tokens = tokens[:-1]
+        elif collapsed.endswith("총 장"):
+            tokens = tokens[:-2]
+        name = "".join(tokens) if all(len(token) == 1 for token in tokens) else " ".join(tokens)
+        if _compact(name) != match.group(1):
+            continue
+        names.setdefault(
+            _compact(name),
+            ExtractionCandidate(name, [evidence] if evidence is not None else []),
+        )
+    if len(names) != 1:
+        return None
+    return next(iter(names.values()))
+
+
+def _is_parenthesised(compact_text: str) -> bool:
+    return compact_text.startswith("(") and compact_text.endswith(")")
+
+
+def stacked_label_value(
+    source: ExtractionInput,
+    labels: list[str],
+    accept: Callable[[str], bool] = lambda _value: True,
+) -> ExtractionCandidate | None:
+    """Value beside a two-line label cell. One line is the label, the other a
+    parenthesised alternate name, stacked directly above or below it:
+
+    * 사업자등록번호 / (법인등록번호)  -- 근로복지공단 완납증명원;
+    * 주민등록번호 / (사업자등록번호)  -- 납세증명서.
+
+    The value is centred to the right of the pair, so it need not overlap the
+    label's own line by half its height. Needs geometry; an exact whole-line
+    label only (a check-box row such as "☐ 사업자등록번호" is not one)."""
+    if isinstance(source, str):
+        return None
+    lines = _boxed(_source_lines(source))
+    wanted = {_compact(label) for label in labels}
+    for text, evidence in lines:
+        compact = _compact(_normalize_extraction_text(text))
+        core = compact[1:-1] if _is_parenthesised(compact) else compact
+        if core not in wanted:
+            continue
+        box = evidence.bounding_box
+        assert box is not None
+        for partner, partner_evidence in lines:
+            partner_box = partner_evidence.bounding_box
+            assert partner_box is not None
+            compact_partner = _compact(_normalize_extraction_text(partner))
+            if (
+                partner_evidence is evidence
+                or partner_evidence.page_number != evidence.page_number
+                or _is_parenthesised(compact) == _is_parenthesised(compact_partner)
+                or not 0 < abs(partner_box.y - box.y) <= 2 * box.height
+                or abs(partner_box.x - box.x) > 3 * box.height
+            ):
+                continue
+            right = [
+                (value, value_evidence)
+                for value, value_evidence in lines
+                if value_evidence not in (evidence, partner_evidence)
+                and value_evidence.page_number == evidence.page_number
+                and accept(_normalize_extraction_text(value))
+                and any(
+                    _right_associated(
+                        OCRLine(anchor, bounding_box=anchor_box),
+                        OCRLine(value, bounding_box=value_evidence.bounding_box),
+                    )
+                    for anchor, anchor_box in ((text, box), (partner, partner_box))
+                )
+            ]
+            right.sort(key=lambda item: item[1].bounding_box.x)  # type: ignore[union-attr]
+            if right:
+                value, value_evidence = right[0]
+                return ExtractionCandidate(
+                    _normalize_extraction_text(value),
+                    [evidence, partner_evidence, value_evidence],
+                    value_from_other_segment=True,
+                    relation="stacked_label_right",
+                )
     return None
 
 
@@ -843,6 +1057,19 @@ class BaseDocumentExtractor(ABC):
         method = "spatial_right_of_label" if used_spatial_candidate else candidate.relation
         return self._value(field_name, raw, normalized, method, candidate)
 
+    def issuer_university_field(self, text: ExtractionInput) -> ExtractedValue:
+        candidate = issuer_university_candidate(text)
+        normalized = normalize_text_field(candidate.value if candidate else None)
+        if (
+            candidate is None
+            or normalized is None
+            or not is_valid_value("university_name", normalized)
+        ):
+            return self.missing("university_name")
+        return self._value(
+            "university_name", candidate.value, normalized, "standalone_university_name", candidate
+        )
+
     def date_field(
         self, text: ExtractionInput, field_name: str, labels: list[str]
     ) -> ExtractedValue:
@@ -876,6 +1103,13 @@ class BaseDocumentExtractor(ABC):
         self, text: ExtractionInput, field_name: str, labels: list[str]
     ) -> ExtractedValue:
         candidate = candidate_after_label(text, labels)
+        if candidate is None or normalize_business_number(candidate.value) is None:
+            candidate = (
+                stacked_label_value(
+                    text, labels, lambda value: normalize_business_number(value) is not None
+                )
+                or candidate
+            )
         raw_context = candidate.value if candidate else None
         match = (
             BUSINESS_NUMBER_RE.search(canonicalize_numeric_text(raw_context))
@@ -902,10 +1136,25 @@ class BaseDocumentExtractor(ABC):
         assert candidate is not None
         return self._value("valid_until", candidate, normalized, "regex_date", candidate_match)
 
+    def _gpa_candidate(
+        self, text: ExtractionInput, labels: list[str]
+    ) -> tuple[ExtractionCandidate | None, bool]:
+        """(candidate, conflicted). A cumulative-GPA cue beats the label path;
+        cumulative cues that disagree make the field abstain."""
+        cumulative = cumulative_gpa_candidates(text)
+        values = {_compact(item.value) for item in cumulative}
+        if len(values) > 1:
+            return None, True
+        if cumulative:
+            return cumulative[0], False
+        return candidate_after_label(text, labels), False
+
     def gpa_field(
         self, text: ExtractionInput, field_name: str, labels: list[str]
     ) -> ExtractedValue:
-        candidate = candidate_after_label(text, labels)
+        candidate, conflicted = self._gpa_candidate(text, labels)
+        if conflicted:
+            return self.missing(field_name)
         raw = candidate.value if candidate else None
         normalized = normalize_gpa(raw)
         if candidate is None or normalized is None:
@@ -916,7 +1165,9 @@ class BaseDocumentExtractor(ABC):
     def gpa_scale_field(
         self, text: ExtractionInput, field_name: str, labels: list[str]
     ) -> ExtractedValue:
-        candidate = candidate_after_label(text, labels)
+        candidate, conflicted = self._gpa_candidate(text, labels)
+        if conflicted:
+            return self.missing(field_name)
         raw = candidate.value if candidate else None
         normalized = normalize_gpa_scale(raw)
         if candidate is None or normalized is None:
