@@ -275,3 +275,44 @@ def test_enrollment_certificate_is_not_pulled_towards_transcript_by_the_new_sign
 def test_graduation_certificate_listing_credits_is_not_a_transcript() -> None:
     text = "졸업증명서\n성명 류하늘\n학과 기계공학과\n졸업일자 2027-02-20\n취득학점 140\n학위 학사"
     assert DocumentClassifier().classify(text).predicted_type == DocumentType.GRADUATION_CERTIFICATE
+
+
+# ------------------------------------------------------------------ extraction gaps seen on scans
+
+
+def _fields_of(doc_type: DocumentType, lines: list[OCRLine]) -> dict[str, str | None]:
+    page = OCRPage(1, "\n".join(item.text for item in lines), lines, metadata={"source": "ocr"})
+    source = OCRDocumentResult("ocr", [page], page.text)
+    return {v.field_name: v.normalized_value for v in ExtractorRegistry().extract(doc_type, source)}
+
+
+def test_stacked_label_value_centred_between_the_two_lines_is_read() -> None:
+    # value overlaps each label line by less than half its height (scan geometry)
+    lines = [
+        _box("납세증명서", 300, 100, 400, 60),
+        _box("주민등록번호", 1465, 648, 229, 56),
+        _box("(사업자등록번호)", 1468, 703, 285, 57),
+        _box("123-45-67891", 1843, 679, 228, 42),
+    ]
+    got = _fields_of(DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE, lines)
+    assert got["business_registration_number"] == "1234567891"
+
+
+def test_value_cell_with_a_spilled_closing_parenthesis_is_read() -> None:
+    lines = [
+        _box("사업자등록증", 600, 100, 800, 120),
+        _box("법인명(단체명)", 247, 752, 335, 58),
+        _box("):주식회사 가온정밀", 578, 752, 503, 57),
+    ]
+    got = _fields_of(DocumentType.BUSINESS_REGISTRATION_CERTIFICATE, lines)
+    assert got["company_name"] == "주식회사 가온정밀"
+
+
+def test_submitter_company_comparison_ignores_legal_entity_notation_only() -> None:
+    from app.document_intelligence.validation.submission import _same_name
+
+    rule = RuleType.COMPANY_NAME_MATCH
+    assert _same_name("(주)가온정밀", "주식회사 가온정밀", rule)
+    assert _same_name("가온정밀(주)", "㈜가온정밀", rule)
+    assert not _same_name("(주)가온정밀", "주식회사 가온정믹", rule)
+    assert not _same_name("류하늘", "류하눌", RuleType.APPLICANT_NAME_MATCH)

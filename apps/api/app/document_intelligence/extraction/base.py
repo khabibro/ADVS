@@ -38,7 +38,7 @@ EXTRACTOR_VERSION = "evidence-v5"
 BRN_CHECKSUM_FAILED_METHOD = "regex_business_number_checksum_failed"
 
 _COLON_RE = re.compile(r"[：﹕꞉︓]")
-_VALUE_CELL_COLON_RE = re.compile(r"^\s*:\s*")
+_VALUE_CELL_COLON_RE = re.compile(r"^\s*\)?\s*:\s*")
 _WHITESPACE_RE = re.compile(r"[ \t]+")
 # A row whose entire content is one date and nothing else. Korean official
 # certificates print the issue date as a bare line inside the issuance block
@@ -355,7 +355,10 @@ def _right_associated(label: OCRLine, value: OCRLine) -> bool:
         return False
     overlap = min(a.y + a.height, b.y + b.height) - max(a.y, b.y)
     gap = b.x - (a.x + a.width)
-    return overlap >= max(a.height, b.height) * 0.5 and 0 <= gap <= 12 * min(a.height, b.height)
+    # detector boxes of neighbouring cells may overlap slightly at their margins
+    return overlap >= max(a.height, b.height) * 0.5 and (
+        -0.5 * min(a.height, b.height) <= gap <= 12 * min(a.height, b.height)
+    )
 
 
 def _below_associated(label: OCRLine, value: OCRLine) -> bool:
@@ -797,6 +800,17 @@ def issuer_university_candidate(source: ExtractionInput) -> ExtractionCandidate 
     return next(iter(names.values()))
 
 
+def _right_of_stack(first: BoundingBox, second: BoundingBox, value: BoundingBox) -> bool:
+    """The value box is to the right of a two-line label cell and vertically centred within
+    it (it need not overlap either single line by half its height)."""
+    top = min(first.y, second.y)
+    bottom = max(first.y + first.height, second.y + second.height)
+    height = min(first.height, second.height)
+    center = value.y + value.height / 2
+    gap = value.x - max(first.x + first.width, second.x + second.width)
+    return top <= center <= bottom and 0 <= gap <= 12 * height
+
+
 def _is_parenthesised(compact_text: str) -> bool:
     return compact_text.startswith("(") and compact_text.endswith(")")
 
@@ -844,12 +858,10 @@ def stacked_label_value(
                 if value_evidence not in (evidence, partner_evidence)
                 and value_evidence.page_number == evidence.page_number
                 and accept(_normalize_extraction_text(value))
-                and any(
-                    _right_associated(
-                        OCRLine(anchor, bounding_box=anchor_box),
-                        OCRLine(value, bounding_box=value_evidence.bounding_box),
-                    )
-                    for anchor, anchor_box in ((text, box), (partner, partner_box))
+                and _right_of_stack(
+                    box,
+                    partner_box,
+                    value_evidence.bounding_box,  # type: ignore[arg-type]
                 )
             ]
             right.sort(key=lambda item: item[1].bounding_box.x)  # type: ignore[union-attr]
