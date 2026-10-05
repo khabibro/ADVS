@@ -183,7 +183,7 @@ from app.models.entities import ExtractedField as _ExtractedField  # noqa: E402
 def _business_fields() -> list:
     return ExtractorRegistry().extract(
         DocumentType.BUSINESS_REGISTRATION_CERTIFICATE,
-        "사업자등록증\n상호 한국테크\n사업자등록번호 123-45-67890",
+        "사업자등록증\n상호 한국테크\n사업자등록번호 123-45-67891",
     )
 
 
@@ -286,7 +286,7 @@ def test_expiration_check_still_runs_alongside_the_net() -> None:
     """An expired document must still be reported as such."""
     fields = ExtractorRegistry().extract(
         DocumentType.SME_CONFIRMATION_CERTIFICATE,
-        "중소기업확인서\n기업명: 주식회사예시연구\n사업자등록번호: 987-65-43210\n"
+        "중소기업확인서\n기업명: 주식회사예시연구\n사업자등록번호: 987-65-43215\n"
         "유효기간: 2020-01-01 ~ 2021-03-31",
     )
     issues = ValidationEngine().validate_document(

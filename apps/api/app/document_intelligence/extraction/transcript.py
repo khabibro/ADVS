@@ -1,16 +1,9 @@
-import re
-
 from app.core.domain import DocumentType
 from app.document_intelligence.extraction.base import (
     BaseDocumentExtractor,
     ExtractedValue,
-    ExtractionCandidate,
     ExtractionInput,
-    candidate_matching_line,
 )
-from app.document_intelligence.normalization.field_normalizer import normalize_text_field
-
-_STANDALONE_UNIVERSITY_RE = re.compile(r"[가-힣A-Za-z0-9㈜()· ]{2,40}대학교")
 
 
 class TranscriptExtractor(BaseDocumentExtractor):
@@ -36,14 +29,4 @@ class TranscriptExtractor(BaseDocumentExtractor):
         labeled = self.text_field(text, "university_name", ["대학교", "대학명", "학교명", "대학"])
         if labeled.normalized_value is not None:
             return labeled
-        candidate: ExtractionCandidate | None = candidate_matching_line(
-            text, _STANDALONE_UNIVERSITY_RE
-        )
-        raw = candidate.value if candidate else None
-        normalized = normalize_text_field(raw)
-        if candidate is None or normalized is None:
-            return self.missing("university_name")
-        assert raw is not None
-        return self._value(
-            "university_name", raw, normalized, "standalone_university_name", candidate
-        )
+        return self.issuer_university_field(text)
