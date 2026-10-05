@@ -93,6 +93,6 @@ docker-down:
 # ---------------------------------------------------------------------------
 
 eval-variants:
-	cd apps/api && $(API_BIN)/python ../../evaluation/phase_b/run_variants.py \
-		--output ../../evaluation/phase_b/test_variants_digital.json \
+	cd apps/api && $(API_BIN)/python ../../evaluation/harness/run_variants.py \
+		--output ../../evaluation/phase_c/test_variants_digital.json \
 		--versions digital --skip-ocr

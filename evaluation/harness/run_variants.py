@@ -1,4 +1,4 @@
-"""Phase B variant harness.
+"""Variant harness (raw capture; scoring lives in score_variants.py).
 
 Runs the fictional test-variant document set
 (evaluation/datasets/synthetic/test_variants/) through the real production
@@ -16,8 +16,8 @@ needs no monkeypatch; it also receives that same date explicitly, so both
 code paths agree. Nothing on disk is edited.
 
 Usage (from apps/api):
-    .venv312/bin/python ../../evaluation/phase_b/run_variants.py \\
-        --output ../../evaluation/phase_b/B0_variants.json \\
+    .venv312/bin/python ../../evaluation/harness/run_variants.py \\
+        --output ../../evaluation/phase_c/B0_raw.json \\
         [--sets B01,B02,...] [--versions digital,scanned,images] [--skip-ocr]
 """
 from __future__ import annotations
@@ -84,9 +84,9 @@ def main() -> int:
 
     import tempfile
 
-    temp_dir = tempfile.mkdtemp(prefix="advs_phaseb_", dir=str(REPO_ROOT / "evaluation" / "phase_b"))
+    temp_dir = tempfile.mkdtemp(prefix="advs_harness_", dir=str(REPO_ROOT / "evaluation" / "harness"))
     temp_root = Path(temp_dir)
-    os.environ["DATABASE_URL"] = f"sqlite:///{temp_root / 'phase_b.db'}"
+    os.environ["DATABASE_URL"] = f"sqlite:///{temp_root / 'harness.db'}"
     os.environ["STORAGE_PATH"] = str(temp_root / "storage")
     os.environ["OCR_PROVIDER"] = "paddle"
     os.environ["APP_ENV"] = "test"
@@ -216,12 +216,15 @@ def main() -> int:
                 record["fields"] = {
                     f["field_name"]: {
                         "value": f.get("effective_normalized_value"),
+                        "machine_value": f.get("normalized_value"),
+                        "confidence": f.get("confidence"),
                         "source": f.get("effective_source"),
                         "evidence_state": f.get("evidence_assessment"),
                         "needs_review": f.get("needs_review"),
                     }
                     for f in dj.get("extracted_fields", [])
                 }
+                record["page_count"] = dj.get("page_count")
                 record["issues"] = [
                     r["code"] for r in dj.get("validation_results", []) if not r.get("passed")
                 ]
@@ -242,40 +245,6 @@ def main() -> int:
             "issues": v.get("issues", []),
         }
 
-    def compare_classification(file_rel, actual_type):
-        expected = by_file.get(file_rel, {}).get("expected_classification")
-        if expected is None:
-            return "RECORD"
-        return "MATCH" if actual_type == expected else "MISMATCH"
-
-    def compare_fields(file_rel, actual_fields):
-        expected = (by_file.get(file_rel, {}) or {}).get("expected_fields") or {}
-        out = {}
-        for name, spec in expected.items():
-            state = (spec or {}).get("state")
-            actual = (actual_fields.get(name) or {}).get("value")
-            if state != "KNOWN_VALUE":
-                out[name] = "RECORD"
-                continue
-            expected_value = spec.get("value")
-            if actual is None:
-                out[name] = "MISMATCH_UNRESOLVED"
-            elif _comparable(actual) == _comparable(expected_value):
-                out[name] = "MATCH"
-            else:
-                out[name] = "MISMATCH"
-        return out
-
-    def compare_status(expected_str, actual_status):
-        if expected_str is None:
-            return "RECORD"
-        if "record actual" in expected_str.lower():
-            return "RECORD"
-        for token in ("READY", "REVIEW_REQUIRED", "NEEDS_CORRECTION", "FAILED"):
-            if expected_str.strip().startswith(token):
-                return "MATCH" if actual_status == token else "MISMATCH"
-        return "RECORD"
-
     results: dict[str, Any] = {
         "manifest_submission_date": submission_date,
         "versions_run": versions,
@@ -283,7 +252,7 @@ def main() -> int:
         "format_sets": {},
     }
 
-    with TestClient(app) as client:
+    with TestClient(app, raise_server_exceptions=False) as client:
         all_scenario_sets = manifest["business_sets"] + manifest["student_sets"]
         for scenario in all_scenario_sets:
             set_id = scenario["set_id"]
@@ -304,34 +273,16 @@ def main() -> int:
                 sub = verify(client, pid, submission_date)
                 elapsed = round(time.perf_counter() - t0, 1)
                 expected_block = scenario["expected"].get(version, {})
-                status_cmp = compare_status(expected_block.get("submission_status"), sub.get("status"))
                 entry = {
-                    "expected_submission_status": expected_block.get("submission_status"),
                     "actual_submission_status": sub.get("status"),
-                    "status_comparison": status_cmp,
                     "actual_issue_codes": sub.get("issue_codes"),
-                    "files": [
-                        {
-                            "file": fr["file"],
-                            "predicted_document_type": fr.get("predicted_document_type"),
-                            "classification_confidence": fr.get("classification_confidence"),
-                            "classification_needs_review": fr.get("classification_needs_review"),
-                            "classification_comparison": compare_classification(
-                                fr["file"], fr.get("predicted_document_type")
-                            ),
-                            "document_overall_status": fr.get("overall_status"),
-                            "field_comparisons": compare_fields(fr["file"], fr.get("fields", {})),
-                            "upload_status": fr.get("upload_status"),
-                            "processing_status": fr.get("processing_status"),
-                        }
-                        for fr in file_results
-                    ],
+                    "files": file_results,
                     "elapsed_seconds": elapsed,
                 }
                 results["sets"][set_id]["versions"][version] = entry
                 print(
-                    f"  {version}: expected={expected_block.get('submission_status')!r} "
-                    f"actual={sub.get('status')} [{status_cmp}] ({elapsed}s)",
+                    f"  {version}: "
+                    f"actual={sub.get('status')} ({elapsed}s)",
                     flush=True,
                 )
 
@@ -349,14 +300,7 @@ def main() -> int:
                                  "requirement, otherwise identical to the default business checklist",
                     "actual_submission_status": sub.get("status"),
                     "actual_issue_codes": sub.get("issue_codes"),
-                    "files": [
-                        {
-                            "file": fr["file"],
-                            "predicted_document_type": fr.get("predicted_document_type"),
-                            "document_overall_status": fr.get("overall_status"),
-                        }
-                        for fr in file_results
-                    ],
+                    "files": file_results,
                     "elapsed_seconds": elapsed,
                 }
                 print(
@@ -377,21 +321,7 @@ def main() -> int:
                 results["format_sets"][set_id] = {
                     "title": fset["title"],
                     "expected": fset["expected"],
-                    "files": [
-                        {
-                            "file": fr["file"],
-                            "upload_status": fr.get("upload_status"),
-                            "upload_error": fr.get("upload_error"),
-                            "processing_status": fr.get("processing_status"),
-                            "processing_error_code": fr.get("processing_error_code"),
-                            "predicted_document_type": fr.get("predicted_document_type"),
-                            "classification_comparison": compare_classification(
-                                fr["file"], fr.get("predicted_document_type")
-                            ),
-                            "document_overall_status": fr.get("overall_status"),
-                        }
-                        for fr in file_results
-                    ],
+                    "files": file_results,
                     "elapsed_seconds": elapsed,
                 }
                 print(f"  {len(file_results)} files ({elapsed}s)", flush=True)

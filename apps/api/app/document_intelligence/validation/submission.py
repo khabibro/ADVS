@@ -23,6 +23,7 @@ from app.document_intelligence.evidence_sufficiency import (
     EvidenceAssessmentReason,
     EvidenceAssessmentState,
 )
+from app.document_intelligence.extraction.base import BRN_CHECKSUM_FAILED_METHOD
 from app.document_intelligence.normalization.field_normalizer import (
     normalize_lexical_text,
     strip_legal_entity_markers,
@@ -60,6 +61,7 @@ class FieldSnapshot:
     assessment_reasons: tuple[EvidenceAssessmentReason, ...] = ()
     effective_source: EffectiveValueSource = EffectiveValueSource.MACHINE
     review_id: uuid.UUID | None = None
+    extraction_method: str | None = None
 
 
 @dataclass(frozen=True)
@@ -874,9 +876,17 @@ class SubmissionVerificationEngine:
             )
         ):
             return None
+        checksum_failed = (
+            snapshot is not None
+            and snapshot.extraction_method == BRN_CHECKSUM_FAILED_METHOD
+            and snapshot.effective_source
+            not in (EffectiveValueSource.HUMAN_CONFIRMED, EffectiveValueSource.HUMAN_CORRECTED)
+        )
         issue = VerificationIssue(
             code=(
-                "OCR_UNCERTAIN"
+                "BUSINESS_NUMBER_CHECKSUM_FAILED"
+                if checksum_failed
+                else "OCR_UNCERTAIN"
                 if snapshot is not None
                 and (
                     snapshot.assessment_state == EvidenceAssessmentState.REVIEW_REQUIRED

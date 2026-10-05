@@ -1,7 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -46,6 +46,19 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @model_validator(mode="after")
+    def _refuse_mock_ocr_in_production(self) -> "Settings":
+        # The mock provider returns canned text; in production it would turn
+        # every upload into a fabricated, plausible-looking document.
+        if self.app_env.strip().lower() in {"production", "prod"} and (
+            self.ocr_provider.strip().lower() == "mock"
+        ):
+            raise ValueError(
+                "OCR_PROVIDER=mock is not allowed when APP_ENV is production; "
+                "configure a real OCR provider (paddle)."
+            )
+        return self
 
     @property
     def max_upload_size_bytes(self) -> int:

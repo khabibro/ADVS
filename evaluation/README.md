@@ -9,8 +9,8 @@ SQLite database. From the repository root, run a quick digital-only pass with:
 
 ```bash
 cd apps/api
-.venv312/bin/python ../../evaluation/phase_b/run_variants.py \
-  --output ../../evaluation/phase_b/test_variants_digital.json \
+.venv312/bin/python ../../evaluation/harness/run_variants.py \
+  --output ../../evaluation/phase_c/test_variants_digital.json \
   --versions digital --skip-ocr
 ```
 
