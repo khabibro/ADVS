@@ -539,3 +539,26 @@ def test_pipeline_workflow_can_switch_auto_acceptance_off(client, setup, monkeyp
         _fields(client, ids["br.pdf"])["business_registration_number"]["effective_normalized_value"]
         is None
     )
+
+
+def test_s7_second_pass_can_contradict_a_corroborated_name_but_never_confirm_one() -> None:
+    wrong = "주식회사 가온정말"  # every document carries the same misread
+    docs = [
+        field(D1, "company_name", wrong, second="법인명:주식회사가온정밀"),
+        field(D2, "company_name", wrong, doc_type=SME, second="기업명:주식회사가온정밀"),
+    ]
+    assert accepted(decide(docs, CTX, Strategy.S5), D1, "company_name")  # residual without the veto
+    vetoed = decide(docs, CTX, Strategy.S7)
+    assert not accepted(vetoed, D1, "company_name")
+    assert vetoed[(D1, "company_name")].reason == "SECOND_PASS_CONTRADICTS_NAME"
+    agreeing = [
+        field(D1, "company_name", "주식회사 가온정밀", second="법인명:주식회사가온정밀"),
+        field(
+            D2, "company_name", "주식회사 가온정밀", doc_type=SME, second="기업명:주식회사가온정밀"
+        ),
+    ]
+    assert accepted(decide(agreeing, CTX, Strategy.S7), D1, "company_name")
+    # a lone name is still not accepted by a matching second pass (rule 4)
+    alone = [field(D1, "student_name", "류하늘", doc_type=ENR, second="성명:류하늘")]
+    assert not accepted(decide(alone, CTX, Strategy.S7), D1, "student_name")
+    assert parse_strategy("s7") == Strategy.S7

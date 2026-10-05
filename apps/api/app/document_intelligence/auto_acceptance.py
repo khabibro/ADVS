@@ -16,6 +16,8 @@ S4  S3, or a second OCR pass of the field's region that agrees (fields with no c
 S5  S4 + the application's own values (project company name / applicant name) as an
     independent source, and a veto when they disagree
 S6  S5 + a disagreeing second pass vetoes any acceptance of a numeric field
+S7  S6 + a second pass that does not contain a name's value vetoes the acceptance of that name
+    (a second pass never *accepts* a name -- rule 4 -- it can only contradict it)
 
 Mandatory rules (all corroborating strategies)
 ----------------------------------------------
@@ -61,6 +63,7 @@ class Strategy(StrEnum):
     S4 = "S4"
     S5 = "S5"
     S6 = "S6"
+    S7 = "S7"
 
 
 @dataclass(frozen=True)
@@ -70,6 +73,7 @@ class Features:
     second_pass: bool = False
     application: bool = False
     second_pass_veto: bool = False
+    name_veto: bool = False
 
 
 STRATEGY_FEATURES: dict[Strategy, Features] = {
@@ -85,6 +89,14 @@ STRATEGY_FEATURES: dict[Strategy, Features] = {
         second_pass=True,
         application=True,
         second_pass_veto=True,
+    ),
+    Strategy.S7: Features(
+        validators=True,
+        corroboration=True,
+        second_pass=True,
+        application=True,
+        second_pass_veto=True,
+        name_veto=True,
     ),
 }
 
@@ -114,15 +126,16 @@ class FieldRule:
     second_pass: bool  # a second pass of the region may confirm it
     application: str | None = None  # project attribute it can be compared with
     floor: float = CONFIDENCE_FLOOR
+    name_veto: bool = False  # a second pass may contradict (never confirm) this value
 
 
 FIELD_RULES: dict[str, FieldRule] = {
     "business_registration_number": FieldRule("BRN", "business_number", True),
-    "company_name": FieldRule("COMPANY", "company", False, "company_name"),
-    "workplace_name": FieldRule("COMPANY", "company", False, "company_name"),
-    "student_name": FieldRule("PERSON", "person", False, "applicant_name"),
+    "company_name": FieldRule("COMPANY", "company", False, "company_name", name_veto=True),
+    "workplace_name": FieldRule("COMPANY", "company", False, "company_name", name_veto=True),
+    "student_name": FieldRule("PERSON", "person", False, "applicant_name", name_veto=True),
     "student_id": FieldRule("STUDENT_ID", "student_id", True),
-    "university_name": FieldRule("UNIVERSITY", "university", False),
+    "university_name": FieldRule("UNIVERSITY", "university", False, name_veto=True),
     "issue_date": FieldRule("DATE", None, True),
     "valid_from": FieldRule("DATE", None, True),
     "valid_until": FieldRule("DATE", None, True),
@@ -131,7 +144,9 @@ FIELD_RULES: dict[str, FieldRule] = {
 }
 
 # Fields whose value a second pass can re-read and compare as a number/date.
-SECOND_PASS_FIELDS = frozenset(name for name, rule in FIELD_RULES.items() if rule.second_pass)
+SECOND_PASS_FIELDS = frozenset(
+    name for name, rule in FIELD_RULES.items() if rule.second_pass or rule.name_veto
+)
 KNOWN_GPA_SCALES = frozenset({"4", "4.3", "4.5"})
 STUDENT_ID_RE = re.compile(r"^\d{8,10}$")
 _GPA_PAIR_RE = re.compile(r"(\d(?:\.\d{1,3})?)\s*/\s*(\d(?:\.\d{1,3})?)")
@@ -159,6 +174,9 @@ def parse_second_pass(field_name: str, text: str | None) -> str | None:
     """Normalise a second-pass reading of a region the same way the first pass is."""
     if not text:
         return None
+    rule = FIELD_RULES.get(field_name)
+    if rule is not None and rule.name_veto:
+        return _squash(text)  # names: the whole reading, compared by containment (veto only)
     folded = canonicalize_numeric_text(text)
     if field_name == "business_registration_number":
         return normalize_business_number(folded)
@@ -462,6 +480,10 @@ def _decide_corroborated(
         and second_value != item.value
     ):
         return _no(strategy, "SECOND_PASS_DISAGREES", rule.rule_id)
+
+    if features.name_veto and rule.name_veto and rule.group and second and second.normalized:
+        if canonical_key(rule.group, item.value) not in second.normalized:
+            return _no(strategy, "SECOND_PASS_CONTRADICTS_NAME", rule.rule_id)
 
     sources: list[str] = []
     corroborators: list[uuid.UUID] = []
