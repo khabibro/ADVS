@@ -29,7 +29,10 @@ from app.document_intelligence.ocr.models import (
     RegionRequest,
 )
 from app.document_intelligence.ocr.providers import get_ocr_provider
-from app.document_intelligence.ocr.text_assembly import assemble_document_text
+from app.document_intelligence.ocr.text_assembly import (
+    assemble_document_text,
+    assemble_page_text,
+)
 from app.document_intelligence.preprocessing.processor import PdfProcessor, is_meaningful_text
 from app.document_intelligence.results import CanonicalDocumentResult
 from app.document_intelligence.validation.engine import (
@@ -313,6 +316,9 @@ class DocumentProcessingService:
             for page_number in needs_ocr:
                 ocr_page = by_page.get(page_number)
                 if ocr_page is not None:
+                    if ocr_page.lines:
+                        # derive the text from the lines with the current reading order
+                        ocr_page.text = assemble_page_text(ocr_page.lines)
                     pages.append(ocr_page)
             provider_name = str(
                 next(
