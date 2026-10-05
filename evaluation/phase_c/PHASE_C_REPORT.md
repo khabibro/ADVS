@@ -32,8 +32,13 @@ Quality gates at HEAD: 450 tests, ruff, format check, mypy all pass. Overfitting
 ## 6. B0 vs B1 (`B0_vs_B1.md`)
 13 of 14 criteria PASS. **FAIL: scanned+images field WRONG 36 → 41** (all review-gated, 0 unflagged; whitespace-dropping OCR artifacts on fields that were previously unresolved; net OCR CORRECT +60 scanned / +87 images). Highlights: digital field CORRECT 106 → 239 of 240; B01 and B02 READY; B10 REVIEW_REQUIRED + `BUSINESS_NUMBER_CHECKSUM_FAILED`; B07 partial-checklist REVIEW_REQUIRED; digital status MATCH 7 → 12 (of 23 scored/recorded rows; 5 MISMATCH remain); F16 all rejected at upload; scanned/images never READY; review burden digital 8.5 → 3.3 fields per submission.
 
+## 6a. Decisions recorded after review
+- **Accepted exception:** the one failed criterion (scanned/image field WRONG 36 → 41) is accepted. All 5 additional values are review-gated whitespace artefacts of OCR (0 unflagged).
+- **Resolved in the system's favour:** the B02-3 `㈜`/`(주)` dispute is NFKC-equivalent text; the scorer will adopt that rule in the next phase, not retroactively (B0/B1 numbers stay as measured).
+- The fictional test set is the main evaluation corpus; the real-document check is not required for this merge (limit in §9 stands as a caveat on the numbers).
+
 ## 7. Disputed expectations (manifest untouched)
-- `B02-3_납세증명서.pdf / company_name`: manifest `㈜` (U+3231) vs system `(주)` after Unicode NFKC. `EXPECTATION_DISPUTED` — same text; remains the one digital WRONG.
+- `B02-3_납세증명서.pdf / company_name`: manifest `㈜` (U+3231) vs system `(주)` after Unicode NFKC. `EXPECTATION_DISPUTED` — same text; remains the one digital WRONG. **Resolved (see 6a): NFKC-equivalent, system correct.**
 - Not disputed but worth your decision: B11/S07 digital expect NEEDS_CORRECTION; the system returns REVIEW_REQUIRED whenever an UNKNOWN document is present (design). S01/S10 expect READY; see below.
 
 ## 8. Remaining problems for the next phase
