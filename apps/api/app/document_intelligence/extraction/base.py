@@ -13,6 +13,7 @@ from app.document_intelligence.extraction.fields import (
 from app.document_intelligence.normalization.field_normalizer import (
     BUSINESS_NUMBER_RE,
     canonicalize_numeric_text,
+    is_valid_business_number,
     normalize_business_number,
     normalize_date,
     normalize_gpa,
@@ -31,6 +32,10 @@ from app.document_intelligence.ocr.models import (
 from app.document_intelligence.ocr.text_assembly import order_lines
 
 EXTRACTOR_VERSION = "evidence-v5"
+
+# Extraction method recorded on a business number that was read but fails its
+# check digit. The value and evidence are kept; the field is routed to review.
+BRN_CHECKSUM_FAILED_METHOD = "regex_business_number_checksum_failed"
 
 _COLON_RE = re.compile(r"[：﹕꞉︓]")
 _VALUE_CELL_COLON_RE = re.compile(r"^\s*:\s*")
@@ -1123,7 +1128,10 @@ class BaseDocumentExtractor(ABC):
         if candidate is None or normalized is None:
             return self.missing(field_name)
         assert raw_value is not None
-        return self._value(field_name, raw_value, normalized, "regex_business_number", candidate)
+        value = self._value(field_name, raw_value, normalized, "regex_business_number", candidate)
+        if not is_valid_business_number(normalized):
+            return replace(value, needs_review=True, extraction_method=BRN_CHECKSUM_FAILED_METHOD)
+        return value
 
     def valid_until_field(self, text: ExtractionInput, labels: list[str]) -> ExtractedValue:
         candidate_match = candidate_after_label(text, labels)

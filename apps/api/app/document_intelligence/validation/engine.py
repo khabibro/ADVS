@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from app.core.domain import EXPECTED_FIELDS, DocumentType, OverallStatus, RuleType, Severity
-from app.document_intelligence.extraction.base import ExtractedValue
+from app.document_intelligence.extraction.base import BRN_CHECKSUM_FAILED_METHOD, ExtractedValue
 from app.document_intelligence.normalization.field_normalizer import strip_legal_entity_markers
 
 VALIDATION_ENGINE_VERSION = "heuristic-v2"
@@ -281,7 +281,9 @@ class ValidationEngine:
                 name,
                 None,
                 f"{name} 필드를 확인해야 합니다.",
-                "MISSING_REQUIRED_FIELD",
+                "BUSINESS_NUMBER_CHECKSUM_FAILED"
+                if field is not None and field.extraction_method == BRN_CHECKSUM_FAILED_METHOD
+                else "MISSING_REQUIRED_FIELD",
             )
             for name, field in names
             if self._supported_value(field) is None
