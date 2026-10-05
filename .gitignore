@@ -34,3 +34,5 @@ evaluation/datasets/synthetic/test_variants/formats/
 evaluation/datasets/synthetic/holdout/business/
 evaluation/datasets/synthetic/holdout/student/
 evaluation/datasets/synthetic/holdout/formats/
+evaluation/phase_d/ocr_cache/
+evaluation/harness/advs_harness_*/

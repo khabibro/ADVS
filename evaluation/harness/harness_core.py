@@ -153,7 +153,8 @@ class OCRCacheProvider:
         self.cache_dir = cache_dir
         self.mode = mode
         self.injector = injector
-        self.stats = {"hits": 0, "recorded": 0}
+        self.reading_editor: Callable[[str, str, str | None], str | None] | None = None
+        self.stats = {"hits": 0, "recorded": 0, "second_pass_hits": 0, "second_pass_computed": 0}
         cache_dir.mkdir(parents=True, exist_ok=True)
 
     def provider_for(self, settings: Any) -> Any:
@@ -185,6 +186,42 @@ class OCRCacheProvider:
         if self.injector is not None:
             pages = self.injector(digest, pages)
         return pages
+
+    async def read_regions(self, path: Path, mime_type: str, requests: list[Any]) -> list[Any]:
+        """Second-pass region reads: served from / stored in the cache (a miss runs the real
+        provider once). `reading_editor` lets the injection suite corrupt a reading."""
+        from app.document_intelligence.ocr.models import RegionReading
+
+        digest = sha256_file(path)
+        folder = self.cache_dir / "second_pass"
+        folder.mkdir(parents=True, exist_ok=True)
+        readings = []
+        for request in requests:
+            box = request.bbox
+            token = f"{digest}|{request.field_name}|{request.page_number}|{round(box.x)},{round(box.y)},{round(box.width)},{round(box.height)}"
+            file = folder / (hashlib.sha256(token.encode()).hexdigest() + ".json")
+            if file.exists():
+                data = json.loads(file.read_text(encoding="utf-8"))
+                self.stats["second_pass_hits"] += 1
+            else:
+                real = self.factory(None)
+                reading = (await real.read_regions(path, mime_type, [request]))[0]
+                data = dataclasses.asdict(reading)
+                file.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+                self.stats["second_pass_computed"] += 1
+            text = data.get("text")
+            if self.reading_editor is not None:
+                text = self.reading_editor(digest, request.field_name, text)
+            readings.append(
+                RegionReading(
+                    field_name=request.field_name,
+                    page_number=data.get("page_number", request.page_number),
+                    text=text,
+                    confidence=data.get("confidence"),
+                    preprocess=data.get("preprocess", ""),
+                )
+            )
+        return readings
 
     async def health_check(self) -> bool:
         return True
