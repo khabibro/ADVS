@@ -261,7 +261,7 @@ class Runner:
             "PADDLE_OCR_CACHE_DIR", str(REPO_ROOT / "apps" / "api" / "storage" / "paddleocr-cache")
         )
         for key, value in (extra_env or {}).items():
-            os.environ[key] = value
+            os.environ[key.removeprefix("ADVS_")] = value  # ADVS_AUTO_ACCEPT_STRATEGY -> AUTO_ACCEPT_STRATEGY
         sys.path.insert(0, str(REPO_ROOT / "apps" / "api"))
 
         from fastapi.testclient import TestClient
@@ -393,12 +393,20 @@ class Runner:
                 record["processing_status"] = body.get("processing_status")
                 record["processing_error_code"] = body.get("processing_error_code")
                 record["predicted_document_type"] = body.get("document_type")
-            detail = self.client.get(f"/api/v1/documents/{document_id}")
-            if detail.status_code == 200:
-                self._capture_detail(record, detail.json())
             record["process_ms"] = round((time.perf_counter() - started) * 1000, 1)
             results.append(record)
         return results
+
+    def capture_details(self, file_results: list[dict[str, Any]]) -> None:
+        """Document details are read after *every* document of the submission is processed (and
+        verified), because auto-acceptance corroborates across documents."""
+        for record in file_results:
+            document_id = record.get("document_id")
+            if not document_id:
+                continue
+            detail = self.client.get(f"/api/v1/documents/{document_id}")
+            if detail.status_code == 200:
+                self._capture_detail(record, detail.json())
 
     @staticmethod
     def _capture_detail(record: dict[str, Any], detail: dict[str, Any]) -> None:
@@ -448,6 +456,7 @@ class Runner:
         project_id = self.make_project(workflow, checklist_id, name)
         file_results = self.upload_and_process(project_id, files)
         verification = self.verify(project_id)
+        self.capture_details(file_results)
         return {
             "project_id": project_id,
             "actual_submission_status": verification.get("status"),
@@ -507,6 +516,7 @@ class Runner:
                 started = time.perf_counter()
                 project_id = self.make_project("business", self.business_id, f"{set_id}-format")
                 file_results = self.upload_and_process(project_id, [(r, self.root / r) for r in fset["files"]])
+                self.capture_details(file_results)
                 results["format_sets"][set_id] = {
                     "title": fset["title"],
                     "expected": fset["expected"],

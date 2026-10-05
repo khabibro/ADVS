@@ -39,6 +39,7 @@ from app.models.entities import (
     Submission,
     ValidationResult,
 )
+from app.services.auto_acceptance import decisions_for_project
 from app.services.consistency import acquire_project_lock, lock_project
 from app.services.requirements import required_fields
 from app.services.reviews import EffectiveFieldResolver
@@ -95,7 +96,7 @@ class SubmissionVerificationService:
             requirements = self._requirements(project.checklist)
             if not requirements:
                 raise RuleConfigurationError("Workflow has no document requirements")
-            documents = self._documents(db, project_id)
+            documents = self._documents(db, project_id, evaluation_date)
             result = self.engine.verify(
                 project_id=project.id,
                 workflow_id=project.checklist_id,
@@ -241,7 +242,11 @@ class SubmissionVerificationService:
             )
         return snapshots
 
-    def _documents(self, db: Session, project_id: uuid.UUID) -> list[DocumentSnapshot]:
+    def _documents(
+        self, db: Session, project_id: uuid.UUID, reference_date: date | None = None
+    ) -> list[DocumentSnapshot]:
+        project = db.get(Project, project_id)
+        decisions = decisions_for_project(db, project, reference_date)
         rows = db.scalars(
             select(Document)
             .join(Submission)
@@ -273,7 +278,9 @@ class SubmissionVerificationService:
             for field_name in field_names:
                 machine = machine_by_name.get(field_name)
                 review = reviews_by_target.get((row.id, field_name))
-                effective = self.field_resolver.resolve(machine, review, row.processing_version)
+                effective = self.field_resolver.resolve(
+                    machine, review, row.processing_version, decisions.get((row.id, field_name))
+                )
                 fields[field_name] = FieldSnapshot(
                     id=machine.id if machine else None,
                     field_name=field_name,

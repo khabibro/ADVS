@@ -14,7 +14,14 @@ from PIL import Image
 
 from app.core.config import Settings
 from app.core.errors import ProcessingErrorCode
-from app.document_intelligence.ocr.models import BoundingBox, OCRLine, OCRPage, OCRProviderError
+from app.document_intelligence.ocr.models import (
+    BoundingBox,
+    OCRLine,
+    OCRPage,
+    OCRProviderError,
+    RegionReading,
+    RegionRequest,
+)
 from app.document_intelligence.ocr.text_assembly import assemble_page_text
 from app.document_intelligence.ocr.worker import run_ocr
 from app.document_intelligence.preprocessing.processor import ImagePreprocessor
@@ -67,6 +74,13 @@ class OCRProvider(ABC):
     @abstractmethod
     async def health_check(self) -> bool:
         raise NotImplementedError
+
+    async def read_regions(
+        self, path: Path, mime_type: str, requests: list[RegionRequest]
+    ) -> list[RegionReading]:
+        """Second, independent read of field regions. Providers that cannot do it
+        return no readings, which simply means "no corroboration from a second pass"."""
+        return []
 
 
 class MockOCRProvider(OCRProvider):
@@ -299,6 +313,82 @@ class PaddleOCRProvider(OCRProvider):
         if not pages or not any(page.text.strip() for page in pages):
             raise OCRProviderError(ProcessingErrorCode.OCR_EMPTY_RESULT)
         return pages
+
+    # Second pass: crop the field's region, normalise contrast and upscale -- a different
+    # input to the recogniser than the first pass, so a reading error caused by the page
+    # rendering (scale, contrast, neighbouring glyphs) is unlikely to repeat.
+    _SECOND_PASS_PREPROCESS = "crop+autocontrast+x1.6"
+    _SECOND_PASS_SCALE = 1.6
+
+    async def read_regions(
+        self, path: Path, mime_type: str, requests: list[RegionRequest]
+    ) -> list[RegionReading]:
+        if not requests:
+            return []
+        by_page: dict[int, list[RegionRequest]] = {}
+        for request in requests:
+            by_page.setdefault(request.page_number, []).append(request)
+        readings: list[RegionReading] = []
+        try:
+            for idx, image_path, _transform in self._input_images(path, mime_type):
+                page_requests = by_page.get(idx)
+                if not page_requests:
+                    continue
+                with Image.open(image_path) as image:
+                    page_image = image.convert("L")
+                for request in page_requests:
+                    readings.append(await self._read_region(page_image, request))
+        except OCRProviderError:
+            raise
+        except Exception:
+            return []  # a second pass must never turn a usable first pass into a failure
+        return readings
+
+    async def _read_region(self, page_image: Image.Image, request: RegionRequest) -> RegionReading:
+        from PIL import ImageOps
+
+        box = request.bbox
+        margin_x = max(6.0, box.height * 0.4)
+        margin_y = max(4.0, box.height * 0.3)
+        left = max(0, int(box.x - margin_x))
+        top = max(0, int(box.y - margin_y))
+        right = min(page_image.width, int(box.x + box.width + margin_x))
+        bottom = min(page_image.height, int(box.y + box.height + margin_y))
+        empty = RegionReading(
+            request.field_name, request.page_number, None, None, self._SECOND_PASS_PREPROCESS
+        )
+        if right - left < 4 or bottom - top < 4:
+            return empty
+        crop = ImageOps.autocontrast(page_image.crop((left, top, right, bottom)), cutoff=2)
+        crop = crop.resize(
+            (int(crop.width * self._SECOND_PASS_SCALE), int(crop.height * self._SECOND_PASS_SCALE)),
+            Image.Resampling.LANCZOS,
+        )
+        crop = ImageOps.expand(crop, border=12, fill=255)
+        with tempfile.TemporaryDirectory(prefix="advs_second_pass_") as directory:
+            crop_path = Path(directory) / "region.png"
+            crop.save(crop_path)
+            try:
+                raw = await run_ocr(
+                    partial(self._predict, crop_path), self.settings.ocr_timeout_seconds
+                )
+                page = self._normalize_page(raw=raw, page_number=request.page_number, duration_ms=0)
+            except Exception:
+                return empty
+        lines = sorted(
+            (line for line in page.lines if line.text.strip()),
+            key=lambda line: line.bounding_box.x if line.bounding_box else 0.0,
+        )
+        if not lines:
+            return empty
+        confidences = [line.confidence for line in lines if line.confidence is not None]
+        return RegionReading(
+            request.field_name,
+            request.page_number,
+            " ".join(line.text for line in lines),
+            min(confidences) if confidences else None,
+            self._SECOND_PASS_PREPROCESS,
+        )
 
     async def _retry_page_with_orientation(self, page: OCRPage, image_path: Path) -> OCRPage:
         if not self.doc_orientation or not self._looks_orientation_broken([page]):

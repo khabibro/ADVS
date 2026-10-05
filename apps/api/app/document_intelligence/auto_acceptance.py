@@ -1,0 +1,506 @@
+"""Auto-acceptance of OCR values: decide which OCR-read fields still need a human.
+
+Today's evidence policy sends every OCR-read field to a person. This module lets an OCR
+value stand **only when something independent confirms it**. It never edits machine
+evidence and never replaces human review: it only decides whether a field still needs
+one. The decision is computed on the fly from the project's current documents, so
+re-processing a document invalidates it automatically.
+
+Strategies (one switch, `Settings.auto_accept_strategy`)
+-------------------------------------------------------
+S0  none (every OCR field goes to a human; the previous behaviour)
+S1  confidence >= floor only                        (unsafe: shown to prove why)
+S2  S1 + format validators
+S3  S2 + corroboration by another document
+S4  S3, or a second OCR pass of the field's region that agrees (fields with no corroborator)
+S5  S4 + the application's own values (project company name / applicant name) as an
+    independent source, and a veto when they disagree
+S6  S5 + a disagreeing second pass vetoes any acceptance of a numeric field
+
+Mandatory rules (all corroborating strategies)
+----------------------------------------------
+1. Exact equality only, after field-specific canonicalisation (no similarity, no edit distance).
+2. Independence: a corroborating value comes from a different document (different file hash)
+   or from a second OCR pass with different preprocessing. A value never corroborates itself.
+3. No majority voting: a disagreement from any other document means no acceptance by corroboration.
+4. Person and company names are accepted only through corroboration (documents or the
+   application), never through a second pass of the same image.
+5. Mismatch handling stays with the existing rules: a value that is not accepted is simply
+   left to a human; this module never produces a NEEDS_CORRECTION by itself.
+"""
+
+from __future__ import annotations
+
+import re
+import unicodedata
+import uuid
+from collections.abc import Sequence
+from dataclasses import dataclass, field
+from datetime import date
+from enum import StrEnum
+from typing import Any
+
+from app.core.domain import DocumentType
+from app.document_intelligence.normalization.field_normalizer import (
+    DATE_RE,
+    canonicalize_numeric_text,
+    is_valid_business_number,
+    normalize_business_number,
+    normalize_date,
+    strip_legal_entity_markers,
+)
+
+AUTO_ACCEPT_POLICY_VERSION = "auto-accept-v1"
+
+
+class Strategy(StrEnum):
+    S0 = "S0"
+    S1 = "S1"
+    S2 = "S2"
+    S3 = "S3"
+    S4 = "S4"
+    S5 = "S5"
+    S6 = "S6"
+
+
+@dataclass(frozen=True)
+class Features:
+    validators: bool = False
+    corroboration: bool = False
+    second_pass: bool = False
+    application: bool = False
+    second_pass_veto: bool = False
+
+
+STRATEGY_FEATURES: dict[Strategy, Features] = {
+    Strategy.S0: Features(),
+    Strategy.S1: Features(),
+    Strategy.S2: Features(validators=True),
+    Strategy.S3: Features(validators=True, corroboration=True),
+    Strategy.S4: Features(validators=True, corroboration=True, second_pass=True),
+    Strategy.S5: Features(validators=True, corroboration=True, second_pass=True, application=True),
+    Strategy.S6: Features(
+        validators=True,
+        corroboration=True,
+        second_pass=True,
+        application=True,
+        second_pass_veto=True,
+    ),
+}
+
+
+def parse_strategy(value: str | None) -> Strategy:
+    try:
+        return Strategy((value or "S0").strip().upper())
+    except ValueError:
+        return Strategy.S0
+
+
+# ---------------------------------------------------------------------------
+# Per-field rule table (the one place that says what each field may rely on)
+# ---------------------------------------------------------------------------
+
+#: Minimum OCR confidence. Confidence is a floor, never a reason to accept on its own:
+#: calibration on the development set found no usable separation between correct and
+#: wrong values (see evaluation/phase_d/calibration.md), and the injection suite shows
+#: high-confidence errors. The floor equals the evidence policy's existing 0.90.
+CONFIDENCE_FLOOR = 0.90
+
+
+@dataclass(frozen=True)
+class FieldRule:
+    rule_id: str
+    group: str | None  # identity attribute shared across documents (corroboration)
+    second_pass: bool  # a second pass of the region may confirm it
+    application: str | None = None  # project attribute it can be compared with
+    floor: float = CONFIDENCE_FLOOR
+
+
+FIELD_RULES: dict[str, FieldRule] = {
+    "business_registration_number": FieldRule("BRN", "business_number", True),
+    "company_name": FieldRule("COMPANY", "company", False, "company_name"),
+    "workplace_name": FieldRule("COMPANY", "company", False, "company_name"),
+    "student_name": FieldRule("PERSON", "person", False, "applicant_name"),
+    "student_id": FieldRule("STUDENT_ID", "student_id", True),
+    "university_name": FieldRule("UNIVERSITY", "university", False),
+    "issue_date": FieldRule("DATE", None, True),
+    "valid_from": FieldRule("DATE", None, True),
+    "valid_until": FieldRule("DATE", None, True),
+    "gpa": FieldRule("GPA", None, True),
+    "gpa_scale": FieldRule("GPA", None, True),
+}
+
+# Fields whose value a second pass can re-read and compare as a number/date.
+SECOND_PASS_FIELDS = frozenset(name for name, rule in FIELD_RULES.items() if rule.second_pass)
+KNOWN_GPA_SCALES = frozenset({"4", "4.3", "4.5"})
+STUDENT_ID_RE = re.compile(r"^\d{8,10}$")
+_GPA_PAIR_RE = re.compile(r"(\d(?:\.\d{1,3})?)\s*/\s*(\d(?:\.\d{1,3})?)")
+
+
+# ---------------------------------------------------------------------------
+# Canonical keys
+# ---------------------------------------------------------------------------
+
+
+def _squash(text: str) -> str:
+    return "".join(unicodedata.normalize("NFKC", text).split())
+
+
+def canonical_key(group: str, value: str) -> str:
+    if group in ("business_number", "student_id"):
+        return "".join(ch for ch in value if ch.isdigit())
+    if group == "company":
+        core = strip_legal_entity_markers(unicodedata.normalize("NFKC", value))
+        return _squash(core)
+    return _squash(value)
+
+
+def parse_second_pass(field_name: str, text: str | None) -> str | None:
+    """Normalise a second-pass reading of a region the same way the first pass is."""
+    if not text:
+        return None
+    folded = canonicalize_numeric_text(text)
+    if field_name == "business_registration_number":
+        return normalize_business_number(folded)
+    if field_name == "student_id":
+        runs = re.findall(r"(?<!\d)\d{8,10}(?!\d)", folded)
+        return runs[0] if len(set(runs)) == 1 else None
+    if field_name in ("issue_date", "valid_from", "valid_until"):
+        found = [normalize_date(match.group(0)) for match in DATE_RE.finditer(folded)]
+        if not found or any(item is None for item in found):
+            return None
+        if len(found) == 1:
+            return found[0]
+        if len(found) == 2 and field_name in ("valid_from", "valid_until"):
+            # a validity range printed in one box: start, then end
+            return found[0] if field_name == "valid_from" else found[1]
+        return None
+    if field_name in ("gpa", "gpa_scale"):
+        tail = folded.split("평점평균", 1)[-1]
+        match = _GPA_PAIR_RE.search(tail)
+        if not match:
+            return None
+        text_value = match.group(1) if field_name == "gpa" else match.group(2)
+        try:
+            from decimal import Decimal
+
+            return format(Decimal(text_value).normalize(), "f")
+        except Exception:
+            return None
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Inputs / outputs
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class SecondPassInput:
+    text: str | None
+    normalized: str | None
+    confidence: float | None
+    preprocess: str = ""
+
+
+@dataclass(frozen=True)
+class FieldInput:
+    document_id: uuid.UUID
+    checksum: str
+    document_type: DocumentType
+    field_name: str
+    value: str | None  # machine normalized value
+    confidence: float | None
+    ocr: bool  # the value was read by OCR (not embedded text)
+    needs_review: bool
+    extraction_method: str | None = None
+    second_pass: SecondPassInput | None = None
+    has_current_review: bool = False
+
+
+@dataclass(frozen=True)
+class ProjectContext:
+    company_name: str | None = None
+    applicant_name: str | None = None
+    reference_date: date | None = None
+
+
+@dataclass(frozen=True)
+class AutoDecision:
+    accepted: bool
+    strategy: str
+    policy_version: str = AUTO_ACCEPT_POLICY_VERSION
+    rule_id: str | None = None
+    sources: tuple[str, ...] = ()
+    corroborating_document_ids: tuple[uuid.UUID, ...] = ()
+    second_pass_value: str | None = None
+    reason: str | None = None  # why it was NOT accepted
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "accepted": self.accepted,
+            "strategy": self.strategy,
+            "policy_version": self.policy_version,
+            "rule_id": self.rule_id,
+            "sources": list(self.sources),
+            "corroborating_document_ids": [str(item) for item in self.corroborating_document_ids],
+            "second_pass_value": self.second_pass_value,
+            "reason": self.reason,
+        }
+
+
+# ---------------------------------------------------------------------------
+# Validators
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class _Index:
+    by_doc: dict[uuid.UUID, dict[str, FieldInput]] = field(default_factory=dict)
+
+    def sibling(self, document_id: uuid.UUID, name: str) -> FieldInput | None:
+        return self.by_doc.get(document_id, {}).get(name)
+
+
+def _valid_format(item: FieldInput, index: _Index, context: ProjectContext) -> str | None:
+    """None when the value passes its format validator, else the reason."""
+    value = item.value or ""
+    name = item.field_name
+    if name == "business_registration_number":
+        if not (len(value) == 10 and is_valid_business_number(value)):
+            return "FORMAT_BRN_CHECKSUM"
+        return None
+    if name in ("issue_date", "valid_from", "valid_until"):
+        try:
+            parsed = date.fromisoformat(value)
+        except ValueError:
+            return "FORMAT_DATE_INVALID"
+        if not (1990 <= parsed.year <= 2100):
+            return "FORMAT_DATE_RANGE"
+        if name == "issue_date" and context.reference_date and parsed > context.reference_date:
+            return "FORMAT_ISSUE_DATE_AFTER_SUBMISSION"
+        if name in ("valid_from", "valid_until"):
+            other_name = "valid_until" if name == "valid_from" else "valid_from"
+            other = index.sibling(item.document_id, other_name)
+            if other and other.value:
+                try:
+                    other_date = date.fromisoformat(other.value)
+                except ValueError:
+                    return "FORMAT_DATE_INVALID"
+                start, end = (parsed, other_date) if name == "valid_from" else (other_date, parsed)
+                if start > end:
+                    return "FORMAT_VALIDITY_ORDER"
+        return None
+    if name in ("gpa", "gpa_scale"):
+        scale = index.sibling(item.document_id, "gpa_scale")
+        score = index.sibling(item.document_id, "gpa")
+        if not (scale and scale.value and score and score.value):
+            return "FORMAT_GPA_PAIR_MISSING"
+        if scale.value not in KNOWN_GPA_SCALES:
+            return "FORMAT_GPA_SCALE_UNKNOWN"
+        try:
+            if float(score.value) > float(scale.value) or float(score.value) < 0:
+                return "FORMAT_GPA_ABOVE_SCALE"
+        except ValueError:
+            return "FORMAT_GPA_INVALID"
+        return None
+    if name == "student_id":
+        return None if STUDENT_ID_RE.match(value) else "FORMAT_STUDENT_ID"
+    return None  # names / university: no format validator (corroboration only)
+
+
+HAS_VALIDATOR = frozenset(
+    {
+        "business_registration_number",
+        "issue_date",
+        "valid_from",
+        "valid_until",
+        "gpa",
+        "gpa_scale",
+        "student_id",
+    }
+)
+
+
+# ---------------------------------------------------------------------------
+# Decision
+# ---------------------------------------------------------------------------
+
+
+def _no(strategy: Strategy, reason: str, rule_id: str | None = None) -> AutoDecision:
+    return AutoDecision(False, strategy.value, rule_id=rule_id, reason=reason)
+
+
+def decide(
+    fields: Sequence[FieldInput],
+    context: ProjectContext,
+    strategy: Strategy,
+) -> dict[tuple[uuid.UUID, str], AutoDecision]:
+    """Decision for every OCR field of the project. Fields that are not OCR-read, have no
+    value, were marked for review by the extractor, or have a human review are not decided."""
+    features = STRATEGY_FEATURES[strategy]
+    index = _Index()
+    for item in fields:
+        index.by_doc.setdefault(item.document_id, {})[item.field_name] = item
+    decisions: dict[tuple[uuid.UUID, str], AutoDecision] = {}
+    if strategy == Strategy.S0:
+        return decisions
+
+    for item in fields:
+        if not item.ocr or item.value is None or item.has_current_review:
+            continue
+        key = (item.document_id, item.field_name)
+        rule = FIELD_RULES.get(item.field_name)
+        if rule is None:
+            decisions[key] = _no(strategy, "NO_RULE_FOR_FIELD")
+            continue
+        if item.needs_review:
+            decisions[key] = _no(strategy, "EXTRACTION_MARKED_FOR_REVIEW", rule.rule_id)
+            continue
+        if item.extraction_method and "semantic" in item.extraction_method:
+            decisions[key] = _no(strategy, "SEMANTIC_INFERENCE", rule.rule_id)
+            continue
+        if item.confidence is None or item.confidence < rule.floor:
+            decisions[key] = _no(strategy, "CONFIDENCE_BELOW_FLOOR", rule.rule_id)
+            continue
+
+        # S1: confidence only (shown to be unsafe by the injection suite)
+        if strategy == Strategy.S1:
+            decisions[key] = AutoDecision(
+                True, strategy.value, rule_id=f"{rule.rule_id}:CONFIDENCE"
+            )
+            continue
+
+        if features.validators and item.field_name in HAS_VALIDATOR:
+            problem = _valid_format(item, index, context)
+            if problem:
+                decisions[key] = _no(strategy, problem, rule.rule_id)
+                continue
+
+        if not features.corroboration:
+            # S2: confidence + format only, for the fields that have a validator
+            if item.field_name in HAS_VALIDATOR:
+                decisions[key] = AutoDecision(
+                    True, strategy.value, rule_id=f"{rule.rule_id}:FORMAT"
+                )
+            else:
+                decisions[key] = _no(strategy, "NO_FORMAT_VALIDATOR", rule.rule_id)
+            continue
+
+        decisions[key] = _decide_corroborated(
+            item, rule, fields, index, context, strategy, features
+        )
+    return decisions
+
+
+def _group_values(
+    item: FieldInput,
+    rule: FieldRule,
+    fields: Sequence[FieldInput],
+    index: _Index,
+    context: ProjectContext,
+    features: Features,
+) -> tuple[list[FieldInput], list[FieldInput]]:
+    """(agreeing, disagreeing) valid values of the same attribute on *other* documents."""
+    assert rule.group is not None and item.value is not None
+    mine = canonical_key(rule.group, item.value)
+    agreeing: list[FieldInput] = []
+    disagreeing: list[FieldInput] = []
+    for other in fields:
+        other_rule = FIELD_RULES.get(other.field_name)
+        if (
+            other.document_id == item.document_id
+            or other.checksum == item.checksum
+            or other_rule is None
+            or other_rule.group != rule.group
+            or other.value is None
+        ):
+            continue
+        if (
+            other.field_name in HAS_VALIDATOR
+            and features.validators
+            and _valid_format(other, index, context)
+        ):
+            continue  # an unreadable/invalid value from another document is noise, not evidence
+        if canonical_key(rule.group, other.value) == mine:
+            agreeing.append(other)
+        else:
+            disagreeing.append(other)
+    return agreeing, disagreeing
+
+
+def _decide_corroborated(
+    item: FieldInput,
+    rule: FieldRule,
+    fields: Sequence[FieldInput],
+    index: _Index,
+    context: ProjectContext,
+    strategy: Strategy,
+    features: Features,
+) -> AutoDecision:
+    assert item.value is not None
+    # ---- application value (independent source, S5+) ---------------------------------------
+    reference = None
+    if features.application and rule.application:
+        reference = (
+            context.company_name if rule.application == "company_name" else context.applicant_name
+        )
+    if reference and rule.group:
+        if canonical_key(rule.group, reference) != canonical_key(rule.group, item.value):
+            return _no(strategy, "CONFLICTS_WITH_APPLICATION_VALUE", rule.rule_id)
+
+    # ---- second-pass veto (S6) ----------------------------------------------------------------
+    second = item.second_pass
+    # Two independent reads that produce the identical value are the evidence; the second read's
+    # confidence is not used (crop-edge noise drags it down and it tells nothing extra).
+    second_value = second.normalized if second else None
+    if (
+        features.second_pass_veto
+        and rule.second_pass
+        and second
+        and second.normalized
+        and second_value != item.value
+    ):
+        return _no(strategy, "SECOND_PASS_DISAGREES", rule.rule_id)
+
+    sources: list[str] = []
+    corroborators: list[uuid.UUID] = []
+    if rule.group:
+        agreeing, disagreeing = _group_values(item, rule, fields, index, context, features)
+        if reference:
+            # The application's own value is an independent source: an exact match accepts the
+            # value even if some other document disagrees (that document is what gets reviewed).
+            sources.append("application")
+            if agreeing and not disagreeing:
+                sources.append("documents")
+                corroborators = sorted({other.document_id for other in agreeing}, key=str)
+        else:
+            if disagreeing:
+                return _no(strategy, "DISAGREES_WITH_OTHER_DOCUMENT", rule.rule_id)
+            if agreeing:
+                sources.append("documents")
+                corroborators = sorted({other.document_id for other in agreeing}, key=str)
+    if sources:
+        return AutoDecision(
+            True,
+            strategy.value,
+            rule_id=f"{rule.rule_id}:{'+'.join(s.upper() for s in sources)}",
+            sources=tuple(sources),
+            corroborating_document_ids=tuple(corroborators),
+        )
+
+    # ---- second-pass consensus, only where nothing else can confirm it (S4+) --------------
+    if (
+        features.second_pass
+        and rule.second_pass
+        and second_value is not None
+        and second_value == item.value
+    ):
+        return AutoDecision(
+            True,
+            strategy.value,
+            rule_id=f"{rule.rule_id}:SECOND_PASS",
+            sources=("second_pass",),
+            second_pass_value=second_value,
+        )
+    return _no(strategy, "NO_INDEPENDENT_CONFIRMATION", rule.rule_id)

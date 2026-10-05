@@ -59,3 +59,24 @@ class OCRDocumentResult:
     @property
     def page_count(self) -> int:
         return len(self.pages)
+
+
+@dataclass
+class RegionRequest:
+    """Ask the OCR provider to re-read one field's region, in the pixel space of the
+    first-pass page image (the same space as the field's evidence bounding box)."""
+
+    field_name: str
+    page_number: int
+    bbox: BoundingBox
+
+
+@dataclass
+class RegionReading:
+    """A second, independent reading of one region (different crop, scale and contrast)."""
+
+    field_name: str
+    page_number: int
+    text: str | None
+    confidence: float | None
+    preprocess: str
