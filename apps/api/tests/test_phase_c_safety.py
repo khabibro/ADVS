@@ -7,8 +7,9 @@ from datetime import date
 
 import pytest
 
-from app.core.domain import DocumentType, OverallStatus, ProcessingStatus
+from app.core.domain import DocumentType, OverallStatus, ProcessingStatus, RuleType, Severity
 from app.document_intelligence.evidence_sufficiency import (
+    EffectiveValueSource,
     EvidenceAssessmentReason,
     EvidenceAssessmentState,
 )
@@ -21,6 +22,7 @@ from app.document_intelligence.validation.submission import (
     DocumentSnapshot,
     FieldSnapshot,
     RequirementSnapshot,
+    SubmissionRule,
     SubmissionVerificationEngine,
     VerificationContext,
 )
@@ -107,6 +109,7 @@ def test_submission_reports_checksum_issue_as_review_required_never_ready_or_cor
         True,
         EvidenceAssessmentState.REVIEW_REQUIRED,
         (EvidenceAssessmentReason.EXTRACTION_MARKED_FOR_REVIEW,),
+        EffectiveValueSource.UNAVAILABLE,
         extraction_method=BRN_CHECKSUM_FAILED_METHOD,
     )
     document = DocumentSnapshot(
@@ -132,3 +135,42 @@ def test_submission_reports_checksum_issue_as_review_required_never_ready_or_cor
     )
     assert result.status == OverallStatus.REVIEW_REQUIRED
     assert [i.code for i in result.issues] == ["BUSINESS_NUMBER_CHECKSUM_FAILED"]
+
+
+def test_checksum_issue_is_reported_under_a_configured_required_field_rule() -> None:
+    from app.core.domain import RuleType, Severity
+    from app.document_intelligence.validation.engine import ConfiguredRule
+
+    gated = policy_gated_fields([_brn_value("123-45-67890")])[0]
+    rules = [ConfiguredRule(RuleType.REQUIRED_FIELD, Severity.WARNING, {"field": "issue_date"})]
+    issues = ValidationEngine().validate_document(
+        None, DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE, [gated], configured_rules=rules
+    )
+    assert "BUSINESS_NUMBER_CHECKSUM_FAILED" in {i.code for i in issues if not i.passed}
+
+
+def test_human_confirmed_value_clears_the_checksum_issue() -> None:
+    snapshot = FieldSnapshot(
+        uuid.uuid4(),
+        "business_registration_number",
+        "1234567890",
+        True,
+        True,
+        EvidenceAssessmentState.SUFFICIENT,
+        (),
+        EffectiveValueSource.HUMAN_CONFIRMED,
+        extraction_method=BRN_CHECKSUM_FAILED_METHOD,
+    )
+    result = SubmissionVerificationEngine()._unresolved_field(
+        SubmissionRule(uuid.uuid4(), RuleType.REQUIRED_FIELD, Severity.WARNING, {}),
+        DocumentSnapshot(
+            uuid.uuid4(),
+            DocumentType.BUSINESS_REGISTRATION_CERTIFICATE,
+            ProcessingStatus.COMPLETED,
+            "x",
+            {},
+        ),
+        snapshot,
+        "business_registration_number",
+    )
+    assert result is None
