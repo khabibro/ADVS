@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2] / "evaluation" / "phase_d" / "strategies"
-STRATS = ["S0", "S1", "S2", "S3", "S4", "S5", "S6"]
+STRATS = ["S0", "S1", "S2", "S3", "S4", "S5", "S6", "S7"]
 
 
 def load(path: Path):
