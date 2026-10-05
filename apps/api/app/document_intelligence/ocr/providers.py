@@ -284,6 +284,10 @@ class PaddleOCRProvider(OCRProvider):
                 page.page_number = idx
                 page.duration_ms = int((time.perf_counter() - page_start) * 1000)
                 page.metadata["transform"] = {**transform, **page.metadata.get("transform", {})}
+                # A page can render below the configured DPI (budget fit to the
+                # page's own raster); report what was actually used.
+                if "effective_render_dpi" in transform:
+                    page.metadata["render_dpi"] = transform["effective_render_dpi"]
                 pages.append(page)
         except OCRProviderError:
             raise
