@@ -151,6 +151,20 @@ def aggregate_status(issues: list[VerificationIssue]) -> OverallStatus:
     return OverallStatus.READY
 
 
+def _same_name(actual: str, expected: str, rule_type: RuleType) -> bool:
+    """Exact equality of the submitter's own name/company against a document value, after
+    canonicalisation only (NFKC, whitespace; for companies also the legal-entity marker, so
+    주식회사 X / (주)X / ㈜X / X(주) are one company). No similarity measure."""
+
+    def key(value: str) -> str:
+        text = normalize_lexical_text(value)
+        if rule_type == RuleType.COMPANY_NAME_MATCH:
+            text = strip_legal_entity_markers(text)
+        return "".join(text.split())
+
+    return key(actual) == key(expected)
+
+
 def _comparison_key(value: str, value_type: str) -> str:
     """Comparison-only key.
 
@@ -578,7 +592,11 @@ class SubmissionVerificationEngine:
             unresolved = self._unresolved_field(rule, document, snapshot, name)
             if unresolved:
                 results.append(unresolved)
-            elif snapshot and snapshot.normalized_value != expected:
+            elif (
+                snapshot
+                and snapshot.normalized_value is not None
+                and not _same_name(snapshot.normalized_value, expected, rule_type)
+            ):
                 issue = VerificationIssue(
                     code,
                     OverallStatus.NEEDS_CORRECTION,
