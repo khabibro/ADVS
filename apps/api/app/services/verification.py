@@ -284,6 +284,7 @@ class SubmissionVerificationService:
                     assessment_reasons=effective.assessment.reasons,
                     effective_source=effective.source,
                     review_id=effective.review.id if effective.review else None,
+                    extraction_method=machine.extraction_method if machine else None,
                 )
             snapshots.append(
                 DocumentSnapshot(

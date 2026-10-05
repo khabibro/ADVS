@@ -73,14 +73,14 @@ async def test_paddle_normalizes_tuple_output_without_leaking_raw_shape(tmp_path
         [
             [
                 ([[0, 0], [100, 0], [100, 20], [0, 20]], ("사업자등록증", 0.97)),
-                ([[0, 30], [160, 30], [160, 50], [0, 50]], ("사업자등록번호 123-45-67890", 0.94)),
+                ([[0, 30], [160, 30], [160, 50], [0, 50]], ("사업자등록번호 123-45-67891", 0.94)),
             ]
         ]
     )
 
     pages = await provider.extract_document(path, "image/png")
 
-    assert pages[0].text == "사업자등록증\n사업자등록번호 123-45-67890"
+    assert pages[0].text == "사업자등록증\n사업자등록번호 123-45-67891"
     assert pages[0].confidence == pytest.approx(0.955)
     assert pages[0].metadata["provider"] == "paddle"
     assert pages[0].metadata["rec_model_name"] == "korean_PP-OCRv5_mobile_rec"
@@ -143,7 +143,7 @@ async def test_paddle_fixture_flows_through_classifier_extractor_validator(tmp_p
                 ([[0, 60], [140, 60], [140, 80], [0, 80]], ("대표자 이영희", 0.99)),
                 (
                     [[0, 90], [220, 90], [220, 110], [0, 110]],
-                    ("사업자등록번호 123-45-67890", 0.99),
+                    ("사업자등록번호 123-45-67891", 0.99),
                 ),
             ]
         ]

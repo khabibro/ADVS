@@ -101,6 +101,30 @@ def normalize_business_number(value: str | None) -> str | None:
     return "".join(matches[0].groups()) if len(matches) == 1 else None
 
 
+_BUSINESS_NUMBER_WEIGHTS = (1, 3, 7, 1, 3, 7, 1, 3, 5)
+
+
+def is_valid_business_number(value: str | None) -> bool:
+    """Check digit of a 10-digit 사업자등록번호 (hyphens allowed).
+
+    The commonly published algorithm: weights 1,3,7,1,3,7,1,3,5 on the first
+    nine digits, plus floor(d9 * 5 / 10); the check digit is
+    (10 - total mod 10) mod 10. Taken from public descriptions, not an official
+    specification -- confirm against an official source before relying on it.
+    """
+    if not value:
+        return False
+    digits = normalize_business_number(value)
+    if digits is None:
+        return False
+    numbers = [int(character) for character in digits]
+    total = sum(
+        digit * weight for digit, weight in zip(numbers[:9], _BUSINESS_NUMBER_WEIGHTS, strict=True)
+    )
+    total += numbers[8] * 5 // 10
+    return (10 - total % 10) % 10 == numbers[9]
+
+
 def normalize_gpa(value: str | None) -> str | None:
     """Returns the GPA numerator as a canonical decimal string.
 
