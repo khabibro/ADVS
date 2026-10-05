@@ -268,5 +268,7 @@ class SubmissionVerificationRead(BaseModel):
     evaluated_at: datetime | None
     is_current: bool
     issues: list[VerificationIssueRead]
+    # Informational items that never change the status (e.g. DUPLICATE_UPLOAD_IGNORED).
+    notices: list[VerificationIssueRead] = []
     rule_results: list[RuleEvaluationRead]
     disclaimer: str

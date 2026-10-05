@@ -146,6 +146,10 @@ def _verification_read(
             VerificationIssueRead.model_validate(issue, from_attributes=True)
             for issue in (result.issues if result else ())
         ],
+        notices=[
+            VerificationIssueRead.model_validate(issue, from_attributes=True)
+            for issue in (result.notices if result else ())
+        ],
         rule_results=[
             RuleEvaluationRead.model_validate(item, from_attributes=True)
             for item in (result.rule_results if result else ())

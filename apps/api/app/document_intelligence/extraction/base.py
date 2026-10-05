@@ -959,6 +959,45 @@ def _followed_by_issuer(observations: list[_RowObservation], index: int) -> bool
     return False
 
 
+_CERTIFICATION_SENTENCE_RE = re.compile(r"증명합니다|확인합니다|증명함|확인함|증명하여|증명하오")
+_CERTIFICATION_LOOKBACK = 2
+
+
+def _is_issuer_block_date(source: ExtractionInput, candidate: ExtractionCandidate) -> bool:
+    """True when the bare issue date is read from *embedded PDF text* and sits in the issuer
+    block: a certification sentence ("위의 사실을 증명합니다.") directly above it, the issuer
+    (institution or signing officer) just below, and no other date between them.
+
+    A scan or photo never qualifies (OCR can misread a date digit and nothing independent
+    confirms it), and neither does a date that merely resembles the pattern elsewhere on the
+    page, such as an enrolment-period date.
+    """
+    if isinstance(source, str) or not candidate.evidence:
+        return False
+    if any(item.source_kind != "embedded_pdf_text" for item in candidate.evidence):
+        return False
+    observations = _source_observations(source)
+    date_index = next(
+        (
+            index
+            for index, observation in enumerate(observations)
+            if canonicalize_numeric_text(observation.row.text).strip() == candidate.value
+        ),
+        None,
+    )
+    if date_index is None:
+        return False
+    page_number = observations[date_index].row.page_number
+    above = observations[max(0, date_index - _CERTIFICATION_LOOKBACK) : date_index]
+    if not any(
+        item.row.page_number == page_number
+        and _CERTIFICATION_SENTENCE_RE.search(_compact(item.row.text))
+        for item in above
+    ):
+        return False
+    return _followed_by_issuer(observations, date_index)
+
+
 def _has_unresolved_label_before_candidate(
     source: ExtractionInput, labels: list[str], candidate: ExtractionCandidate
 ) -> bool:
@@ -1097,6 +1136,12 @@ class BaseDocumentExtractor(ABC):
             return labelled
         if _has_unresolved_label_before_candidate(text, labels, candidate):
             return labelled
+        if _is_issuer_block_date(text, candidate):
+            # Digital text, one bare date, between the certification sentence and the issuer
+            # line: not an inference. (Owner decision, Phase D.)
+            return self._value(
+                "issue_date", candidate.value, normalized, "issuer_block_issue_date", candidate
+            )
         return replace(
             self._value(
                 "issue_date", candidate.value, normalized, "document_semantic_issue_date", candidate

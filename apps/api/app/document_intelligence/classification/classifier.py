@@ -178,6 +178,11 @@ class ClassificationResult:
     needs_review: bool
     classifier_version: str = CLASSIFIER_VERSION
     alternatives: list[ClassificationAlternative] = field(default_factory=list)
+    # Set when the pages of one file are different supported document types (see
+    # DocumentProcessingService._split_multi_document); fields are then extracted from the
+    # first type's pages only and the file always goes to review.
+    multiple_documents_in_file: bool = False
+    page_types: dict[str, str] | None = None
 
 
 def _unknown(
