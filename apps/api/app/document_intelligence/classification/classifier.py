@@ -136,6 +136,11 @@ SIGNALS: dict[DocumentType, list[Signal]] = {
         Signal("성적증명서", TITLE),
         Signal("평점평균", IDENTIFIER),
         Signal("총평점", IDENTIFIER),
+        # Layout signals of the grade table itself, for scans whose letter-spaced title
+        # ("성 적 증 명 서") is misread: the per-semester "취득학점" line and the
+        # "평점평균 ... 백분율" summary appear on transcripts and on no other supported type.
+        Signal("취득학점", IDENTIFIER),
+        Signal("백분율", SUPPORT),
         Signal("학번", SUPPORT),
         Signal("GPA", SUPPORT),
     ],
