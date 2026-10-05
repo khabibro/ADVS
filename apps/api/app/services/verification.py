@@ -154,7 +154,16 @@ class SubmissionVerificationService:
         if not evaluation_date_value:
             return StoredSubmissionVerification(None, None, False)
         rule_results = tuple(self._row_to_rule_result(row) for row in rows)
-        issues = tuple(item.issue for item in rule_results if item.issue is not None)
+        issues = tuple(
+            item.issue
+            for item in rule_results
+            if item.issue is not None and item.outcome != RuleOutcome.NOTICE
+        )
+        notices = tuple(
+            item.issue
+            for item in rule_results
+            if item.issue is not None and item.outcome == RuleOutcome.NOTICE
+        )
         result = SubmissionVerificationResult(
             project_id=project.id,
             workflow_id=project.checklist_id,
@@ -162,6 +171,7 @@ class SubmissionVerificationService:
             evaluation_date=date.fromisoformat(str(evaluation_date_value)),
             issues=issues,
             rule_results=rule_results,
+            notices=notices,
         )
         evaluated_at = rows[0].created_at
         return StoredSubmissionVerification(result, evaluated_at, True)
@@ -306,6 +316,9 @@ class SubmissionVerificationService:
                     classification_needs_review=bool(
                         (row.classification_meta or {}).get("needs_review")
                     ),
+                    multiple_documents_in_file=bool(
+                        (row.classification_meta or {}).get("multiple_documents_in_file")
+                    ),
                     created_at=row.created_at.isoformat(),
                 )
             )
@@ -375,12 +388,13 @@ class SubmissionVerificationService:
                     document_id=item.document_id,
                     project_id=project.id,
                     rule_type=item.rule_type.value,
-                    passed=item.outcome in {RuleOutcome.PASS, RuleOutcome.NOT_APPLICABLE},
+                    passed=item.outcome
+                    in {RuleOutcome.PASS, RuleOutcome.NOT_APPLICABLE, RuleOutcome.NOTICE},
                     severity=(
                         Severity.ERROR.value
                         if issue and issue.status_effect == OverallStatus.NEEDS_CORRECTION
                         else Severity.WARNING.value
-                        if issue
+                        if issue and issue.status_effect != OverallStatus.READY
                         else Severity.INFO.value
                     ),
                     expected_value=None,
@@ -412,7 +426,7 @@ class SubmissionVerificationService:
         related_document_type = self._document_type(details.get("related_document_type"))
         rule_id = self._uuid(details.get("rule_id"))
         issue = None
-        if outcome in {RuleOutcome.FAIL, RuleOutcome.UNRESOLVED}:
+        if outcome in {RuleOutcome.FAIL, RuleOutcome.UNRESOLVED, RuleOutcome.NOTICE}:
             issue = VerificationIssue(
                 code=row.code,
                 status_effect=OverallStatus(

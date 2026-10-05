@@ -8,7 +8,7 @@ from sqlalchemy import delete, or_, update
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.domain import ProcessingStatus
+from app.core.domain import DocumentType, ProcessingStatus, RuleType, Severity
 from app.core.errors import PROCESSING_ERROR_MESSAGES, ProcessingErrorCode
 from app.document_intelligence.auto_acceptance import (
     SECOND_PASS_FIELDS,
@@ -149,8 +149,14 @@ class DocumentProcessingService:
                 },
             )
 
+            extraction_source = source_result
+            if source_result.page_count > 1:
+                split = self._split_multi_document(source_result)
+                if split is not None:
+                    classification, extraction_source = split
+
             self._set_status(db, document, ProcessingStatus.EXTRACTING)
-            fields = self.extractor.extract(classification.predicted_type, source_result)
+            fields = self.extractor.extract(classification.predicted_type, extraction_source)
             await self._second_pass(document, source_result, fields)
             logger.info(
                 "extraction_completed",
@@ -159,6 +165,20 @@ class DocumentProcessingService:
 
             self._set_status(db, document, ProcessingStatus.VALIDATING)
             issues, project = self._calculate_validation(db, document, classification, fields)
+            if classification.multiple_documents_in_file and not any(
+                item.code == "MULTIPLE_DOCUMENTS_IN_FILE" for item in issues
+            ):
+                issues.append(
+                    ValidationIssue(
+                        RuleType.EXPECTED_DOCUMENT_TYPE,
+                        False,
+                        Severity.WARNING,
+                        None,
+                        None,
+                        "한 파일에 서로 다른 종류의 서류가 들어 있어 확인이 필요합니다.",
+                        "MULTIPLE_DOCUMENTS_IN_FILE",
+                    )
+                )
 
             canonical_result = CanonicalDocumentResult.compose(
                 document_id=document.id,
@@ -254,6 +274,40 @@ class DocumentProcessingService:
                 "preprocess": reading.preprocess,
                 "first_pass_value": values.get(reading.field_name),
             }
+
+    def _split_multi_document(
+        self, source_result: OCRDocumentResult
+    ) -> tuple[ClassificationResult, OCRDocumentResult] | None:
+        """Classify each page. When pages of one file are different *supported* types
+        (e.g. a 사업자등록증 followed by a 납세증명서), flag the file and extract only from
+        the pages of the first type, so fields from different documents are never merged.
+        Unclassifiable pages (an unrelated page, a blank page) are ignored."""
+        page_types: dict[int, DocumentType] = {}
+        for page in source_result.pages:
+            if is_meaningful_text(page.text):
+                page_types[page.page_number] = self.classifier.classify(page.text).predicted_type
+        supported = {item for item in page_types.values() if item != DocumentType.UNKNOWN}
+        if len(supported) < 2:
+            return None
+        first = next(item for _, item in sorted(page_types.items()) if item != DocumentType.UNKNOWN)
+        pages = [page for page in source_result.pages if page_types.get(page.page_number) == first]
+        restricted = OCRDocumentResult(
+            provider=source_result.provider,
+            pages=pages,
+            assembled_text=assemble_document_text(pages),
+        )
+        return (
+            ClassificationResult(
+                predicted_type=first,
+                confidence_score=0.0,
+                score=0.0,
+                evidence=[],
+                needs_review=True,
+                multiple_documents_in_file=True,
+                page_types={str(number): str(item) for number, item in sorted(page_types.items())},
+            ),
+            restricted,
+        )
 
     def _set_status(self, db: Session, document: Document, status: ProcessingStatus) -> None:
         document.processing_status = status
@@ -459,6 +513,8 @@ class DocumentProcessingService:
             "evidence": classification.evidence,
             "needs_review": classification.needs_review,
             "classifier_version": classification.classifier_version,
+            "multiple_documents_in_file": classification.multiple_documents_in_file,
+            "page_types": classification.page_types,
             "alternatives": [
                 {"document_type": str(alt.document_type), "score": alt.score}
                 for alt in classification.alternatives

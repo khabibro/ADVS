@@ -61,6 +61,9 @@ class RuleOutcome(StrEnum):
     FAIL = "FAIL"
     UNRESOLVED = "UNRESOLVED"
     NOT_APPLICABLE = "NOT_APPLICABLE"
+    NOTICE = (
+        "NOTICE"  # informational (e.g. a duplicate upload was ignored); never changes the status
+    )
 
 
 class Severity(StrEnum):

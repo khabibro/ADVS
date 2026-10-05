@@ -133,4 +133,16 @@ def validate_effective_document(
         configured_document_rules(db, project, document_type),
         submission_reference_date(submission),
     )
+    if (document.classification_meta or {}).get("multiple_documents_in_file"):
+        issues.append(
+            ValidationIssue(
+                RuleType.EXPECTED_DOCUMENT_TYPE,
+                False,
+                Severity.WARNING,
+                None,
+                None,
+                "한 파일에 서로 다른 종류의 서류가 들어 있어 확인이 필요합니다.",
+                "MULTIPLE_DOCUMENTS_IN_FILE",
+            )
+        )
     return issues, project
