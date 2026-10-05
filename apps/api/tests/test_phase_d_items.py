@@ -316,3 +316,15 @@ def test_submitter_company_comparison_ignores_legal_entity_notation_only() -> No
     assert _same_name("가온정밀(주)", "㈜가온정밀", rule)
     assert not _same_name("(주)가온정밀", "주식회사 가온정믹", rule)
     assert not _same_name("류하늘", "류하눌", RuleType.APPLICANT_NAME_MATCH)
+
+
+def test_enrollment_certificate_with_a_misread_title_classifies_from_its_period_field() -> None:
+    text = "재 학 증\n등명서\n성명 : 류하늘\n재학기간 : 2025년 03월 02일 입학\n학번 : 2025123456\n소속 : 공과대학 기계공학과\n한국샘플대학교 총장"
+    assert DocumentClassifier().classify(text).predicted_type == DocumentType.ENROLLMENT_CERTIFICATE
+
+
+def test_graduation_certificate_listing_the_enrolment_period_stays_a_graduation_certificate() -> (
+    None
+):
+    text = "졸업증명서\n성명 류하늘\n재학기간 2021-03-02 ~ 2025-02-20\n학과 기계공학과\n졸업일자 2025-02-20\n학위 학사\n한국샘플대학교"
+    assert DocumentClassifier().classify(text).predicted_type == DocumentType.GRADUATION_CERTIFICATE

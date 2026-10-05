@@ -128,6 +128,9 @@ SIGNALS: dict[DocumentType, list[Signal]] = {
     DocumentType.ENROLLMENT_CERTIFICATE: [
         Signal("재학증명서", TITLE),
         Signal("재학여부", IDENTIFIER),
+        # "재학기간" (period of enrolment) is a field of the enrolment certificate itself;
+        # it lets a scan whose letter-spaced title was misread still be recognised.
+        Signal("재학기간", IDENTIFIER),
         Signal("학번", SUPPORT),
         Signal("학과", SUPPORT),
         Signal("대학교", SUPPORT),
