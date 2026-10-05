@@ -116,6 +116,11 @@ SIGNALS: dict[DocumentType, list[Signal]] = {
     DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE: [
         Signal("4대사회보험료완납증명서", TITLE),
         Signal("사회보험료완납증명서", TITLE),
+        # 고용·산재보험료 완납증명원 is the 근로복지공단 title form (원, not 서);
+        # its title is printed on its own line, apart from the 보험료 words.
+        Signal("완납증명원", TITLE),
+        Signal("고용보험료", SUPPORT),
+        Signal("산재보험료", SUPPORT),
         Signal("사업장명", IDENTIFIER),
         Signal("사업자등록번호", SUPPORT),
         Signal("유효기한", SUPPORT),
