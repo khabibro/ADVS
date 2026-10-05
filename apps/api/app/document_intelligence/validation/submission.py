@@ -879,7 +879,8 @@ class SubmissionVerificationEngine:
         checksum_failed = (
             snapshot is not None
             and snapshot.extraction_method == BRN_CHECKSUM_FAILED_METHOD
-            and snapshot.effective_source == EffectiveValueSource.MACHINE
+            and snapshot.effective_source
+            not in (EffectiveValueSource.HUMAN_CONFIRMED, EffectiveValueSource.HUMAN_CORRECTED)
         )
         issue = VerificationIssue(
             code=(
