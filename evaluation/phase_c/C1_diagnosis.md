@@ -52,3 +52,7 @@ Every OCR field is gated to human review by policy, so scanned and image submiss
 - **C-1**: add the real title form `완납증명원` (+ supporting `고용보험료`/`산재보험료` labels) → #2, #8.
 - **C-2** (by cause): value-cell leading colon (#1); parenthesised labels (#3); two-line stacked labels (#4); `소속` label + college-prefix handling with affiliation-before-major priority (#7); issuer-line university (#6); cumulative GPA (row after `총 취득학점`; header-table cell) (#5).
 - **Not fixed (documented)**: #9 evidence policy (forbidden scope), #10 scorer vs NFKC, #11 design, and all OCR-recognition items.
+
+## 6. Addendum after B1 (correction)
+
+§2/#9 predicted that the untrusted bare issue date would block READY on all digital sets. B1 showed this is only true for the **student** certificates: `issue_date` is a default required field of 재학증명서/성적증명서, but not of the four business documents, so B01/B02 reach READY once the other causes are fixed. S01/S10 remain REVIEW_REQUIRED solely because of `issue_date` (`SEMANTIC_INFERENCE`, effective value UNAVAILABLE).
