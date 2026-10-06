@@ -127,6 +127,11 @@ class FieldRule:
     application: str | None = None  # project attribute it can be compared with
     floor: float = CONFIDENCE_FLOOR
     name_veto: bool = False  # a second pass may contradict (never confirm) this value
+    # May a second pass of the same image confirm this value on its own? Owner decision after
+    # Phase D2: no for the decision-driving fields (a misread repeated by both passes could flip
+    # a decision); they need another document or the application value. The second pass is still
+    # read for them and still vetoes (S6/S7).
+    confirm_by_second_pass: bool = True
 
 
 FIELD_RULES: dict[str, FieldRule] = {
@@ -134,13 +139,13 @@ FIELD_RULES: dict[str, FieldRule] = {
     "company_name": FieldRule("COMPANY", "company", False, "company_name", name_veto=True),
     "workplace_name": FieldRule("COMPANY", "company", False, "company_name", name_veto=True),
     "student_name": FieldRule("PERSON", "person", False, "applicant_name", name_veto=True),
-    "student_id": FieldRule("STUDENT_ID", "student_id", True),
+    "student_id": FieldRule("STUDENT_ID", "student_id", True, confirm_by_second_pass=False),
     "university_name": FieldRule("UNIVERSITY", "university", False, name_veto=True),
-    "issue_date": FieldRule("DATE", None, True),
-    "valid_from": FieldRule("DATE", None, True),
-    "valid_until": FieldRule("DATE", None, True),
-    "gpa": FieldRule("GPA", None, True),
-    "gpa_scale": FieldRule("GPA", None, True),
+    "issue_date": FieldRule("DATE", None, True, confirm_by_second_pass=False),
+    "valid_from": FieldRule("DATE", None, True, confirm_by_second_pass=False),
+    "valid_until": FieldRule("DATE", None, True, confirm_by_second_pass=False),
+    "gpa": FieldRule("GPA", None, True, confirm_by_second_pass=False),
+    "gpa_scale": FieldRule("GPA", None, True, confirm_by_second_pass=False),
 }
 
 # Decision-boundary margins (Phase D2). A value confirmed *only* by a second pass of the same
@@ -584,6 +589,7 @@ def _decide_corroborated(
     if (
         features.second_pass
         and rule.second_pass
+        and rule.confirm_by_second_pass
         and second_value is not None
         and second_value == item.value
     ):

@@ -226,12 +226,36 @@ def test_person_name_is_never_accepted_by_a_second_pass_alone() -> None:
     assert accepted(decide(pair, CTX, Strategy.S4), D1, "student_name")
 
 
-def test_second_pass_consensus_accepts_when_no_document_can_confirm() -> None:
-    fields = [field(D1, "student_id", "2025123456", doc_type=ENR, second="2025123456")]
-    assert accepted(decide(fields, CTX, Strategy.S4), D1, "student_id")
-    assert not accepted(decide(fields, CTX, Strategy.S3), D1, "student_id")
+def test_second_pass_consensus_accepts_a_check_digit_number_but_not_decision_driving_fields() -> (
+    None
+):
+    brn = [field(D1, "business_registration_number", GOOD_BRN, second=GOOD_BRN)]
+    assert accepted(decide(brn, CTX, Strategy.S4), D1, "business_registration_number")
+    assert not accepted(decide(brn, CTX, Strategy.S3), D1, "business_registration_number")
+    # owner decision after D2: a second pass alone no longer confirms these fields
+    lone = [
+        field(D1, "student_id", "2025123456", doc_type=ENR, second="2025123456"),
+        field(D1, "valid_until", "2027-12-31", doc_type=SME, second="2027-12-31"),
+        field(D1, "issue_date", "2027-02-20", doc_type=ENR, second="2027-02-20"),
+        field(D1, "gpa", "3.4", doc_type=TRN, second="3.4"),
+        field(D1, "gpa_scale", "4.5", doc_type=TRN, second="4.5"),
+        field(D1, "valid_from", "2027-01-01", doc_type=SME, second="2027-01-01"),
+    ]
+    for strategy in (Strategy.S4, Strategy.S5, Strategy.S6, Strategy.S7):
+        decisions = decide(lone, CTX, strategy)
+        for key, item in decisions.items():
+            assert not item.accepted, (strategy, key)
+    assert (
+        decide(lone, CTX, Strategy.S7)[(D1, "student_id")].reason == "NO_INDEPENDENT_CONFIRMATION"
+    )
     disagree = [field(D1, "student_id", "2025123456", doc_type=ENR, second="2025123458")]
     assert not accepted(decide(disagree, CTX, Strategy.S4), D1, "student_id")
+    # another document still corroborates a student number
+    pair = [
+        field(D1, "student_id", "2025123456", doc_type=ENR),
+        field(D2, "student_id", "2025123456", doc_type=TRN),
+    ]
+    assert accepted(decide(pair, CTX, Strategy.S7), D1, "student_id")
 
 
 def test_second_pass_veto_stops_a_corroborated_checksum_preserving_misread() -> None:
@@ -282,7 +306,9 @@ def test_date_logic_validators() -> None:
         field(D2, "issue_date", "2027-02-20", doc_type=ENR, second="2027-02-20"),
     ]
     decisions = decide(ok, ctx, Strategy.S4)
-    assert all(d.accepted for d in decisions.values())
+    assert all(
+        d.reason == "NO_INDEPENDENT_CONFIRMATION" for d in decisions.values()
+    )  # valid, but no source
     reversed_range = [
         field(D1, "valid_from", "2027-12-31", doc_type=SME, second="2027-12-31"),
         field(D1, "valid_until", "2027-01-01", doc_type=SME, second="2027-01-01"),
@@ -302,7 +328,10 @@ def test_gpa_validators_and_student_id_format() -> None:
             field(D1, "gpa_scale", scale, doc_type=TRN, second=scale),
         ]
 
-    assert accepted(decide(gpa_fields("3.4", "4.5"), CTX, Strategy.S4), D1, "gpa")
+    assert (
+        decide(gpa_fields("3.4", "4.5"), CTX, Strategy.S4)[(D1, "gpa")].reason
+        == "NO_INDEPENDENT_CONFIRMATION"
+    )
     assert (
         decide(gpa_fields("4.6", "4.5"), CTX, Strategy.S4)[(D1, "gpa")].reason
         == "FORMAT_GPA_ABOVE_SCALE"
@@ -575,7 +604,7 @@ def test_second_pass_only_date_near_the_reference_date_is_left_to_a_human() -> N
     near = [field(D1, "valid_until", "2027-03-05", doc_type=TAX, second="2027-03-05")]
     far = [field(D1, "valid_until", "2027-03-25", doc_type=TAX, second="2027-03-25")]
     assert decide(near, _ctx(), Strategy.S7)[(D1, "valid_until")].reason == "NEAR_DECISION_BOUNDARY"
-    assert accepted(decide(far, _ctx(), Strategy.S7), D1, "valid_until")
+    assert not accepted(decide(far, _ctx(), Strategy.S7), D1, "valid_until")
     expired_side = [field(D1, "valid_until", "2027-02-24", doc_type=TAX, second="2027-02-24")]
     assert not accepted(decide(expired_side, _ctx(), Strategy.S7), D1, "valid_until")
 
@@ -589,7 +618,7 @@ def test_issue_date_near_the_age_limit_and_gpa_near_the_threshold_are_left_to_a_
         decide(near_limit, ctx, Strategy.S7)[(D1, "issue_date")].reason == "NEAR_DECISION_BOUNDARY"
     )
     recent = [field(D1, "issue_date", "2027-02-10", doc_type=ENR, second="2027-02-10")]
-    assert accepted(decide(recent, ctx, Strategy.S7), D1, "issue_date")
+    assert not accepted(decide(recent, ctx, Strategy.S7), D1, "issue_date")
     gpa_near = [
         field(D1, "gpa", "3.1", doc_type=TRN, second="3.1"),
         field(D1, "gpa_scale", "4.5", doc_type=TRN, second="4.5"),
@@ -599,9 +628,11 @@ def test_issue_date_near_the_age_limit_and_gpa_near_the_threshold_are_left_to_a_
         field(D1, "gpa", "3.8", doc_type=TRN, second="3.8"),
         field(D1, "gpa_scale", "4.5", doc_type=TRN, second="4.5"),
     ]
-    assert accepted(decide(gpa_clear, ctx, Strategy.S7), D1, "gpa")
-    # without a configured boundary nothing is near one
-    assert accepted(decide(gpa_near, _ctx(), Strategy.S7), D1, "gpa")
+    assert not accepted(decide(gpa_clear, ctx, Strategy.S7), D1, "gpa")
+    # without a configured boundary nothing is near one (and the second pass alone still does not accept)
+    assert (
+        decide(gpa_near, _ctx(), Strategy.S7)[(D1, "gpa")].reason == "NO_INDEPENDENT_CONFIRMATION"
+    )
 
 
 def test_validity_end_implausibly_far_from_the_issue_date_is_blocked() -> None:
@@ -619,7 +650,10 @@ def test_validity_end_implausibly_far_from_the_issue_date_is_blocked() -> None:
         field(D1, "issue_date", "2027-02-20", doc_type=TAX, method="document_semantic_issue_date"),
         field(D1, "valid_until", "2027-03-22", doc_type=TAX, second="2027-03-22"),
     ]
-    assert accepted(decide(plausible, _ctx(), Strategy.S7), D1, "valid_until")
+    assert (
+        decide(plausible, _ctx(), Strategy.S7)[(D1, "valid_until")].reason
+        == "NO_INDEPENDENT_CONFIRMATION"
+    )
 
 
 def test_cumulative_gpa_outside_the_semester_gpas_is_not_accepted() -> None:
@@ -630,6 +664,9 @@ def test_cumulative_gpa_outside_the_semester_gpas_is_not_accepted() -> None:
             field(D1, "gpa_scale", "4.5", doc_type=TRN, second="4.5"),
         ]
 
-    assert accepted(decide(gpa_fields("3.2"), CTX, Strategy.S7), D1, "gpa")
+    assert (
+        decide(gpa_fields("3.2"), CTX, Strategy.S7)[(D1, "gpa")].reason
+        == "NO_INDEPENDENT_CONFIRMATION"
+    )
     blocked = decide(gpa_fields("3.9"), CTX, Strategy.S7)  # above every semester
     assert blocked[(D1, "gpa")].reason == "FORMAT_GPA_OUTSIDE_SEMESTER_RANGE"
