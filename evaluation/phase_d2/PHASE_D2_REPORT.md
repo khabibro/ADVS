@@ -1,6 +1,6 @@
 # Phase D2 report — close the Phase D gaps, re-judge on hold-out set 2
 
-Branch `phase-d/auto-acceptance` (D2 commits on top of Phase D). **Not merged, not pushed** (see §8: two acceptance rows are not fully met).
+Branch `phase-d/auto-acceptance` (D2 commits on top of Phase D). **Accepted by the owner with one policy change (§11) and merged into main.**
 
 ## 1. Decisions applied
 D-1 default student workflow gets the 재학증명서 rules (90-day issue-date age, configurable; `student_id` required); I also added, as seed configuration, a student number / student name comparison between 재학증명서 and 성적증명서 (needed so H15 can never be READY). D-2 hold-out set 1 is development data (used freely). D-3 hold-out set 2 was judged once, guarded by `ADVS_FINAL_JUDGEMENT=1`.
@@ -77,3 +77,33 @@ python3 ../../evaluation/harness/score_d2.py --raw /tmp/raw.json --corpus dev|ho
 ADVS_FINAL_JUDGEMENT=1 .venv312/bin/python ../../evaluation/harness/run_variants.py --corpus holdout2 ...
 ADVS_FINAL_JUDGEMENT=1 python3 ../../evaluation/harness/score_d2.py --corpus holdout2 ...
 ```
+
+## 11. Owner acceptance, final policy change and merge
+
+**Owner decisions recorded**
+- The review-burden miss on hold-out set 2 (−60 % / −64 % against Phase D's −65 % / −68 %) is **accepted by the owner**: the safety rules (title gate, boundary margins) cost about 5 points.
+- Hold-out set 2 is used up and is not run again. **Hold-out exposure note:** I printed the first five lines of its README (generic heading text; no documents, no results) while committing it, before D2-7; everything else was read only at D2-7 (checklist conditions, then `fictional_entities` for the overfitting grep).
+
+**Policy change (more conservative only).** In the auto-acceptance policy table (`FIELD_RULES`, new column `confirm_by_second_pass`), a second OCR pass of the same image may no longer *confirm* `valid_from`, `valid_until`, `issue_date`, `gpa`, `gpa_scale` and `student_id`. They now need another document or the application value. The second pass is still read for them and still vetoes (S6/S7); business numbers (check digit) can still be confirmed by a second pass; nothing else changed. Because no other document or application value exists for dates and GPA, those fields now always go to a human on scans/photos; a student number is auto-accepted only when the enrolment and transcript agree. Tests updated (`tests/test_phase_d_auto_acceptance.py`).
+
+**Re-run on development data only (test_variants + hold-out set 1), injections E1–E12** (`B2_D2_*`):
+| | D2 (B1-D2) | final policy (B2-D2) |
+|---|---|---|
+| false READY (all sets, all injections) | 0 | **0** |
+| false auto-accept, all injections incl. common-mode E6/E8/E9 "-both" | 16–17 | **0** |
+| review burden per submission, test_variants (scanned / images) | 4.23 / 3.68 | **7.23 / 6.59** (−38 % / −43 % vs 11.64) |
+| review burden per submission, hold-out set 1 (scanned / images) | 4.36 / 3.96 | **7.40 / 6.84** (−36 % / −41 %) |
+| OCR fields auto-accepted, test_variants (scanned / images) | 163 / 175 of 240 | 97 / 111 |
+| auto-decided scanned/image submissions, test_variants | 3 / 5 of 22 | 1 / 1 |
+| digital fields correct | 240/240, 275/275 | 240/240, 275/275 |
+| S01/S10 digital READY, S02 NEEDS_CORRECTION, S08/S09 REVIEW_REQUIRED, H13–H15 and B11/S07 never READY | yes | yes |
+**Burden cost of the policy change: about +3 fields per scanned/photographed submission** (every validity end, issue date and GPA now needs a person; scanned all-valid business sets such as B01 no longer reach READY on their own, they end at REVIEW_REQUIRED for the validity dates). This is a larger cost than the earlier 5 points; it removes the common-mode residual entirely on the injection suite.
+
+**Remaining items for the next phase**
+1. Internal-consistency corroboration for the fields that now go to a human: GPA recomputed from the semester GPAs and credits; validity period vs issue date per document type (configurable), so that dates and GPA can be accepted again without a second pass.
+2. Scanned 사업자등록증 company-name extraction (the name cell is not extracted from the OCR on scans).
+3. The SME company-name confidence (photographed 중소기업확인서 names are read below the 0.90 floor).
+4. Department and the unlabelled issue date on scans stay with a human (no independent source).
+
+## 12. Phase D + D2 in one paragraph
+Phase D added auto-acceptance of OCR values confirmed by an independent source (another document, the application value, or — for check-digit numbers — a second OCR pass), cutting manual checking by about two thirds with 0 false auto-accepts on the development data and single-document injections. D2 fixed the hold-out findings: digital extraction by position (hold-out digital 63 % → 100 %), the OCR title gate and look-alike near-match (no more READY on a garbled 지방세 certificate), decision-boundary margins, the student workflow rules, and — by owner decision — second-pass-alone confirmation was removed for the decision-driving fields, which closed the common-mode residual at a further burden cost (§11). False READY is 0 on every development, hold-out and injection run.
