@@ -181,7 +181,11 @@ def main() -> None:
                                 "operator": RuleOperator.ON_OR_BEFORE.value,
                                 "expected_value": "2026-12-31",
                             },
-                        )
+                        ),
+                        # 재학증명서 rules (Phase D2 decision D-1): issued within the last
+                        # 90 days (configurable) and the student number must be present.
+                        (RuleType.ISSUE_DATE_MAX_AGE, Severity.ERROR, {"max_age_days": 90}),
+                        (RuleType.REQUIRED_FIELD, Severity.WARNING, {"field": "student_id"}),
                     ],
                 ),
                 (
