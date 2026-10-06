@@ -463,8 +463,18 @@ class Runner:
         file_results = self.upload_and_process(project_id, files)
         verification = self.verify(project_id)
         self.capture_details(file_results)
+        reviews = self.client.get(f"/api/v1/projects/{project_id}/review-items")
+        review_items = (
+            [
+                {"document_id": item["document_id"], "field_name": item["field_name"], "queue_status": item["queue_status"], "state": item["assessment_state"]}
+                for item in reviews.json()
+            ]
+            if reviews.status_code == 200
+            else []
+        )
         return {
             "project_id": project_id,
+            "review_items": review_items,
             "actual_submission_status": verification.get("status"),
             "actual_issue_codes": verification.get("issue_codes"),
             "notices": verification.get("notices"),
