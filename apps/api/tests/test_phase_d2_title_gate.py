@@ -43,7 +43,7 @@ def test_garbled_localtax_qualifier_is_a_near_match(qualifier: str) -> None:
 
 def test_garbled_qualifier_spread_over_single_character_boxes_is_found_in_the_row() -> None:
     chars = [box(char, 100 + index * 45, width=40) for index, char in enumerate("지빙세")]
-    result = assess_title([page(*chars, box("납세증명서", 320))], TAX, ["납세증명서"])
+    result = assess_title([page(*chars, box("납세증명서", 280))], TAX, ["납세증명서"])
     assert result.near_match == "지방세"
 
 
@@ -98,3 +98,14 @@ def test_a_similar_looking_name_is_not_a_qualifier_match() -> None:
     assert (
         _near_lookalike("지방세") is None
     )  # exact qualifier is handled by the look-alike title table
+
+
+def test_a_field_label_far_to_the_left_on_the_title_row_is_not_part_of_the_title() -> None:
+    # 근로복지공단 완납증명원: "발 급 번 호" and the checked insurance boxes share the title's row
+    lines = [
+        box("발 급 번 호", 82, width=120),
+        box("☑ 산재보험료", 400, width=200),
+        box("완납 증명원", 900, width=240),
+    ]
+    soc = DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE
+    assert assess_title([page(*lines)], soc, ["완납증명원"]).established
