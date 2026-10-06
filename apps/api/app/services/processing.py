@@ -2,7 +2,7 @@ import logging
 import re
 import time
 import uuid
-from dataclasses import asdict
+from dataclasses import asdict, replace
 
 from sqlalchemy import delete, or_, update
 from sqlalchemy.orm import Session
@@ -20,6 +20,7 @@ from app.document_intelligence.classification.classifier import (
     ClassificationResult,
     DocumentClassifier,
 )
+from app.document_intelligence.classification.title_gate import assess_title
 from app.document_intelligence.extraction.base import ExtractedValue
 from app.document_intelligence.extraction.registry import ExtractorRegistry
 from app.document_intelligence.ocr.models import (
@@ -155,6 +156,8 @@ class DocumentProcessingService:
                 if split is not None:
                     classification, extraction_source = split
 
+            classification = self._apply_title_gate(source_result, classification)
+
             self._set_status(db, document, ProcessingStatus.EXTRACTING)
             fields = self.extractor.extract(classification.predicted_type, extraction_source)
             await self._second_pass(document, source_result, fields)
@@ -274,6 +277,33 @@ class DocumentProcessingService:
                 "preprocess": reading.preprocess,
                 "first_pass_value": values.get(reading.field_name),
             }
+
+    def _apply_title_gate(
+        self, source_result: OCRDocumentResult, classification: ClassificationResult
+    ) -> ClassificationResult:
+        """OCR-read documents must prove their type before any field can be auto-accepted
+        (see classification/title_gate.py). Embedded PDF text is exact and is not gated."""
+        if classification.predicted_type == DocumentType.UNKNOWN:
+            return classification
+        ocr_pages = [
+            page for page in source_result.pages if page.metadata.get("source") != "direct_pdf_text"
+        ]
+        if not ocr_pages:
+            return classification
+        assessment = assess_title(ocr_pages, classification.predicted_type, classification.evidence)
+        gated = replace(classification, title_gate=assessment.to_dict())
+        if assessment.near_match:
+            return replace(
+                gated,
+                predicted_type=DocumentType.UNKNOWN,
+                confidence_score=0.0,
+                score=0.0,
+                evidence=[],
+                needs_review=True,
+            )
+        if not assessment.established:
+            return replace(gated, needs_review=True)
+        return gated
 
     def _split_multi_document(
         self, source_result: OCRDocumentResult
@@ -515,6 +545,7 @@ class DocumentProcessingService:
             "classifier_version": classification.classifier_version,
             "multiple_documents_in_file": classification.multiple_documents_in_file,
             "page_types": classification.page_types,
+            "title_gate": classification.title_gate,
             "alternatives": [
                 {"document_type": str(alt.document_type), "score": alt.score}
                 for alt in classification.alternatives
