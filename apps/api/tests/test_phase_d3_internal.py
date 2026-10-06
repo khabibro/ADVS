@@ -420,3 +420,21 @@ def test_business_number_type_code_plausibility() -> None:
     assert business_number_type_plausible("1048127382", "individual") is False
     assert business_number_type_plausible("1043127382", None) is None
     assert business_number_type_plausible("123", "corporate") is None
+
+
+def test_candidate_repair_proposes_only_a_unique_valid_alternative_matching_a_peer() -> None:
+    from app.document_intelligence.candidate_repair import PROVENANCE, propose_repair
+    from app.document_intelligence.normalization.field_normalizer import is_valid_business_number
+
+    def only_good(value: str) -> bool:  # a validator with exactly one valid neighbour
+        return value == "4028561724"
+
+    proposal = propose_repair("4028561124", only_good, ["4028561724"])
+    assert proposal is not None and proposal.value == "4028561724"
+    assert proposal.provenance == PROVENANCE
+    assert propose_repair("4028561124", only_good, ["1234567890"]) is None  # no peer carries it
+    assert propose_repair("4028561124", only_good, []) is None
+    assert propose_repair("4028561724", only_good, ["4028561724"]) is None  # already valid
+    # with the real check digit several alternatives of a misread validate by chance (one in ten
+    # each), so uniqueness fails and nothing is proposed
+    assert propose_repair("4028361724", is_valid_business_number, ["4028561724"]) is None

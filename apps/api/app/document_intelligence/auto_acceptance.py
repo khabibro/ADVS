@@ -41,12 +41,13 @@ import re
 import unicodedata
 import uuid
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
 from enum import StrEnum
 from typing import Any
 
 from app.core.domain import DocumentType
+from app.document_intelligence.candidate_repair import PROVENANCE, propose_repair
 from app.document_intelligence.confirmations import (
     business_number_type_plausible,
     date_pair,
@@ -321,6 +322,9 @@ class AutoDecision:
     second_pass_value: str | None = None
     reason: str | None = None  # why it was NOT accepted
     robust: bool = False  # accepted for the decision only (every plausible misreading agrees)
+    repair_candidate: str | None = (
+        None  # D3-9: a proposed repair of a failed checksum (never applied)
+    )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -333,7 +337,11 @@ class AutoDecision:
             "second_pass_value": self.second_pass_value,
             "reason": self.reason,
             "robust": self.robust,
-            "confusion_table_version": CONFUSION_TABLE_VERSION if self.robust else None,
+            "repair_candidate": self.repair_candidate,
+            "repair_provenance": PROVENANCE if self.repair_candidate else None,
+            "confusion_table_version": CONFUSION_TABLE_VERSION
+            if self.robust or self.repair_candidate
+            else None,
         }
 
 
@@ -539,7 +547,22 @@ def decide(
         if features.validators and item.field_name in HAS_VALIDATOR:
             problem = _valid_format(item, index, context)
             if problem:
-                decisions[key] = _no(strategy, problem, rule.rule_id)
+                decision = _no(strategy, problem, rule.rule_id)
+                if problem == "FORMAT_BRN_CHECKSUM" and features.internal:
+                    proposal = propose_repair(
+                        item.value,
+                        is_valid_business_number,
+                        (
+                            other.value
+                            for document_id, named in index.by_doc.items()
+                            if document_id != item.document_id
+                            for other in [named.get("business_registration_number")]
+                            if other is not None and other.value
+                        ),
+                    )
+                    if proposal is not None:
+                        decision = replace(decision, repair_candidate=proposal.value)
+                decisions[key] = decision
                 continue
 
         if features.internal and item.field_name in INTERNAL_FIELDS:

@@ -125,6 +125,8 @@ class AutoAcceptanceRead(BaseModel):
     second_pass_value: str | None = None
     reason: str | None = None
     robust: bool = False
+    repair_candidate: str | None = None
+    repair_provenance: str | None = None
     confusion_table_version: str | None = None
 
 
