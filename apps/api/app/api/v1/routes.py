@@ -55,7 +55,6 @@ from app.schemas.api import (
 from app.services.auto_acceptance import decisions_for_project
 from app.services.consistency import lock_project
 from app.services.document_validation import (
-    submission_reference_date,
     validate_effective_document,
 )
 from app.services.processing import _ACTIVE_STATUSES, DocumentProcessingService
@@ -409,7 +408,7 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
     detail.extracted_fields = []
     submission = db.get(Submission, document.submission_id)
     project = db.get(Project, submission.project_id) if submission else None
-    decisions = decisions_for_project(db, project, submission_reference_date(submission))
+    decisions = decisions_for_project(db, project)
     by_name = {item.field_name: item for item in document.extracted_fields}
     for name in sorted(set(by_name) | set(current_reviews)):
         item = by_name.get(name)
