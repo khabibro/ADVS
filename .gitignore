@@ -38,3 +38,6 @@ evaluation/phase_d/ocr_cache/
 evaluation/harness/advs_harness_*/
 evaluation/phase_d/strategies/*.json
 evaluation/phase_d/ocr_cache*/
+evaluation/datasets/synthetic/holdout2/business/
+evaluation/datasets/synthetic/holdout2/student/
+evaluation/datasets/synthetic/holdout2/formats/

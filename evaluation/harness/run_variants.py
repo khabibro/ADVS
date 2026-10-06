@@ -8,7 +8,7 @@ Usage (from apps/api):
         [--sets B01,B02] [--versions digital,scanned,images] [--skip-ocr] [--skip-formats] \
         [--project-values] [--ocr-cache DIR --ocr-mode record|replay] [--strategy S0..S5]
 
-`--corpus holdout` is refused unless ADVS_FINAL_JUDGEMENT=1 (final judgement only).
+`--corpus holdout2` is refused unless ADVS_FINAL_JUDGEMENT=1 (final judgement only).
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from harness_core import Runner, guard_corpus  # noqa: E402
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--corpus", choices=["dev", "holdout"], default="dev")
+    parser.add_argument("--corpus", choices=["dev", "holdout", "holdout2"], default="dev")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--sets", type=str, default=None)
     parser.add_argument("--versions", type=str, default="digital,scanned,images")

@@ -39,7 +39,12 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SYNTHETIC = REPO_ROOT / "evaluation" / "datasets" / "synthetic"
-CORPORA = {"dev": SYNTHETIC / "test_variants", "holdout": SYNTHETIC / "holdout"}
+CORPORA = {
+    "dev": SYNTHETIC / "test_variants",
+    "holdout": SYNTHETIC / "holdout",  # hold-out set 1: development data since Phase D2 (decision D-1)
+    "holdout2": SYNTHETIC / "holdout2",  # hold-out set 2: final judgement only
+}
+GUARDED = {"holdout2"}
 HOLDOUT_LOG = REPO_ROOT / "evaluation" / "phase_d" / "holdout_runs.log"
 
 EXT_MIME = {
@@ -71,7 +76,7 @@ def git_head() -> str:
 def guard_corpus(corpus: str, argv: list[str] | None = None) -> Path:
     """Return the corpus root, refusing the hold-out set outside final judgement."""
     root = CORPORA[corpus]
-    if corpus == "holdout":
+    if corpus in GUARDED:
         if os.environ.get("ADVS_FINAL_JUDGEMENT") != "1":
             raise SystemExit(
                 "Refusing to touch the hold-out set: it is for final judgement only "
@@ -94,7 +99,7 @@ def guard_corpus(corpus: str, argv: list[str] | None = None) -> Path:
 
 
 def guard_path(path: Path) -> Path:
-    if "holdout" in path.resolve().parts and os.environ.get("ADVS_FINAL_JUDGEMENT") != "1":
+    if "holdout2" in path.resolve().parts and os.environ.get("ADVS_FINAL_JUDGEMENT") != "1":
         raise SystemExit(f"Refusing to open a hold-out path outside final judgement: {path}")
     return path
 
