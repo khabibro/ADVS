@@ -52,7 +52,9 @@ def test_recent_certificate_with_student_number_is_ready(client, db_session) -> 
     verdict = _verify(
         client, db_session, _enrollment("2026년 09월 20일", "2025123456"), "2026-10-05"
     )
-    assert verdict["status"] == "READY", [(i["code"], i.get("field_name"), i.get("document_type")) for i in verdict["issues"]]
+    assert verdict["status"] == "READY", [
+        (i["code"], i.get("field_name"), i.get("document_type")) for i in verdict["issues"]
+    ]
 
 
 def test_certificate_older_than_ninety_days_needs_correction(client, db_session) -> None:
@@ -113,7 +115,9 @@ def _verify_two(client: TestClient, db_session, transcript: list[str]) -> dict:
 
 def test_enrollment_and_transcript_naming_the_same_student_are_ready(client, db_session) -> None:
     verdict = _verify_two(client, db_session, _transcript("2025123456"))
-    assert verdict["status"] == "READY", [(i["code"], i.get("field_name"), i.get("document_type")) for i in verdict["issues"]]
+    assert verdict["status"] == "READY", [
+        (i["code"], i.get("field_name"), i.get("document_type")) for i in verdict["issues"]
+    ]
 
 
 def test_student_number_differing_by_one_digit_between_the_two_documents_is_never_ready(
