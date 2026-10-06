@@ -48,6 +48,7 @@ from typing import Any
 
 from app.core.domain import DocumentType
 from app.document_intelligence.confirmations import (
+    business_number_type_plausible,
     date_pair,
     gpa_arithmetic,
     issue_date_box_for,
@@ -356,6 +357,11 @@ def _valid_format(item: FieldInput, index: _Index, context: ProjectContext) -> s
     if name == "business_registration_number":
         if not (len(value) == 10 and is_valid_business_number(value)):
             return "FORMAT_BRN_CHECKSUM"
+        if (
+            item.facts is not None
+            and business_number_type_plausible(value, item.facts.entity_type) is False
+        ):
+            return "BRN_TYPE_CODE_IMPLAUSIBLE"
         return None
     if name in ("issue_date", "valid_from", "valid_until"):
         try:

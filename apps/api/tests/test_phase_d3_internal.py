@@ -409,3 +409,14 @@ def test_fields_no_rule_uses_are_marked_informational(client, db_session) -> Non
     assert fields["student_id"]["decision_relevant"] is True  # required by the workflow
     assert fields["issue_date"]["decision_relevant"] is True
     assert fields["department"]["decision_relevant"] is False  # no rule uses it
+
+
+def test_business_number_type_code_plausibility() -> None:
+    from app.document_intelligence.confirmations import business_number_type_plausible
+
+    assert business_number_type_plausible("1048127382", "corporate") is True  # code 81
+    assert business_number_type_plausible("1043127382", "corporate") is False  # code 31
+    assert business_number_type_plausible("1043127382", "individual") is True
+    assert business_number_type_plausible("1048127382", "individual") is False
+    assert business_number_type_plausible("1043127382", None) is None
+    assert business_number_type_plausible("123", "corporate") is None

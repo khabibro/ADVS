@@ -237,3 +237,22 @@ __all__ = [
     "parse_iso",
     "timedelta",
 ]
+
+
+# Business registration number type code (digits 4-5 of the ten digits). Configurable expectation,
+# not a legal rule: it is commonly published that 01-79 are individual taxpayers, 81/84/85/86/87/88
+# are for-profit corporations, 82 non-profit corporations, 89 other bodies, 90-99 tax-exempt
+# individuals. Validation only: a plausible code never confirms a number; an implausible one
+# (a form that states "corporate" with an individual code) sends it to a human.
+BUSINESS_TYPE_CODES: dict[str, tuple[tuple[int, int], ...]] = {
+    "individual": ((1, 79), (90, 99)),
+    "corporate": ((81, 89),),
+}
+
+
+def business_number_type_plausible(number: str, entity_type: str | None) -> bool | None:
+    """True/False when the form states its entity type and the number has a type code; else None."""
+    if entity_type not in BUSINESS_TYPE_CODES or len(number) != 10 or not number.isdigit():
+        return None
+    code = int(number[3:5])
+    return any(low <= code <= high for low, high in BUSINESS_TYPE_CODES[entity_type])
