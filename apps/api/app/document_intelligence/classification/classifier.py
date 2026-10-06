@@ -128,6 +128,9 @@ SIGNALS: dict[DocumentType, list[Signal]] = {
     DocumentType.ENROLLMENT_CERTIFICATE: [
         Signal("재학증명서", TITLE),
         Signal("재학여부", IDENTIFIER),
+        # "재학기간" (period of enrolment) is a field of the enrolment certificate itself;
+        # it lets a scan whose letter-spaced title was misread still be recognised.
+        Signal("재학기간", IDENTIFIER),
         Signal("학번", SUPPORT),
         Signal("학과", SUPPORT),
         Signal("대학교", SUPPORT),
@@ -136,6 +139,11 @@ SIGNALS: dict[DocumentType, list[Signal]] = {
         Signal("성적증명서", TITLE),
         Signal("평점평균", IDENTIFIER),
         Signal("총평점", IDENTIFIER),
+        # Layout signals of the grade table itself, for scans whose letter-spaced title
+        # ("성 적 증 명 서") is misread: the per-semester "취득학점" line and the
+        # "평점평균 ... 백분율" summary appear on transcripts and on no other supported type.
+        Signal("취득학점", IDENTIFIER),
+        Signal("백분율", SUPPORT),
         Signal("학번", SUPPORT),
         Signal("GPA", SUPPORT),
     ],
@@ -173,6 +181,13 @@ class ClassificationResult:
     needs_review: bool
     classifier_version: str = CLASSIFIER_VERSION
     alternatives: list[ClassificationAlternative] = field(default_factory=list)
+    # Set when the pages of one file are different supported document types (see
+    # DocumentProcessingService._split_multi_document); fields are then extracted from the
+    # first type's pages only and the file always goes to review.
+    multiple_documents_in_file: bool = False
+    page_types: dict[str, str] | None = None
+    # Result of the OCR title gate (classification/title_gate.py); None for embedded text.
+    title_gate: dict[str, object] | None = None
 
 
 def _unknown(

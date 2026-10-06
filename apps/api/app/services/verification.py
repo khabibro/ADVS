@@ -39,6 +39,7 @@ from app.models.entities import (
     Submission,
     ValidationResult,
 )
+from app.services.auto_acceptance import decisions_for_project
 from app.services.consistency import acquire_project_lock, lock_project
 from app.services.requirements import required_fields
 from app.services.reviews import EffectiveFieldResolver
@@ -95,7 +96,7 @@ class SubmissionVerificationService:
             requirements = self._requirements(project.checklist)
             if not requirements:
                 raise RuleConfigurationError("Workflow has no document requirements")
-            documents = self._documents(db, project_id)
+            documents = self._documents(db, project_id, evaluation_date)
             result = self.engine.verify(
                 project_id=project.id,
                 workflow_id=project.checklist_id,
@@ -153,7 +154,16 @@ class SubmissionVerificationService:
         if not evaluation_date_value:
             return StoredSubmissionVerification(None, None, False)
         rule_results = tuple(self._row_to_rule_result(row) for row in rows)
-        issues = tuple(item.issue for item in rule_results if item.issue is not None)
+        issues = tuple(
+            item.issue
+            for item in rule_results
+            if item.issue is not None and item.outcome != RuleOutcome.NOTICE
+        )
+        notices = tuple(
+            item.issue
+            for item in rule_results
+            if item.issue is not None and item.outcome == RuleOutcome.NOTICE
+        )
         result = SubmissionVerificationResult(
             project_id=project.id,
             workflow_id=project.checklist_id,
@@ -161,6 +171,7 @@ class SubmissionVerificationService:
             evaluation_date=date.fromisoformat(str(evaluation_date_value)),
             issues=issues,
             rule_results=rule_results,
+            notices=notices,
         )
         evaluated_at = rows[0].created_at
         return StoredSubmissionVerification(result, evaluated_at, True)
@@ -241,7 +252,11 @@ class SubmissionVerificationService:
             )
         return snapshots
 
-    def _documents(self, db: Session, project_id: uuid.UUID) -> list[DocumentSnapshot]:
+    def _documents(
+        self, db: Session, project_id: uuid.UUID, reference_date: date | None = None
+    ) -> list[DocumentSnapshot]:
+        project = db.get(Project, project_id)
+        decisions = decisions_for_project(db, project, reference_date)
         rows = db.scalars(
             select(Document)
             .join(Submission)
@@ -273,7 +288,9 @@ class SubmissionVerificationService:
             for field_name in field_names:
                 machine = machine_by_name.get(field_name)
                 review = reviews_by_target.get((row.id, field_name))
-                effective = self.field_resolver.resolve(machine, review, row.processing_version)
+                effective = self.field_resolver.resolve(
+                    machine, review, row.processing_version, decisions.get((row.id, field_name))
+                )
                 fields[field_name] = FieldSnapshot(
                     id=machine.id if machine else None,
                     field_name=field_name,
@@ -298,6 +315,9 @@ class SubmissionVerificationService:
                     processing_version=row.processing_version,
                     classification_needs_review=bool(
                         (row.classification_meta or {}).get("needs_review")
+                    ),
+                    multiple_documents_in_file=bool(
+                        (row.classification_meta or {}).get("multiple_documents_in_file")
                     ),
                     created_at=row.created_at.isoformat(),
                 )
@@ -368,12 +388,13 @@ class SubmissionVerificationService:
                     document_id=item.document_id,
                     project_id=project.id,
                     rule_type=item.rule_type.value,
-                    passed=item.outcome in {RuleOutcome.PASS, RuleOutcome.NOT_APPLICABLE},
+                    passed=item.outcome
+                    in {RuleOutcome.PASS, RuleOutcome.NOT_APPLICABLE, RuleOutcome.NOTICE},
                     severity=(
                         Severity.ERROR.value
                         if issue and issue.status_effect == OverallStatus.NEEDS_CORRECTION
                         else Severity.WARNING.value
-                        if issue
+                        if issue and issue.status_effect != OverallStatus.READY
                         else Severity.INFO.value
                     ),
                     expected_value=None,
@@ -405,7 +426,7 @@ class SubmissionVerificationService:
         related_document_type = self._document_type(details.get("related_document_type"))
         rule_id = self._uuid(details.get("rule_id"))
         issue = None
-        if outcome in {RuleOutcome.FAIL, RuleOutcome.UNRESOLVED}:
+        if outcome in {RuleOutcome.FAIL, RuleOutcome.UNRESOLVED, RuleOutcome.NOTICE}:
             issue = VerificationIssue(
                 code=row.code,
                 status_effect=OverallStatus(

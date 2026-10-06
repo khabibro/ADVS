@@ -76,6 +76,24 @@ def comparison_rule(
     )
 
 
+def student_identity_rule(
+    field: str, *, value_type: str = "string"
+) -> tuple[RuleType, Severity, dict[str, Any]]:
+    """The 재학증명서 and 성적증명서 must name the same student (Phase D2)."""
+    return (
+        RuleType.FIELD_COMPARISON,
+        Severity.ERROR,
+        {
+            "source_document_type": DocumentType.ENROLLMENT_CERTIFICATE.value,
+            "source_field": field,
+            "target_document_type": DocumentType.TRANSCRIPT.value,
+            "target_field": field,
+            "operator": RuleOperator.EQUALS.value,
+            "value_type": value_type,
+        },
+    )
+
+
 def validity_rule(
     document_type: DocumentType,
 ) -> tuple[RuleType, Severity, dict[str, Any]]:
@@ -181,13 +199,19 @@ def main() -> None:
                                 "operator": RuleOperator.ON_OR_BEFORE.value,
                                 "expected_value": "2026-12-31",
                             },
-                        )
+                        ),
+                        # 재학증명서 rules (Phase D2 decision D-1): issued within the last
+                        # 90 days (configurable) and the student number must be present.
+                        (RuleType.ISSUE_DATE_MAX_AGE, Severity.ERROR, {"max_age_days": 90}),
+                        (RuleType.REQUIRED_FIELD, Severity.WARNING, {"field": "student_id"}),
                     ],
                 ),
                 (
                     DocumentType.TRANSCRIPT,
                     False,
                     [
+                        student_identity_rule("student_id", value_type="identifier"),
+                        student_identity_rule("student_name"),
                         (
                             RuleType.DATE_COMPARISON,
                             Severity.ERROR,

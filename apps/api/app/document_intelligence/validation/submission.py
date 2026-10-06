@@ -74,6 +74,7 @@ class DocumentSnapshot:
     processing_version: int = 0
     classification_needs_review: bool = False
     created_at: str = ""
+    multiple_documents_in_file: bool = False
 
 
 @dataclass(frozen=True)
@@ -131,6 +132,7 @@ class SubmissionVerificationResult:
     evaluation_date: date
     issues: tuple[VerificationIssue, ...]
     rule_results: tuple[RuleEvaluationResult, ...]
+    notices: tuple[VerificationIssue, ...] = ()
 
 
 def _status_for_severity(severity: Severity) -> OverallStatus:
@@ -147,6 +149,20 @@ def aggregate_status(issues: list[VerificationIssue]) -> OverallStatus:
     if any(issue.status_effect == OverallStatus.REVIEW_REQUIRED for issue in issues):
         return OverallStatus.REVIEW_REQUIRED
     return OverallStatus.READY
+
+
+def _same_name(actual: str, expected: str, rule_type: RuleType) -> bool:
+    """Exact equality of the submitter's own name/company against a document value, after
+    canonicalisation only (NFKC, whitespace; for companies also the legal-entity marker, so
+    주식회사 X / (주)X / ㈜X / X(주) are one company). No similarity measure."""
+
+    def key(value: str) -> str:
+        text = normalize_lexical_text(value)
+        if rule_type == RuleType.COMPANY_NAME_MATCH:
+            text = strip_legal_entity_markers(text)
+        return "".join(text.split())
+
+    return key(actual) == key(expected)
 
 
 def _comparison_key(value: str, value_type: str) -> str:
@@ -200,7 +216,16 @@ class SubmissionVerificationEngine:
                 key=lambda item: (item.rule_type.value, str(sorted(item.params.items()))),
             ):
                 results.append(self._evaluate_rule(rule, selected, context))
-        issues = [result.issue for result in results if result.issue is not None]
+        issues = [
+            result.issue
+            for result in results
+            if result.issue is not None and result.outcome != RuleOutcome.NOTICE
+        ]
+        notices = [
+            result.issue
+            for result in results
+            if result.issue is not None and result.outcome == RuleOutcome.NOTICE
+        ]
         return SubmissionVerificationResult(
             project_id=project_id,
             workflow_id=workflow_id,
@@ -208,6 +233,7 @@ class SubmissionVerificationEngine:
             evaluation_date=context.evaluation_date,
             issues=tuple(issues),
             rule_results=tuple(results),
+            notices=tuple(notices),
         )
 
     def validate_configuration(self, requirements: list[RequirementSnapshot]) -> None:
@@ -358,10 +384,13 @@ class SubmissionVerificationEngine:
             uncertain = [doc for doc in typed if doc.classification_needs_review]
             if uncertain:
                 selected[requirement.document_type] = None
+                multiple = any(doc.multiple_documents_in_file for doc in uncertain)
                 issue = VerificationIssue(
-                    "CLASSIFICATION_REQUIRES_REVIEW",
+                    "MULTIPLE_DOCUMENTS_IN_FILE" if multiple else "CLASSIFICATION_REQUIRES_REVIEW",
                     OverallStatus.REVIEW_REQUIRED,
-                    "서류 유형을 확인해야 합니다.",
+                    "한 파일에 서로 다른 서류가 들어 있어 확인해야 합니다."
+                    if multiple
+                    else "서류 유형을 확인해야 합니다.",
                     document_type=requirement.document_type,
                 )
                 results.append(
@@ -431,6 +460,23 @@ class SubmissionVerificationEngine:
                     continue
                 chosen = min(completed, key=lambda item: item.created_at)
                 selected[requirement.document_type] = chosen
+                if len(completed) > 1:
+                    results.append(
+                        RuleEvaluationResult(
+                            None,
+                            RuleType.DUPLICATE_DOCUMENT,
+                            RuleOutcome.NOTICE,
+                            VerificationIssue(
+                                "DUPLICATE_UPLOAD_IGNORED",
+                                OverallStatus.READY,
+                                f"동일한 파일이 {len(completed)}번 업로드되어 한 번만 점검했습니다.",
+                                document_id=chosen.id,
+                                document_type=requirement.document_type,
+                            ),
+                            document_id=chosen.id,
+                            document_type=requirement.document_type,
+                        )
+                    )
                 results.append(
                     RuleEvaluationResult(
                         None,
@@ -546,7 +592,11 @@ class SubmissionVerificationEngine:
             unresolved = self._unresolved_field(rule, document, snapshot, name)
             if unresolved:
                 results.append(unresolved)
-            elif snapshot and snapshot.normalized_value != expected:
+            elif (
+                snapshot
+                and snapshot.normalized_value is not None
+                and not _same_name(snapshot.normalized_value, expected, rule_type)
+            ):
                 issue = VerificationIssue(
                     code,
                     OverallStatus.NEEDS_CORRECTION,

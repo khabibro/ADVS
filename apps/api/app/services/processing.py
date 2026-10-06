@@ -1,23 +1,39 @@
 import logging
+import re
 import time
 import uuid
-from dataclasses import asdict
+from dataclasses import asdict, replace
 
 from sqlalchemy import delete, or_, update
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.domain import ProcessingStatus
+from app.core.domain import DocumentType, ProcessingStatus, RuleType, Severity
 from app.core.errors import PROCESSING_ERROR_MESSAGES, ProcessingErrorCode
+from app.document_intelligence.auto_acceptance import (
+    SECOND_PASS_FIELDS,
+    STRATEGY_FEATURES,
+    parse_second_pass,
+    parse_strategy,
+)
 from app.document_intelligence.classification.classifier import (
     ClassificationResult,
     DocumentClassifier,
 )
+from app.document_intelligence.classification.title_gate import assess_title
 from app.document_intelligence.extraction.base import ExtractedValue
 from app.document_intelligence.extraction.registry import ExtractorRegistry
-from app.document_intelligence.ocr.models import OCRDocumentResult, OCRPage, OCRProviderError
+from app.document_intelligence.ocr.models import (
+    OCRDocumentResult,
+    OCRPage,
+    OCRProviderError,
+    RegionRequest,
+)
 from app.document_intelligence.ocr.providers import get_ocr_provider
-from app.document_intelligence.ocr.text_assembly import assemble_document_text
+from app.document_intelligence.ocr.text_assembly import (
+    assemble_document_text,
+    assemble_page_text,
+)
 from app.document_intelligence.preprocessing.processor import PdfProcessor, is_meaningful_text
 from app.document_intelligence.results import CanonicalDocumentResult
 from app.document_intelligence.validation.engine import (
@@ -48,6 +64,18 @@ _ACTIVE_STATUSES = {
     ProcessingStatus.EXTRACTING,
     ProcessingStatus.VALIDATING,
 }
+
+
+def _value_evidence(item: ExtractedValue):  # type: ignore[no-untyped-def]
+    """The evidence box that actually holds the value (not the label box)."""
+    value = item.normalized_value or ""
+    digits = re.sub(r"\D", "", value)
+    boxed = [entry for entry in (item.evidence or []) if entry.bounding_box is not None]
+    for entry in boxed:
+        source_digits = re.sub(r"\D", "", entry.source_text)
+        if value in entry.source_text or (digits and digits in source_digits):
+            return entry
+    return boxed[-1] if boxed else None
 
 
 class DocumentProcessingService:
@@ -122,8 +150,17 @@ class DocumentProcessingService:
                 },
             )
 
+            extraction_source = source_result
+            if source_result.page_count > 1:
+                split = self._split_multi_document(source_result)
+                if split is not None:
+                    classification, extraction_source = split
+
+            classification = self._apply_title_gate(source_result, classification)
+
             self._set_status(db, document, ProcessingStatus.EXTRACTING)
-            fields = self.extractor.extract(classification.predicted_type, source_result)
+            fields = self.extractor.extract(classification.predicted_type, extraction_source)
+            await self._second_pass(document, source_result, fields)
             logger.info(
                 "extraction_completed",
                 extra={"document_id": str(document.id), "field_count": len(fields)},
@@ -131,6 +168,20 @@ class DocumentProcessingService:
 
             self._set_status(db, document, ProcessingStatus.VALIDATING)
             issues, project = self._calculate_validation(db, document, classification, fields)
+            if classification.multiple_documents_in_file and not any(
+                item.code == "MULTIPLE_DOCUMENTS_IN_FILE" for item in issues
+            ):
+                issues.append(
+                    ValidationIssue(
+                        RuleType.EXPECTED_DOCUMENT_TYPE,
+                        False,
+                        Severity.WARNING,
+                        None,
+                        None,
+                        "한 파일에 서로 다른 종류의 서류가 들어 있어 확인이 필요합니다.",
+                        "MULTIPLE_DOCUMENTS_IN_FILE",
+                    )
+                )
 
             canonical_result = CanonicalDocumentResult.compose(
                 document_id=document.id,
@@ -177,6 +228,116 @@ class DocumentProcessingService:
                 PROCESSING_ERROR_MESSAGES[ProcessingErrorCode.PROCESSING_FAILED],
             )
             return document
+
+    async def _second_pass(
+        self, document: Document, source_result: OCRDocumentResult, fields: list[ExtractedValue]
+    ) -> None:
+        """Re-read the region of each OCR-read numeric/date field with different preprocessing
+        and store the reading with the page (see auto_acceptance.py). Best effort: a failed
+        second pass only means no corroboration from it."""
+        if not STRATEGY_FEATURES[parse_strategy(self.settings.auto_accept_strategy)].second_pass:
+            return
+        requests = []
+        for item in fields:
+            if (
+                item.field_name not in SECOND_PASS_FIELDS
+                or item.normalized_value is None
+                or item.needs_review
+                or not item.evidence
+                or not any(entry.source_kind == "ocr" for entry in item.evidence)
+            ):
+                continue
+            evidence = _value_evidence(item)
+            if evidence is not None and evidence.bounding_box is not None:
+                requests.append(
+                    RegionRequest(item.field_name, evidence.page_number, evidence.bounding_box)
+                )
+        if not requests:
+            return
+        try:
+            from app.services.storage.local import detected_mime
+
+            path = self.storage.path_for(document.storage_key)
+            readings = await get_ocr_provider(self.settings).read_regions(
+                path, detected_mime(path), requests
+            )
+        except Exception:
+            logger.warning("second_pass_failed", extra={"document_id": str(document.id)})
+            return
+        values = {item.field_name: item.normalized_value for item in fields}
+        pages = {page.page_number: page for page in source_result.pages}
+        for reading in readings:
+            page = pages.get(reading.page_number)
+            if page is None:
+                continue
+            page.metadata.setdefault("second_pass", {})[reading.field_name] = {
+                "text": reading.text,
+                "normalized": parse_second_pass(reading.field_name, reading.text),
+                "confidence": reading.confidence,
+                "preprocess": reading.preprocess,
+                "first_pass_value": values.get(reading.field_name),
+            }
+
+    def _apply_title_gate(
+        self, source_result: OCRDocumentResult, classification: ClassificationResult
+    ) -> ClassificationResult:
+        """OCR-read documents must prove their type before any field can be auto-accepted
+        (see classification/title_gate.py). Embedded PDF text is exact and is not gated."""
+        if classification.predicted_type == DocumentType.UNKNOWN:
+            return classification
+        ocr_pages = [
+            page for page in source_result.pages if page.metadata.get("source") != "direct_pdf_text"
+        ]
+        if not ocr_pages:
+            return classification
+        assessment = assess_title(ocr_pages, classification.predicted_type, classification.evidence)
+        gated = replace(classification, title_gate=assessment.to_dict())
+        if assessment.near_match:
+            return replace(
+                gated,
+                predicted_type=DocumentType.UNKNOWN,
+                confidence_score=0.0,
+                score=0.0,
+                evidence=[],
+                needs_review=True,
+            )
+        if not assessment.established:
+            return replace(gated, needs_review=True)
+        return gated
+
+    def _split_multi_document(
+        self, source_result: OCRDocumentResult
+    ) -> tuple[ClassificationResult, OCRDocumentResult] | None:
+        """Classify each page. When pages of one file are different *supported* types
+        (e.g. a 사업자등록증 followed by a 납세증명서), flag the file and extract only from
+        the pages of the first type, so fields from different documents are never merged.
+        Unclassifiable pages (an unrelated page, a blank page) are ignored."""
+        page_types: dict[int, DocumentType] = {}
+        for page in source_result.pages:
+            if is_meaningful_text(page.text):
+                page_types[page.page_number] = self.classifier.classify(page.text).predicted_type
+        supported = {item for item in page_types.values() if item != DocumentType.UNKNOWN}
+        if len(supported) < 2:
+            return None
+        first = next(item for _, item in sorted(page_types.items()) if item != DocumentType.UNKNOWN)
+        pages = [page for page in source_result.pages if page_types.get(page.page_number) == first]
+        restricted = OCRDocumentResult(
+            provider=source_result.provider,
+            pages=pages,
+            assembled_text=assemble_document_text(pages),
+        )
+        return (
+            ClassificationResult(
+                predicted_type=first,
+                confidence_score=0.0,
+                score=0.0,
+                evidence=[],
+                needs_review=True,
+                multiple_documents_in_file=True,
+                page_types={str(number): str(item) for number, item in sorted(page_types.items())},
+            ),
+            restricted,
+        )
 
     def _set_status(self, db: Session, document: Document, status: ProcessingStatus) -> None:
         document.processing_status = status
@@ -239,6 +400,9 @@ class DocumentProcessingService:
             for page_number in needs_ocr:
                 ocr_page = by_page.get(page_number)
                 if ocr_page is not None:
+                    if ocr_page.lines:
+                        # derive the text from the lines with the current reading order
+                        ocr_page.text = assemble_page_text(ocr_page.lines)
                     pages.append(ocr_page)
             provider_name = str(
                 next(
@@ -379,6 +543,9 @@ class DocumentProcessingService:
             "evidence": classification.evidence,
             "needs_review": classification.needs_review,
             "classifier_version": classification.classifier_version,
+            "multiple_documents_in_file": classification.multiple_documents_in_file,
+            "page_types": classification.page_types,
+            "title_gate": classification.title_gate,
             "alternatives": [
                 {"document_type": str(alt.document_type), "score": alt.score}
                 for alt in classification.alternatives
