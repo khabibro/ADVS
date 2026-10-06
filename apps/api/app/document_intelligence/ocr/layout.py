@@ -44,17 +44,38 @@ class TextRow:
 
     @property
     def text(self) -> str:
-        """Segments joined by a single space.
+        """Segments joined by a single space -- unless the boxes abut.
 
-        The space is meaningful: a gap between two segments is real
-        whitespace in the source document, and the label patterns already
-        tolerate intra-label spacing.
+        A real gap between two segments is whitespace in the source document, so it
+        becomes a space (the label patterns tolerate intra-label spacing). Boxes that
+        touch (gap under a quarter of the text height) are one word the detector cut in
+        two, so they are joined without a space.
         """
-        return " ".join(segment.text for segment in self.segments if segment.text)
+        parts: list[str] = []
+        previous: OCRLine | None = None
+        for segment in self.segments:
+            if not segment.text:
+                continue
+            if previous is not None:
+                parts.append("" if _abuts(previous, segment) else " ")
+            parts.append(segment.text)
+            previous = segment
+        return "".join(parts)
 
     @property
     def has_geometry(self) -> bool:
         return all(segment.bounding_box is not None for segment in self.segments)
+
+
+ABUT_GAP_RATIO = 0.25
+
+
+def _abuts(left: OCRLine, right: OCRLine) -> bool:
+    left_box, right_box = left.bounding_box, right.bounding_box
+    if left_box is None or right_box is None:
+        return False
+    gap = right_box.x - (left_box.x + left_box.width)
+    return -left_box.height <= gap < ABUT_GAP_RATIO * min(left_box.height, right_box.height)
 
 
 def _vertical_overlap(left: OCRLine, right: OCRLine) -> float:

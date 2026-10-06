@@ -1,3 +1,4 @@
+import re
 from dataclasses import replace
 
 from app.core.domain import DocumentType
@@ -7,6 +8,8 @@ from app.document_intelligence.extraction.base import (
     ExtractionInput,
 )
 
+_GLUED_COLLEGE_RE = re.compile(r"(.{2,8}?대학)(?![원교])\s*(.{2,}(?:학과|학부|전공))")
+
 
 def department_without_college(value: ExtractedValue) -> ExtractedValue:
     """소속 prints "단과대학 학과" ("공과대학 기계공학과"); the department is the
@@ -14,6 +17,10 @@ def department_without_college(value: ExtractedValue) -> ExtractedValue:
     normalized = value.normalized_value
     if normalized is None:
         return value
+    glued = _GLUED_COLLEGE_RE.fullmatch(normalized)
+    if glued:
+        # OCR often drops the space inside one recognised box: "공과대학기계공학과".
+        return replace(value, normalized_value=glued.group(2))
     tokens = normalized.split()
     if len(tokens) > 1 and tokens[0].endswith("대학") and not tokens[0].endswith("대학교"):
         return replace(value, normalized_value=" ".join(tokens[1:]))

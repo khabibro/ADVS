@@ -38,7 +38,7 @@ EXTRACTOR_VERSION = "evidence-v5"
 BRN_CHECKSUM_FAILED_METHOD = "regex_business_number_checksum_failed"
 
 _COLON_RE = re.compile(r"[：﹕꞉︓]")
-_VALUE_CELL_COLON_RE = re.compile(r"^\s*:\s*")
+_VALUE_CELL_COLON_RE = re.compile(r"^\s*\)?\s*:\s*")
 _WHITESPACE_RE = re.compile(r"[ \t]+")
 # A row whose entire content is one date and nothing else. Korean official
 # certificates print the issue date as a bare line inside the issuance block
@@ -188,6 +188,68 @@ def _evidence_for(
     )
 
 
+_SEPARATOR_ONLY_RE = re.compile(r"^[\s:：﹕꞉︓]+$")
+
+
+def _merge_separator_boxes(row: TextRow) -> TextRow:
+    """A form may draw the colon of "label : value" as a box of its own (label cell, ":" cell,
+    value cell). Fold such a box into the label box on its left, so label and value stay
+    neighbours and the colon is read as the separator it is."""
+    segments = list(row.segments)
+    if len(segments) < 3 or not any(_SEPARATOR_ONLY_RE.match(item.text) for item in segments):
+        return row
+    merged: list[OCRLine] = []
+    for item in segments:
+        previous = merged[-1] if merged else None
+        if (
+            previous is not None
+            and _SEPARATOR_ONLY_RE.match(item.text)
+            and previous.bounding_box is not None
+            and item.bounding_box is not None
+        ):
+            left, right = previous.bounding_box, item.bounding_box
+            x0, y0 = min(left.x, right.x), min(left.y, right.y)
+            x1 = max(left.x + left.width, right.x + right.width)
+            y1 = max(left.y + left.height, right.y + right.height)
+            merged[-1] = replace(
+                previous,
+                text=previous.text.rstrip() + ":",
+                bounding_box=BoundingBox(x0, y0, x1 - x0, y1 - y0),
+            )
+        else:
+            merged.append(item)
+    return TextRow(row.page_number, tuple(merged))
+
+
+_STAMP_LIKE_MAX_CHARS = 6
+
+
+def _date_row_text(row: TextRow) -> str:
+    """The row's text for "is this row a bare date" purposes: a date box that shares its row with
+    a seal or stamp mark (a few characters printed over the date line) is still a bare
+    date row. Other boxes must look like a mark (no digits, a few characters), otherwise the row
+    text is returned unchanged."""
+    segments = [item for item in row.segments if item.text.strip()]
+    dates = [item for item in segments if _DATE_ONLY_RE.match(canonicalize_numeric_text(item.text))]
+    if len(dates) != 1 or len(segments) == 1:
+        return row.text
+    date_box = dates[0].bounding_box
+    others = [item for item in segments if item is not dates[0]]
+
+    def mark_like(item: OCRLine) -> bool:
+        compact = _compact(item.text)
+        if compact.endswith((":", "：")) or any(ch.isdigit() for ch in compact):
+            return False  # a label or another value, not a stamp
+        if date_box is not None and item.bounding_box is not None:
+            if item.bounding_box.x + item.bounding_box.width / 2 < date_box.x + date_box.width / 2:
+                return False  # a mark overlaps / follows the date; a label precedes its value
+        return len(compact) <= _STAMP_LIKE_MAX_CHARS or compact.startswith("[")
+
+    if all(mark_like(item) for item in others):
+        return dates[0].text
+    return row.text
+
+
 def _source_observations(source: ExtractionInput) -> list[_RowObservation]:
     """Group the source into page-scoped visual rows.
 
@@ -229,6 +291,7 @@ def _source_observations(source: ExtractionInput) -> list[_RowObservation]:
             metadata=page.metadata,
         )
         for row in build_rows(ordered_page):
+            row = _merge_separator_boxes(row)
             evidence = tuple(
                 _evidence_for(ordered_page, segment, source_kind, coordinate_space)
                 for segment in row.segments
@@ -355,7 +418,10 @@ def _right_associated(label: OCRLine, value: OCRLine) -> bool:
         return False
     overlap = min(a.y + a.height, b.y + b.height) - max(a.y, b.y)
     gap = b.x - (a.x + a.width)
-    return overlap >= max(a.height, b.height) * 0.5 and 0 <= gap <= 12 * min(a.height, b.height)
+    # detector boxes of neighbouring cells may overlap slightly at their margins
+    return overlap >= max(a.height, b.height) * 0.5 and (
+        -0.5 * min(a.height, b.height) <= gap <= 12 * min(a.height, b.height)
+    )
 
 
 def _below_associated(label: OCRLine, value: OCRLine) -> bool:
@@ -797,6 +863,17 @@ def issuer_university_candidate(source: ExtractionInput) -> ExtractionCandidate 
     return next(iter(names.values()))
 
 
+def _right_of_stack(first: BoundingBox, second: BoundingBox, value: BoundingBox) -> bool:
+    """The value box is to the right of a two-line label cell and vertically centred within
+    it (it need not overlap either single line by half its height)."""
+    top = min(first.y, second.y)
+    bottom = max(first.y + first.height, second.y + second.height)
+    height = min(first.height, second.height)
+    center = value.y + value.height / 2
+    gap = value.x - max(first.x + first.width, second.x + second.width)
+    return top <= center <= bottom and 0 <= gap <= 12 * height
+
+
 def _is_parenthesised(compact_text: str) -> bool:
     return compact_text.startswith("(") and compact_text.endswith(")")
 
@@ -844,12 +921,10 @@ def stacked_label_value(
                 if value_evidence not in (evidence, partner_evidence)
                 and value_evidence.page_number == evidence.page_number
                 and accept(_normalize_extraction_text(value))
-                and any(
-                    _right_associated(
-                        OCRLine(anchor, bounding_box=anchor_box),
-                        OCRLine(value, bounding_box=value_evidence.bounding_box),
-                    )
-                    for anchor, anchor_box in ((text, box), (partner, partner_box))
+                and _right_of_stack(
+                    box,
+                    partner_box,
+                    value_evidence.bounding_box,  # type: ignore[arg-type]
                 )
             ]
             right.sort(key=lambda item: item[1].bounding_box.x)  # type: ignore[union-attr]
@@ -906,7 +981,7 @@ def standalone_date_candidate(source: ExtractionInput) -> ExtractionCandidate | 
     observations = _source_observations(source)
     values: dict[str, ExtractionCandidate] = {}
     for observation in observations:
-        text = canonicalize_numeric_text(observation.row.text).strip()
+        text = canonicalize_numeric_text(_date_row_text(observation.row)).strip()
         if not _DATE_ONLY_RE.match(text):
             continue
         normalized = normalize_date(text)
@@ -927,7 +1002,7 @@ def standalone_date_candidate(source: ExtractionInput) -> ExtractionCandidate | 
         return None
     candidate = next(iter(values.values()))
     for index, observation in enumerate(observations):
-        if canonicalize_numeric_text(observation.row.text).strip() != candidate.value:
+        if canonicalize_numeric_text(_date_row_text(observation.row)).strip() != candidate.value:
             continue
         # A label immediately preceding a bare date owns that date. It is
         # not an unlabelled issuance block (e.g. graduation or employment).
@@ -959,6 +1034,45 @@ def _followed_by_issuer(observations: list[_RowObservation], index: int) -> bool
     return False
 
 
+_CERTIFICATION_SENTENCE_RE = re.compile(r"증명합니다|확인합니다|증명함|확인함|증명하여|증명하오")
+_CERTIFICATION_LOOKBACK = 2
+
+
+def _is_issuer_block_date(source: ExtractionInput, candidate: ExtractionCandidate) -> bool:
+    """True when the bare issue date is read from *embedded PDF text* and sits in the issuer
+    block: a certification sentence ("위의 사실을 증명합니다.") directly above it, the issuer
+    (institution or signing officer) just below, and no other date between them.
+
+    A scan or photo never qualifies (OCR can misread a date digit and nothing independent
+    confirms it), and neither does a date that merely resembles the pattern elsewhere on the
+    page, such as an enrolment-period date.
+    """
+    if isinstance(source, str) or not candidate.evidence:
+        return False
+    if any(item.source_kind != "embedded_pdf_text" for item in candidate.evidence):
+        return False
+    observations = _source_observations(source)
+    date_index = next(
+        (
+            index
+            for index, observation in enumerate(observations)
+            if canonicalize_numeric_text(_date_row_text(observation.row)).strip() == candidate.value
+        ),
+        None,
+    )
+    if date_index is None:
+        return False
+    page_number = observations[date_index].row.page_number
+    above = observations[max(0, date_index - _CERTIFICATION_LOOKBACK) : date_index]
+    if not any(
+        item.row.page_number == page_number
+        and _CERTIFICATION_SENTENCE_RE.search(_compact(item.row.text))
+        for item in above
+    ):
+        return False
+    return _followed_by_issuer(observations, date_index)
+
+
 def _has_unresolved_label_before_candidate(
     source: ExtractionInput, labels: list[str], candidate: ExtractionCandidate
 ) -> bool:
@@ -976,7 +1090,7 @@ def _has_unresolved_label_before_candidate(
     candidate_index: int | None = None
     for index, observation in enumerate(observations):
         if (
-            normalize_date(canonicalize_numeric_text(observation.row.text).strip())
+            normalize_date(canonicalize_numeric_text(_date_row_text(observation.row)).strip())
             == candidate_date
         ):
             candidate_index = index
@@ -1097,6 +1211,12 @@ class BaseDocumentExtractor(ABC):
             return labelled
         if _has_unresolved_label_before_candidate(text, labels, candidate):
             return labelled
+        if _is_issuer_block_date(text, candidate):
+            # Digital text, one bare date, between the certification sentence and the issuer
+            # line: not an inference. (Owner decision, Phase D.)
+            return self._value(
+                "issue_date", candidate.value, normalized, "issuer_block_issue_date", candidate
+            )
         return replace(
             self._value(
                 "issue_date", candidate.value, normalized, "document_semantic_issue_date", candidate

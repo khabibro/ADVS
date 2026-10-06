@@ -9,22 +9,47 @@ guessing a layout.
 
 from app.document_intelligence.ocr.models import OCRLine, OCRPage
 
-_Y_BAND_PX = 12.0
-
-
-def _sort_key(line: OCRLine) -> tuple[float, float]:
-    box = line.bounding_box
-    if box is None:
-        return (0.0, 0.0)
-    y_center = box.y + box.height / 2
-    band = round(y_center / _Y_BAND_PX)
-    return (band, box.x)
+_OVERLAP_RATIO = 0.5
 
 
 def order_lines(lines: list[OCRLine]) -> list[OCRLine]:
+    """Reading order = visual rows top to bottom, left to right inside a row.
+
+    Rows are decided by vertical *overlap*, not by fixed-height bands: a letter-spaced
+    title ("성 적 증 명 서") is detected as one box per character, and a few pixels of
+    baseline jitter used to push boxes of the same title into different bands and scramble
+    the title ("1적 증 명 서 성"), so its classification signal was lost.
+    """
     if not lines or any(line.bounding_box is None for line in lines):
         return lines
-    return sorted(lines, key=_sort_key)
+    by_center = sorted(
+        lines,
+        key=lambda line: (
+            line.bounding_box.y + line.bounding_box.height / 2,  # type: ignore[union-attr]
+            line.bounding_box.x,  # type: ignore[union-attr]
+        ),
+    )
+    rows: list[list[OCRLine]] = [[by_center[0]]]
+    for line in by_center[1:]:
+        anchor = rows[-1][-1]
+        if _vertical_overlap(anchor, line) >= _OVERLAP_RATIO * min(
+            anchor.bounding_box.height,  # type: ignore[union-attr]
+            line.bounding_box.height,  # type: ignore[union-attr]
+        ):
+            rows[-1].append(line)
+        else:
+            rows.append([line])
+    return [
+        line
+        for row in rows
+        for line in sorted(row, key=lambda item: item.bounding_box.x)  # type: ignore[union-attr]
+    ]
+
+
+def _vertical_overlap(left: OCRLine, right: OCRLine) -> float:
+    a, b = left.bounding_box, right.bounding_box
+    assert a is not None and b is not None
+    return min(a.y + a.height, b.y + b.height) - max(a.y, b.y)
 
 
 def assemble_page_text(lines: list[OCRLine]) -> str:

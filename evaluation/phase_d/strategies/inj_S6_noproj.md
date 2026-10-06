@@ -1,0 +1,94 @@
+# Injection results — S6 injection noproj
+
+- Suite SHA-256 `a81e4ef2ebfc97c3bf2646952b2c3a532e2cab33b4ecace8365cc9c685a484fd`, seed 20261005, git `bf0106c`, strategy `S6`, project values `False`
+- Scorer v2 SHA-256 `49674a9c03e464310cda0278782062e1a4b996e334ff8d8cbdc78d10b5ad2594`; cases: 428
+
+`planned` = enumerated cases; `exercised` = the un-injected control run read the target field correctly (so the injection is meaningful); `effective` = the pipeline actually read the injected wrong value.
+
+| Injection | Planned | Exercised | Effective (wrong value read) | False auto-accept | False READY | Not auto-accepted | READY | NEEDS_CORRECTION | REVIEW_REQUIRED |
+|---|---|---|---|---|---|---|---|---|---|
+| E1-one | 44 | 42 | 42 | 0 | 0 | 42 | 0 | 8 | 34 |
+| E2-all | 22 | 22 | 22 | 0 | 0 | 22 | 0 | 4 | 18 |
+| E3-all | 22 | 22 | 22 | 0 | 0 | 22 | 0 | 4 | 18 |
+| E3-one | 44 | 43 | 43 | 0 | 0 | 43 | 0 | 8 | 35 |
+| E4-one | 44 | 44 | 0 | 0 | 0 | 44 | 0 | 8 | 36 |
+| E5-all | 20 | 18 | 18 | 16 | 0 | 2 | 0 | 2 | 16 |
+| E5-one | 40 | 36 | 36 | 0 | 0 | 36 | 0 | 4 | 32 |
+| E6-one | 4 | 4 | 3 | 0 | 0 | 4 | 0 | 0 | 4 |
+| E6-one-both | 4 | 4 | 3 | 1 | 0 | 3 | 0 | 0 | 4 |
+| E7-all | 24 | 24 | 24 | 22 | 5 | 2 | 5 | 4 | 15 |
+| E7-one | 48 | 46 | 46 | 0 | 0 | 46 | 0 | 8 | 38 |
+| E8-one | 18 | 18 | 18 | 0 | 0 | 18 | 0 | 0 | 18 |
+| E8-one-both | 18 | 18 | 18 | 18 | 0 | 0 | 0 | 0 | 18 |
+| E9-one | 38 | 32 | 32 | 0 | 0 | 32 | 0 | 4 | 28 |
+| E9-one-both | 38 | 32 | 32 | 4 | 0 | 28 | 0 | 4 | 28 |
+
+Totals: planned 428, exercised 405, effective 359.
+
+**Totals: false auto-accept 61, false READY 5.**
+
+## Leaks
+
+| Case | status | injected → accepted value |
+|---|---|---|
+| B01/scanned:E7-all | READY | workplace_name: 테스트상사→주식회사 테스트상자; company_name: 테스트상사→주식회사 테스트상자; company_name: 테스트상사→주식회사 테스트상자; company_name: 테스트상사→주식회사 테스트상자 |
+| B01/images:E7-all | READY | workplace_name: 테스트상사→주식회사테스드상사; company_name: 테스트상사→주식회사 테스드상사; company_name: 테스트상사→주식회사테스드상사; company_name: 테스트상사→주식회사테스드상사 |
+| B02/scanned:E7-all | REVIEW_REQUIRED | company_name: 테스트상사→(주)테스트성사; company_name: 테스트상사→(주)테스트성사; workplace_name: 테스트상사→테스트성사(주) |
+| B02/images:E7-all | READY | company_name: 테스트상사→(주)테스드상사; company_name: 테스트상사→(주)테스드상사; workplace_name: 테스트상사→테스드상사(주); company_name: 테스트상사→주식회사테스드상사 |
+| B04/scanned:E7-all | REVIEW_REQUIRED | company_name: 테스트상사→주식회사 테스트상자; company_name: 테스트상사→주식회사테스트상자; workplace_name: 테스트상사→주식회사 테스트상자; company_name: 테스트상사→주식회사 테스트상자 |
+| B04/images:E7-all | REVIEW_REQUIRED | company_name: 테스트상사→주식회사테스트성사; workplace_name: 테스트상사→주식회사 테스트성사; company_name: 테스트상사→주식회사테스트성사; company_name: 테스트상사→주식회사 테스트성사 |
+| B05/scanned:E7-all | NEEDS_CORRECTION | workplace_name: 테스트상사→주식회사 테소트상사; company_name: 테스트상사→주식회사 테소트상사; company_name: 테스트상사→주식회사테소트상사 |
+| B05/scanned:E6-valid_until:B05-3_납세증명서_스캔.pdf:both | REVIEW_REQUIRED | valid_until: 2026-08-31→2028-08-31 |
+| B05/images:E7-all | NEEDS_CORRECTION | company_name: 테스트상사→주식회사테스드상사; company_name: 테스트상사→주식회사 테스드상사; company_name: 테스트상사→주식회사테스드상사; workplace_name: 테스트상사→주식회사 테스드상사 |
+| B06/scanned:E7-all | REVIEW_REQUIRED | company_name: 테스트상사→주식회사테소트상사; workplace_name: 테스트상사→주식회사 테소트상사; company_name: 테스트상사→주식회사 테소트상사 |
+| B06/images:E7-all | READY | company_name: 테스트상사→주식회사테스트상자; workplace_name: 테스트상사→주식회사테스트상자; company_name: 테스트상사→주식회사테스트상자; company_name: 테스트상사→주식회사 테스트상자 |
+| B07/scanned:E7-all | REVIEW_REQUIRED | company_name: 테스트상사→주식회사 데스트상사; company_name: 테스트상사→주식회사 데스트상사; workplace_name: 테스트상사→주식회사 데스트상사; company_name: 테스트상사→주식회사데스트상사 |
+| B07/images:E7-all | REVIEW_REQUIRED | company_name: 테스트상사→주식회사테소트상사; company_name: 테스트상사→주식회사 테소트상사; company_name: 테스트상사→주식회사테소트상사; workplace_name: 테스트상사→주식회사 테소트상사 |
+| B08/scanned:E7-all | NEEDS_CORRECTION | workplace_name: 테스트상사→주식회사 테스드상사; company_name: 테스트상사→주식회사 테스드상사; company_name: 테스트상사→주식회사 테스드상사 |
+| B08/images:E7-all | NEEDS_CORRECTION | company_name: 테스트상사→주식회사테스트성사; company_name: 테스트상사→주식회사 테스트성사; workplace_name: 테스트상사→주식회사 테스트성사 |
+| B09/scanned:E7-all | REVIEW_REQUIRED | workplace_name: 테스트상사→주식회사 테스트상자; company_name: 테스트상사→주식회사테스트상자; company_name: 테스트상사→주식회사 테스트상자; company_name: 테스트상사→주식회사테스트상자 |
+| B09/images:E7-all | READY | company_name: 테스트상사→주식회사 데스트상사; company_name: 테스트상사→주식회사데스트상사; company_name: 테스트상사→주식회사데스트상사; workplace_name: 테스트상사→주식회사 데스트상사; company_name: 테스트상사→주식회사데스트상사 |
+| B10/scanned:E7-all | REVIEW_REQUIRED | company_name: 테스트상사→주식회사 테소트상사; company_name: 테스트상사→주식회사 테소트상사; workplace_name: 테스트상사→주식회사 테소트상사; company_name: 테스트상사→주식회사테소트상사 |
+| B10/images:E7-all | REVIEW_REQUIRED | workplace_name: 테스트상사→주식회사 데스트상사; company_name: 테스트상사→주식회사데스트상사; company_name: 테스트상사→주식회사 데스트상사; company_name: 테스트상사→주식회사데스트상사 |
+| B11/scanned:E7-all | REVIEW_REQUIRED | workplace_name: 테스트상사→주식회사 테소트상사; company_name: 테스트상사→주식회사테소트상사; company_name: 테스트상사→주식회사 테소트상사 |
+| B11/images:E7-all | REVIEW_REQUIRED | company_name: 테스트상사→주식회사테스트상자; company_name: 테스트상사→주식회사 테스트상자; workplace_name: 테스트상사→주식회사 테스트상자 |
+| B12/scanned:E7-all | REVIEW_REQUIRED | workplace_name: 테스트상사→주식회사 데스트상사; company_name: 테스트상사→주식회사 데스트상사; company_name: 테스트상사→주식회사데스트상사; company_name: 테스트상사→주식회사데스트상사; company_name: 테스트상사→주식회사데스트상사 |
+| B12/images:E7-all | REVIEW_REQUIRED | company_name: 테스트상사→주식회사 테스트상자; workplace_name: 테스트상사→주식회사 테스트상자; company_name: 테스트상사→주식회사테스트상자; company_name: 테스트상사→주식회사테스트상자; company_name: 테스트상사→주식회사 테스트상자 |
+| S01/scanned:E5-all | REVIEW_REQUIRED | student_name: 김테스트→김테스드; student_name: 김테스트→김테스드 |
+| S01/scanned:E8:S01-2_성적증명서_스캔.pdf:both | REVIEW_REQUIRED | gpa: 3.80→4.4 |
+| S01/images:E5-all | REVIEW_REQUIRED | student_name: 김테스트→김테스드; student_name: 김테스트→김테스드 |
+| S01/images:E8:S01-2_성적증명서_사진.png:both | REVIEW_REQUIRED | gpa: 3.80→4.4 |
+| S02/scanned:E5-all | REVIEW_REQUIRED | student_name: 김테스트→길테스트; student_name: 김테스트→길테스트 |
+| S02/scanned:E8:S02-2_성적증명서_스캔.pdf:both | REVIEW_REQUIRED | gpa: 3.80→4.4 |
+| S02/images:E5-all | REVIEW_REQUIRED | student_name: 김테스트→김데스트; student_name: 김테스트→김데스트 |
+| S02/images:E8:S02-2_성적증명서_사진.png:both | REVIEW_REQUIRED | gpa: 3.80→4.4 |
+| S03/scanned:E5-all | NEEDS_CORRECTION | student_name: 김테스트→김테스드; student_name: 김테스트→김테스드 |
+| S03/scanned:E8:S03-2_성적증명서_스캔.pdf:both | REVIEW_REQUIRED | gpa: 2.70→3.7 |
+| S03/images:E5-all | NEEDS_CORRECTION | student_name: 김테스트→김테소트; student_name: 김테스트→김테소트 |
+| S03/images:E8:S03-2_성적증명서_사진.png:both | REVIEW_REQUIRED | gpa: 2.70→3.7 |
+| S04/scanned:E5-all | REVIEW_REQUIRED | student_name: 김테스트→김데스트; student_name: 김테스트→김데스트 |
+| S04/scanned:E8:S04-2_성적증명서_스캔.pdf:both | REVIEW_REQUIRED | gpa: 3.10→3.8 |
+| S04/scanned:E9:S04-2_성적증명서_스캔.pdf:both | REVIEW_REQUIRED | student_id: 2023123456→7023123456 |
+| S04/images:E5-all | REVIEW_REQUIRED | student_name: 김테스트→길테스트; student_name: 김테스트→길테스트 |
+| S04/images:E8:S04-2_성적증명서_사진.png:both | REVIEW_REQUIRED | gpa: 3.10→3.8 |
+| S04/images:E9:S04-2_성적증명서_사진.png:both | REVIEW_REQUIRED | student_id: 2023123456→2023123455 |
+| S05/scanned:E8:S05-2_성적증명서_스캔.pdf:both | REVIEW_REQUIRED | gpa: 3.80→4.4 |
+| S05/images:E8:S05-2_성적증명서_사진.png:both | REVIEW_REQUIRED | gpa: 3.80→4.4 |
+| S06/scanned:E5-all | REVIEW_REQUIRED | student_name: 김테스트→김테소트; student_name: 김테스트→김테소트 |
+| S06/scanned:E8:S06-2_성적증명서_스캔.pdf:both | REVIEW_REQUIRED | gpa: 3.80→4.4 |
+| S06/images:E5-all | REVIEW_REQUIRED | student_name: 김테스트→길테스트; student_name: 김테스트→길테스트 |
+| S06/images:E8:S06-2_성적증명서_사진.png:both | REVIEW_REQUIRED | gpa: 3.80→4.4 |
+| S08/scanned:E5-all | REVIEW_REQUIRED | student_name: 김테스트→김데스트; student_name: 김테스트→김데스트 |
+| S08/scanned:E8:S08-2_성적증명서_스캔.pdf:both | REVIEW_REQUIRED | gpa: 3.80→4.4 |
+| S08/images:E5-all | REVIEW_REQUIRED | student_name: 김테스트→김테스드; student_name: 김테스트→김테스드 |
+| S08/images:E8:S08-2_성적증명서_사진.png:both | REVIEW_REQUIRED | gpa: 3.80→4.4 |
+| S09/scanned:E5-all | REVIEW_REQUIRED | student_name: 김테스트→김테스드; student_name: 김테스트→김테스드 |
+| S09/scanned:E8:S09-2_성적증명서_스캔.pdf:both | REVIEW_REQUIRED | gpa: 3.80→4.4 |
+| S09/scanned:E9:S09-2_성적증명서_스캔.pdf:both | REVIEW_REQUIRED | student_id: 2023123456→2823123456 |
+| S09/images:E5-all | REVIEW_REQUIRED | student_name: 김테스트→김데스트; student_name: 김테스트→김데스트 |
+| S09/images:E8:S09-2_성적증명서_사진.png:both | REVIEW_REQUIRED | gpa: 3.80→4.4 |
+| S09/images:E9:S09-2_성적증명서_사진.png:both | REVIEW_REQUIRED | student_id: 2023123456→2023123466 |
+| S10/scanned:E5-all | REVIEW_REQUIRED | student_name: 김테스트→김테스드; student_name: 김테스트→김테스드 |
+| S10/scanned:E8:S10-2_성적증명서_스캔.pdf:both | REVIEW_REQUIRED | gpa: 3.80→4.4 |
+| S10/images:E5-all | REVIEW_REQUIRED | student_name: 김테스트→길테스트; student_name: 김테스트→길테스트 |
+| S10/images:E8:S10-2_성적증명서_사진.png:both | REVIEW_REQUIRED | gpa: 3.80→4.4 |
