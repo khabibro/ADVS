@@ -562,3 +562,61 @@ def test_s7_second_pass_can_contradict_a_corroborated_name_but_never_confirm_one
     alone = [field(D1, "student_name", "류하늘", doc_type=ENR, second="성명:류하늘")]
     assert not accepted(decide(alone, CTX, Strategy.S7), D1, "student_name")
     assert parse_strategy("s7") == Strategy.S7
+
+
+# ------------------------------------------------------------------ D2: boundary rule and plausibility
+
+
+def _ctx(**extra) -> ProjectContext:
+    return ProjectContext(reference_date=date(2027, 3, 1), **extra)
+
+
+def test_second_pass_only_date_near_the_reference_date_is_left_to_a_human() -> None:
+    near = [field(D1, "valid_until", "2027-03-05", doc_type=TAX, second="2027-03-05")]
+    far = [field(D1, "valid_until", "2027-03-25", doc_type=TAX, second="2027-03-25")]
+    assert decide(near, _ctx(), Strategy.S7)[(D1, "valid_until")].reason == "NEAR_DECISION_BOUNDARY"
+    assert accepted(decide(far, _ctx(), Strategy.S7), D1, "valid_until")
+    expired_side = [field(D1, "valid_until", "2027-02-24", doc_type=TAX, second="2027-02-24")]
+    assert not accepted(decide(expired_side, _ctx(), Strategy.S7), D1, "valid_until")
+
+
+def test_issue_date_near_the_age_limit_and_gpa_near_the_threshold_are_left_to_a_human() -> None:
+    ctx = _ctx(issue_max_age_days=90, gpa_threshold=3.0)
+    near_limit = [
+        field(D1, "issue_date", "2026-12-05", doc_type=ENR, second="2026-12-05")
+    ]  # 86 days
+    assert (
+        decide(near_limit, ctx, Strategy.S7)[(D1, "issue_date")].reason == "NEAR_DECISION_BOUNDARY"
+    )
+    recent = [field(D1, "issue_date", "2027-02-10", doc_type=ENR, second="2027-02-10")]
+    assert accepted(decide(recent, ctx, Strategy.S7), D1, "issue_date")
+    gpa_near = [
+        field(D1, "gpa", "3.1", doc_type=TRN, second="3.1"),
+        field(D1, "gpa_scale", "4.5", doc_type=TRN, second="4.5"),
+    ]
+    assert decide(gpa_near, ctx, Strategy.S7)[(D1, "gpa")].reason == "NEAR_DECISION_BOUNDARY"
+    gpa_clear = [
+        field(D1, "gpa", "3.8", doc_type=TRN, second="3.8"),
+        field(D1, "gpa_scale", "4.5", doc_type=TRN, second="4.5"),
+    ]
+    assert accepted(decide(gpa_clear, ctx, Strategy.S7), D1, "gpa")
+    # without a configured boundary nothing is near one
+    assert accepted(decide(gpa_near, _ctx(), Strategy.S7), D1, "gpa")
+
+
+def test_validity_end_implausibly_far_from_the_issue_date_is_blocked() -> None:
+    fields = [
+        field(D1, "issue_date", "2027-02-20", doc_type=TAX, method="document_semantic_issue_date"),
+        field(
+            D1, "valid_until", "2029-03-22", doc_type=TAX, second="2029-03-22"
+        ),  # a year digit misread
+    ]
+    assert (
+        decide(fields, _ctx(), Strategy.S7)[(D1, "valid_until")].reason
+        == "FORMAT_VALIDITY_TOO_LONG"
+    )
+    plausible = [
+        field(D1, "issue_date", "2027-02-20", doc_type=TAX, method="document_semantic_issue_date"),
+        field(D1, "valid_until", "2027-03-22", doc_type=TAX, second="2027-03-22"),
+    ]
+    assert accepted(decide(plausible, _ctx(), Strategy.S7), D1, "valid_until")
