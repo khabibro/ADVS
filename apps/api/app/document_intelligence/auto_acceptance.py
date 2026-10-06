@@ -38,7 +38,7 @@ import unicodedata
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 from enum import StrEnum
 from typing import Any
 
@@ -143,6 +143,22 @@ FIELD_RULES: dict[str, FieldRule] = {
     "gpa_scale": FieldRule("GPA", None, True),
 }
 
+# Decision-boundary margins (Phase D2). A value confirmed *only* by a second pass of the same
+# image is not auto-accepted when it lies this close to a decision boundary of the workflow:
+#   date_days -- valid_until / valid_from within N days of the reference date, and issue_date within
+#                N days of the age limit (reference date - max age);
+#   gpa       -- within X of the configured GPA threshold.
+# Chosen from the injection analysis (evaluation/phase_d2/margins.md): E11 moves dates 0-7 days
+# across the boundary (N = 10 keeps a margin over the largest tested shift, and the largest
+# shift a day-digit confusion can cause is 8 days); E12 moves a GPA to 3.00-3.10 (X = 0.5 covers
+# the first-decimal confusions 0.1-0.5). Larger margins were rejected because 납세증명서 and
+# 완납증명원 normally expire 20-30 days after issue, so N >= 31 would send every such date to a
+# human and remove the scanned all-valid READY.
+BOUNDARY_MARGINS: dict[str, float] = {"date_days": 10, "gpa": 0.5}
+# A certificate is valid for a bounded span; a validity end far beyond the issue date (or the
+# start) is the signature of a year/month digit misread. Policy constant, days.
+MAX_VALIDITY_SPAN_DAYS = 400
+
 # Fields whose value a second pass can re-read and compare as a number/date.
 SECOND_PASS_FIELDS = frozenset(
     name for name, rule in FIELD_RULES.items() if rule.second_pass or rule.name_veto
@@ -241,6 +257,8 @@ class ProjectContext:
     company_name: str | None = None
     applicant_name: str | None = None
     reference_date: date | None = None
+    issue_max_age_days: int | None = None  # the workflow's ISSUE_DATE_MAX_AGE, if configured
+    gpa_threshold: float | None = None  # the workflow's GPA threshold, if configured
 
 
 @dataclass(frozen=True)
@@ -297,6 +315,19 @@ def _valid_format(item: FieldInput, index: _Index, context: ProjectContext) -> s
             return "FORMAT_DATE_RANGE"
         if name == "issue_date" and context.reference_date and parsed > context.reference_date:
             return "FORMAT_ISSUE_DATE_AFTER_SUBMISSION"
+        if name == "valid_until":
+            issued = index.sibling(item.document_id, "issue_date")
+            if issued and issued.value:
+                try:
+                    issue_date = date.fromisoformat(issued.value)
+                except ValueError:
+                    issue_date = None
+                if issue_date is not None:
+                    span = (parsed - issue_date).days
+                    if span < 0:
+                        return "FORMAT_VALIDITY_BEFORE_ISSUE"
+                    if span > MAX_VALIDITY_SPAN_DAYS:
+                        return "FORMAT_VALIDITY_TOO_LONG"
         if name in ("valid_from", "valid_until"):
             other_name = "valid_until" if name == "valid_from" else "valid_from"
             other = index.sibling(item.document_id, other_name)
@@ -308,6 +339,8 @@ def _valid_format(item: FieldInput, index: _Index, context: ProjectContext) -> s
                 start, end = (parsed, other_date) if name == "valid_from" else (other_date, parsed)
                 if start > end:
                     return "FORMAT_VALIDITY_ORDER"
+                if (end - start).days > MAX_VALIDITY_SPAN_DAYS:
+                    return "FORMAT_VALIDITY_TOO_LONG"
         return None
     if name in ("gpa", "gpa_scale"):
         scale = index.sibling(item.document_id, "gpa_scale")
@@ -325,6 +358,25 @@ def _valid_format(item: FieldInput, index: _Index, context: ProjectContext) -> s
     if name == "student_id":
         return None if STUDENT_ID_RE.match(value) else "FORMAT_STUDENT_ID"
     return None  # names / university: no format validator (corroboration only)
+
+
+def _near_decision_boundary(item: FieldInput, context: ProjectContext) -> bool:
+    """True when `item` lies within the policy margin of a decision boundary of the workflow."""
+    margin_days = BOUNDARY_MARGINS["date_days"]
+    reference = context.reference_date
+    if item.value is None:
+        return False
+    try:
+        if item.field_name in ("valid_until", "valid_from") and reference is not None:
+            return abs((date.fromisoformat(item.value) - reference).days) <= margin_days
+        if item.field_name == "issue_date" and reference is not None and context.issue_max_age_days:
+            limit = reference - timedelta(days=context.issue_max_age_days)
+            return abs((date.fromisoformat(item.value) - limit).days) <= margin_days
+        if item.field_name == "gpa" and context.gpa_threshold is not None:
+            return abs(float(item.value) - context.gpa_threshold) <= BOUNDARY_MARGINS["gpa"]
+    except ValueError:
+        return False
+    return False
 
 
 HAS_VALIDATOR = frozenset(
@@ -511,7 +563,15 @@ def _decide_corroborated(
             corroborating_document_ids=tuple(corroborators),
         )
 
-    # ---- second-pass consensus, only where nothing else can confirm it (S4+) --------------
+    # ---- second-pass consensus, only where nothing else can confirm it (S4+)
+    if (
+        features.second_pass
+        and rule.second_pass
+        and second_value is not None
+        and second_value == item.value
+        and _near_decision_boundary(item, context)
+    ):
+        return _no(strategy, "NEAR_DECISION_BOUNDARY", rule.rule_id)
     if (
         features.second_pass
         and rule.second_pass

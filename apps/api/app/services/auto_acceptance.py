@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import get_settings
-from app.core.domain import DocumentType, ProcessingStatus
+from app.core.domain import DocumentType, ProcessingStatus, RuleType
 from app.document_intelligence.auto_acceptance import (
     AutoDecision,
     FieldInput,
@@ -20,7 +20,14 @@ from app.document_intelligence.auto_acceptance import (
     decide,
     parse_strategy,
 )
-from app.models.entities import Document, FieldReview, Project, Submission
+from app.models.entities import (
+    Document,
+    DocumentRequirement,
+    FieldReview,
+    Project,
+    Submission,
+    ValidationRule,
+)
 
 Decisions = dict[tuple[uuid.UUID, str], AutoDecision]
 
@@ -46,6 +53,30 @@ def second_pass_by_field(document: Document) -> dict[str, SecondPassInput]:
                 preprocess=item.get("preprocess", ""),
             )
     return found
+
+
+def _workflow_boundaries(db: Session, project: Project) -> tuple[int | None, float | None]:
+    """The workflow's issue-date age limit and GPA threshold (the decision boundaries a
+    second-pass-only value must stay clear of)."""
+    if project.checklist_id is None:
+        return None, None
+    rules = db.scalars(
+        select(ValidationRule)
+        .join(DocumentRequirement, ValidationRule.requirement_id == DocumentRequirement.id)
+        .where(DocumentRequirement.checklist_id == project.checklist_id)
+    ).all()
+    max_age: int | None = None
+    threshold: float | None = None
+    for rule in rules:
+        params = rule.params or {}
+        if rule.rule_type == RuleType.ISSUE_DATE_MAX_AGE.value:
+            max_age = int(params.get("max_age_days", 90))
+        elif rule.rule_type == RuleType.NUMERIC_COMPARISON.value and params.get("field") == "gpa":
+            try:
+                threshold = float(str(params.get("expected_value")))
+            except (TypeError, ValueError):
+                continue
+    return max_age, threshold
 
 
 def decisions_for_project(
@@ -113,9 +144,12 @@ def decisions_for_project(
                     has_current_review=(document.id, item.field_name) in reviews,
                 )
             )
+    max_age, gpa_threshold = _workflow_boundaries(db, project)
     context = ProjectContext(
         company_name=project.company_name,
         applicant_name=project.applicant_name,
         reference_date=reference_date,
+        issue_max_age_days=max_age,
+        gpa_threshold=gpa_threshold,
     )
     return decide(inputs, context, strategy)
