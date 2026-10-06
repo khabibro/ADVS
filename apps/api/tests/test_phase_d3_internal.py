@@ -239,3 +239,173 @@ def test_s8_confirms_gpa_and_scale_from_the_page_and_blocks_a_mismatch() -> None
     bad = [f("gpa", "3.93", TRN, facts=facts), f("gpa_scale", "4.5", TRN, facts=facts)]
     assert decide(bad, CTX, Strategy.S8)[(D1, "gpa")].reason == "ARITHMETIC_MISMATCH"
     assert not decide(good, CTX, Strategy.S7)[(D1, "gpa")].accepted  # not before D3
+
+
+def test_validity_end_is_supported_by_a_separately_printed_date_one_period_earlier() -> None:
+    from app.document_intelligence.confirmations import issue_date_box_for
+
+    own = DateBox("2027-03-31", 1, 100, 300, 200, 30, False)
+    earlier = DateBox("2027-03-01", 1, 400, 800, 200, 30, True)
+    other = DateBox("2026-01-15", 1, 400, 900, 200, 30, True)
+    assert (
+        issue_date_box_for(TAX, DocFacts(dates=(own, earlier, other)), date(2027, 3, 31)).state
+        == "CONFIRMED"
+    )
+    assert (
+        issue_date_box_for(TAX, DocFacts(dates=(own, other)), date(2027, 3, 31)).state == "NONE"
+    )  # never invented
+    assert (
+        issue_date_box_for(TAX, DocFacts(dates=(earlier,)), date(2027, 3, 31)).state == "NONE"
+    )  # needs its own box
+    unlabelled = DateBox(
+        "2027-03-01", 1, 400, 800, 200, 30, False
+    )  # a labelled date does not count
+    assert (
+        issue_date_box_for(TAX, DocFacts(dates=(own, unlabelled)), date(2027, 3, 31)).state
+        == "NONE"
+    )
+    assert (
+        issue_date_box_for(SME, DocFacts(dates=(own, earlier)), date(2027, 3, 31)).state == "NONE"
+    )
+
+
+def test_s8_confirms_a_validity_end_from_the_page_when_the_issue_date_was_not_extracted() -> None:
+    facts = DocFacts(
+        dates=(
+            DateBox("2027-03-31", 1, 100, 300, 200, 30, False),
+            DateBox("2027-03-01", 1, 400, 800, 200, 30, True),
+        )
+    )
+    item = [f("valid_until", "2027-03-31", facts=facts)]
+    assert decide(item, CTX, Strategy.S8)[(D1, "valid_until")].accepted
+    assert not decide(item, CTX, Strategy.S7)[(D1, "valid_until")].accepted
+
+
+def test_issuer_university_with_the_title_glued_on_is_read() -> None:
+    from app.document_intelligence.extraction.registry import ExtractorRegistry
+    from app.document_intelligence.ocr.models import (
+        BoundingBox,
+        OCRDocumentResult,
+        OCRLine,
+        OCRPage,
+    )
+
+    line = OCRLine("한국샘플대학교총장", 0.99, BoundingBox(100, 900, 700, 80))
+    page = OCRPage(1, line.text, [line], metadata={"source": "ocr"})
+    values = ExtractorRegistry().extract(TRN, OCRDocumentResult("ocr", [page], line.text))
+    assert {v.field_name: v.normalized_value for v in values}["university_name"] == "한국샘플대학교"
+
+
+# ----------------------------------------------------------------- decision-robust (D3-5)
+
+
+def test_alternative_readings_cover_substitution_transposition_drop_and_add() -> None:
+    from app.document_intelligence.ocr_confusions import (
+        CONFUSION_TABLE_VERSION,
+        alternative_readings,
+    )
+
+    alts = alternative_readings("3.8")
+    assert {"3.0", "3.6", "3.3"} <= alts  # 8 -> 0 / 6 / 3
+    assert alternative_readings("38") >= {"83"}  # adjacent digits transposed
+    assert ".38" not in alts  # a separator is not transposed
+    assert ".8" in alts and "3." in alts  # a dropped digit
+    assert "33.8" in alts and "3.88" in alts  # an added digit
+    assert "3.8" not in alts and CONFUSION_TABLE_VERSION
+
+
+def test_gpa_is_decision_robust_only_when_every_plausible_misreading_gives_the_same_outcome() -> (
+    None
+):
+    from app.document_intelligence.decision_robust import RuleSpec, is_decision_robust
+
+    low = [RuleSpec(TRN, "gpa", "at_least", bound_number=0.5)]
+    high = [RuleSpec(TRN, "gpa", "at_least", bound_number=3.5)]
+    assert is_decision_robust(low, None, "gpa", TRN, "3.8", scale=4.5)
+    assert not is_decision_robust(high, None, "gpa", TRN, "3.8", scale=4.5)  # 3.0 would flip it
+    assert not is_decision_robust([], None, "gpa", TRN, "3.8", scale=4.5)  # no rule uses it
+
+
+def test_a_date_is_almost_never_robust_because_a_transposed_year_flips_expiry() -> None:
+    from app.document_intelligence.decision_robust import RuleSpec, is_decision_robust
+
+    spec = [RuleSpec(TAX, "valid_until", "on_or_after_ref")]
+    ref = date(2027, 3, 10)
+    assert not is_decision_robust(
+        spec, ref, "valid_until", TAX, "2030-12-31"
+    )  # 2003-12-31 would be expired
+    assert not is_decision_robust(
+        spec, ref, "valid_until", TAX, "2027-03-31"
+    )  # 2021-03-31 would be expired
+
+
+def test_a_confirmed_date_profile_rules_out_alternatives_that_break_it() -> None:
+    from app.document_intelligence.decision_robust import RuleSpec, is_decision_robust
+
+    spec = [RuleSpec(TAX, "valid_until", "on_or_after_ref")]
+    ref = date(2027, 3, 10)
+    siblings = {
+        "issue_date": date(2027, 3, 1),
+        "valid_from": None,
+        "valid_until": date(2027, 3, 31),
+    }
+    # the year 2021 reading would break the 30-day profile with the printed issue date
+    assert is_decision_robust(spec, ref, "valid_until", TAX, "2027-03-31", siblings=siblings)
+
+
+def test_s9_accepts_a_robust_value_and_labels_it_s8_does_not() -> None:
+    from app.document_intelligence.decision_robust import RuleSpec
+
+    ctx = ProjectContext(
+        reference_date=date(2027, 3, 10),
+        rules=(RuleSpec(TRN, "gpa", "at_least", bound_number=0.5),),
+    )
+    gpa = [f("gpa", "3.8", TRN), f("gpa_scale", "4.5", TRN)]
+    assert not decide(gpa, ctx, Strategy.S8)[(D1, "gpa")].accepted
+    decision = decide(gpa, ctx, Strategy.S9)[(D1, "gpa")]
+    assert decision.accepted and decision.robust and decision.to_dict()["confusion_table_version"]
+
+
+def test_fields_no_rule_uses_are_marked_informational(client, db_session) -> None:
+    import runpy
+    import uuid as _uuid
+    from pathlib import Path
+
+    import fitz
+    from sqlalchemy import select
+
+    from app.models.entities import Checklist
+
+    runpy.run_path(str(Path(__file__).resolve().parents[3] / "scripts" / "seed.py"))["main"]()
+    workflow = db_session.scalar(select(Checklist).where(Checklist.name == "학생 제출서류 점검"))
+    project = client.post(
+        "/api/v1/projects",
+        json={"name": f"i{_uuid.uuid4().hex[:4]}", "workflow_id": str(workflow.id)},
+    ).json()
+    document = fitz.open()
+    page = document.new_page()
+    for index, line in enumerate(
+        [
+            "재 학 증 명 서",
+            "성          명 : 류하늘",
+            "소          속 : 공과대학 기계공학과",
+            "학          번 : 2025123456",
+            "위의 사실을 증명합니다.",
+            "2026년 09월 20일",
+            "한국샘플대학교 총장",
+        ]
+    ):
+        page.insert_text((60, 60 + index * 26), line, fontsize=12, fontname="korea")
+    data = document.tobytes()
+    uploaded = client.post(
+        f"/api/v1/projects/{project['id']}/documents",
+        files={"file": ("e.pdf", data, "application/pdf")},
+    ).json()
+    client.post(f"/api/v1/documents/{uploaded['id']}/process")
+    fields = {
+        f["field_name"]: f
+        for f in client.get(f"/api/v1/documents/{uploaded['id']}").json()["extracted_fields"]
+    }
+    assert fields["student_id"]["decision_relevant"] is True  # required by the workflow
+    assert fields["issue_date"]["decision_relevant"] is True
+    assert fields["department"]["decision_relevant"] is False  # no rule uses it

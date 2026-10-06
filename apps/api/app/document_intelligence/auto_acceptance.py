@@ -50,10 +50,12 @@ from app.core.domain import DocumentType
 from app.document_intelligence.confirmations import (
     date_pair,
     gpa_arithmetic,
+    issue_date_box_for,
     parse_iso,
     printed_twice,
     scale_confirmation,
 )
+from app.document_intelligence.decision_robust import RuleSpec, is_decision_robust
 from app.document_intelligence.internal_evidence import DocFacts
 from app.document_intelligence.normalization.field_normalizer import (
     DATE_RE,
@@ -63,6 +65,7 @@ from app.document_intelligence.normalization.field_normalizer import (
     normalize_date,
     strip_legal_entity_markers,
 )
+from app.document_intelligence.ocr_confusions import CONFUSION_TABLE_VERSION
 
 AUTO_ACCEPT_POLICY_VERSION = "auto-accept-v1"
 
@@ -303,6 +306,7 @@ class ProjectContext:
     reference_date: date | None = None
     issue_max_age_days: int | None = None  # the workflow's ISSUE_DATE_MAX_AGE, if configured
     gpa_threshold: float | None = None  # the workflow's GPA threshold, if configured
+    rules: tuple[RuleSpec, ...] = ()  # the workflow's active rules on decision-driving fields
 
 
 @dataclass(frozen=True)
@@ -315,6 +319,7 @@ class AutoDecision:
     corroborating_document_ids: tuple[uuid.UUID, ...] = ()
     second_pass_value: str | None = None
     reason: str | None = None  # why it was NOT accepted
+    robust: bool = False  # accepted for the decision only (every plausible misreading agrees)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -326,6 +331,8 @@ class AutoDecision:
             "corroborating_document_ids": [str(item) for item in self.corroborating_document_ids],
             "second_pass_value": self.second_pass_value,
             "reason": self.reason,
+            "robust": self.robust,
+            "confusion_table_version": CONFUSION_TABLE_VERSION if self.robust else None,
         }
 
 
@@ -429,6 +436,7 @@ def _near_decision_boundary(item: FieldInput, context: ProjectContext) -> bool:
     return False
 
 
+ROBUST_FIELDS = frozenset({"gpa", "valid_from", "valid_until", "issue_date"})
 INTERNAL_FIELDS = frozenset({"gpa", "gpa_scale", "issue_date", "valid_from", "valid_until"})
 
 
@@ -448,6 +456,10 @@ def _internal_verdict(item: FieldInput, index: _Index, context: ProjectContext):
         pair = date_pair(item.document_type, issue, start, end)
         if pair.state != "NONE":
             return pair
+        if item.field_name == "valid_until" and end is not None and issue is None:
+            boxed = issue_date_box_for(item.document_type, item.facts, end)
+            if boxed.state != "NONE":
+                return boxed
     if item.field_name == "issue_date":
         return printed_twice(item.facts, item.value or "")
     return None
@@ -680,4 +692,27 @@ def _decide_corroborated(
             sources=("second_pass",),
             second_pass_value=second_value,
         )
+    if features.robust and item.field_name in ROBUST_FIELDS and not item.needs_review:
+        scale_item = index.sibling(item.document_id, "gpa_scale")
+        siblings = {
+            name: parse_iso(other.value)
+            for name in ("issue_date", "valid_from", "valid_until")
+            if (other := index.sibling(item.document_id, name)) is not None
+        }
+        if is_decision_robust(
+            list(context.rules),
+            context.reference_date,
+            item.field_name,
+            item.document_type,
+            item.value,
+            scale=float(scale_item.value) if scale_item and scale_item.value else None,
+            siblings=siblings,
+        ):
+            return AutoDecision(
+                True,
+                strategy.value,
+                rule_id=f"{rule.rule_id}:DECISION_ROBUST",
+                sources=("decision_robust",),
+                robust=True,
+            )
     return _no(strategy, "NO_INDEPENDENT_CONFIRMATION", rule.rule_id)

@@ -851,6 +851,8 @@ def issuer_university_candidate(source: ExtractionInput) -> ExtractionCandidate 
             tokens = tokens[:-1]
         elif collapsed.endswith("총 장"):
             tokens = tokens[:-2]
+        elif tokens and tokens[-1].endswith("총장") and len(tokens[-1]) > 2:
+            tokens[-1] = tokens[-1].removesuffix("총장")  # OCR dropped the space: "…대학교총장"
         name = "".join(tokens) if all(len(token) == 1 for token in tokens) else " ".join(tokens)
         if _compact(name) != match.group(1):
             continue

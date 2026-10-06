@@ -167,6 +167,38 @@ def date_pair(
     )
 
 
+def issue_date_box_for(
+    document_type: DocumentType,
+    facts: DocFacts | None,
+    valid_until: date,
+    profiles: dict[DocumentType, ValidityProfile] | None = None,
+) -> Verdict:
+    """When the issue date itself was not extracted (it is printed unlabelled, e.g. beside a receipt
+    number), look at the separately printed dates of the page: a bare date box exactly one profile
+    period before `valid_until` supports it. Independent: that box is not the validity-end box; the
+    issue date is never invented -- a box must be printed there."""
+    profile = (profiles or VALIDITY_PROFILES).get(document_type)
+    if facts is None or profile is None or profile.until_after_issue_days is None:
+        return NONE
+    low, high = profile.until_after_issue_days
+    own = [box for box in facts.dates if box.iso == valid_until.isoformat()]
+    if not own:
+        return NONE
+    for box in facts.dates:
+        parsed = parse_iso(box.iso)
+        if (
+            parsed is None
+            or not box.bare
+            or any(box.iso == o.iso and box.x == o.x and box.y == o.y for o in own)
+        ):
+            continue
+        if _within((valid_until - parsed).days, (low, high), profile.tolerance_days):
+            return Verdict(
+                "CONFIRMED", "date_pair", "a separately printed date one validity period earlier"
+            )
+    return NONE
+
+
 MIN_SEPARATION_HEIGHTS = 1.5
 
 

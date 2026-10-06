@@ -124,6 +124,8 @@ class AutoAcceptanceRead(BaseModel):
     corroborating_document_ids: list[uuid.UUID] = []
     second_pass_value: str | None = None
     reason: str | None = None
+    robust: bool = False
+    confusion_table_version: str | None = None
 
 
 class FieldRead(BaseModel):
@@ -143,6 +145,9 @@ class FieldRead(BaseModel):
     effective_source: EffectiveValueSource | None = None
     current_review_decision: FieldReviewDecision | None = None
     auto_acceptance: AutoAcceptanceRead | None = None
+    # False = no active rule or required field of the workflow uses this field: it is shown as
+    # "informational, not verified" and never holds a submission in REVIEW_REQUIRED.
+    decision_relevant: bool = True
     model_config = ConfigDict(from_attributes=True)
 
 
