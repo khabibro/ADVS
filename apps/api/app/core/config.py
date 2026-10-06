@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     # Auto-acceptance of OCR values (see document_intelligence/auto_acceptance.py).
     # S0 = off (every OCR field to a human) ... S7. Default S7 (chosen in Phase D).
-    auto_accept_strategy: str = "S7"
+    auto_accept_strategy: str = "S8"
     # Comma-separated workflow (checklist) ids for which auto-acceptance is switched off.
     auto_accept_disabled_workflows: str = ""
 

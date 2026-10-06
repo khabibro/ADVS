@@ -9,6 +9,7 @@ from pathlib import Path
 import fitz
 from fastapi.testclient import TestClient
 
+from app.core.config import get_settings
 from app.core.domain import DocumentType, RuleType, Severity
 from app.document_intelligence.ocr.models import BoundingBox, OCRLine, OCRPage
 from app.models.entities import (
@@ -202,8 +203,11 @@ def test_full_pipeline_ocr_failure_is_distinct_from_unknown(client: TestClient, 
 
 
 def test_full_pipeline_expired_sme_certificate_needs_correction(
-    client: TestClient, db_session
+    client: TestClient, db_session, monkeypatch
 ) -> None:
+    # This test covers the human-confirmation path of an OCR value: pin the pre-auto-acceptance
+    # policy (S0) so that the value is not accepted by the policy before the human confirms it.
+    monkeypatch.setattr(get_settings(), "auto_accept_strategy", "S0")
     project = _create_project(client, db_session)
     document = _upload(client, project["id"], "sme_expired_scan.pdf")
     processed = _process(client, document["id"])
