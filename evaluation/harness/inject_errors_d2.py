@@ -232,7 +232,7 @@ def render(label: str, summary: dict[str, Any], results: list[dict[str, Any]], m
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--corpus", choices=["dev", "holdout", "holdout2", "holdout3"], default="dev")
+    parser.add_argument("--corpus", choices=["dev", "holdout", "holdout2"], default="dev")
     parser.add_argument("--ocr-cache", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--label", default="")
