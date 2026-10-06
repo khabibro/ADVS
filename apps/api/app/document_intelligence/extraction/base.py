@@ -226,7 +226,7 @@ _STAMP_LIKE_MAX_CHARS = 6
 
 def _date_row_text(row: TextRow) -> str:
     """The row's text for "is this row a bare date" purposes: a date box that shares its row with
-    a seal or stamp mark ("TEST", "견본", "[직인 생략]" printed over the date line) is still a bare
+    a seal or stamp mark (a few characters printed over the date line) is still a bare
     date row. Other boxes must look like a mark (no digits, a few characters), otherwise the row
     text is returned unchanged."""
     segments = [item for item in row.segments if item.text.strip()]
