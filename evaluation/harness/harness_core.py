@@ -199,7 +199,7 @@ class OCRCacheProvider:
         from app.document_intelligence.ocr.models import RegionReading
 
         digest = sha256_file(path)
-        folder = self.cache_dir / "second_pass"
+        folder = self.cache_dir / "second_pass_v2"  # v2: stamp-aware reading (D3-7)
         folder.mkdir(parents=True, exist_ok=True)
         readings = []
         for request in requests:
