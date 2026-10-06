@@ -22,6 +22,7 @@ from app.document_intelligence.auto_acceptance import (
     decide,
     parse_strategy,
 )
+from app.document_intelligence.internal_evidence import extract_facts
 from app.models.entities import (
     Document,
     DocumentRequirement,
@@ -159,6 +160,23 @@ def decisions_for_project(
         ):
             continue
         second = second_pass_by_field(document)
+        facts = (
+            extract_facts(
+                [
+                    {
+                        "page_number": r.page_number,
+                        "lines": r.lines or [],
+                        "metadata": r.metadata_json or {},
+                    }
+                    for r in document.ocr_results
+                ]
+            )
+            if any(
+                "ocr" in {entry.get("source_kind") for entry in (f.evidence or [])}
+                for f in document.extracted_fields
+            )
+            else None
+        )
         gpas = semester_gpas(document) if document_type == DocumentType.TRANSCRIPT else ()
         for item in document.extracted_fields:
             kinds = {entry.get("source_kind") for entry in (item.evidence or [])}
@@ -176,6 +194,7 @@ def decisions_for_project(
                     second_pass=second.get(item.field_name),
                     has_current_review=(document.id, item.field_name) in reviews,
                     peer_values=gpas if item.field_name == "gpa" else (),
+                    facts=facts,
                 )
             )
     max_age, gpa_threshold = _workflow_boundaries(db, project)
