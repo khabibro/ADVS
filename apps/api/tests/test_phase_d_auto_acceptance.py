@@ -620,3 +620,16 @@ def test_validity_end_implausibly_far_from_the_issue_date_is_blocked() -> None:
         field(D1, "valid_until", "2027-03-22", doc_type=TAX, second="2027-03-22"),
     ]
     assert accepted(decide(plausible, _ctx(), Strategy.S7), D1, "valid_until")
+
+
+def test_cumulative_gpa_outside_the_semester_gpas_is_not_accepted() -> None:
+    def gpa_fields(value: str) -> list[FieldInput]:
+        gpa = field(D1, "gpa", value, doc_type=TRN, second=value)
+        return [
+            FieldInput(**{**gpa.__dict__, "peer_values": (2.9, 3.1, 3.3, float(value))}),
+            field(D1, "gpa_scale", "4.5", doc_type=TRN, second="4.5"),
+        ]
+
+    assert accepted(decide(gpa_fields("3.2"), CTX, Strategy.S7), D1, "gpa")
+    blocked = decide(gpa_fields("3.9"), CTX, Strategy.S7)  # above every semester
+    assert blocked[(D1, "gpa")].reason == "FORMAT_GPA_OUTSIDE_SEMESTER_RANGE"

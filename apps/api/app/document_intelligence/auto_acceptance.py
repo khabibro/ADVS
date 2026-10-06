@@ -250,6 +250,9 @@ class FieldInput:
     extraction_method: str | None = None
     second_pass: SecondPassInput | None = None
     has_current_review: bool = False
+    # Other values of the same kind printed on the same document (a transcript's per-semester
+    # GPAs): a cumulative value must lie among them.
+    peer_values: tuple[float, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -352,6 +355,12 @@ def _valid_format(item: FieldInput, index: _Index, context: ProjectContext) -> s
         try:
             if float(score.value) > float(scale.value) or float(score.value) < 0:
                 return "FORMAT_GPA_ABOVE_SCALE"
+            # a cumulative GPA is an average of the semester GPAs, so it cannot lie outside them
+            others = [v for v in score.peer_values if abs(v - float(score.value)) > 1e-6]
+            if len(others) >= 2 and not (
+                min(others) - 0.01 <= float(score.value) <= max(others) + 0.01
+            ):
+                return "FORMAT_GPA_OUTSIDE_SEMESTER_RANGE"
         except ValueError:
             return "FORMAT_GPA_INVALID"
         return None

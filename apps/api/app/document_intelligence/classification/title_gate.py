@@ -28,7 +28,7 @@ from app.document_intelligence.classification.classifier import (
     UNSUPPORTED_LOOK_ALIKE_TITLES,
 )
 from app.document_intelligence.ocr.layout import build_rows
-from app.document_intelligence.ocr.models import OCRPage
+from app.document_intelligence.ocr.models import OCRLine, OCRPage
 
 # Qualifiers that turn a supported title into a different document (derived from the Phase B
 # look-alike table: 지방세납세증명서, 휴학증명서, 졸업예정증명서).
@@ -119,6 +119,38 @@ def _titles(document_type: DocumentType) -> list[str]:
     ]
 
 
+ADJACENT_GAP_RATIO = 2.0  # a qualifier box touches or nearly touches the title box
+
+
+def _adjacent_prefix(segments: list[OCRLine], title: str) -> str | None:
+    """The text that sits *immediately* before `title` on its row: the part of the first title
+    box before the title, plus the boxes directly to its left while the gap between neighbouring
+    boxes stays within about two text heights. A field label further left on the same row
+    ("발 급 번 호 ... 완납 증명원") is not part of the title."""
+    texts = [_squash(item.text) for item in segments]
+    joined = "".join(texts)
+    start = joined.find(title)
+    if start < 0:
+        return None
+    offset = 0
+    first = 0
+    for index, text in enumerate(texts):
+        if start < offset + len(text) or (not text and start == offset):
+            first = index
+            break
+        offset += len(text)
+    prefix = texts[first][: start - offset]
+    for index in range(first - 1, -1, -1):
+        right, left = segments[index + 1].bounding_box, segments[index].bounding_box
+        if right is None or left is None:
+            break
+        gap = right.x - (left.x + left.width)
+        if gap > ADJACENT_GAP_RATIO * max(left.height, right.height):
+            break
+        prefix = texts[index] + prefix
+    return prefix
+
+
 def assess_title(
     pages: list[OCRPage], document_type: DocumentType, evidence: list[str]
 ) -> TitleAssessment:
@@ -126,23 +158,18 @@ def assess_title(
     titles = _titles(document_type)
     for page in pages:
         for row in build_rows(page):
-            squashed = _squash(row.text)
+            segments = [item for item in row.segments if item.text.strip()]
             for title in titles:
-                index = squashed.find(title)
-                if index < 0:
+                raw_prefix = _adjacent_prefix(segments, title)
+                if raw_prefix is None:
                     continue
-                prefix = _squash(
-                    _BRACKETED.sub(
-                        "", row.text[: row.text.find(title[0])] if False else squashed[:index]
-                    )
-                )
+                prefix = _squash(_BRACKETED.sub("", raw_prefix))
                 near = _near_lookalike(prefix)
                 if near:
                     return TitleAssessment(False, "LOOKALIKE_QUALIFIER_NEAR_MATCH", near)
                 hangul = "".join(_HANGUL.findall(prefix))
                 if not hangul or any(
-                    hangul.endswith(word) or hangul == word
-                    for word in BENIGN_PREFIXES.get(document_type, ())
+                    hangul.endswith(word) for word in BENIGN_PREFIXES.get(document_type, ())
                 ):
                     return TitleAssessment(True)
                 return TitleAssessment(False, "UNEXPLAINED_CHARACTERS_BEFORE_TITLE")
@@ -153,6 +180,5 @@ def assess_title(
         if signal.weight >= IDENTIFIER and signal.text in evidence
     ]
     if len(strong) >= 2:
-        # a damaged qualifier right before where a title should be still blocks
         return TitleAssessment(True)
     return TitleAssessment(False, "TITLE_NOT_CLEAN_AND_NO_SECOND_SIGNAL")

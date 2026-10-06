@@ -3,6 +3,8 @@ document_intelligence/auto_acceptance.py for the rules)."""
 
 from __future__ import annotations
 
+import re
+import unicodedata
 import uuid
 from datetime import date
 
@@ -26,6 +28,7 @@ from app.models.entities import (
     FieldReview,
     Project,
     Submission,
+    ValidationResult,
     ValidationRule,
 )
 
@@ -39,6 +42,33 @@ def configured_strategy(project: Project | None) -> Strategy:
     ):
         return Strategy.S0
     return parse_strategy(settings.auto_accept_strategy)
+
+
+_SEMESTER_GPA_RE = re.compile(r"평점평균\s*[:：]?\s*(\d(?:\.\d{1,3})?)\s*/")
+
+
+def semester_gpas(document: Document) -> tuple[float, ...]:
+    values: list[float] = []
+    for result in document.ocr_results:
+        for line in result.lines or []:
+            text = unicodedata.normalize("NFKC", str(line.get("text", "")))
+            values.extend(float(match) for match in _SEMESTER_GPA_RE.findall(text))
+    return tuple(values)
+
+
+def latest_evaluation_date(db: Session, project_id: uuid.UUID) -> date | None:
+    """The evaluation date of the project's stored verification, if any: the date every
+    date-dependent decision was made against."""
+    row = db.scalar(
+        select(ValidationResult)
+        .where(ValidationResult.project_id == project_id, ValidationResult.scope == "SUBMISSION")
+        .limit(1)
+    )
+    value = (row.details or {}).get("evaluation_date") if row is not None else None
+    try:
+        return date.fromisoformat(str(value)) if value else None
+    except ValueError:
+        return None
 
 
 def second_pass_by_field(document: Document) -> dict[str, SecondPassInput]:
@@ -98,6 +128,8 @@ def decisions_for_project(
         .execution_options(populate_existing=True)
     ).all()
     if reference_date is None:
+        reference_date = latest_evaluation_date(db, project.id)
+    if reference_date is None:
         from app.services.document_validation import submission_reference_date
 
         submission = db.scalar(
@@ -127,6 +159,7 @@ def decisions_for_project(
         ):
             continue
         second = second_pass_by_field(document)
+        gpas = semester_gpas(document) if document_type == DocumentType.TRANSCRIPT else ()
         for item in document.extracted_fields:
             kinds = {entry.get("source_kind") for entry in (item.evidence or [])}
             inputs.append(
@@ -142,6 +175,7 @@ def decisions_for_project(
                     extraction_method=item.extraction_method,
                     second_pass=second.get(item.field_name),
                     has_current_review=(document.id, item.field_name) in reviews,
+                    peer_values=gpas if item.field_name == "gpa" else (),
                 )
             )
     max_age, gpa_threshold = _workflow_boundaries(db, project)
