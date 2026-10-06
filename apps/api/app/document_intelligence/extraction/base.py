@@ -188,6 +188,68 @@ def _evidence_for(
     )
 
 
+_SEPARATOR_ONLY_RE = re.compile(r"^[\s:：﹕꞉︓]+$")
+
+
+def _merge_separator_boxes(row: TextRow) -> TextRow:
+    """A form may draw the colon of "label : value" as a box of its own (label cell, ":" cell,
+    value cell). Fold such a box into the label box on its left, so label and value stay
+    neighbours and the colon is read as the separator it is."""
+    segments = list(row.segments)
+    if len(segments) < 3 or not any(_SEPARATOR_ONLY_RE.match(item.text) for item in segments):
+        return row
+    merged: list[OCRLine] = []
+    for item in segments:
+        previous = merged[-1] if merged else None
+        if (
+            previous is not None
+            and _SEPARATOR_ONLY_RE.match(item.text)
+            and previous.bounding_box is not None
+            and item.bounding_box is not None
+        ):
+            left, right = previous.bounding_box, item.bounding_box
+            x0, y0 = min(left.x, right.x), min(left.y, right.y)
+            x1 = max(left.x + left.width, right.x + right.width)
+            y1 = max(left.y + left.height, right.y + right.height)
+            merged[-1] = replace(
+                previous,
+                text=previous.text.rstrip() + ":",
+                bounding_box=BoundingBox(x0, y0, x1 - x0, y1 - y0),
+            )
+        else:
+            merged.append(item)
+    return TextRow(row.page_number, tuple(merged))
+
+
+_STAMP_LIKE_MAX_CHARS = 6
+
+
+def _date_row_text(row: TextRow) -> str:
+    """The row's text for "is this row a bare date" purposes: a date box that shares its row with
+    a seal or stamp mark ("TEST", "견본", "[직인 생략]" printed over the date line) is still a bare
+    date row. Other boxes must look like a mark (no digits, a few characters), otherwise the row
+    text is returned unchanged."""
+    segments = [item for item in row.segments if item.text.strip()]
+    dates = [item for item in segments if _DATE_ONLY_RE.match(canonicalize_numeric_text(item.text))]
+    if len(dates) != 1 or len(segments) == 1:
+        return row.text
+    date_box = dates[0].bounding_box
+    others = [item for item in segments if item is not dates[0]]
+
+    def mark_like(item: OCRLine) -> bool:
+        compact = _compact(item.text)
+        if compact.endswith((":", "：")) or any(ch.isdigit() for ch in compact):
+            return False  # a label or another value, not a stamp
+        if date_box is not None and item.bounding_box is not None:
+            if item.bounding_box.x + item.bounding_box.width / 2 < date_box.x + date_box.width / 2:
+                return False  # a mark overlaps / follows the date; a label precedes its value
+        return len(compact) <= _STAMP_LIKE_MAX_CHARS or compact.startswith("[")
+
+    if all(mark_like(item) for item in others):
+        return dates[0].text
+    return row.text
+
+
 def _source_observations(source: ExtractionInput) -> list[_RowObservation]:
     """Group the source into page-scoped visual rows.
 
@@ -229,6 +291,7 @@ def _source_observations(source: ExtractionInput) -> list[_RowObservation]:
             metadata=page.metadata,
         )
         for row in build_rows(ordered_page):
+            row = _merge_separator_boxes(row)
             evidence = tuple(
                 _evidence_for(ordered_page, segment, source_kind, coordinate_space)
                 for segment in row.segments
@@ -918,7 +981,7 @@ def standalone_date_candidate(source: ExtractionInput) -> ExtractionCandidate | 
     observations = _source_observations(source)
     values: dict[str, ExtractionCandidate] = {}
     for observation in observations:
-        text = canonicalize_numeric_text(observation.row.text).strip()
+        text = canonicalize_numeric_text(_date_row_text(observation.row)).strip()
         if not _DATE_ONLY_RE.match(text):
             continue
         normalized = normalize_date(text)
@@ -939,7 +1002,7 @@ def standalone_date_candidate(source: ExtractionInput) -> ExtractionCandidate | 
         return None
     candidate = next(iter(values.values()))
     for index, observation in enumerate(observations):
-        if canonicalize_numeric_text(observation.row.text).strip() != candidate.value:
+        if canonicalize_numeric_text(_date_row_text(observation.row)).strip() != candidate.value:
             continue
         # A label immediately preceding a bare date owns that date. It is
         # not an unlabelled issuance block (e.g. graduation or employment).
@@ -993,7 +1056,7 @@ def _is_issuer_block_date(source: ExtractionInput, candidate: ExtractionCandidat
         (
             index
             for index, observation in enumerate(observations)
-            if canonicalize_numeric_text(observation.row.text).strip() == candidate.value
+            if canonicalize_numeric_text(_date_row_text(observation.row)).strip() == candidate.value
         ),
         None,
     )
@@ -1027,7 +1090,7 @@ def _has_unresolved_label_before_candidate(
     candidate_index: int | None = None
     for index, observation in enumerate(observations):
         if (
-            normalize_date(canonicalize_numeric_text(observation.row.text).strip())
+            normalize_date(canonicalize_numeric_text(_date_row_text(observation.row)).strip())
             == candidate_date
         ):
             candidate_index = index
