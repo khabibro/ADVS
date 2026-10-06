@@ -6,6 +6,7 @@ from PIL import Image, ImageOps
 
 from app.core.errors import ProcessingErrorCode
 from app.document_intelligence.ocr.models import BoundingBox, OCRLine, OCRPage, OCRProviderError
+from app.document_intelligence.ocr.text_assembly import order_lines
 
 # Below this character count, extracted "text" is typically stray metadata,
 # watermarks, or noise rather than a usable text layer -- OCR is needed.
@@ -45,6 +46,9 @@ class PdfProcessor:
                                 x1, y1, x2, y2 = (float(value) for value in bbox)
                                 box = BoundingBox(x=x1, y=y1, width=x2 - x1, height=y2 - y1)
                             lines.append(OCRLine(text=source, confidence=None, bounding_box=box))
+                    # The order text is stored in a PDF is arbitrary (generators, redaction and
+                    # re-flow tools shuffle it): rebuild reading order from the coordinates.
+                    lines = order_lines(lines)
                     page_text = "\n".join(line.text for line in lines)
                     pages.append(
                         OCRPage(
