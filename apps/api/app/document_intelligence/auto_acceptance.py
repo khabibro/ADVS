@@ -538,6 +538,15 @@ def decide(
 
         if features.internal and item.field_name in INTERNAL_FIELDS:
             verdict = _internal_verdict(item, index, context)
+            if (
+                verdict is not None
+                and verdict.state == "CONFIRMED"
+                and _near_decision_boundary(item, context)
+            ):
+                # internal confirmations are tolerance-based (a one-day shift still fits a
+                # profile), so they cannot pin a value that sits next to a decision boundary
+                decisions[key] = _no(strategy, "NEAR_DECISION_BOUNDARY", rule.rule_id)
+                continue
             if verdict is not None and verdict.state == "CONFIRMED":
                 decisions[key] = AutoDecision(
                     True,
