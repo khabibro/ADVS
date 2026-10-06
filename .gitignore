@@ -42,3 +42,9 @@ evaluation/datasets/synthetic/holdout2/business/
 evaluation/datasets/synthetic/holdout2/student/
 evaluation/datasets/synthetic/holdout2/formats/
 evaluation/phase_d2/ocr_cache*/
+evaluation/datasets/synthetic/holdout3/business/
+evaluation/datasets/synthetic/holdout3/student/
+evaluation/datasets/synthetic/holdout3/formats/
+evaluation/phase_d/H_*.json
+evaluation/phase_d3/H3_*.json
+evaluation/phase_d3/ocr_cache*/

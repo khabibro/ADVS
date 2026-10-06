@@ -42,9 +42,10 @@ SYNTHETIC = REPO_ROOT / "evaluation" / "datasets" / "synthetic"
 CORPORA = {
     "dev": SYNTHETIC / "test_variants",
     "holdout": SYNTHETIC / "holdout",  # hold-out set 1: development data since Phase D2 (decision D-1)
-    "holdout2": SYNTHETIC / "holdout2",  # hold-out set 2: final judgement only
+    "holdout2": SYNTHETIC / "holdout2",  # hold-out set 2: development data since Phase D3
+    "holdout3": SYNTHETIC / "holdout3",  # hold-out set 3: final judgement only
 }
-GUARDED = {"holdout2"}
+GUARDED = {"holdout3"}
 HOLDOUT_LOG = REPO_ROOT / "evaluation" / "phase_d" / "holdout_runs.log"
 
 EXT_MIME = {
@@ -99,7 +100,7 @@ def guard_corpus(corpus: str, argv: list[str] | None = None) -> Path:
 
 
 def guard_path(path: Path) -> Path:
-    if "holdout2" in path.resolve().parts and os.environ.get("ADVS_FINAL_JUDGEMENT") != "1":
+    if "holdout3" in path.resolve().parts and os.environ.get("ADVS_FINAL_JUDGEMENT") != "1":
         raise SystemExit(f"Refusing to open a hold-out path outside final judgement: {path}")
     return path
 
