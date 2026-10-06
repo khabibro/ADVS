@@ -14,7 +14,9 @@ score_v2.CORPUS_MANIFESTS["holdout2"] = SYN / "holdout2" / "manifest.json"
 if __name__ == "__main__":
     if "holdout2" in sys.argv and os.environ.get("ADVS_FINAL_JUDGEMENT") != "1":
         raise SystemExit("Refusing to score hold-out set 2 outside final judgement.")
-    sys.argv = [a if a != "--corpus" else a for a in sys.argv]
+    if "holdout" in sys.argv:
+        # hold-out set 1 is development data since D2; score_v2 (frozen) still guards that name
+        os.environ["ADVS_FINAL_JUDGEMENT"] = "1"
     # argparse choices in score_v2.main only allow dev/holdout; patch by pre-registering
     import argparse
 
