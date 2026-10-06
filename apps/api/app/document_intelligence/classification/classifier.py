@@ -186,6 +186,8 @@ class ClassificationResult:
     # first type's pages only and the file always goes to review.
     multiple_documents_in_file: bool = False
     page_types: dict[str, str] | None = None
+    # Result of the OCR title gate (classification/title_gate.py); None for embedded text.
+    title_gate: dict[str, object] | None = None
 
 
 def _unknown(

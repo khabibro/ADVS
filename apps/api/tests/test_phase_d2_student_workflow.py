@@ -71,6 +71,8 @@ def test_certificate_without_a_student_number_goes_to_review(client, db_session)
 
 
 def test_certificate_with_no_issue_date_goes_to_review(client, db_session) -> None:
-    lines = [line for line in _enrollment("2026년 09월 20일", "2025123456") if "2026년 09월" not in line]
+    lines = [
+        line for line in _enrollment("2026년 09월 20일", "2025123456") if "2026년 09월" not in line
+    ]
     verdict = _verify(client, db_session, lines, "2026-10-05")
     assert verdict["status"] == "REVIEW_REQUIRED"
