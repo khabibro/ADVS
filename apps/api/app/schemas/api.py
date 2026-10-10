@@ -112,6 +112,8 @@ class EvidenceRead(BaseModel):
     polygon: list[tuple[float, float]] | None = None
     detection_confidence: float | None = None
     transform: dict | None = None
+    # The box as fractions (0..1) of the page; present only when its coordinate system is known.
+    normalized_box: BoundingBoxRead | None = None
 
 
 class AutoAcceptanceRead(BaseModel):
@@ -370,3 +372,9 @@ class ProjectOverviewRead(BaseModel):
     other_documents: list[OtherDocumentOverview]
     issues: list[OverviewIssue]
     notices: list[VerificationIssueRead]
+
+
+class PageInfoRead(BaseModel):
+    page_number: int
+    width: int
+    height: int
