@@ -54,5 +54,7 @@ D3 (unmerged; not in demo),holdout 2 data,injections E1-E18 false auto-accept / 
 Phase E rehearsal,demo set,scenarios passing (3 runs in a row),8/8 x3,evaluation/phase_e/PHASE_E_REPORT.md
 Phase E rehearsal,demo set,scanned submission D6 processing time (4 pages),~63 s,evaluation/phase_e/PHASE_E_REPORT.md
 Phase E rehearsal,demo set,digital submission processing time,0.1-0.3 s,evaluation/phase_e/PHASE_E_REPORT.md
-Phase E,backend,pytest tests passed,534,run 2026-10-10 (apps/api)
+Phase E2,backend,pytest tests passed,555,run 2026-10-10 (apps/api; v2 branch)
+Phase E2,web,vitest tests passed,107,run 2026-10-10 (apps/web)
+Phase E2,web,playwright end-to-end tests passed,15 of 15,run 2026-10-10 (apps/web/e2e/ui-flows.spec.ts)
 Gap,holdout 3,not run,n/a (gap),.gitignore / evaluation/phase_d3 (guarded set)
