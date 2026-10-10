@@ -19,7 +19,7 @@ All numbers: **fictional test documents** built on the layouts of a few real sam
 | Official verification (National Tax Service API, issuance numbers) | planned | `ROADMAP.md` |
 | Authentication, privacy controls, audit log | planned | not built |
 
-## Safety (re-checked: 533 backend tests pass; rehearsal 3/3 runs)
+## Safety (re-checked: 534 backend tests pass; rehearsal 3/3 runs)
 | Measure | Result | Source |
 |---|---|---|
 | False 제출 가능, dev data (all sets, all versions) | **0** | `evaluation/phase_d2/B2_D2_dev_report.md`, `B2_D2_holdout_report.md` |
