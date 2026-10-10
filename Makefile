@@ -1,7 +1,19 @@
 API_VENV ?= .venv312
 API_BIN = $(API_VENV)/bin
 
-.PHONY: dev dev-api dev-web dev-admin lint typecheck test build format migrate migration-check seed api-lint api-typecheck api-test env-validate security-audit check check-all docker-build docker-check docker-up docker-down eval-variants
+.PHONY: demo demo-reset demo-stop demo-rehearsal dev dev-api dev-web dev-admin lint typecheck test build format migrate migration-check seed api-lint api-typecheck api-test env-validate security-audit check check-all docker-build docker-check docker-up docker-down eval-variants
+
+demo:
+	scripts/demo start
+
+demo-reset:
+	scripts/demo reset
+
+demo-stop:
+	scripts/demo stop
+
+demo-rehearsal:
+	$(API_BIN)/python -I scripts/demo_rehearsal
 
 dev:
 	docker compose up --build

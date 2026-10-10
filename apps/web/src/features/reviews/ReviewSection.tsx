@@ -9,6 +9,7 @@ import { apiErrorDetail, apiErrorMessage } from "@/lib/api-error";
 import { useSubmitReview } from "@/lib/queries";
 import {
   assessmentReasonLabels,
+  autoAcceptReasonLabel,
   documentTypeLabel,
   effectiveSourceLabels,
   fieldLabel,
@@ -222,6 +223,12 @@ function ReviewItemCard({
                   <li key={reason}>· {assessmentReasonLabels[reason]}</li>
                 ))}
               </ul>
+            ) : null}
+            {autoAcceptReasonLabel(item.auto_acceptance) ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                자동 확인하지 못한 이유:{" "}
+                {autoAcceptReasonLabel(item.auto_acceptance)}
+              </p>
             ) : null}
             {item.confidence !== null ? (
               <p className="mt-2 text-xs text-muted-foreground">
