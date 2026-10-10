@@ -24,7 +24,7 @@ import re
 from dataclasses import dataclass, field
 
 import fitz
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageStat
 
 from app.document_intelligence.ocr.models import BoundingBox, OCRLine
 from app.document_intelligence.ocr.text_assembly import order_lines
@@ -33,6 +33,9 @@ RENDER_SCALE = 1.5  # 108 dpi: enough to see 6 pt text change pixels
 MIN_VISIBLE_FONT_SIZE = 2.0  # points; smaller text cannot be read by a person
 CHANGED_PIXEL_LEVEL = 6  # grey-level difference that counts as drawn (faint watermarks are 10-20)
 MIN_CHANGED_PIXELS = 2
+MIN_CONTRAST = (
+    0.05  # text colour vs the page behind it (0-1 luminance); below this nobody can read it
+)
 GARBLED_RATIO = 0.3
 HYBRID_IMAGE_SHARE = 0.25  # share of the page covered by pictures: text may live in the picture
 OVERLAP_IOU = 0.6
@@ -146,6 +149,23 @@ def _drawn(full: Image.Image, bare: Image.Image, rect: fitz.Rect) -> bool:
     return changed >= MIN_CHANGED_PIXELS
 
 
+def _low_contrast(bare: Image.Image, rect: fitz.Rect, colour: int) -> bool:
+    """Text painted in (nearly) the colour of what is behind it, judged on the text-free render so
+    other text under the box cannot make it look visible."""
+    box = (
+        max(0, int(rect.x0 * RENDER_SCALE)),
+        max(0, int(rect.y0 * RENDER_SCALE)),
+        min(bare.width, int(rect.x1 * RENDER_SCALE) + 1),
+        min(bare.height, int(rect.y1 * RENDER_SCALE) + 1),
+    )
+    if box[2] <= box[0] or box[3] <= box[1]:
+        return False
+    background = ImageStat.Stat(bare.crop(box)).median[0] / 255
+    red, green, blue = (colour >> 16) & 255, (colour >> 8) & 255, colour & 255
+    luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255
+    return abs(luminance - background) < MIN_CONTRAST
+
+
 def _flagged_invisible(page: fitz.Page) -> list[tuple[fitz.Rect, str, str]]:
     """Text objects the PDF itself marks as not drawn: (box, normalised text, reason)."""
     found = []
@@ -196,6 +216,8 @@ def analyse_page(doc_bytes: bytes, page: fitz.Page, page_number: int) -> PageTex
                         bare = _text_free_render(doc_bytes, page_number - 1)
                     if bare is not None and not _drawn(full, bare, rect):
                         reason = "not_drawn"
+                    elif bare is not None and _low_contrast(bare, rect, int(span.get("color", 0))):
+                        reason = "low_contrast"
                 if reason:
                     result.hidden_texts.append(text)
                     result.hidden_reasons.add(reason)
