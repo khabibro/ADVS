@@ -1007,44 +1007,6 @@
               }
             ],
             "title": "Reason"
-          },
-          "robust": {
-            "type": "boolean",
-            "title": "Robust",
-            "default": false
-          },
-          "repair_candidate": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Repair Candidate"
-          },
-          "repair_provenance": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Repair Provenance"
-          },
-          "confusion_table_version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Confusion Table Version"
           }
         },
         "type": "object",
@@ -1701,11 +1663,6 @@
                 "type": "null"
               }
             ]
-          },
-          "decision_relevant": {
-            "type": "boolean",
-            "title": "Decision Relevant",
-            "default": true
           }
         },
         "type": "object",
