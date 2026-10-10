@@ -35,6 +35,7 @@ from app.document_intelligence.ocr.text_assembly import (
     assemble_page_text,
 )
 from app.document_intelligence.preprocessing.processor import PdfProcessor, is_meaningful_text
+from app.document_intelligence.preprocessing.text_layer import audit_text_layer
 from app.document_intelligence.results import CanonicalDocumentResult
 from app.document_intelligence.validation.engine import (
     ValidationEngine,
@@ -48,7 +49,11 @@ from app.models.entities import (
     ValidationResult,
 )
 from app.services.consistency import lock_document_project
-from app.services.document_validation import policy_gated_fields, validate_effective_document
+from app.services.document_validation import (
+    policy_gated_fields,
+    text_layer_mismatch_issue,
+    validate_effective_document,
+)
 from app.services.reviews import invalidate_document_reviews
 from app.services.storage.local import LocalStorageService
 from app.services.verification import invalidate_document_project_verification
@@ -182,6 +187,9 @@ class DocumentProcessingService:
                         "MULTIPLE_DOCUMENTS_IN_FILE",
                     )
                 )
+
+            if source_result.text_layer and source_result.text_layer.get("mismatch"):
+                issues.append(text_layer_mismatch_issue())
 
             canonical_result = CanonicalDocumentResult.compose(
                 document_id=document.id,
@@ -361,16 +369,23 @@ class DocumentProcessingService:
         mime_type = detected_mime(path)
         is_pdf = mime_type == "application/pdf"
         embedded_pages: list[OCRPage] = []
+        provenance: dict = {}
         if is_pdf:
-            embedded_pages = (await asyncio.to_thread(self.pdf.extract_text, path)).pages
+            pdf_result = await asyncio.to_thread(self.pdf.extract_text, path)
+            embedded_pages = pdf_result.pages
+            provenance = pdf_result.provenance
             if not embedded_pages:
                 raise OCRProviderError(ProcessingErrorCode.OCR_EMPTY_RESULT)
 
         # Prefer a real text layer page by page: it carries exact characters
         # and no recognition error. Only pages without a usable layer are
         # handed to OCR.
+        # A page whose text layer cannot be trusted (hidden text carrying dates or numbers,
+        # unreadable font encoding, pictures, overlapping text) is read from its pixels instead.
         usable_by_page = {
-            page.page_number: page for page in embedded_pages if is_meaningful_text(page.text)
+            page.page_number: page
+            for page in embedded_pages
+            if is_meaningful_text(page.text) and page.metadata["text_layer"]["trusted"]
         }
         needs_ocr = [
             page.page_number for page in embedded_pages if page.page_number not in usable_by_page
@@ -428,6 +443,7 @@ class DocumentProcessingService:
             provider=provider_name,
             pages=pages,
             assembled_text=assemble_document_text(pages),
+            text_layer=audit_text_layer(embedded_pages, pages, provenance) if is_pdf else None,
         )
         if not result.pages or not result.assembled_text.strip():
             raise OCRProviderError(ProcessingErrorCode.OCR_EMPTY_RESULT)
@@ -546,6 +562,7 @@ class DocumentProcessingService:
             "multiple_documents_in_file": classification.multiple_documents_in_file,
             "page_types": classification.page_types,
             "title_gate": classification.title_gate,
+            "text_layer": source_result.text_layer,
             "alternatives": [
                 {"document_type": str(alt.document_type), "score": alt.score}
                 for alt in classification.alternatives

@@ -87,7 +87,7 @@ Default ports:
 
 ## OCR
 
-PaddleOCR is the default real OCR engine. Digital PDFs with a usable text layer are extracted directly with PyMuPDF; scanned PDFs and images go through PaddleOCR.
+PaddleOCR is the default real OCR engine. Digital PDFs with a usable, visible text layer are extracted directly with PyMuPDF (hidden text is ignored and flagged); scanned PDFs and images go through PaddleOCR.
 
 ```bash
 OCR_PROVIDER=paddle
