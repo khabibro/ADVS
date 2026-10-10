@@ -1,0 +1,58 @@
+phase,set,metric,value,source
+B0 baseline,dev,digital fields correct / total,240/240,evaluation/phase_d/PHASE_D_REPORT.md §3
+B0 baseline,dev,scanned fields correct / wrong / unresolved (of 240),139 / 3 / 98,evaluation/phase_d/PHASE_D_REPORT.md §3
+B0 baseline,dev,images fields correct / wrong / unresolved (of 240),199 / 1 / 40,evaluation/phase_d/PHASE_D_REPORT.md §3
+B0 baseline,dev,review burden scanned (fields per submission),11.64,evaluation/phase_d/PHASE_D_REPORT.md §3
+B0 baseline,dev,review burden images (fields per submission),11.64,evaluation/phase_d/PHASE_D_REPORT.md §3
+B0 baseline,dev,false READY,0,evaluation/phase_d/PHASE_D_REPORT.md §3
+D (S7 before D2),dev,review burden scanned,3.82,evaluation/phase_d/PHASE_D_REPORT.md §4
+D (S7 before D2),dev,review burden images,3.55,evaluation/phase_d/PHASE_D_REPORT.md §4
+D (S7 before D2),dev,false auto-accept,0,evaluation/phase_d/PHASE_D_REPORT.md §7
+D (S7 before D2),dev,false READY,2 (S02/S09 digital; fixed in D2),evaluation/phase_d/PHASE_D_REPORT.md §7
+D (S7 before D2),holdout 1,review burden scanned,4.12,evaluation/phase_d/PHASE_D_REPORT.md §8
+D (S7 before D2),holdout 1,review burden images,3.72,evaluation/phase_d/PHASE_D_REPORT.md §8
+D (S7 before D2),holdout 1,false READY,1 (B11 images look-alike; fixed in D2),evaluation/phase_d/PHASE_D_REPORT.md §8
+D2 pre-policy,dev,review burden scanned,4.23,evaluation/phase_d2/PHASE_D2_REPORT.md §5
+D2 pre-policy,dev,review burden images,3.68,evaluation/phase_d2/PHASE_D2_REPORT.md §5
+D2 pre-policy,holdout 2,digital fields correct / total,275/275,evaluation/phase_d2/PHASE_D2_REPORT.md §6
+D2 pre-policy,holdout 2,review burden scanned,4.60,evaluation/phase_d2/PHASE_D2_REPORT.md §6
+D2 pre-policy,holdout 2,review burden images,4.24,evaluation/phase_d2/PHASE_D2_REPORT.md §6
+D2 pre-policy,holdout 2,false READY,0,evaluation/phase_d2/PHASE_D2_REPORT.md §6
+D2 pre-policy,holdout 2,false auto-accept,0,evaluation/phase_d2/PHASE_D2_REPORT.md §6
+D2 pre-policy,holdout 2,auto-accepted OCR fields scanned %,64.0,evaluation/phase_d2/PHASE_D2_REPORT.md §6
+D2 pre-policy,holdout 2,auto-accepted OCR fields images %,67.3,evaluation/phase_d2/PHASE_D2_REPORT.md §6
+D2 final (main),dev,digital fields correct / total,240/240,evaluation/phase_d2/B2_D2_dev_report.md §3
+D2 final (main),dev,scanned fields correct / wrong / unresolved (of 240),228 / 0 / 12,evaluation/phase_d2/B2_D2_dev_report.md §3
+D2 final (main),dev,images fields correct / wrong / unresolved (of 240),230 / 0 / 10,evaluation/phase_d2/B2_D2_dev_report.md §3
+D2 final (main),dev,auto-accepted OCR fields scanned %,40.4,evaluation/phase_d2/B2_D2_dev_report.md §3
+D2 final (main),dev,auto-accepted OCR fields images %,46.2,evaluation/phase_d2/B2_D2_dev_report.md §3
+D2 final (main),dev,review burden scanned (total unconfirmed),7.23,evaluation/phase_d2/B2_D2_dev_report.md §5
+D2 final (main),dev,review burden images (total unconfirmed),6.59,evaluation/phase_d2/B2_D2_dev_report.md §5
+D2 final (main),dev,review burden digital,0.91,evaluation/phase_d2/B2_D2_dev_report.md §5
+D2 final (main),dev,false READY,0,evaluation/phase_d2/B2_D2_dev_report.md §4
+D2 final (main),dev,false auto-accept (all injections; 474 cases),0,evaluation/phase_d2/B2_D2_inj_dev.md
+D2 final (main),dev,false READY (all injections; 474 cases),0,evaluation/phase_d2/B2_D2_inj_dev.md
+D2 final (main),holdout 1,digital fields correct / total,275/275,evaluation/phase_d2/B2_D2_holdout_report.md §3
+D2 final (main),holdout 1,scanned fields correct / wrong / unresolved (of 275),254 / 0 / 21,evaluation/phase_d2/B2_D2_holdout_report.md §3
+D2 final (main),holdout 1,images fields correct / wrong / unresolved (of 275),258 / 0 / 17,evaluation/phase_d2/B2_D2_holdout_report.md §3
+D2 final (main),holdout 1,auto-accepted OCR fields scanned %,38.5,evaluation/phase_d2/B2_D2_holdout_report.md §3
+D2 final (main),holdout 1,auto-accepted OCR fields images %,43.6,evaluation/phase_d2/B2_D2_holdout_report.md §3
+D2 final (main),holdout 1,review burden scanned,7.40,evaluation/phase_d2/B2_D2_holdout_report.md §5
+D2 final (main),holdout 1,review burden images,6.84,evaluation/phase_d2/B2_D2_holdout_report.md §5
+D2 final (main),holdout 1,false READY,0,evaluation/phase_d2/B2_D2_holdout_report.md §4
+D2 final (main),holdout 1,false auto-accept (all injections; 666 cases),0,evaluation/phase_d2/B2_D2_inj_holdout.md
+D2 final (main),holdout 1,false READY (all injections; 666 cases),0,evaluation/phase_d2/B2_D2_inj_holdout.md
+D2 final (main),dev,classification match (supported types + UNKNOWN; all versions),100%,evaluation/phase_d2/B2_D2_dev_report.md §2
+D2 final (main),dev,decision-blocking fields scanned (D3 measurement of same policy),5.41,phase-d3/internal-automation:evaluation/phase_d3/D3_configs.md
+D2 final (main),dev,decision-blocking fields images (D3 measurement of same policy),4.82,phase-d3/internal-automation:evaluation/phase_d3/D3_configs.md
+D3 (unmerged; not in demo),dev,decision-blocking fields scanned (C5),2.68,phase-d3/internal-automation:evaluation/phase_d3/D3_configs.md
+D3 (unmerged; not in demo),dev,decision-blocking fields images (C5),2.09,phase-d3/internal-automation:evaluation/phase_d3/D3_configs.md
+D3 (unmerged; not in demo),dev,total unconfirmed scanned (C5),3.82,phase-d3/internal-automation:evaluation/phase_d3/D3_configs.md
+D3 (unmerged; not in demo),dev,total unconfirmed images (C5),3.14,phase-d3/internal-automation:evaluation/phase_d3/D3_configs.md
+D3 baseline B0_D3,holdout 2 data,injections E1-E18 false auto-accept / false READY,1 / 0 (E3c-both),phase-d3/internal-automation:evaluation/phase_d3/D3_configs.md
+D3 (unmerged; not in demo),holdout 2 data,injections E1-E18 false auto-accept / false READY (C5),1 / 1 (E3c-both),phase-d3/internal-automation:evaluation/phase_d3/D3_configs.md
+Phase E rehearsal,demo set,scenarios passing (3 runs in a row),8/8 x3,evaluation/phase_e/PHASE_E_REPORT.md
+Phase E rehearsal,demo set,scanned submission D6 processing time (4 pages),~63 s,evaluation/phase_e/PHASE_E_REPORT.md
+Phase E rehearsal,demo set,digital submission processing time,0.1-0.3 s,evaluation/phase_e/PHASE_E_REPORT.md
+Phase E,backend,pytest tests passed,534,run 2026-10-10 (apps/api)
+Gap,holdout 3,not run,n/a (gap),.gitignore / evaluation/phase_d3 (guarded set)

@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+# ADVS midterm demo launcher (local processes, SQLite, no Docker).
+#   scripts/demo start    reset (first run only) + start API, web and admin; wait until ready
+#   scripts/demo reset    stop, recreate a clean demo database, seed workflows, pre-load D1-D8, start
+#   scripts/demo stop     stop everything
+#   scripts/demo status   show what is running
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+STATE="$ROOT/storage/demo"
+LOGS="$STATE/logs"
+PIDS="$STATE/pids"
+VENV="${API_VENV:-$ROOT/apps/api/.venv312}"
+PY="$VENV/bin/python"
+API_PORT="${API_PORT:-8000}"
+WEB_PORT="${WEB_PORT:-3000}"
+ADMIN_PORT="${ADMIN_PORT:-3002}"
+
+export APP_ENV=development
+export DATABASE_URL="sqlite:///$STATE/advs_demo.db"
+export STORAGE_PATH="$STATE/files"
+export PADDLE_OCR_CACHE_DIR="$ROOT/storage/paddleocr-cache"
+export OCR_PROVIDER=paddle
+export OCR_WARMUP=true
+export CORS_ORIGINS="http://localhost:$WEB_PORT,http://localhost:$ADMIN_PORT,http://127.0.0.1:$WEB_PORT,http://127.0.0.1:$ADMIN_PORT"
+export NEXT_PUBLIC_API_URL="http://localhost:$API_PORT/api/v1"
+export API_URL="http://localhost:$API_PORT/api/v1"
+export ADVS_API_URL="http://localhost:$API_PORT/api/v1"
+
+say() { printf '\033[1m[demo]\033[0m %s\n' "$*"; }
+
+alive() { [ -f "$PIDS/$1" ] && kill -0 "$(cat "$PIDS/$1")" 2>/dev/null; }
+
+port_busy() { lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; }
+
+stop_one() {
+  if alive "$1"; then
+    local pid; pid="$(cat "$PIDS/$1")"
+    pkill -P "$pid" 2>/dev/null || true
+    kill "$pid" 2>/dev/null || true
+    for _ in $(seq 1 30); do kill -0 "$pid" 2>/dev/null || break; sleep 0.2; done
+    kill -9 "$pid" 2>/dev/null || true
+  fi
+  rm -f "$PIDS/$1"
+}
+
+stop_all() { for n in web admin api; do stop_one "$n"; done; }
+
+wait_url() { # url, label, seconds
+  for _ in $(seq 1 "$3"); do
+    if curl -fsS -o /dev/null "$1" 2>/dev/null; then return 0; fi
+    sleep 1
+  done
+  say "TIMEOUT waiting for $2 ($1). See $LOGS"; return 1
+}
+
+check_ports() {
+  for entry in "api:$API_PORT" "web:$WEB_PORT" "admin:$ADMIN_PORT"; do
+    if ! alive "${entry%%:*}" && port_busy "${entry##*:}"; then
+      say "port ${entry##*:} (${entry%%:*}) is already in use by another process; free it first"; exit 1
+    fi
+  done
+}
+
+start_api() {
+  alive api && return 0
+  say "starting API on :$API_PORT (OCR model warms up in the background)"
+  (cd "$ROOT/apps/api"; nohup "$VENV/bin/uvicorn" app.main:app --host 127.0.0.1 --port "$API_PORT" \
+    >"$LOGS/api.log" 2>&1 & echo $! >"$PIDS/api")
+  wait_url "http://127.0.0.1:$API_PORT/health" "API" 60
+}
+
+wait_ocr_ready() {
+  say "waiting for the OCR model (first start can take a minute) ..."
+  for _ in $(seq 1 240); do
+    if grep -q "OCR model ready\|OCR warm-up failed" "$LOGS/api.log" 2>/dev/null; then
+      grep "OCR model ready\|OCR warm-up failed" "$LOGS/api.log" | tail -1; return 0
+    fi
+    sleep 1
+  done
+  say "OCR warm-up did not finish in 4 minutes; check $LOGS/api.log"
+}
+
+build_web() {
+  if [ ! -d "$ROOT/apps/web/.next" ] || [ ! -d "$ROOT/apps/admin/.next" ] || [ "${REBUILD:-0}" = 1 ]; then
+    say "building web and admin (one-time, ~1 min)"
+    (cd "$ROOT" && pnpm --filter @advs/web build >"$LOGS/build-web.log" 2>&1 \
+      && pnpm --filter @advs/admin build >"$LOGS/build-admin.log" 2>&1) \
+      || { say "build failed; see $LOGS/build-*.log"; exit 1; }
+  fi
+}
+
+start_web() {
+  build_web
+  if ! alive web; then
+    say "starting web on :$WEB_PORT"
+    (cd "$ROOT/apps/web"; nohup "$ROOT/apps/web/node_modules/.bin/next" start -p "$WEB_PORT" >"$LOGS/web.log" 2>&1 & echo $! >"$PIDS/web")
+  fi
+  if ! alive admin; then
+    say "starting admin on :$ADMIN_PORT"
+    (cd "$ROOT/apps/admin"; nohup "$ROOT/apps/admin/node_modules/.bin/next" start -p "$ADMIN_PORT" >"$LOGS/admin.log" 2>&1 & echo $! >"$PIDS/admin")
+  fi
+  wait_url "http://127.0.0.1:$WEB_PORT/" "web" 60
+  wait_url "http://127.0.0.1:$ADMIN_PORT/" "admin" 60
+}
+
+reset_state() {
+  say "resetting the demo database and files"
+  stop_all
+  rm -rf "$STATE/advs_demo.db" "$STATE/files"
+  mkdir -p "$STATE/files" "$LOGS" "$PIDS"
+  (cd "$ROOT/apps/api" && "$VENV/bin/alembic" upgrade head >"$LOGS/migrate.log" 2>&1) \
+    || { say "migration failed; see $LOGS/migrate.log"; exit 1; }
+  (cd "$ROOT/apps/api" && PYTHONPATH="$ROOT:." "$PY" "$ROOT/scripts/seed.py")
+  start_api
+  wait_ocr_ready
+  say "pre-loading demo submissions D1-D8 (OCR for D6 takes a little while)"
+  "$PY" -I "$ROOT/scripts/demo_scenarios.py" preload
+}
+
+cmd="${1:-start}"
+mkdir -p "$LOGS" "$PIDS"
+case "$cmd" in
+  start)
+    check_ports
+    if [ ! -f "$STATE/advs_demo.db" ]; then reset_state; else start_api; wait_ocr_ready; fi
+    start_web
+    say "READY  web http://localhost:$WEB_PORT   admin http://localhost:$ADMIN_PORT   api http://localhost:$API_PORT/docs"
+    ;;
+  reset)
+    check_ports
+    reset_state
+    start_web
+    say "RESET DONE  web http://localhost:$WEB_PORT   admin http://localhost:$ADMIN_PORT"
+    ;;
+  stop) stop_all; say "stopped" ;;
+  status)
+    for n in api web admin; do alive "$n" && echo "$n: running (pid $(cat "$PIDS/$n"))" || echo "$n: stopped"; done ;;
+  *) echo "usage: scripts/demo {start|reset|stop|status}"; exit 2 ;;
+esac

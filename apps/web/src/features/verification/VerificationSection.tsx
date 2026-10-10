@@ -16,7 +16,7 @@ import { Button, Card } from "@advs/ui";
 import { InlineError } from "@/components/page-state";
 import { StatusChip } from "@/components/status-chip";
 import { apiErrorDetail, apiErrorMessage } from "@/lib/api-error";
-import { useVerifyProject } from "@/lib/queries";
+import { useDocumentDetail, useVerifyProject } from "@/lib/queries";
 import {
   fieldLabel,
   formatDate,
@@ -36,12 +36,69 @@ const STATUS_ICON = {
   NEEDS_CORRECTION: XCircle,
 } as const;
 
+function fieldValueText(
+  fieldName: string | null | undefined,
+  value: string | null | undefined,
+): string | null {
+  if (!fieldName || !value) return null;
+  return /_(from|until|date)$/.test(fieldName) ? formatDate(value) : value;
+}
+
+/** The concrete values behind an issue ("2026. 08. 31." / "A ≠ B"), so the reader need not open the document. */
+function IssueEvidence({
+  issue,
+  evaluationDate,
+}: {
+  issue: VerificationIssue;
+  evaluationDate: string | null | undefined;
+}) {
+  const own = useDocumentDetail(issue.document_id);
+  const related = useDocumentDetail(issue.related_document_id);
+  const valueOf = (
+    detail: typeof own.data,
+    name: string | null | undefined,
+  ) =>
+    fieldValueText(
+      name,
+      detail?.extracted_fields.find((f) => f.field_name === name)
+        ?.effective_normalized_value,
+    );
+  const ownValue = valueOf(own.data, issue.field_name);
+  if (!ownValue || !issue.field_name) return null;
+  const ownLabel = `${documentTypeLabel(issue.document_type ?? "UNKNOWN")} ${fieldLabel(issue.field_name)}`;
+  if (issue.code === "EXPIRED_DOCUMENT") {
+    return (
+      <>
+        {ownLabel} {ownValue} — 점검 기준일 {formatDate(evaluationDate)}보다
+        이전입니다.
+      </>
+    );
+  }
+  const relatedValue = valueOf(related.data, issue.related_field_name);
+  if (relatedValue && issue.related_field_name) {
+    return (
+      <>
+        {ownLabel} “{ownValue}” ↔{" "}
+        {documentTypeLabel(issue.related_document_type ?? "UNKNOWN")}{" "}
+        {fieldLabel(issue.related_field_name)} “{relatedValue}”
+      </>
+    );
+  }
+  return (
+    <>
+      {ownLabel}: {ownValue}
+    </>
+  );
+}
+
 function IssueCard({
   issue,
   projectId,
+  evaluationDate,
 }: {
   issue: VerificationIssue;
   projectId: string;
+  evaluationDate?: string | null;
 }) {
   const copy = verificationIssue(issue.code);
   const effect = overallStatus(issue.status_effect);
@@ -73,6 +130,9 @@ function IssueCard({
           확인 항목: {detailParts.join(" · ")}
         </p>
       ) : null}
+      <p className="mt-1 text-xs font-medium text-foreground">
+        <IssueEvidence evaluationDate={evaluationDate} issue={issue} />
+      </p>
       <Link
         className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-white px-2.5 text-xs font-medium text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         href={documentHref}
@@ -103,6 +163,17 @@ export function VerificationSection({
   const stale = hasResult && !verification.is_current;
   const showResult = hasResult && !stale;
   const status = overallStatus(verification.status);
+  // The same finding can be reported by two rules; show it once.
+  const uniqueIssues = verification.issues.filter(
+    (issue, index, all) =>
+      all.findIndex(
+        (other) =>
+          other.code === issue.code &&
+          other.document_id === issue.document_id &&
+          other.field_name === issue.field_name &&
+          other.related_document_id === issue.related_document_id,
+      ) === index,
+  );
   const StatusIcon = STATUS_ICON[verification.status] ?? ShieldCheck;
 
   return (
@@ -248,10 +319,10 @@ export function VerificationSection({
             <h3 className="mb-3 font-semibold">
               확인된 항목{" "}
               <span className="text-sm font-normal text-muted-foreground">
-                {verification.issues.length}건
+                {uniqueIssues.length}건
               </span>
             </h3>
-            {verification.issues.length === 0 ? (
+            {uniqueIssues.length === 0 ? (
               <Card padding="none" tone="outline">
                 <p className="px-6 py-8 text-center text-sm text-muted-foreground">
                   현재 설정된 점검 기준에서 확인된 문제가 없습니다.
@@ -259,8 +330,9 @@ export function VerificationSection({
               </Card>
             ) : (
               <ul className="grid gap-3 md:grid-cols-2">
-                {verification.issues.map((issue, index) => (
+                {uniqueIssues.map((issue, index) => (
                   <IssueCard
+                    evaluationDate={verification.evaluation_date}
                     issue={issue}
                     key={issueKey(issue, index)}
                     projectId={project.id}

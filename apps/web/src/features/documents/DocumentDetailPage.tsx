@@ -5,6 +5,8 @@ import { Card } from "@advs/ui";
 import { StatusChip } from "@/components/status-chip";
 import { ApiError } from "@/lib/api-error";
 import {
+  autoAcceptReasonLabel,
+  autoAcceptedLabel,
   documentTypeLabel,
   effectiveSourceLabels,
   evidenceStateLabels,
@@ -147,12 +149,24 @@ export async function DocumentDetailPage({
                             {effectiveSourceLabels[source]}
                           </span>
                         ) : null}
-                        {assessment ? (
+                        {autoAcceptedLabel(field.auto_acceptance) ? (
+                          <span
+                            className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800"
+                            title="사람의 확인 없이 자동으로 받아들인 값입니다."
+                          >
+                            자동 확인 · {autoAcceptedLabel(field.auto_acceptance)}
+                          </span>
+                        ) : assessment ? (
                           <span className="text-xs text-muted-foreground">
                             {evidenceStateLabels[assessment]}
                           </span>
                         ) : null}
                       </div>
+                      {autoAcceptReasonLabel(field.auto_acceptance) ? (
+                        <p className="mt-1 text-xs text-amber-800">
+                          {autoAcceptReasonLabel(field.auto_acceptance)}
+                        </p>
+                      ) : null}
                       {source === "HUMAN_CORRECTED" && field.normalized_value ? (
                         <p className="mt-1 text-xs text-muted-foreground">
                           자동 인식 값: {field.normalized_value}

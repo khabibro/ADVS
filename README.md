@@ -17,8 +17,7 @@ MENTOR-DEFINED MVP DOCUMENT DOMAIN:
 - Transcript / 성적증명서
 
 Existing Graduation Certificate / 졸업증명서 and Career Certificate / 경력증명서 support is
-preserved. Phase 2 defines structured facts; it does not yet perform cross-document identity
-matching, generalized validity decisions, or GPA threshold evaluation.
+preserved. Cross-document checks (business number, company name, student number and name), validity dates and the student issue-date rule run as configurable workflow rules; see `docs/midterm/RESULTS.md` for what is measured.
 
 This is not production-ready OCR/extraction. PaddleOCR is the only real OCR provider; mock OCR remains available for tests and local pipeline development.
 
@@ -44,9 +43,12 @@ Infrastructure: Docker Compose, pnpm workspace, Turborepo for TypeScript tasks, 
 
 ## Setup
 
+Requires Python 3.12 (not 3.13/3.14), Node 20+ with pnpm, and network access on the first run (PaddleOCR downloads its models once).
+
 ```bash
 pnpm install
 cd apps/api
+python3.12 -m venv .venv312
 source .venv312/bin/activate
 pip install -e ".[dev,paddle]"
 alembic upgrade head
@@ -55,6 +57,19 @@ make seed
 ```
 
 Copy `.env.example` to `.env` for local overrides. Do not commit `.env`.
+
+## Demo (midterm presentation)
+
+One command starts everything on this machine (local processes, SQLite, no Docker):
+
+```bash
+make demo            # first run: reset + pre-load D1-D8, then start API, web (3000), admin (3002)
+make demo-rehearsal  # reset, re-run every demo scenario through the real API, print a PASS/FAIL table
+make demo-reset      # back to the clean pre-loaded demo state (idempotent)
+make demo-stop
+```
+
+The API loads the OCR model at start (`OCR_WARMUP=true`) and logs `OCR model ready`; `make demo` waits for it. State lives in `storage/demo/` (database, files, logs). Override ports with `WEB_PORT`, `ADMIN_PORT`, `API_PORT`. The demo documents are the fictional test set in `evaluation/datasets/synthetic/test_variants/` (the PDFs/images are generated, not committed; see its README). The presenter script and results pack are in `docs/midterm/`.
 
 ## Development
 
