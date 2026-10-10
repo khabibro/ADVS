@@ -46,6 +46,7 @@ from app.schemas.api import (
     ReviewItemRead,
     RuleEvaluationRead,
     SubmissionVerificationRead,
+    UploadRulesRead,
     ValidationRead,
     VerificationIssueRead,
     VerificationRequest,
@@ -61,7 +62,12 @@ from app.services.document_validation import (
 from app.services.overview import ProjectOverviewService
 from app.services.processing import _ACTIVE_STATUSES, DocumentProcessingService
 from app.services.reviews import FieldReviewService, ReviewValidationError, StaleReviewError
-from app.services.storage.local import LocalStorageService, canonical_mime, sanitize_filename
+from app.services.storage.local import (
+    ALLOWED_EXT,
+    LocalStorageService,
+    canonical_mime,
+    sanitize_filename,
+)
 from app.services.verification import (
     StoredSubmissionVerification,
     SubmissionVerificationService,
@@ -539,6 +545,17 @@ def project_overview(project_id: uuid.UUID, db: Session = Depends(get_db)):
     if overview is None:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
     return overview
+
+
+@router.get("/upload-rules", response_model=UploadRulesRead)
+def upload_rules():
+    settings = get_settings()
+    return UploadRulesRead(
+        extensions=sorted(ALLOWED_EXT),
+        mime_types=sorted({canonical_mime(f"x{ext}") for ext in ALLOWED_EXT}),
+        max_size_mb=settings.max_upload_size_mb,
+        max_pages=settings.max_pdf_pages,
+    )
 
 
 @router.get("/projects/{project_id}/reviews", response_model=list[FieldReviewRead])

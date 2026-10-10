@@ -278,6 +278,15 @@ class SubmissionVerificationRead(BaseModel):
 # --- Project overview (read model for the web app; aggregates stored decisions, decides nothing) ---
 
 
+class UploadRulesRead(BaseModel):
+    """What the upload endpoint accepts, so clients never keep their own allow-list."""
+
+    extensions: list[str]
+    mime_types: list[str]
+    max_size_mb: int
+    max_pages: int
+
+
 class CheckState(StrEnum):
     CURRENT = "CURRENT"  # a stored check exists and still matches the documents and reviews
     NOT_CURRENT = "NOT_CURRENT"  # never run, or inputs changed since
