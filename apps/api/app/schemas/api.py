@@ -1,5 +1,6 @@
 import uuid
 from datetime import date, datetime
+from enum import StrEnum
 from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -111,6 +112,8 @@ class EvidenceRead(BaseModel):
     polygon: list[tuple[float, float]] | None = None
     detection_confidence: float | None = None
     transform: dict | None = None
+    # The box as fractions (0..1) of the page; present only when its coordinate system is known.
+    normalized_box: BoundingBoxRead | None = None
 
 
 class AutoAcceptanceRead(BaseModel):
@@ -143,6 +146,8 @@ class FieldRead(BaseModel):
     effective_source: EffectiveValueSource | None = None
     current_review_decision: FieldReviewDecision | None = None
     auto_acceptance: AutoAcceptanceRead | None = None
+    # True when a rule of the project's workflow reads this field (so it can change the status).
+    used_by_rules: bool = False
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -272,3 +277,119 @@ class SubmissionVerificationRead(BaseModel):
     notices: list[VerificationIssueRead] = []
     rule_results: list[RuleEvaluationRead]
     disclaimer: str
+
+
+# --- Project overview (read model for the web app; aggregates stored decisions, decides nothing) ---
+
+
+class UploadRulesRead(BaseModel):
+    """What the upload endpoint accepts, so clients never keep their own allow-list."""
+
+    extensions: list[str]
+    mime_types: list[str]
+    max_size_mb: int
+    max_pages: int
+
+
+class CheckState(StrEnum):
+    CURRENT = "CURRENT"  # a stored check exists and still matches the documents and reviews
+    NOT_CURRENT = "NOT_CURRENT"  # never run, or inputs changed since
+
+
+class RequirementState(StrEnum):
+    MISSING = "MISSING"
+    PROCESSING = "PROCESSING"
+    FAILED = "FAILED"
+    NOT_CHECKED = "NOT_CHECKED"
+    OK = "OK"
+    REVIEW_REQUIRED = "REVIEW_REQUIRED"
+    NEEDS_CORRECTION = "NEEDS_CORRECTION"
+
+
+class NextStep(StrEnum):
+    UPLOAD_DOCUMENTS = "UPLOAD_DOCUMENTS"
+    WAIT_PROCESSING = "WAIT_PROCESSING"
+    REVIEW_FIELDS = "REVIEW_FIELDS"
+    RUN_CHECK = "RUN_CHECK"
+    FIX_ISSUES = "FIX_ISSUES"
+    DONE = "DONE"
+
+
+class OverviewDocumentRef(BaseModel):
+    id: uuid.UUID
+    original_filename: str
+    processing_status: str
+    document_type: DocumentType
+    error_message: str | None = None
+
+
+class RequirementOverview(BaseModel):
+    document_type: DocumentType
+    display_name: str
+    required: bool
+    state: RequirementState
+    documents: list[OverviewDocumentRef]
+    issue_codes: list[str]
+
+
+class OtherDocumentOverview(BaseModel):
+    document: OverviewDocumentRef
+    reason: str  # UNKNOWN_TYPE | NOT_IN_WORKFLOW
+
+
+class OverviewIssue(VerificationIssueRead):
+    # Values behind the finding, so the UI quotes them instead of looking them up.
+    value: str | None = None
+    related_value: str | None = None
+    reference_date: date | None = None
+    expected_value: str | None = None
+    max_age_days: int | None = None
+
+
+class OverviewCounts(BaseModel):
+    requirements_total: int
+    required_total: int
+    required_ok: int
+    required_missing: int
+    issues_needs_correction: int
+    issues_review_required: int
+    review_open: int
+    review_done: int
+    documents_total: int
+    documents_processing: int
+    documents_failed: int
+
+
+class ProjectOverviewRead(BaseModel):
+    project_id: uuid.UUID
+    check_state: CheckState
+    status: OverallStatus | None  # the stored decision; None unless check_state is CURRENT
+    evaluation_date: date | None
+    evaluated_at: datetime | None
+    suggested_evaluation_date: date
+    status_item_count: int | None
+    next_step: NextStep
+    counts: OverviewCounts
+    requirements: list[RequirementOverview]
+    other_documents: list[OtherDocumentOverview]
+    issues: list[OverviewIssue]
+    notices: list[VerificationIssueRead]
+
+
+class PageInfoRead(BaseModel):
+    page_number: int
+    width: int
+    height: int
+
+
+class ProjectSummaryRead(BaseModel):
+    """One line per submission for the list screen (same source as the overview)."""
+
+    project_id: uuid.UUID
+    check_state: CheckState
+    status: OverallStatus | None
+    status_item_count: int | None
+    next_step: NextStep
+    required_ok: int
+    required_total: int
+    review_open: int

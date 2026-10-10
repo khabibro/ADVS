@@ -83,25 +83,25 @@ export const processingPresentation: Record<
   PREPROCESSING: {
     label: "분석 준비 중",
     tone: "info",
-    description: "문서를 분석할 수 있도록 준비하고 있습니다.",
+    description: "서류를 분석할 수 있도록 준비하고 있습니다.",
   },
   OCR_PENDING: {
     label: "분석 대기 중",
     tone: "info",
-    description: "문서 분석 대기 중입니다.",
+    description: "서류 분석 대기 중입니다.",
   },
   OCR_PROCESSING: {
-    label: "문서 읽는 중",
+    label: "서류 읽는 중",
     tone: "info",
-    description: "PDF에서 문서 내용을 읽고 있습니다.",
+    description: "PDF에서 서류 내용을 읽고 있습니다.",
   },
   OCR_COMPLETED: {
-    label: "문서 읽기 완료",
+    label: "서류 읽기 완료",
     tone: "info",
-    description: "문서 종류와 항목을 판별하고 있습니다.",
+    description: "서류 종류와 항목을 판별하고 있습니다.",
   },
   CLASSIFYING: {
-    label: "문서 종류 판별 중",
+    label: "서류 종류 판별 중",
     tone: "info",
     description: "업로드한 서류의 종류를 판별하고 있습니다.",
   },
@@ -118,12 +118,12 @@ export const processingPresentation: Record<
   COMPLETED: {
     label: "분석 완료",
     tone: "success",
-    description: "문서 종류와 주요 항목을 확인했습니다.",
+    description: "서류 종류와 주요 항목을 확인했습니다.",
   },
   FAILED: {
     label: "분석 실패",
     tone: "danger",
-    description: "문서를 분석하지 못했습니다.",
+    description: "서류를 분석하지 못했습니다.",
   },
 };
 
@@ -182,7 +182,7 @@ const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   TRANSCRIPT: "성적증명서",
   GRADUATION_CERTIFICATE: "졸업증명서",
   CAREER_CERTIFICATE: "경력증명서",
-  UNKNOWN: "문서 종류 확인 필요",
+  UNKNOWN: "서류 종류 확인 필요",
 };
 
 /**
@@ -196,7 +196,7 @@ export function documentTypeLabel(
   requirementDisplayName?: string,
 ): string {
   if (requirementDisplayName) return requirementDisplayName;
-  return DOCUMENT_TYPE_LABELS[type] ?? "문서 종류 확인 필요";
+  return DOCUMENT_TYPE_LABELS[type] ?? "서류 종류 확인 필요";
 }
 
 /* ------------------------------------------------------------------ *
@@ -228,7 +228,7 @@ export const issuePresentation: Record<string, IssuePresentation> = {
   },
   OCR_UNCERTAIN: {
     title: "인식 결과 확인이 필요합니다.",
-    action: "문서의 값과 자동 인식 결과를 비교해 주세요.",
+    action: "서류의 값과 자동 인식 결과를 비교해 주세요.",
     resolution: "review",
   },
   REQUIRED_FIELD_UNRESOLVED: {
@@ -247,12 +247,12 @@ export const issuePresentation: Record<string, IssuePresentation> = {
     resolution: "check",
   },
   DOCUMENT_PROCESSING_FAILED: {
-    title: "문서 분석에 실패했습니다.",
-    action: "문서를 다시 분석하거나 다른 파일로 교체해 주세요.",
+    title: "서류 분석에 실패했습니다.",
+    action: "서류를 다시 분석하거나 다른 파일로 교체해 주세요.",
     resolution: "replace",
   },
   UNCLASSIFIED_DOCUMENT_REQUIRES_REVIEW: {
-    title: "문서 종류를 확인할 수 없습니다.",
+    title: "서류 종류를 확인할 수 없습니다.",
     action:
       "지원하지 않는 서류이거나 다른 종류의 서류일 수 있습니다. 올바른 서류로 교체해 주세요.",
     resolution: "replace",
@@ -263,7 +263,7 @@ export const issuePresentation: Record<string, IssuePresentation> = {
     resolution: "replace",
   },
   DOCUMENT_PROCESSING_IN_PROGRESS: {
-    title: "문서 분석이 끝나지 않았습니다.",
+    title: "서류 분석이 끝나지 않았습니다.",
     action: "분석이 끝난 뒤 다시 점검해 주세요.",
     resolution: "wait",
   },

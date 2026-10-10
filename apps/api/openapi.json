@@ -796,6 +796,177 @@
         }
       }
     },
+    "/api/v1/projects/{project_id}/overview": {
+      "get": {
+        "summary": "Project Overview",
+        "operationId": "project_overview_api_v1_projects__project_id__overview_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOverviewRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-summaries": {
+      "get": {
+        "summary": "Project Summaries",
+        "operationId": "project_summaries_api_v1_project_summaries_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectSummaryRead"
+                  },
+                  "type": "array",
+                  "title": "Response Project Summaries Api V1 Project Summaries Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/upload-rules": {
+      "get": {
+        "summary": "Upload Rules",
+        "operationId": "upload_rules_api_v1_upload_rules_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadRulesRead"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/pages": {
+      "get": {
+        "summary": "Document Pages",
+        "operationId": "document_pages_api_v1_documents__document_id__pages_get",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PageInfoRead"
+                  },
+                  "title": "Response Document Pages Api V1 Documents  Document Id  Pages Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/pages/{page_number}/image": {
+      "get": {
+        "summary": "Document Page Image",
+        "operationId": "document_page_image_api_v1_documents__document_id__pages__page_number__image_get",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Document Id"
+            }
+          },
+          {
+            "name": "page_number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Page Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects/{project_id}/reviews": {
       "get": {
         "summary": "List Reviews",
@@ -1007,44 +1178,6 @@
               }
             ],
             "title": "Reason"
-          },
-          "robust": {
-            "type": "boolean",
-            "title": "Robust",
-            "default": false
-          },
-          "repair_candidate": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Repair Candidate"
-          },
-          "repair_provenance": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Repair Provenance"
-          },
-          "confusion_table_version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Confusion Table Version"
           }
         },
         "type": "object",
@@ -1097,6 +1230,14 @@
           "height"
         ],
         "title": "BoundingBoxRead"
+      },
+      "CheckState": {
+        "type": "string",
+        "enum": [
+          "CURRENT",
+          "NOT_CURRENT"
+        ],
+        "title": "CheckState"
       },
       "ChecklistCreate": {
         "properties": {
@@ -1530,6 +1671,16 @@
               }
             ],
             "title": "Transform"
+          },
+          "normalized_box": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BoundingBoxRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -1702,10 +1853,10 @@
               }
             ]
           },
-          "decision_relevant": {
+          "used_by_rules": {
             "type": "boolean",
-            "title": "Decision Relevant",
-            "default": true
+            "title": "Used By Rules",
+            "default": false
           }
         },
         "type": "object",
@@ -1973,6 +2124,35 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "NextStep": {
+        "type": "string",
+        "enum": [
+          "UPLOAD_DOCUMENTS",
+          "WAIT_PROCESSING",
+          "REVIEW_FIELDS",
+          "RUN_CHECK",
+          "FIX_ISSUES",
+          "DONE"
+        ],
+        "title": "NextStep"
+      },
+      "OtherDocumentOverview": {
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/OverviewDocumentRef"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document",
+          "reason"
+        ],
+        "title": "OtherDocumentOverview"
+      },
       "OverallStatus": {
         "type": "string",
         "enum": [
@@ -1981,6 +2161,311 @@
           "NEEDS_CORRECTION"
         ],
         "title": "OverallStatus"
+      },
+      "OverviewCounts": {
+        "properties": {
+          "requirements_total": {
+            "type": "integer",
+            "title": "Requirements Total"
+          },
+          "required_total": {
+            "type": "integer",
+            "title": "Required Total"
+          },
+          "required_ok": {
+            "type": "integer",
+            "title": "Required Ok"
+          },
+          "required_missing": {
+            "type": "integer",
+            "title": "Required Missing"
+          },
+          "issues_needs_correction": {
+            "type": "integer",
+            "title": "Issues Needs Correction"
+          },
+          "issues_review_required": {
+            "type": "integer",
+            "title": "Issues Review Required"
+          },
+          "review_open": {
+            "type": "integer",
+            "title": "Review Open"
+          },
+          "review_done": {
+            "type": "integer",
+            "title": "Review Done"
+          },
+          "documents_total": {
+            "type": "integer",
+            "title": "Documents Total"
+          },
+          "documents_processing": {
+            "type": "integer",
+            "title": "Documents Processing"
+          },
+          "documents_failed": {
+            "type": "integer",
+            "title": "Documents Failed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "requirements_total",
+          "required_total",
+          "required_ok",
+          "required_missing",
+          "issues_needs_correction",
+          "issues_review_required",
+          "review_open",
+          "review_done",
+          "documents_total",
+          "documents_processing",
+          "documents_failed"
+        ],
+        "title": "OverviewCounts"
+      },
+      "OverviewDocumentRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "original_filename": {
+            "type": "string",
+            "title": "Original Filename"
+          },
+          "processing_status": {
+            "type": "string",
+            "title": "Processing Status"
+          },
+          "document_type": {
+            "$ref": "#/components/schemas/DocumentType"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "original_filename",
+          "processing_status",
+          "document_type"
+        ],
+        "title": "OverviewDocumentRef"
+      },
+      "OverviewIssue": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "status_effect": {
+            "$ref": "#/components/schemas/OverallStatus"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "document_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DocumentType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "field_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Name"
+          },
+          "related_document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Document Id"
+          },
+          "related_document_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DocumentType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "related_field_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Field Name"
+          },
+          "rule_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Id"
+          },
+          "field_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Id"
+          },
+          "related_field_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Field Id"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "related_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Value"
+          },
+          "reference_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Date"
+          },
+          "expected_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Value"
+          },
+          "max_age_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Age Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "status_effect",
+          "message"
+        ],
+        "title": "OverviewIssue"
+      },
+      "PageInfoRead": {
+        "properties": {
+          "page_number": {
+            "type": "integer",
+            "title": "Page Number"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          }
+        },
+        "type": "object",
+        "required": [
+          "page_number",
+          "width",
+          "height"
+        ],
+        "title": "PageInfoRead"
       },
       "ProjectCreate": {
         "properties": {
@@ -2022,6 +2507,119 @@
           "workflow_id"
         ],
         "title": "ProjectCreate"
+      },
+      "ProjectOverviewRead": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "check_state": {
+            "$ref": "#/components/schemas/CheckState"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OverallStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evaluation_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Date"
+          },
+          "evaluated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluated At"
+          },
+          "suggested_evaluation_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Suggested Evaluation Date"
+          },
+          "status_item_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Item Count"
+          },
+          "next_step": {
+            "$ref": "#/components/schemas/NextStep"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/OverviewCounts"
+          },
+          "requirements": {
+            "items": {
+              "$ref": "#/components/schemas/RequirementOverview"
+            },
+            "type": "array",
+            "title": "Requirements"
+          },
+          "other_documents": {
+            "items": {
+              "$ref": "#/components/schemas/OtherDocumentOverview"
+            },
+            "type": "array",
+            "title": "Other Documents"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/OverviewIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          },
+          "notices": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationIssueRead"
+            },
+            "type": "array",
+            "title": "Notices"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "check_state",
+          "status",
+          "evaluation_date",
+          "evaluated_at",
+          "suggested_evaluation_date",
+          "status_item_count",
+          "next_step",
+          "counts",
+          "requirements",
+          "other_documents",
+          "issues",
+          "notices"
+        ],
+        "title": "ProjectOverviewRead"
       },
       "ProjectRead": {
         "properties": {
@@ -2104,6 +2702,122 @@
           "created_at"
         ],
         "title": "ProjectRead"
+      },
+      "ProjectSummaryRead": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "check_state": {
+            "$ref": "#/components/schemas/CheckState"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OverallStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status_item_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Item Count"
+          },
+          "next_step": {
+            "$ref": "#/components/schemas/NextStep"
+          },
+          "required_ok": {
+            "type": "integer",
+            "title": "Required Ok"
+          },
+          "required_total": {
+            "type": "integer",
+            "title": "Required Total"
+          },
+          "review_open": {
+            "type": "integer",
+            "title": "Review Open"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "check_state",
+          "status",
+          "status_item_count",
+          "next_step",
+          "required_ok",
+          "required_total",
+          "review_open"
+        ],
+        "title": "ProjectSummaryRead",
+        "description": "One line per submission for the list screen (same source as the overview)."
+      },
+      "RequirementOverview": {
+        "properties": {
+          "document_type": {
+            "$ref": "#/components/schemas/DocumentType"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "required": {
+            "type": "boolean",
+            "title": "Required"
+          },
+          "state": {
+            "$ref": "#/components/schemas/RequirementState"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/OverviewDocumentRef"
+            },
+            "type": "array",
+            "title": "Documents"
+          },
+          "issue_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Issue Codes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_type",
+          "display_name",
+          "required",
+          "state",
+          "documents",
+          "issue_codes"
+        ],
+        "title": "RequirementOverview"
+      },
+      "RequirementState": {
+        "type": "string",
+        "enum": [
+          "MISSING",
+          "PROCESSING",
+          "FAILED",
+          "NOT_CHECKED",
+          "OK",
+          "REVIEW_REQUIRED",
+          "NEEDS_CORRECTION"
+        ],
+        "title": "RequirementState"
       },
       "ReviewItemRead": {
         "properties": {
@@ -2493,6 +3207,41 @@
           "disclaimer"
         ],
         "title": "SubmissionVerificationRead"
+      },
+      "UploadRulesRead": {
+        "properties": {
+          "extensions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Extensions"
+          },
+          "mime_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mime Types"
+          },
+          "max_size_mb": {
+            "type": "integer",
+            "title": "Max Size Mb"
+          },
+          "max_pages": {
+            "type": "integer",
+            "title": "Max Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "extensions",
+          "mime_types",
+          "max_size_mb",
+          "max_pages"
+        ],
+        "title": "UploadRulesRead",
+        "description": "What the upload endpoint accepts, so clients never keep their own allow-list."
       },
       "ValidationError": {
         "properties": {

@@ -117,8 +117,17 @@ class SubmissionVerificationService:
         self._persist(db, project, result, evaluated_at, snapshot)
         return StoredSubmissionVerification(result, evaluated_at, True)
 
-    def get_latest(self, db: Session, project_id: uuid.UUID) -> StoredSubmissionVerification:
-        lock_project(db, project_id)
+    def get_latest(
+        self, db: Session, project_id: uuid.UUID, *, read_only: bool = False
+    ) -> StoredSubmissionVerification:
+        """The stored check, or an empty one when it no longer matches the inputs.
+
+        ``read_only`` takes no project lock and writes nothing (it neither invalidates a stale
+        result nor downgrades the project status), so it can be polled while documents are being
+        analysed without contending with the writer.
+        """
+        if not read_only:
+            lock_project(db, project_id)
         project = self._load_project(db, project_id)
         if project is None:
             raise LookupError("project not found")
@@ -134,7 +143,7 @@ class SubmissionVerificationService:
         )
         rows.sort(key=lambda row: int((row.details or {}).get("result_index", 0)))
         if not rows or project.checklist_id is None:
-            if project.status == OverallStatus.READY.value:
+            if project.status == OverallStatus.READY.value and not read_only:
                 project.status = OverallStatus.REVIEW_REQUIRED.value
                 db.commit()
             return StoredSubmissionVerification(None, None, False)
@@ -143,12 +152,14 @@ class SubmissionVerificationService:
                 project, self._requirements(project.checklist), self._documents(db, project_id)
             )
         except RuleConfigurationError:
-            invalidate_submission_verification(db, project.id)
-            db.commit()
+            if not read_only:
+                invalidate_submission_verification(db, project.id)
+                db.commit()
             return StoredSubmissionVerification(None, None, False)
         if any((row.details or {}).get("input_snapshot") != snapshot for row in rows):
-            invalidate_submission_verification(db, project.id)
-            db.commit()
+            if not read_only:
+                invalidate_submission_verification(db, project.id)
+                db.commit()
             return StoredSubmissionVerification(None, None, False)
         evaluation_date_value = rows[0].details.get("evaluation_date") if rows[0].details else None
         if not evaluation_date_value:
@@ -251,6 +262,12 @@ class SubmissionVerificationService:
                 )
             )
         return snapshots
+
+    def document_snapshots(
+        self, db: Session, project_id: uuid.UUID, reference_date: date | None = None
+    ) -> list[DocumentSnapshot]:
+        """Documents with their effective field values (read-only view for other services)."""
+        return self._documents(db, project_id, reference_date)
 
     def _documents(
         self, db: Session, project_id: uuid.UUID, reference_date: date | None = None
