@@ -65,8 +65,8 @@ describe("overall status presentation", () => {
 describe("processing status presentation", () => {
   it("distinguishes upload, processing, processed, and failed", () => {
     expect(processingStatus("UPLOADED").label).toBe("업로드 완료");
-    expect(processingStatus("OCR_PROCESSING").label).toBe("문서 읽는 중");
-    expect(processingStatus("CLASSIFYING").label).toBe("문서 종류 판별 중");
+    expect(processingStatus("OCR_PROCESSING").label).toBe("서류 읽는 중");
+    expect(processingStatus("CLASSIFYING").label).toBe("서류 종류 판별 중");
     expect(processingStatus("COMPLETED").label).toBe("분석 완료");
     expect(processingStatus("FAILED").label).toBe("분석 실패");
   });
@@ -105,8 +105,8 @@ describe("document type presentation", () => {
   });
 
   it("describes an unclassified document as needing confirmation", () => {
-    expect(documentTypeLabel("UNKNOWN")).toBe("문서 종류 확인 필요");
-    expect(documentTypeLabel("UNKNOWN")).not.toBe("알 수 없는 문서");
+    expect(documentTypeLabel("UNKNOWN")).toBe("서류 종류 확인 필요");
+    expect(documentTypeLabel("UNKNOWN")).not.toBe("알 수 없는 서류");
   });
 });
 

@@ -59,10 +59,10 @@ describe("apiErrorMessage", () => {
       "자동 점검을 완료하지 못했습니다.",
     );
     expect(apiErrorMessage(new ApiError(500, "OCR_TIMEOUT"), "process")).toBe(
-      "문서 분석 시간이 초과되었습니다.",
+      "서류 분석 시간이 초과되었습니다.",
     );
     expect(apiErrorMessage(new ApiError(500, "PROCESSING_FAILED"), "process")).toBe(
-      "문서 분석에 실패했습니다.",
+      "서류 분석에 실패했습니다.",
     );
   });
 

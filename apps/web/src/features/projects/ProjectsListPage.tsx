@@ -40,7 +40,7 @@ export function ProjectsListPage() {
             제출 건
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            필요한 서류를 업로드하면 문서 종류와 주요 항목을 확인하고, 제출 전에
+            필요한 서류를 업로드하면 서류 종류와 주요 항목을 확인하고, 제출 전에
             자동으로 점검합니다.
           </p>
         </div>
