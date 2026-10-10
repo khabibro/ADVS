@@ -29,6 +29,17 @@ export type Verification = Schemas["SubmissionVerificationRead"];
 export type VerificationIssue = Schemas["VerificationIssueRead"];
 export type RuleEvaluation = Schemas["RuleEvaluationRead"];
 
+export type ProjectOverview = Schemas["ProjectOverviewRead"];
+export type OverviewIssue = Schemas["OverviewIssue"];
+export type RequirementOverview = Schemas["RequirementOverview"];
+export type RequirementState = Schemas["RequirementState"];
+export type NextStep = Schemas["NextStep"];
+export type OverviewDocumentRef = Schemas["OverviewDocumentRef"];
+export type OtherDocumentOverview = Schemas["OtherDocumentOverview"];
+export type ProjectSummary = Schemas["ProjectSummaryRead"];
+export type UploadRules = Schemas["UploadRulesRead"];
+export type PageInfo = Schemas["PageInfoRead"];
+
 export type ReviewItem = Schemas["ReviewItemRead"];
 export type FieldReview = Schemas["FieldReviewRead"];
 export type FieldReviewCreate = Schemas["FieldReviewCreate"];

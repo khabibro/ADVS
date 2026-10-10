@@ -11,6 +11,11 @@ export const queryKeys = {
   project: (projectId: string) => ["advs", "project", projectId] as const,
   documents: (projectId: string) =>
     ["advs", "project", projectId, "documents"] as const,
+  overview: (projectId: string) =>
+    ["advs", "project", projectId, "overview"] as const,
+  summaries: () => ["advs", "project-summaries"] as const,
+  uploadRules: () => ["advs", "upload-rules"] as const,
+  pages: (documentId: string) => ["advs", "document", documentId, "pages"] as const,
   document: (documentId: string) => ["advs", "document", documentId] as const,
   verification: (projectId: string) =>
     ["advs", "project", projectId, "verification"] as const,

@@ -1,4 +1,5 @@
 import {
+  apiBaseUrl,
   apiJsonRequest,
   apiRequest,
   apiUploadRequest,
@@ -8,9 +9,13 @@ import type {
   DocumentDetail,
   FieldReview,
   FieldReviewCreate,
+  PageInfo,
   Project,
   ProjectCreate,
+  ProjectOverview,
+  ProjectSummary,
   ReviewItem,
+  UploadRules,
   Verification,
   Workflow,
 } from "@/types/api";
@@ -33,6 +38,15 @@ export const api = {
     apiRequest<Project>(`/projects/${projectId}`),
   createProject: (body: ProjectCreate) =>
     apiJsonRequest<Project>("/projects", "POST", body),
+
+  projectOverview: (projectId: string) =>
+    apiRequest<ProjectOverview>(`/projects/${projectId}/overview`),
+  projectSummaries: () => apiRequest<ProjectSummary[]>("/project-summaries"),
+  uploadRules: () => apiRequest<UploadRules>("/upload-rules"),
+  documentPages: (documentId: string) =>
+    apiRequest<PageInfo[]>(`/documents/${documentId}/pages`),
+  pageImageUrl: (documentId: string, pageNumber: number) =>
+    `${apiBaseUrl()}/documents/${documentId}/pages/${pageNumber}/image`,
 
   documents: (projectId: string) =>
     apiRequest<Document[]>(`/projects/${projectId}/documents`),

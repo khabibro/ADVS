@@ -107,7 +107,7 @@ start_web() {
 reset_state() {
   say "resetting the demo database and files"
   stop_all
-  rm -rf "$STATE/advs_demo.db" "$STATE/files"
+  rm -rf "$STATE"/advs_demo.db* "$STATE/files"
   mkdir -p "$STATE/files" "$LOGS" "$PIDS"
   (cd "$ROOT/apps/api" && "$VENV/bin/alembic" upgrade head >"$LOGS/migrate.log" 2>&1) \
     || { say "migration failed; see $LOGS/migrate.log"; exit 1; }
