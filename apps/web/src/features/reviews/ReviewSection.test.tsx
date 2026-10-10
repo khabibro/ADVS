@@ -17,6 +17,7 @@ const verification: Verification = {
   evaluated_at: "2026-09-19T03:00:00Z",
   is_current: true,
   issues: [],
+  notices: [],
   rule_results: [],
   disclaimer: "d",
 };

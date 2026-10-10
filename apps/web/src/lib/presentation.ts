@@ -251,6 +251,17 @@ export const issuePresentation: Record<string, IssuePresentation> = {
     action: "문서를 다시 분석하거나 다른 파일로 교체해 주세요.",
     resolution: "replace",
   },
+  UNCLASSIFIED_DOCUMENT_REQUIRES_REVIEW: {
+    title: "문서 종류를 확인할 수 없습니다.",
+    action:
+      "지원하지 않는 서류이거나 다른 종류의 서류일 수 있습니다. 올바른 서류로 교체해 주세요.",
+    resolution: "replace",
+  },
+  ISSUE_DATE_TOO_OLD: {
+    title: "발급일이 제출 기준보다 오래되었습니다.",
+    action: "최근에 발급받은 서류로 교체해 주세요.",
+    resolution: "replace",
+  },
   DOCUMENT_PROCESSING_IN_PROGRESS: {
     title: "문서 분석이 끝나지 않았습니다.",
     action: "분석이 끝난 뒤 다시 점검해 주세요.",
@@ -342,6 +353,55 @@ export const assessmentReasonLabels: Record<EvidenceAssessmentReason, string> =
       "추출 과정에서 직접 확인이 필요한 항목으로 표시됐습니다.",
   };
 
+/** Why an OCR value was accepted without a human (shown as a small badge). */
+const AUTO_ACCEPT_SOURCE_LABELS: Record<string, string> = {
+  documents: "다른 서류와 일치",
+  application: "신청 정보와 일치",
+  second_pass: "재판독 일치",
+};
+
+export function autoAcceptedLabel(
+  autoAcceptance:
+    | { accepted: boolean; sources?: readonly string[] | null }
+    | null
+    | undefined,
+): string | null {
+  if (!autoAcceptance?.accepted) return null;
+  const labels = (autoAcceptance.sources ?? []).map(
+    (source) => AUTO_ACCEPT_SOURCE_LABELS[source],
+  );
+  const known = labels.filter(Boolean);
+  return known.length > 0 ? known.join(" · ") : "자동 확인됨";
+}
+
+/** Why an OCR value could not be accepted automatically and still needs a person. */
+const AUTO_ACCEPT_REASON_LABELS: Record<string, string> = {
+  NO_INDEPENDENT_CONFIRMATION: "다른 서류나 재판독으로 같은 값을 확인하지 못했습니다.",
+  NO_RULE_FOR_FIELD: "이 항목은 자동 확인 대상이 아닙니다.",
+  EXTRACTION_MARKED_FOR_REVIEW: "추출 과정에서 확인이 필요한 항목으로 표시됐습니다.",
+  DISAGREES_WITH_OTHER_DOCUMENT: "다른 서류의 값과 다릅니다.",
+  CONFLICTS_WITH_APPLICATION_VALUE: "신청 정보와 다릅니다.",
+  SECOND_PASS_DISAGREES: "재판독 결과가 첫 판독과 다릅니다.",
+  SEMANTIC_INFERENCE: "문맥으로 추론한 값입니다.",
+  CONFIDENCE_BELOW_FLOOR: "인식 신뢰도가 자동 사용 기준보다 낮습니다.",
+  NEAR_DECISION_BOUNDARY: "제출 가능 여부가 갈리는 경계에 있어 사람이 확인합니다.",
+};
+
+export function autoAcceptReasonLabel(
+  autoAcceptance:
+    | { accepted: boolean; reason?: string | null }
+    | null
+    | undefined,
+): string | null {
+  if (!autoAcceptance || autoAcceptance.accepted || !autoAcceptance.reason) {
+    return null;
+  }
+  return (
+    AUTO_ACCEPT_REASON_LABELS[autoAcceptance.reason] ??
+    "자동으로 확인하지 못해 사람이 확인합니다."
+  );
+}
+
 export const evidenceStateLabels: Record<EvidenceAssessmentState, string> = {
   SUFFICIENT: "자동 사용 가능",
   REVIEW_REQUIRED: "직접 확인 필요",
@@ -366,6 +426,7 @@ export const ruleOutcomeLabels: Record<RuleOutcome, string> = {
   FAIL: "미충족",
   UNRESOLVED: "판단 보류",
   NOT_APPLICABLE: "해당 없음",
+  NOTICE: "참고",
 };
 
 /* ------------------------------------------------------------------ *

@@ -320,6 +320,45 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AutoAcceptanceRead
+         * @description Why an OCR value does (or does not) still need a human check.
+         */
+        AutoAcceptanceRead: {
+            /** Accepted */
+            accepted: boolean;
+            /** Strategy */
+            strategy: string;
+            /** Policy Version */
+            policy_version: string;
+            /** Rule Id */
+            rule_id?: string | null;
+            /**
+             * Sources
+             * @default []
+             */
+            sources: string[];
+            /**
+             * Corroborating Document Ids
+             * @default []
+             */
+            corroborating_document_ids: string[];
+            /** Second Pass Value */
+            second_pass_value?: string | null;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Robust
+             * @default false
+             */
+            robust: boolean;
+            /** Repair Candidate */
+            repair_candidate?: string | null;
+            /** Repair Provenance */
+            repair_provenance?: string | null;
+            /** Confusion Table Version */
+            confusion_table_version?: string | null;
+        };
         /** Body_upload_document_api_v1_projects__project_id__documents_post */
         Body_upload_document_api_v1_projects__project_id__documents_post: {
             /** File */
@@ -534,6 +573,12 @@ export interface components {
             effective_normalized_value?: string | null;
             effective_source?: components["schemas"]["EffectiveValueSource"] | null;
             current_review_decision?: components["schemas"]["FieldReviewDecision"] | null;
+            auto_acceptance?: components["schemas"]["AutoAcceptanceRead"] | null;
+            /**
+             * Decision Relevant
+             * @default true
+             */
+            decision_relevant: boolean;
         };
         /** FieldReviewCreate */
         FieldReviewCreate: {
@@ -692,6 +737,7 @@ export interface components {
             /** Effective Value */
             effective_value: string | null;
             effective_source: components["schemas"]["EffectiveValueSource"];
+            auto_acceptance?: components["schemas"]["AutoAcceptanceRead"] | null;
         };
         /** RuleEvaluationRead */
         RuleEvaluationRead: {
@@ -714,7 +760,7 @@ export interface components {
          * RuleOutcome
          * @enum {string}
          */
-        RuleOutcome: "PASS" | "FAIL" | "UNRESOLVED" | "NOT_APPLICABLE";
+        RuleOutcome: "PASS" | "FAIL" | "UNRESOLVED" | "NOT_APPLICABLE" | "NOTICE";
         /**
          * RuleType
          * @enum {string}
@@ -738,6 +784,11 @@ export interface components {
             is_current: boolean;
             /** Issues */
             issues: components["schemas"]["VerificationIssueRead"][];
+            /**
+             * Notices
+             * @default []
+             */
+            notices: components["schemas"]["VerificationIssueRead"][];
             /** Rule Results */
             rule_results: components["schemas"]["RuleEvaluationRead"][];
             /** Disclaimer */

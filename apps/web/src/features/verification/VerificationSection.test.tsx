@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api-error";
@@ -7,7 +7,7 @@ import { api } from "@/services/api";
 import { VerificationSection } from "./VerificationSection";
 import type { Project, Verification } from "@/types/api";
 
-vi.mock("@/services/api", () => ({ api: { verify: vi.fn() } }));
+vi.mock("@/services/api", () => ({ api: { verify: vi.fn(), document: vi.fn() } }));
 
 vi.mock("next/link", () => ({
   default: ({
@@ -43,6 +43,7 @@ const ready: Verification = {
   evaluated_at: "2026-09-19T03:00:00Z",
   is_current: true,
   issues: [],
+  notices: [],
   rule_results: [],
   disclaimer: "현재 설정된 점검 기준에서 확인된 문제가 없습니다.",
 };
@@ -215,5 +216,35 @@ describe("VerificationSection", () => {
       <VerificationSection project={project} verification={ready} />,
     );
     expect(screen.getByText(/2026\. 09\. 19\./)).toBeInTheDocument();
+  });
+
+  it("quotes the expired date and shows duplicate findings once", async () => {
+    vi.mocked(api.document).mockResolvedValue({
+      extracted_fields: [
+        { field_name: "valid_until", effective_normalized_value: "2026-08-31" },
+      ],
+    } as never);
+    const issue = {
+      code: "EXPIRED_DOCUMENT",
+      status_effect: "NEEDS_CORRECTION" as const,
+      message: "expired",
+      document_id: "doc-1",
+      document_type: "NATIONAL_TAX_PAYMENT_CERTIFICATE" as const,
+      field_name: "valid_until",
+    };
+    renderWithQuery(
+      <VerificationSection
+        project={project}
+        verification={{
+          ...ready,
+          status: "NEEDS_CORRECTION",
+          issues: [issue, { ...issue }],
+        }}
+      />,
+    );
+    await waitFor(() =>
+      expect(screen.getByText(/2026\. 08\. 31\./)).toBeInTheDocument(),
+    );
+    expect(screen.getAllByText("유효기간이 만료되었습니다.")).toHaveLength(1);
   });
 });

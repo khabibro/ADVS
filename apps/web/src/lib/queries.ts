@@ -32,6 +32,15 @@ export function useProjectDocuments(projectId: string) {
   });
 }
 
+/** One document with its fields; shared by issue cards that quote values. */
+export function useDocumentDetail(documentId: string | null | undefined) {
+  return useQuery({
+    queryKey: queryKeys.document(documentId ?? "none"),
+    queryFn: () => api.document(documentId as string),
+    enabled: Boolean(documentId),
+  });
+}
+
 /** Invalidates everything a submission mutation can change. */
 export function useProjectInvalidation(projectId: string) {
   const queryClient = useQueryClient();

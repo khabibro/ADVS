@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { ApiError, parseApiErrorResponse } from "@/lib/api-error";
 import {
+  autoAcceptedLabel,
+  autoAcceptReasonLabel,
   documentTypeLabel,
   fieldLabel,
   formatDate,
@@ -179,5 +181,25 @@ describe("ApiError instances never render as a class name", () => {
     });
     expect(error).toBeInstanceOf(ApiError);
     expect(error.message).toBe("파일 크기가 허용 범위를 초과했습니다.");
+  });
+});
+
+describe("auto-acceptance copy", () => {
+  it("labels an accepted value by its source and never leaks codes", () => {
+    expect(autoAcceptedLabel({ accepted: true, sources: ["documents"] })).toBe(
+      "다른 서류와 일치",
+    );
+    expect(autoAcceptedLabel({ accepted: true, sources: [] })).toBe("자동 확인됨");
+    expect(autoAcceptedLabel({ accepted: false, sources: [] })).toBeNull();
+  });
+
+  it("explains why a value still needs a person", () => {
+    expect(
+      autoAcceptReasonLabel({ accepted: false, reason: "NO_INDEPENDENT_CONFIRMATION" }),
+    ).toContain("같은 값을 확인하지 못했습니다");
+    expect(autoAcceptReasonLabel({ accepted: false, reason: "SOMETHING_NEW" })).not.toMatch(
+      /SOMETHING_NEW/,
+    );
+    expect(autoAcceptReasonLabel({ accepted: true })).toBeNull();
   });
 });
