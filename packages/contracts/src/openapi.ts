@@ -347,17 +347,6 @@ export interface components {
             second_pass_value?: string | null;
             /** Reason */
             reason?: string | null;
-            /**
-             * Robust
-             * @default false
-             */
-            robust: boolean;
-            /** Repair Candidate */
-            repair_candidate?: string | null;
-            /** Repair Provenance */
-            repair_provenance?: string | null;
-            /** Confusion Table Version */
-            confusion_table_version?: string | null;
         };
         /** Body_upload_document_api_v1_projects__project_id__documents_post */
         Body_upload_document_api_v1_projects__project_id__documents_post: {
@@ -574,11 +563,6 @@ export interface components {
             effective_source?: components["schemas"]["EffectiveValueSource"] | null;
             current_review_decision?: components["schemas"]["FieldReviewDecision"] | null;
             auto_acceptance?: components["schemas"]["AutoAcceptanceRead"] | null;
-            /**
-             * Decision Relevant
-             * @default true
-             */
-            decision_relevant: boolean;
         };
         /** FieldReviewCreate */
         FieldReviewCreate: {
