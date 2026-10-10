@@ -49,7 +49,7 @@ ADVS sends **every OCR-read field to review**, regardless of confidence (audit F
 
 ### Important: regenerate before testing on another date
 
-ADVS currently checks validity against the server's `date.today()`, not the submission date. Regenerate with the test-run date so the validity windows line up:
+The API checks validity against an explicit evaluation date (`POST /projects/{id}/verify` takes `evaluation_date`; the demo and the evaluation harness use 2026-10-05, the date all documents here were built for). Without one it uses the server's `date.today()`, so to run the set on another day either pass that evaluation date or regenerate the documents with the test-run date:
 
 ```bash
 cd _generator
