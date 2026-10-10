@@ -32,7 +32,8 @@ const BADGE: Record<FieldSourceKind, string> = {
 };
 
 function boxOf(field: Field) {
-  return field.evidence?.find((e) => e.normalized_box)?.normalized_box ?? null;
+  const boxes = (field.evidence ?? []).filter((e) => e.normalized_box && e.page_number === pageOf(field));
+  return boxes.length ? boxes[boxes.length - 1].normalized_box! : null;
 }
 function pageOf(field: Field): number {
   return field.evidence?.find((e) => e.normalized_box)?.page_number ?? field.evidence?.[0]?.page_number ?? 1;
@@ -110,8 +111,9 @@ function PageViewer({
             ref={image}
             src={api.pageImageUrl(documentId, page)}
           />
-          {onPage.map((field) => {
-            const e = field.evidence!.find((x) => x.page_number === page && x.normalized_box)!;
+          {onPage.flatMap((field) =>
+            field.evidence!.filter((x) => x.page_number === page && x.normalized_box).map((e, index) => ({ field, e, index })),
+          ).map(({ field, e, index }) => {
             const b = e.normalized_box!;
             const isSelected = field.field_name === selected;
             return (
@@ -120,7 +122,7 @@ function PageViewer({
                 className={`absolute rounded-sm border-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                   isSelected ? "border-amber-500 bg-amber-300/30" : "border-sky-400/70 bg-sky-200/10 hover:bg-sky-200/30"
                 }`}
-                key={field.field_name}
+                key={`${field.field_name}-${index}`}
                 onClick={() => onSelect(field.field_name)}
                 style={{
                   left: `${b.x * 100}%`,

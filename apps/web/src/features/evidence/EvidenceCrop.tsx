@@ -15,30 +15,38 @@ export function EvidenceCrop({
   className = "",
 }: {
   documentId: string;
-  evidence: Evidence;
+  evidence: Evidence[];
   className?: string;
 }) {
   const pages = usePageInfo(documentId);
-  const box = evidence.normalized_box;
-  const page = pages.data?.find((p) => p.page_number === evidence.page_number);
+  // A value is usually found next to its label; both are evidence and are shown together.
+  const first = evidence.find((e) => e.normalized_box) ?? evidence[0];
+  const placed = evidence.filter((e) => e.normalized_box && e.page_number === first?.page_number);
+  const page = pages.data?.find((p) => p.page_number === first?.page_number);
 
-  if (!box || !page) {
+  if (!first) return null;
+  if (placed.length === 0 || !page) {
     return (
       <div className={`rounded-md bg-muted p-3 text-sm ${className}`}>
         <p className="text-xs text-muted-foreground">
-          {evidence.page_number}페이지 · {evidence.source_kind === "embedded_pdf_text" ? "PDF 내장 텍스트" : "인식한 글자"}
-          {pages.isPending && box ? " · 원본 이미지를 불러오는 중입니다." : ""}
+          {first.page_number}페이지 · {first.source_kind === "embedded_pdf_text" ? "PDF 내장 텍스트" : "인식한 글자"}
+          {pages.isPending && placed.length > 0 ? " · 원본 이미지를 불러오는 중입니다." : ""}
         </p>
-        <p className="mt-1 whitespace-pre-wrap break-words">{evidence.source_text}</p>
+        <p className="mt-1 whitespace-pre-wrap break-words">{evidence.map((e) => e.source_text).join(" ")}</p>
       </div>
     );
   }
 
-  // Show the line with a little context around it.
-  const x0 = Math.max(0, box.x - 0.03);
-  const y0 = Math.max(0, box.y - 0.012);
-  const w = Math.min(1 - x0, box.width + 0.06);
-  const h = Math.min(1 - y0, box.height + 0.024);
+  const boxes = placed.map((e) => e.normalized_box!);
+  const left = Math.min(...boxes.map((b) => b.x));
+  const top = Math.min(...boxes.map((b) => b.y));
+  const right = Math.max(...boxes.map((b) => b.x + b.width));
+  const bottom = Math.max(...boxes.map((b) => b.y + b.height));
+  // Show the line(s) with a little context around them.
+  const x0 = Math.max(0, left - 0.03);
+  const y0 = Math.max(0, top - 0.012);
+  const w = Math.min(1 - x0, right - left + 0.06);
+  const h = Math.min(1 - y0, bottom - top + 0.024);
   const ratio = (w * page.width) / (h * page.height);
 
   return (
@@ -50,29 +58,33 @@ export function EvidenceCrop({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          alt={`${evidence.page_number}페이지의 인식 위치`}
+          alt={`${first.page_number}페이지의 인식 위치`}
           className="absolute left-0 top-0 max-w-none select-none"
           draggable={false}
-          src={api.pageImageUrl(documentId, evidence.page_number)}
+          src={api.pageImageUrl(documentId, first.page_number)}
           style={{
             width: `${100 / w}%`,
             transform: `translate(${-x0 * 100}%, ${-y0 * 100}%)`,
             transformOrigin: "top left",
           }}
         />
-        <span
-          aria-hidden="true"
-          className="absolute rounded-sm border-2 border-amber-500 bg-amber-300/25"
-          style={{
-            left: `${((box.x - x0) / w) * 100}%`,
-            top: `${((box.y - y0) / h) * 100}%`,
-            width: `${(box.width / w) * 100}%`,
-            height: `${(box.height / h) * 100}%`,
-          }}
-        />
+        {boxes.map((box, index) => (
+          <span
+            aria-hidden="true"
+            className="absolute rounded-sm border-2 border-amber-500 bg-amber-300/25"
+            key={index}
+            style={{
+              left: `${((box.x - x0) / w) * 100}%`,
+              top: `${((box.y - y0) / h) * 100}%`,
+              width: `${(box.width / w) * 100}%`,
+              height: `${(box.height / h) * 100}%`,
+            }}
+          />
+        ))}
       </div>
       <figcaption className="mt-1 text-xs text-muted-foreground">
-        {evidence.page_number}페이지 · {evidence.source_kind === "embedded_pdf_text" ? "PDF 내장 텍스트" : "인식한 글자"}: {evidence.source_text}
+        {first.page_number}페이지 · {first.source_kind === "embedded_pdf_text" ? "PDF 내장 텍스트" : "인식한 글자"}:{" "}
+        {placed.map((e) => e.source_text).join(" ")}
       </figcaption>
     </figure>
   );

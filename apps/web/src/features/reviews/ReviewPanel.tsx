@@ -47,7 +47,7 @@ function ReviewCard({
   const [value, setValue] = useState("");
   const confirmRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const evidence = item.evidence?.[0];
+  const evidence = item.evidence ?? [];
   const hasValue = Boolean(item.machine_normalized_value);
   const why = autoAcceptReasonLabel(item.auto_acceptance);
 
@@ -107,7 +107,7 @@ function ReviewCard({
         </div>
 
         <div className="min-w-0">
-          {evidence ? (
+          {evidence.length > 0 ? (
             <EvidenceCrop documentId={item.document_id} evidence={evidence} />
           ) : (
             <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">

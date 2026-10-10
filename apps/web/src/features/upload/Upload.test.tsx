@@ -71,7 +71,7 @@ describe("upload", () => {
     setup();
     const input = (await screen.findByLabelText("서류 파일 선택")) as HTMLInputElement;
     await waitFor(() => expect(input.accept).toBe(".jpg,.pdf,.png,.webp"));
-    expect(screen.getByText(/JPG, PDF, PNG, WEBP · 파일당 최대 20MB/)).toBeInTheDocument();
+    expect(screen.getByText(/PDF, JPG, PNG, WEBP · 파일당 최대 20MB/)).toBeInTheDocument();
   });
 
   it("starts uploading as soon as files are chosen, one after the other", async () => {
@@ -93,7 +93,7 @@ describe("upload", () => {
     await userEvent.upload(input as HTMLInputElement, [file("메모.txt", "text/plain")], {
       applyAccept: false,
     });
-    expect(await screen.findByText(/메모\.txt: 지원하지 않는 파일 형식입니다\. JPG, PDF, PNG, WEBP 파일을 선택해 주세요\./)).toBeInTheDocument();
+    expect(await screen.findByText(/메모\.txt: 지원하지 않는 파일 형식입니다\. PDF, JPG, PNG, WEBP 파일을 선택해 주세요\./)).toBeInTheDocument();
     expect(api.uploadDocument).not.toHaveBeenCalled();
   });
 

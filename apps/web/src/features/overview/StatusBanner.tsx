@@ -96,7 +96,7 @@ export function StatusBanner({
           </span>
         </p>
         <details className="mt-2">
-          <summary className="inline-flex cursor-pointer items-center gap-1 rounded font-medium underline-offset-2 hover:underline">
+          <summary className="inline-flex cursor-pointer items-center gap-1 rounded font-semibold underline underline-offset-2">
             날짜를 바꿔 다시 점검하기
           </summary>
           <div className="mt-2 flex flex-wrap items-end gap-3">
