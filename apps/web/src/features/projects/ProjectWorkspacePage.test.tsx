@@ -183,7 +183,7 @@ describe("ProjectWorkspacePage", () => {
   it("shows a retryable error when the API is unreachable", async () => {
     vi.mocked(api.projectOverview).mockRejectedValue(new ApiError(0, "NETWORK_ERROR"));
     renderWithQuery(<ProjectWorkspacePage projectId="p" />);
-    expect(await screen.findByText("서버에 연결할 수 없습니다.")).toBeInTheDocument();
+    expect(await screen.findByText(/서버에 연결할 수 없습니다\./)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /다시 시도/ })).toBeInTheDocument();
   });
 });
