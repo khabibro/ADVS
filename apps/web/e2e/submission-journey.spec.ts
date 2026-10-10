@@ -136,7 +136,7 @@ test.describe("ADVS submission journey", () => {
     await page.reload();
     await expect(page.getByText("필수 4 / 4")).toBeVisible();
     const afterRefresh = await page.locator("main").innerText();
-    expect(afterRefresh).not.toContain("알 수 없는 문서");
+    expect(afterRefresh).not.toContain("알 수 없는 서류");
     expect(afterRefresh).toContain("분석 완료");
     for (const token of BACKEND_ENUMS) {
       expect(beforeRefresh).not.toContain(token);

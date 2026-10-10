@@ -1,7 +1,7 @@
 import logging
 import uuid
 
-from fastapi import APIRouter, Depends, File, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, status
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session, selectinload
 
@@ -40,11 +40,15 @@ from app.schemas.api import (
     FieldRead,
     FieldReviewCreate,
     FieldReviewRead,
+    PageInfoRead,
     ProjectCreate,
+    ProjectOverviewRead,
     ProjectRead,
+    ProjectSummaryRead,
     ReviewItemRead,
     RuleEvaluationRead,
     SubmissionVerificationRead,
+    UploadRulesRead,
     ValidationRead,
     VerificationIssueRead,
     VerificationRequest,
@@ -57,9 +61,16 @@ from app.services.consistency import lock_project
 from app.services.document_validation import (
     validate_effective_document,
 )
+from app.services.overview import ProjectOverviewService
+from app.services.pages import EvidenceBoxNormalizer, page_infos, render_page_png
 from app.services.processing import _ACTIVE_STATUSES, DocumentProcessingService
 from app.services.reviews import FieldReviewService, ReviewValidationError, StaleReviewError
-from app.services.storage.local import LocalStorageService, canonical_mime, sanitize_filename
+from app.services.storage.local import (
+    ALLOWED_EXT,
+    LocalStorageService,
+    canonical_mime,
+    sanitize_filename,
+)
 from app.services.verification import (
     StoredSubmissionVerification,
     SubmissionVerificationService,
@@ -71,6 +82,7 @@ router = APIRouter()
 workflow_service = WorkflowService()
 submission_verification_service = SubmissionVerificationService()
 field_review_service = FieldReviewService()
+overview_service = ProjectOverviewService()
 
 
 def demo_user(db: Session) -> User:
@@ -409,10 +421,18 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
     submission = db.get(Submission, document.submission_id)
     project = db.get(Project, submission.project_id) if submission else None
     decisions = decisions_for_project(db, project)
+    rule_fields = (
+        field_review_service.review_dependencies(
+            field_review_service.project_with_rules(db, project.id) or project
+        )
+        if project
+        else set()
+    )
     by_name = {item.field_name: item for item in document.extracted_fields}
     rules_project = field_review_service.project_with_rules(db, project.id) if project else None
     relevant = field_review_service.review_dependencies(rules_project) if rules_project else set()
     document_type_value = DocumentType(document.document_type)
+    normalizer = EvidenceBoxNormalizer(document)
     for name in sorted(set(by_name) | set(current_reviews)):
         item = by_name.get(name)
         decision = decisions.get((document.id, name))
@@ -430,6 +450,9 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
                 needs_review=True,
             )
         )
+        for evidence in field_read.evidence or []:
+            evidence.normalized_box = normalizer.normalize(evidence.model_dump())
+        field_read.used_by_rules = (DocumentType(document.document_type), name) in rule_fields
         field_read.evidence_assessment = effective.assessment.state
         field_read.assessment_reasons = list(effective.assessment.reasons)
         field_read.policy_version = effective.assessment.policy_version
@@ -531,7 +554,87 @@ def review_items(project_id: uuid.UUID, db: Session = Depends(get_db)):
     items = field_review_service.review_items(db, project_id)
     if items is None:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
+    normalizers: dict[uuid.UUID, EvidenceBoxNormalizer] = {}
+    for item in items:
+        for evidence in item.get("evidence") or []:
+            document_id = item["document_id"]
+            if document_id not in normalizers:
+                document = db.get(Document, document_id)
+                if document is None:
+                    break
+                normalizers[document_id] = EvidenceBoxNormalizer(document)
+            box = normalizers[document_id].normalize(evidence)
+            evidence["normalized_box"] = box.model_dump() if box else None
     return items
+
+
+@router.get("/projects/{project_id}/overview", response_model=ProjectOverviewRead)
+def project_overview(project_id: uuid.UUID, db: Session = Depends(get_db)):
+    overview = overview_service.build(db, project_id)
+    if overview is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
+    return overview
+
+
+@router.get("/project-summaries", response_model=list[ProjectSummaryRead])
+def project_summaries(db: Session = Depends(get_db)):
+    ids = db.scalars(select(Project.id).order_by(Project.created_at.desc())).all()
+    summaries = []
+    for project_id in ids:
+        overview = overview_service.build(db, project_id)
+        if overview is None:
+            continue
+        summaries.append(
+            ProjectSummaryRead(
+                project_id=project_id,
+                check_state=overview.check_state,
+                status=overview.status,
+                status_item_count=overview.status_item_count,
+                next_step=overview.next_step,
+                required_ok=overview.counts.required_ok,
+                required_total=overview.counts.required_total,
+                review_open=overview.counts.review_open,
+            )
+        )
+    return summaries
+
+
+@router.get("/upload-rules", response_model=UploadRulesRead)
+def upload_rules():
+    settings = get_settings()
+    return UploadRulesRead(
+        extensions=sorted(ALLOWED_EXT),
+        mime_types=sorted({canonical_mime(f"x{ext}") for ext in ALLOWED_EXT}),
+        max_size_mb=settings.max_upload_size_mb,
+        max_pages=settings.max_pdf_pages,
+    )
+
+
+@router.get("/documents/{document_id}/pages", response_model=list[PageInfoRead])
+def document_pages(document_id: uuid.UUID, db: Session = Depends(get_db)):
+    document = db.get(Document, document_id)
+    if document is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Document not found", 404)
+    try:
+        return page_infos(document)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Document pages unavailable", 404) from exc
+
+
+@router.get("/documents/{document_id}/pages/{page_number}/image")
+def document_page_image(document_id: uuid.UUID, page_number: int, db: Session = Depends(get_db)):
+    document = db.get(Document, document_id)
+    if document is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Document not found", 404)
+    try:
+        png = render_page_png(document, page_number)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Document page unavailable", 404) from exc
+    if png is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Page not found", 404)
+    return Response(
+        content=png, media_type="image/png", headers={"Cache-Control": "private, max-age=300"}
+    )
 
 
 @router.get("/projects/{project_id}/reviews", response_model=list[FieldReviewRead])

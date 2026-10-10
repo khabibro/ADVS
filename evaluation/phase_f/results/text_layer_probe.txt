@@ -1,0 +1,4 @@
+visible page says : 유효기간 2025-01-31 (expired)
+page source       : direct_pdf_text
+meaningful text   : True
+text the pipeline would trust: 납세증명서 TEST SAMPLE 테스트용 견본 유효기간 2027-12-31 사업자등록번호 220-81-12341 주식회사 테스트상사

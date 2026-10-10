@@ -32,6 +32,35 @@ export function useProjectDocuments(projectId: string) {
   });
 }
 
+/** The submission's state as decided by the backend; polled while documents are in flight. */
+export function useProjectOverview(projectId: string) {
+  return useQuery({
+    queryKey: queryKeys.overview(projectId),
+    queryFn: () => api.projectOverview(projectId),
+    refetchInterval: (query) =>
+      query.state.data && query.state.data.counts.documents_processing > 0
+        ? PROCESSING_POLL_MS
+        : false,
+  });
+}
+
+export function useUploadRules() {
+  return useQuery({
+    queryKey: queryKeys.uploadRules(),
+    queryFn: api.uploadRules,
+    staleTime: Infinity,
+  });
+}
+
+export function usePageInfo(documentId: string | null | undefined) {
+  return useQuery({
+    queryKey: queryKeys.pages(documentId ?? "none"),
+    queryFn: () => api.documentPages(documentId as string),
+    enabled: Boolean(documentId),
+    staleTime: Infinity,
+  });
+}
+
 /** One document with its fields; shared by issue cards that quote values. */
 export function useDocumentDetail(documentId: string | null | undefined) {
   return useQuery({
@@ -56,6 +85,8 @@ export function useProjectInvalidation(projectId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.reviewItems(projectId),
       }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.overview(projectId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.summaries() }),
     ]);
   }, [queryClient, projectId]);
 }

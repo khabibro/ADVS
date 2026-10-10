@@ -38,19 +38,19 @@ const CODE_MESSAGES: Record<ApiErrorCode, string> = {
   CORRUPT_DOCUMENT: "PDF 파일을 읽을 수 없습니다.",
   TOO_MANY_PAGES: "PDF 페이지 수가 허용 범위를 초과했습니다.",
   RESOURCE_NOT_FOUND: "요청한 정보를 찾을 수 없습니다.",
-  OCR_PROVIDER_ERROR: "문서 분석 서비스에 연결하지 못했습니다.",
-  OCR_TIMEOUT: "문서 분석 시간이 초과되었습니다.",
-  OCR_DISABLED: "현재 문서 분석 기능을 사용할 수 없습니다.",
-  OCR_INITIALIZATION_ERROR: "문서 분석 기능을 시작하지 못했습니다.",
-  OCR_PROCESSING_ERROR: "문서 분석 중 오류가 발생했습니다.",
-  OCR_INVALID_RESPONSE: "문서 분석 결과를 읽지 못했습니다.",
-  OCR_EMPTY_RESULT: "문서에서 읽을 수 있는 내용을 찾지 못했습니다.",
+  OCR_PROVIDER_ERROR: "서류 분석 서비스에 연결하지 못했습니다.",
+  OCR_TIMEOUT: "서류 분석 시간이 초과되었습니다.",
+  OCR_DISABLED: "현재 서류 분석 기능을 사용할 수 없습니다.",
+  OCR_INITIALIZATION_ERROR: "서류 분석 기능을 시작하지 못했습니다.",
+  OCR_PROCESSING_ERROR: "서류 분석 중 오류가 발생했습니다.",
+  OCR_INVALID_RESPONSE: "서류 분석 결과를 읽지 못했습니다.",
+  OCR_EMPTY_RESULT: "서류에서 읽을 수 있는 내용을 찾지 못했습니다.",
   PDF_RENDER_ERROR: "PDF 페이지를 읽지 못했습니다.",
   UNSUPPORTED_FILE: "지원하지 않는 파일 형식입니다.",
-  PROCESSING_FAILED: "문서 분석에 실패했습니다.",
+  PROCESSING_FAILED: "서류 분석에 실패했습니다.",
   VALIDATION_FAILED: "입력값을 확인해 주세요.",
   VALIDATION_ERROR: "입력값을 확인해 주세요.",
-  NETWORK_ERROR: "서버에 연결할 수 없습니다.",
+  NETWORK_ERROR: "서버에 연결할 수 없습니다. 네트워크 연결을 확인하고 다시 시도해 주세요.",
   HTTP_ERROR: "요청을 처리하지 못했습니다.",
 };
 
@@ -59,15 +59,15 @@ const CONTEXT_OVERRIDES: Partial<
   Record<ApiErrorCode, Partial<Record<ErrorContext, string>>>
 > = {
   VALIDATION_FAILED: { verify: "자동 점검을 완료하지 못했습니다." },
-  OCR_TIMEOUT: { process: "문서 분석 시간이 초과되었습니다." },
-  PROCESSING_FAILED: { process: "문서 분석에 실패했습니다." },
+  OCR_TIMEOUT: { process: "서류 분석 시간이 초과되었습니다." },
+  PROCESSING_FAILED: { process: "서류 분석에 실패했습니다." },
 };
 
 export type ErrorContext = "upload" | "process" | "verify" | "review" | "load";
 
 const CONTEXT_FALLBACK: Record<ErrorContext, string> = {
   upload: "파일 업로드에 실패했습니다.",
-  process: "문서 분석에 실패했습니다.",
+  process: "서류 분석에 실패했습니다.",
   verify: "자동 점검을 완료하지 못했습니다.",
   review: "검토 내용을 저장하지 못했습니다.",
   load: "정보를 불러오지 못했습니다.",
