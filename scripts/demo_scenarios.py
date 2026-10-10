@@ -164,7 +164,8 @@ def preload() -> int:
         for project in client.http.get("/projects").json():
             if not project["name"][:2].startswith("D") or not project["name"][1:2].isdigit():
                 client.delete_project(project["id"])
-        for scn in SCENARIOS:
+        # The project list shows newest first, so create D8 first and D1 last: D1 ends up on top.
+        for scn in reversed(SCENARIOS):
             out = client.run(scn)
             print(f"  {scn.code} {out.status:<17} {out.seconds:5.1f}s  {scn.title}")
     finally:
@@ -175,4 +176,8 @@ def preload() -> int:
 if __name__ == "__main__":
     if sys.argv[1:] == ["preload"]:
         raise SystemExit(preload())
+    if len(sys.argv) == 4 and sys.argv[1] == "run":  # run <code> <project name>: prints the project id
+        _client = DemoClient()
+        print(_client.run(next(s for s in SCENARIOS if s.code == sys.argv[2]), sys.argv[3]).project_id)
+        raise SystemExit(0)
     raise SystemExit(__doc__)

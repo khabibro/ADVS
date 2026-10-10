@@ -15,7 +15,6 @@ settings = get_settings()
 configure_logging(settings.log_level)
 
 
-
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     warmup = asyncio.create_task(warm_up_ocr(settings)) if settings.ocr_warmup else None
