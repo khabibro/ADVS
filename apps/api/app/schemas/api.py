@@ -146,6 +146,8 @@ class FieldRead(BaseModel):
     effective_source: EffectiveValueSource | None = None
     current_review_decision: FieldReviewDecision | None = None
     auto_acceptance: AutoAcceptanceRead | None = None
+    # True when a rule of the project's workflow reads this field (so it can change the status).
+    used_by_rules: bool = False
     model_config = ConfigDict(from_attributes=True)
 
 

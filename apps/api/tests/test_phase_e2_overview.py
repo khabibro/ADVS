@@ -11,6 +11,7 @@ from test_submission_verification_api import (
 )
 
 from app.core.domain import DocumentType, ProcessingStatus
+from app.models.entities import Document, ExtractedField
 from app.services.overview import _unique
 
 BR = DocumentType.BUSINESS_REGISTRATION_CERTIFICATE
@@ -161,3 +162,44 @@ def test_same_finding_is_reported_once() -> None:
 
 def test_unknown_project_is_404(client: TestClient) -> None:
     assert client.get(f"/api/v1/projects/{uuid.uuid4()}/overview").status_code == 404
+
+
+def test_document_fields_say_whether_a_rule_uses_them(client: TestClient, db_session) -> None:
+    project, submission, _ = _business_project(db_session)
+    _both_valid(db_session, submission)
+    mine = db_session.query(Document).filter_by(submission_id=submission.id)
+    for row in db_session.query(ExtractedField).filter(
+        ExtractedField.document_id.in_([d.id for d in mine])
+    ):
+        if row.evidence:
+            row.evidence = [
+                {
+                    "page_number": 1,
+                    "source_text": row.raw_value,
+                    "source_kind": "embedded_pdf_text",
+                    "coordinate_space": "pdf_point",
+                }
+            ]
+    sme_row = mine.filter_by(document_type=SME.value).one()
+    db_session.add(
+        ExtractedField(
+            document_id=sme_row.id,
+            field_name="fax_number",
+            raw_value="02-000-0000",
+            normalized_value="02-000-0000",
+            needs_review=False,
+        )
+    )
+    db_session.commit()
+    sme = next(
+        d
+        for d in client.get(f"/api/v1/projects/{project.id}/documents").json()
+        if d["document_type"] == SME.value
+    )
+    fields = {
+        f["field_name"]: f["used_by_rules"]
+        for f in client.get(f"/api/v1/documents/{sme['id']}").json()["extracted_fields"]
+    }
+    assert fields["business_registration_number"] is True
+    assert fields["valid_until"] is True
+    assert fields["fax_number"] is False
