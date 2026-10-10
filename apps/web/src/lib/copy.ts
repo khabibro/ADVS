@@ -84,6 +84,16 @@ export const SUBMISSION_ISSUE_COPY: Record<string, IssueCopy> = {
   },
 };
 
+/**
+ * Findings that are resolved in the review list (a person confirms or corrects the value), so the
+ * issue list does not repeat them.
+ */
+export const REVIEW_QUEUE_CODES: ReadonlySet<string> = new Set([
+  "OCR_UNCERTAIN",
+  "REQUIRED_FIELD_UNRESOLVED",
+  "BUSINESS_NUMBER_CHECKSUM_FAILED",
+]);
+
 /** Codes on the per-document result ("서류 자체 점검"), including the passing ones. */
 export const DOCUMENT_CHECK_COPY: Record<string, IssueCopy> = {
   ISSUE_DATE_TOO_OLD: {
