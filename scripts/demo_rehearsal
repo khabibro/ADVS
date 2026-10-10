@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+"""Rehearse the midterm demo through the real API (run this on the morning of the presentation).
+
+    scripts/demo_rehearsal            # reset + pre-load, then re-run D1-D8 live and assert
+    scripts/demo_rehearsal --no-reset # skip the reset (API must already be running)
+
+Every scenario is uploaded as a temporary "[리허설]" project, processed by the real pipeline,
+asserted, and deleted again, so the pre-loaded demo projects stay exactly as the presenter
+expects them. Exit code 0 only when every scenario passes.
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import httpx  # noqa: E402
+from demo_scenarios import SCENARIOS, DemoClient, Outcome, Scenario  # noqa: E402
+
+DOC_TYPES = {
+    "D1": {"BUSINESS_REGISTRATION_CERTIFICATE", "SME_CONFIRMATION_CERTIFICATE",
+           "NATIONAL_TAX_PAYMENT_CERTIFICATE", "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE"},
+    "D7": {"ENROLLMENT_CERTIFICATE", "TRANSCRIPT"},
+}
+
+
+def field(doc: dict, name: str) -> dict | None:
+    return next((f for f in doc["extracted_fields"] if f["field_name"] == name), None)
+
+
+def check(scn: Scenario, out: Outcome, client: DemoClient) -> list[str]:
+    """Return a list of failures (empty = pass)."""
+    fails: list[str] = []
+    codes = {i["code"] for i in out.issues}
+    if out.status != scn.expect_status:
+        fails.append(f"status {out.status} != {scn.expect_status}")
+    for code in scn.expect_issues:
+        if code not in codes:
+            fails.append(f"missing issue {code} (got {sorted(codes)})")
+    types = {d["document_type"] for d in out.documents}
+    if scn.code in DOC_TYPES and types != DOC_TYPES[scn.code]:
+        fails.append(f"document types {sorted(types)}")
+    if scn.expect_status == "READY" and codes:
+        fails.append(f"READY but issues {sorted(codes)}")
+
+    if scn.code == "D2":
+        issue = next((i for i in out.issues if i["code"] == "EXPIRED_DOCUMENT"), None)
+        if issue is None or issue["document_type"] != "NATIONAL_TAX_PAYMENT_CERTIFICATE":
+            fails.append("expired issue not on the 국세 납세증명서")
+        tax = next((d for d in out.documents if d["document_type"] == "NATIONAL_TAX_PAYMENT_CERTIFICATE"), None)
+        value = field(tax, "valid_until")["effective_normalized_value"] if tax else None
+        if not value or value >= "2026-10-05":
+            fails.append(f"valid_until {value} should be before 2026-10-05")
+    if scn.code == "D3":
+        issue = next((i for i in out.issues if i["code"] == "INFORMATION_MISMATCH"), None)
+        if issue is None or issue["field_name"] != "company_name":
+            fails.append("mismatch not reported on company_name")
+    if scn.code == "D4":
+        names = {field(d, "company_name")["raw_value"] for d in out.documents if field(d, "company_name")}
+        names |= {field(d, "workplace_name")["raw_value"] for d in out.documents if field(d, "workplace_name")}
+        if len(names) < 2:
+            fails.append(f"expected differently written company names, got {sorted(names)}")
+    if scn.code == "D5":
+        if "UNKNOWN" not in types:
+            fails.append("지방세 certificate was not left unclassified")
+        if out.status == "READY":
+            fails.append("look-alike document produced 제출 가능")
+    if scn.code == "D8":
+        issue = next((i for i in out.issues if i["code"] == "MISSING_REQUIRED_DOCUMENT"), None)
+        if issue is None or issue["document_type"] != "BUSINESS_REGISTRATION_CERTIFICATE":
+            fails.append("missing 사업자등록증 not reported")
+    if scn.review:
+        accepted = [f for d in out.documents for f in d["extracted_fields"]
+                    if (f.get("auto_acceptance") or {}).get("accepted")]
+        pending = [i for i in out.review_items if i["queue_status"] == "PENDING"]
+        if not accepted:
+            fails.append("no field was auto-accepted")
+        if not pending:
+            fails.append("nothing left for the reviewer")
+        confirmed = client.confirm_open_items(out)
+        if confirmed == 0 or out.status != "READY":
+            fails.append(f"after {confirmed} confirmations status is {out.status}, expected READY")
+        out.review_items = [i for i in out.review_items if i["queue_status"] == "PENDING"]
+        if out.review_items:
+            fails.append(f"{len(out.review_items)} items still pending after review")
+    return fails
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--no-reset", action="store_true")
+    args = parser.parse_args()
+
+    if not args.no_reset:
+        print("Resetting the demo (database, seed, pre-loaded D1-D8) ...", flush=True)
+        if subprocess.run([str(ROOT / "scripts" / "demo"), "reset"]).returncode != 0:
+            print("RESET FAILED")
+            return 1
+
+    client = DemoClient()
+    rows: list[tuple[str, str, str, str, str]] = []
+    try:
+        projects = {p["name"][:2]: p for p in client.http.get("/projects").json()}
+        for scn in SCENARIOS:
+            fails: list[str] = []
+            pre = projects.get(scn.code)  # the pre-loaded project must exist in its starting state
+            if pre is None:
+                fails.append("pre-loaded project missing")
+            elif pre["status"] != scn.expect_status:
+                fails.append(f"pre-loaded status {pre['status']}")
+            out = None
+            try:
+                out = client.run(scn, name=f"[리허설] {scn.title}")
+                fails += check(scn, out, client)
+            except Exception as exc:  # report, keep going
+                fails.append(f"error: {exc!r}")
+            finally:
+                if out is not None:
+                    client.delete_project(out.project_id)
+            rows.append((scn.code, scn.title, "PASS" if not fails else "FAIL",
+                         f"{out.seconds:.1f}s" if out else "-", "; ".join(fails)))
+    finally:
+        client.close()
+
+    for name, url in (
+        ("web", f"http://localhost:{os.environ.get('WEB_PORT', '3000')}"),
+        ("admin", f"http://localhost:{os.environ.get('ADMIN_PORT', '3002')}"),
+    ):
+        try:
+            ok = httpx.get(url, timeout=10).status_code == 200
+        except Exception:
+            ok = False
+        rows.append((name, f"{name} app reachable ({url})", "PASS" if ok else "FAIL", "-", ""))
+
+    print()
+    print(f"{'#':<6}{'Result':<7}{'Time':>8}  Scenario")
+    for code, title, result, secs, note in rows:
+        print(f"{code:<6}{result:<7}{secs:>8}  {title}" + (f"   <-- {note}" if note else ""))
+    failed = [r for r in rows if r[2] != "PASS"]
+    print("\nALL PASS" if not failed else f"\n{len(failed)} FAILED")
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
