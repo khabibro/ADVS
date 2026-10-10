@@ -1,41 +1,105 @@
-# Roadmap
+# ADVS roadmap (updated 2026-10-10, Phase F)
 
-## PHASE 1A - Codebase Bootstrap
-Monorepo, frontend, backend, DB, migrations, Docker, file upload, mock OCR, PaddleOCR interface, classifier framework, extractor framework, validation framework, dashboard skeleton, tests, docs.
+This file replaces the original Phase 1A–3 plan (kept in §9 as history). Evidence behind every statement is in `evaluation/phase_f/` (`TECHNICAL_AUDIT.md`, `APPROACH_EVALUATION.md`, `EVALUATION_PROTOCOL.md`). Evidence labels: **[V]** verified in this repository, **[E]** external source, **[H]** hypothesis needing an experiment.
 
-## PHASE 1B - Functional MVP
-Collect sample documents, verify PaddleOCR in the deployment image, test Korean OCR, implement real extraction rules, tune classification, confirm fields/rules, connect all pages, test end-to-end.
+**Dates.** The windows are **October, November and December 2026**. The course deck lists the first midterm presentation on 10/22 (week 8), the second on 11/19 (week 12) and the final on 12/10 (week 15), with a result report in mid-December; the master improvement plan assumes a midterm on 10/14. Precise dates below are therefore *conditional on the confirmed course deadlines*. Effort is given as S / M / L with its repository basis, not in days.
 
-## PHASE 1C - Accuracy Improvement
-Build labeled dataset, measure OCR/classification/extraction accuracy, test scan qualities/templates, improve regex/label extraction, add confidence thresholds and manual review, consider optional LLM extraction.
+## 1. Baseline (frozen at tag `midterm-demo-v2`)
 
-## PHASE 1D - Evaluation and Delivery
-Run final test set, record metrics, compare document formats, document failures, fix critical bugs, polish UI, deploy demo, prepare reports and final presentation.
+- Pipeline: upload → PDF text layer or PaddleOCR (PP-OCRv5 Korean mobile) → deterministic classification → per-type extraction with evidence → auto-acceptance policy → database-driven rules → status → review → overview API → web app. No LLM, VLM or second OCR engine. [V]
+- Six mentor-defined document types; fictional data only; SQLite only; no login; admin app is a placeholder. [V]
+- Results on synthetic data: digital 790/790 correct fields; scans 741/790 and photos 752/790 with **0 wrong** machine values; 0 false READY in 40 not-READY submissions per input type (95 % upper bound 7.5 %) and in 474 + 666 injected cases. Real-world risk is not measured. [V] (`evaluation/phase_f/results/denominators.txt`)
 
-## PHASE 2 - Document Expansion
-Contracts, employment certificates, qualification certificates, other confirmation documents, better layout/template robustness.
+## 2. Confirmed issues (recorded; **no production change before the exam**)
 
-## PHASE 3 - Production Hardening
-Authentication, RBAC, queues, object storage, encryption, retention, observability, audit controls, CI/CD, scaling, OCR fallback, backup/recovery, security review.
+D-1 hidden PDF text is trusted as a digital original (probe-verified); D-2 scans are almost never decided without a person (confirmation policy); D-3 scanned `university_name` extraction 21/58 and 24/58; D-4 OCR confidence is not informative; D-5 only synthetic data; D-6 no HEIC, perspective correction or quality gate; D-7 ~16 s per page on CPU; D-8 duplicate upload creates two rows; D-9 duplicate findings; D-10 look-alike issue attribution; D-11 SQLite, no auth, admin shell; D-12 stale documents (fixed by documents in this phase). Details and evidence: `evaluation/phase_f/TECHNICAL_AUDIT.md` §4.
 
-## Questions to Confirm with Flash21
-1. Are these four MVP document types final?
-2. Can sample documents be provided?
-3. Which fields are mandatory for each document type?
-4. What exactly constitutes a valid document?
-5. Maximum allowed issue-date age?
-6. Which certificates have expiration requirements?
-7. How should names be matched?
-8. How should company names be matched?
-9. What should happen when OCR confidence is low?
-10. Should users be able to manually correct extracted fields?
-11. What retention and access policy is required for uploaded documents containing personal information?
-12. Are files allowed to be stored after verification?
-13. If yes, for how long?
-14. Is authentication required for the demo?
-15. Is an admin interface required in the first MVP?
-16. Is checklist export required, and in what format?
-17. What deployment environment will be used?
-18. Is Korean-only UI sufficient?
-19. Is English UI also required?
-20. What accuracy threshold is considered acceptable?
+## 3. October 2026: stabilise, document, present (no production code changes)
+
+Goal: the demonstrated MVP is stable and every claim is true and traceable.
+
+| ID | Task | Why | What changes / where | How | Test and completion measure | Dependencies, fallback |
+|---|---|---|---|---|---|---|
+| O1 | Freeze the demo | the exam needs the rehearsed build | nothing; tag `midterm-demo-v2` is the demo | present from the tag; new work only on branches | `make demo-rehearsal` passes 3 times in a row the morning of the talk | fallback tag `midterm-demo-2026-10-14` |
+| O2 | Align documents with code | conflicts between deck, plans and code (`TECHNICAL_AUDIT.md` §6) | `docs/midterm/*`, `docs/planning/*`, architecture, testing and classification docs, READMEs | edit documents only | every number in the deck traces to `slides_sources.md`, with n and uncertainty for safety claims | none |
+| O3 | Record defects for November | D-1…D-11 must not be lost | this roadmap, `TECHNICAL_AUDIT.md` | list with evidence and owner | each has an ID, evidence and a milestone | none |
+| O4 | **Confirm the date and the format with the TA or professor** | course deck: 5 min + 2 min Q&A (time over = penalty), first midterm 10/22; master plan: 10/14 and a 10-minute talk | none | ask; adapt the deck (it has a marked 5-minute path) | a written confirmation | if unconfirmed, prepare both: 5-minute path and 10-minute version |
+| O5 | Backup demo | a 5-minute slot cannot hold a live demo | a recorded 60–90 s clip of D1, D2 and D6 plus the screenshots in `docs/midterm/screenshots_v2/` | screen recording | plays offline | live demo only in Q&A |
+| O6 | (Optional, no code) start the physical corpus | the single biggest evidence gap (D-5) | print 10–15 fictional test documents; photograph (2 phones, desk, angle, lamp glare, shadow) and scan at 200 and 300 DPI | follow `EVALUATION_PROTOCOL.md` §1–2 | files stored with the capture conditions | continues in November |
+| O7 | Keep hold-out set 3 unseen | it is the only judgement set for D3 | none | no run, no inspection | `holdout_runs.log` shows no hold-out-3 entry from this phase | none |
+
+**Acceptance for October:** documents consistent with code; rehearsal 3×; hold-out 3 untouched; demo tag unchanged; the format question answered or both formats prepared.
+
+**Deferred on purpose (not in October):** any change to extraction, classification, validation, policy or dependencies; PaddleOCR-VL in any form; D3 merge; login; PostgreSQL.
+
+## 4. November 2026: measure, fix the verified defects, test feasibility
+
+Goal: a controlled research and engineering iteration. Mandatory items first; optional research only if the mandatory ones are on track.
+
+### Mandatory
+
+| ID | Task | Why | Where | How | Test and completion measure | Dependencies, fallback |
+|---|---|---|---|---|---|---|
+| N1 | Freeze the October baseline and extend the measurement | one reproducible reference for all comparisons | `evaluation/harness/*` (scorer extensions in a new version), `evaluation/phase_f/` | add required-field recall, per-field tables and failure-cause labels; keep scorer v2 results reproducible | the baseline report reproduces `results/denominators.txt` from a clean checkout | S–M; none |
+| N2 | **Text-layer trust check (G)** | closes D-1: hidden or OCR-generated text must not count as trusted digital text | `preprocessing/processor.py`, a new gate in `services/processing.py`, tests | render pages, OCR key regions, compare with the text layer; detect invisible text with PyMuPDF text tracing; record producer metadata; disagreeing pages go to the OCR path and are flagged | manipulation tests (hidden text differs from the visible page); **0 false rejects** on the 299 + 279 + 279 genuine digital files; runtime per page reported | S–M; fallback: reject suspicious PDFs to 확인 필요 |
+| N3 | Fix scanned `university_name` extraction (E) | D-3: 71 of 87 non-correct values | student extractors in `document_intelligence/extraction/` | error-attribution first (layout vs recognition vs mapping), then a targeted parser | before/after on the same labelled documents; transcripts and enrolment certificates ≥ the digital level or an explained residual | S–M; fallback: leave to review |
+| N4 | **Finish D3 and judge it once on hold-out 3** | measured burden reduction (5.41 → 2.68 decision-blocking fields on development data) | branch `phase-d3/internal-automation` | acceptance table; judge once; report n and bounds | 0 false READY and 0 wrong auto-accepts on all suites **or** the owner accepts the documented residual (E3c-both); demo scenario D6 and the rehearsal updated before merge | depends on O7; fallback: keep unmerged, report as research |
+| N5 | Physical corpus and ground truth | closes D-5 | `evaluation/phase_f/` data (not committed if large), schema in `EVALUATION_PROTOCOL.md` §2 | two-person readability marking; guard the judgement split | counts per document type and capture condition; baseline measured on it | needs people and time; fallback: smaller corpus, wider reported bounds |
+| N6 | Real-document pilot (read-only, counts only) | the "fictional documents" limit | none in code; a protocol | agree scope with the mentor and 플래시21; report counts only | counts of classified, extracted, needs-human; no content in the repository | needs authorisation; fallback: stay with the physical corpus |
+| N7 | Reviewer queue and admin checklist screen (frontend, Munira) | UX audit items UX-19/20/21 | `apps/web`, `apps/admin` | follow `evaluation/phase_e2/UX_AUDIT.md` Part B | Playwright + axe tests; demo rehearsal | independent of N2–N6 |
+| N8 | PostgreSQL and concurrency tests | the code targets PostgreSQL, tests ran on SQLite | `apps/api` tests, Docker Compose | run the suite and rehearsal on PostgreSQL; concurrent uploads and reviews | suite green on both databases; no locking failures | S–M; fallback: document SQLite-only limits |
+| N9 | Small defects D-8, D-9, D-10 | UX and honesty | upload service, rule results | de-duplicate at the source, attribute issues correctly | unit tests; rehearsal | S |
+
+### Optional research (only if N1–N5 are on track)
+
+| ID | Task | Why | How | Completion measure | Fallback |
+|---|---|---|---|---|---|
+| R1 | Photo quality gate and perspective correction (H) | D-6 | measure on the physical corpus first; prototype offline with OpenCV (already installed); never wire globally without a per-image fallback | usable-photo rate and false-reject rate before/after | document that it was not justified |
+| R2 | **Isolated PaddleOCR-VL proof of concept** (B/C/D) | answer the research question with evidence | separate environment (`paddlepaddle(-gpu) ≥ 3.2.1`, `paddleocr[doc-parser] ≥ 3.4.0`), GPU with CUDA ≥ 11.8 (vLLM: CC ≥ 8.0, CUDA ≥ 12.6) or a measured CPU/MLX run; recorded OCR outputs; same documents; error-correlation table | metrics of `EVALUATION_PROTOCOL.md` §7 with thresholds fixed beforehand | if hardware, time or data make it unreliable: write that down and improve the baseline instead |
+| R3 | Conformal acceptance on real or physical data | the synthetic data have too few errors for calibration | needs error-bearing data (D3 report: ≥ 19 samples per field at α = 0.05, ≥ 99 at α = 0.01) | per-field bounds with sample sizes | keep hand-set floors |
+
+**Acceptance for November:** baseline report (N1) with n and bounds; N2 and N3 verified before/after; D3 judged once with a merge decision; physical corpus with an answer key and measured baseline; the feasibility decision (proceed, defer or reject VLM integration) written down with its rationale; remaining risks listed. Not required: integrating PaddleOCR-VL.
+
+## 5. December 2026: final system and evaluation
+
+| ID | Task | Why | Completion measure | Fallback |
+|---|---|---|---|---|
+| F1 | **Decision gate for selective VLM verification** | evidence-driven, not fashion-driven | adopt (approach D) **only if all hold**: lower human-review rate on the physical/real set at an unchanged upper bound for false auto-accept and false READY; independence shown by the correlation table wherever agreement is used; latency and hardware fit; decision logic unchanged | otherwise retain A + E (+ D3 if it passed) and report the VLM result as negative or inconclusive |
+| F2 | Authentication, per-project access, roles | production gap (`docs/security/document-privacy.md`) | every route protected; tests for cross-project access | document as future work |
+| F3 | Privacy: no personal data in logs, retention and deletion, audit log | same | log inspection tests; retention job; audit view | document |
+| F4 | Optional external checks (National Tax Service registry API; issuance-number links) | the only route to authenticity beyond text/visible consistency | works behind a switch, only with the mentor's agreement | omit |
+| F5 | End-to-end suite, regression tests, deployment instructions, final architecture document | final exam and result report | a fresh deployment works from the documents; suites green | trim scope |
+| F6 | Final evaluation report and presentation | graded deliverable | reproducible metrics with n and bounds; failure analysis; honest limits (`docs/planning/DECEMBER_FINAL_REPORT_TEMPLATE.md`) | none |
+
+**Acceptance for December:** the final comparison (baseline vs chosen alternative) reproducible from the repository; false READY reported with its denominator and bound on a fresh judgement set and on the real pilot if authorised; security basics in place; deployment verified; limitations stated.
+
+## 6. Conditions for adopting or rejecting PaddleOCR-VL
+
+| Decision | Condition |
+|---|---|
+| **Do not adopt before the exam** | project constraint; no evidence exists |
+| **Run an isolated PoC in November** | N1–N5 are on track; hardware available or a CPU/MLX run measured |
+| **Adopt selective verification (D) in December** | all four conditions of F1 hold |
+| **Adopt as the only engine (B)** | never on current evidence: also requires better exact-field accuracy for decision-driving fields **and** a usable uncertainty signal |
+| **Both engines everywhere (C)** | only if the correlation table shows independence and the latency budget allows it |
+| **Reject / defer** | no improvement at fixed bounds, high joint-error rate, unacceptable latency, or an integration that would change decision logic |
+
+## 7. Dependencies and risks
+
+| Risk | Mitigation |
+|---|---|
+| Course dates and format unconfirmed (10/14 vs 10/22; 5 min) | O4; two versions of the talk |
+| Real data and physical captures need people and authorisation | start O6 in October; N5 before N6 |
+| D3 changes demo D6 and its stress suite found one false READY in a correlated case | judge once on hold-out 3; owner decision on the residual; update demo and rehearsal before merge |
+| Synthetic data too clean to calibrate or to show OCR differences | physical corpus; do not quote bounds as real-world |
+| PoC hardware (no NVIDIA GPU on the development Mac; 18 GB RAM) | measure CPU/MLX or use external GPU; otherwise skip R2 |
+| Parallel work causes merge conflicts | one branch per task, merge main into the branch (no rebase), full gates and rehearsal after every merge |
+| Scope creep | optional items are dropped first; mandatory work = N1–N5, N7–N9, F2, F3, F5, F6 |
+
+## 8. Explicitly deferred or out of scope
+
+Fine-tuning OCR models; production second OCR engine; HEIC and multi-document splitting beyond what exists; new document types (졸업증명서 and 경력증명서 stay supported but out of the demo); GPU server deployment; legal or official verification of authenticity (text extraction is not authenticity verification).
+
+## 9. History: the original plan (superseded)
+
+Phase 1A bootstrap (monorepo, upload, mock OCR, PaddleOCR interface, frameworks); 1B functional MVP; 1C accuracy improvement (*"consider optional LLM extraction"*); 1D evaluation and delivery; Phase 2 document expansion; Phase 3 production hardening; and a list of twenty questions for 플래시21 (document types, sample documents, mandatory fields, validity rules, name matching, low-confidence handling, manual correction, retention, authentication, admin interface, export, deployment, languages, accuracy threshold). The questions on validity rules, name matching, manual correction and the accuracy threshold were answered in practice by the mentor-defined checklist and the review flow; the retention, authentication and deployment questions are still open and belong to December.
