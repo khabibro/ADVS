@@ -4,13 +4,12 @@ import { ApiError } from "@/lib/api-error";
 import { renderWithQuery } from "@/test/render";
 import { api } from "@/services/api";
 import { ProjectWorkspacePage } from "./ProjectWorkspacePage";
-import type { ProjectOverview, Project, Verification } from "@/types/api";
+import type { ProjectOverview, Project } from "@/types/api";
 
 vi.mock("@/services/api", () => ({
   api: {
     project: vi.fn(),
     projectOverview: vi.fn(),
-    verification: vi.fn(),
     reviewItems: vi.fn(),
     uploadRules: vi.fn(),
     uploadDocument: vi.fn(),
@@ -43,18 +42,6 @@ const project: Project = {
   created_at: "2026-10-10T00:00:00Z",
 };
 
-const verification: Verification = {
-  project_id: "p",
-  workflow_id: "w",
-  status: "NEEDS_CORRECTION",
-  evaluation_date: "2026-10-05",
-  evaluated_at: "2026-10-10T00:00:00Z",
-  is_current: true,
-  issues: [],
-  notices: [],
-  rule_results: [],
-  disclaimer: "d",
-};
 
 const counts = {
   requirements_total: 2,
@@ -135,7 +122,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(api.project).mockResolvedValue(project);
   vi.mocked(api.projectOverview).mockResolvedValue(expiredOverview);
-  vi.mocked(api.verification).mockResolvedValue(verification);
   vi.mocked(api.reviewItems).mockResolvedValue([]);
   vi.mocked(api.uploadRules).mockResolvedValue({
     extensions: [".pdf", ".png"],

@@ -69,6 +69,14 @@ export function StatusBanner({
           <p className={`mt-3 text-sm leading-6 ${tone.text}`}>
             <span className="font-semibold">다음 할 일 </span>
             {banner.nextStep}
+            {overview.next_step === "REVIEW_FIELDS" ? (
+              <a
+                className="ml-2 rounded font-semibold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                href="#review"
+              >
+                확인할 항목으로 이동
+              </a>
+            ) : null}
           </p>
           {checkError ? (
             <p className="mt-2 text-sm font-medium text-red-800" role="alert">
