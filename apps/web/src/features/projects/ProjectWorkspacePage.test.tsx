@@ -72,6 +72,7 @@ const emptyVerification: Verification = {
   evaluated_at: null,
   is_current: false,
   issues: [],
+  notices: [],
   rule_results: [],
   disclaimer: "d",
 };

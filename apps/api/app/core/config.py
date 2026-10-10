@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     # cannot be fetched; costs ~3 ms/page on CPU.
     paddle_ocr_doc_orientation: bool = True
     log_level: str = "INFO"
+    # Load the OCR model at API start (demo / production) instead of on the first upload.
+    ocr_warmup: bool = False
     # Auto-acceptance of OCR values (see document_intelligence/auto_acceptance.py).
     # S0 = off (every OCR field to a human) ... S7. Default S7 (chosen in Phase D).
     auto_accept_strategy: str = "S7"
