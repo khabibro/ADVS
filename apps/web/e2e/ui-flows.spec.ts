@@ -143,10 +143,8 @@ test.describe("reviewer flow", () => {
       const total = await pendingReviewCount(request, id);
       await open(page, id);
       await page.getByRole("button", { name: "값 수정" }).first().click();
-      // A value that is valid for every field kind the first item can be.
-      const input = page.getByLabel(/올바른 값을 입력/);
-      const hint = (await input.getAttribute("placeholder")) ?? "";
-      await input.fill(/\d{4}-\d{2}-\d{2}/.test(hint) ? "2027-03-30" : "2022000001");
+      // D9 leaves the two issue dates for a person; a plausible earlier date is a valid correction.
+      await page.getByLabel(/올바른 값을 입력/).fill("2026-09-29");
       await page.keyboard.press("Enter");
       await expect(page.getByRole("heading", { name: `확인할 항목 ${total - 1}개` })).toBeVisible();
       await expect(page.getByText(`1 / ${total} 완료`)).toBeVisible();
