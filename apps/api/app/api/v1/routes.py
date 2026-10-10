@@ -420,6 +420,13 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
     submission = db.get(Submission, document.submission_id)
     project = db.get(Project, submission.project_id) if submission else None
     decisions = decisions_for_project(db, project)
+    rule_fields = (
+        field_review_service.review_dependencies(
+            field_review_service.project_with_rules(db, project.id) or project
+        )
+        if project
+        else set()
+    )
     by_name = {item.field_name: item for item in document.extracted_fields}
     normalizer = EvidenceBoxNormalizer(document)
     for name in sorted(set(by_name) | set(current_reviews)):
@@ -441,6 +448,7 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
         )
         for evidence in field_read.evidence or []:
             evidence.normalized_box = normalizer.normalize(evidence.model_dump())
+        field_read.used_by_rules = (DocumentType(document.document_type), name) in rule_fields
         field_read.evidence_assessment = effective.assessment.state
         field_read.assessment_reasons = list(effective.assessment.reasons)
         field_read.policy_version = effective.assessment.policy_version
