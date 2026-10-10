@@ -55,6 +55,9 @@ class OCRDocumentResult:
     pages: list[OCRPage]
     assembled_text: str
     provider_request_id: str | None = None
+    # PDF text-layer audit (see preprocessing/text_layer.py): provenance, pages sent to OCR and
+    # why, and `mismatch` when hidden text carries a date or number the page image does not show.
+    text_layer: dict | None = None
 
     @property
     def page_count(self) -> int:

@@ -75,6 +75,8 @@ class DocumentSnapshot:
     classification_needs_review: bool = False
     created_at: str = ""
     multiple_documents_in_file: bool = False
+    # Hidden PDF text disagrees with what the page shows (preprocessing/text_layer.py).
+    text_layer_mismatch: bool = False
 
 
 @dataclass(frozen=True)
@@ -381,16 +383,29 @@ class SubmissionVerificationEngine:
                     )
                 )
                 continue
-            uncertain = [doc for doc in typed if doc.classification_needs_review]
+            uncertain = [
+                doc for doc in typed if doc.classification_needs_review or doc.text_layer_mismatch
+            ]
             if uncertain:
                 selected[requirement.document_type] = None
                 multiple = any(doc.multiple_documents_in_file for doc in uncertain)
+                mismatch = any(doc.text_layer_mismatch for doc in uncertain)
+                if multiple:
+                    code, message = (
+                        "MULTIPLE_DOCUMENTS_IN_FILE",
+                        "한 파일에 서로 다른 서류가 들어 있어 확인해야 합니다.",
+                    )
+                elif mismatch:
+                    code, message = (
+                        "TEXT_LAYER_MISMATCH",
+                        "PDF 안의 숨은 글자가 화면에 보이는 내용과 달라 확인해야 합니다.",
+                    )
+                else:
+                    code, message = "CLASSIFICATION_REQUIRES_REVIEW", "서류 유형을 확인해야 합니다."
                 issue = VerificationIssue(
-                    "MULTIPLE_DOCUMENTS_IN_FILE" if multiple else "CLASSIFICATION_REQUIRES_REVIEW",
+                    code,
                     OverallStatus.REVIEW_REQUIRED,
-                    "한 파일에 서로 다른 서류가 들어 있어 확인해야 합니다."
-                    if multiple
-                    else "서류 유형을 확인해야 합니다.",
+                    message,
                     document_type=requirement.document_type,
                 )
                 results.append(

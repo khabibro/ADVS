@@ -107,6 +107,18 @@ def configured_document_rules(
     return configured
 
 
+def text_layer_mismatch_issue() -> ValidationIssue:
+    return ValidationIssue(
+        RuleType.EXPECTED_DOCUMENT_TYPE,
+        False,
+        Severity.WARNING,
+        None,
+        None,
+        "PDF 안의 숨은 글자가 화면에 보이는 내용과 달라 확인이 필요합니다.",
+        "TEXT_LAYER_MISMATCH",
+    )
+
+
 def validate_effective_document(
     db: Session, document: Document, document_type: DocumentType, fields: list[ExtractedValue]
 ) -> tuple[list[ValidationIssue], Project | None]:
@@ -145,4 +157,6 @@ def validate_effective_document(
                 "MULTIPLE_DOCUMENTS_IN_FILE",
             )
         )
+    if ((document.classification_meta or {}).get("text_layer") or {}).get("mismatch"):
+        issues.append(text_layer_mismatch_issue())
     return issues, project
