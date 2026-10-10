@@ -252,6 +252,12 @@ class SubmissionVerificationService:
             )
         return snapshots
 
+    def document_snapshots(
+        self, db: Session, project_id: uuid.UUID, reference_date: date | None = None
+    ) -> list[DocumentSnapshot]:
+        """Documents with their effective field values (read-only view for other services)."""
+        return self._documents(db, project_id, reference_date)
+
     def _documents(
         self, db: Session, project_id: uuid.UUID, reference_date: date | None = None
     ) -> list[DocumentSnapshot]:

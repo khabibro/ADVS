@@ -41,6 +41,7 @@ from app.schemas.api import (
     FieldReviewCreate,
     FieldReviewRead,
     ProjectCreate,
+    ProjectOverviewRead,
     ProjectRead,
     ReviewItemRead,
     RuleEvaluationRead,
@@ -57,6 +58,7 @@ from app.services.consistency import lock_project
 from app.services.document_validation import (
     validate_effective_document,
 )
+from app.services.overview import ProjectOverviewService
 from app.services.processing import _ACTIVE_STATUSES, DocumentProcessingService
 from app.services.reviews import FieldReviewService, ReviewValidationError, StaleReviewError
 from app.services.storage.local import LocalStorageService, canonical_mime, sanitize_filename
@@ -71,6 +73,7 @@ router = APIRouter()
 workflow_service = WorkflowService()
 submission_verification_service = SubmissionVerificationService()
 field_review_service = FieldReviewService()
+overview_service = ProjectOverviewService()
 
 
 def demo_user(db: Session) -> User:
@@ -528,6 +531,14 @@ def review_items(project_id: uuid.UUID, db: Session = Depends(get_db)):
     if items is None:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
     return items
+
+
+@router.get("/projects/{project_id}/overview", response_model=ProjectOverviewRead)
+def project_overview(project_id: uuid.UUID, db: Session = Depends(get_db)):
+    overview = overview_service.build(db, project_id)
+    if overview is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
+    return overview
 
 
 @router.get("/projects/{project_id}/reviews", response_model=list[FieldReviewRead])
