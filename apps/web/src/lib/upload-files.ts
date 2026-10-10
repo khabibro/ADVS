@@ -41,8 +41,16 @@ function extensionOf(name: string): string {
   return dot >= 0 ? name.slice(dot).toLowerCase() : "";
 }
 
+const EXTENSION_ORDER = ["pdf", "jpg", "png", "webp"];
+
+/** "PDF, JPG, PNG, WEBP": .jpeg and .jpg are one kind of file to the reader. */
 export function formatExtensions(rules: Pick<UploadRules, "extensions">): string {
-  return rules.extensions.map((ext) => ext.replace(".", "").toUpperCase()).join(", ");
+  const names = new Set(rules.extensions.map((ext) => ext.replace(".", "").toLowerCase().replace("jpeg", "jpg")));
+  const rank = (name: string) => (EXTENSION_ORDER.includes(name) ? EXTENSION_ORDER.indexOf(name) : 99);
+  return [...names]
+    .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b))
+    .map((name) => name.toUpperCase())
+    .join(", ");
 }
 
 export function validateUploadFile(

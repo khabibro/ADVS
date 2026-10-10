@@ -107,12 +107,6 @@ export function ProjectWorkspacePage({ projectId }: { projectId: string }) {
           requirements={overview.requirements}
         />
 
-        <section aria-labelledby="upload-heading">
-          <h2 className="mb-3 text-lg font-semibold" id="upload-heading">
-            서류 추가
-          </h2>
-          <UploadDropzone />
-        </section>
 
         <IssueList issues={overview.issues} notices={overview.notices} projectId={projectId} />
 
@@ -122,6 +116,13 @@ export function ProjectWorkspacePage({ projectId }: { projectId: string }) {
           open={overview.counts.review_open}
           projectId={projectId}
         />
+
+        <section aria-labelledby="upload-heading">
+          <h2 className="mb-3 text-lg font-semibold" id="upload-heading">
+            서류 추가
+          </h2>
+          <UploadDropzone />
+        </section>
 
         <p className="flex items-start gap-2 rounded-lg bg-muted px-4 py-3 text-xs leading-5 text-muted-foreground">
           <Info aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
