@@ -1,0 +1,59 @@
+
+## dev (test_variants), final policy B2-D2  (evaluation/phase_d2/B2_D2_dev.json)
+  digital  READY_expected_not_READY=0, actual_REVIEW_REQUIRED=7, correct_READY=4, correct_not_READY=12, correct_status_undefined=6, needs_human>0=6, submissions=22
+  scanned  READY_expected_not_READY=4, actual_REVIEW_REQUIRED=21, correct_READY=4, correct_not_READY=12, correct_status_undefined=6, needs_human>0=22, submissions=22
+  images   READY_expected_not_READY=4, actual_REVIEW_REQUIRED=21, correct_READY=4, correct_not_READY=12, correct_status_undefined=6, needs_human>0=22, submissions=22
+
+## hold-out 1 (development data since D2), final policy B2-D2  (evaluation/phase_d2/B2_D2_holdout.json)
+  digital  READY_expected_not_READY=0, actual_REVIEW_REQUIRED=7, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=6, submissions=25
+  scanned  READY_expected_not_READY=4, actual_REVIEW_REQUIRED=24, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=25, submissions=25
+  images   READY_expected_not_READY=4, actual_REVIEW_REQUIRED=24, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=25, submissions=25
+
+## hold-out 2 (judged once, before the final policy), B1-D2  (evaluation/phase_d2/H2_B1.json)
+  digital  READY_expected_not_READY=0, actual_REVIEW_REQUIRED=7, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=6, submissions=25
+  scanned  READY_expected_not_READY=3, actual_REVIEW_REQUIRED=22, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=23, submissions=25
+  images   READY_expected_not_READY=3, actual_REVIEW_REQUIRED=21, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=23, submissions=25
+
+## Totals over the three corpora (the same 22-25 scenarios, different values: NOT independent samples)
+  digital  submissions whose correct status is not READY: n=40; false READY observed=0; 95% upper bound on the false-READY rate (rule of three) = 7.5%
+  scanned  submissions whose correct status is not READY: n=40; false READY observed=0; 95% upper bound on the false-READY rate (rule of three) = 7.5%
+  images   submissions whose correct status is not READY: n=40; false READY observed=0; 95% upper bound on the false-READY rate (rule of three) = 7.5%
+
+## Injected-error suites (cases are derived from the same base documents: bounds are optimistic)
+  E1-E12, development                                     n=  474  upper bound for 0 events = 0.63%
+  E1-E12, hold-out 1                                      n=  666  upper bound for 0 events = 0.45%
+  E1-E18 baseline B0_D3 (main policy), development        n= 1353  upper bound for 0 events = 0.22%
+  E1-E18 baseline B0_D3, hold-out 1                       n= 1532  upper bound for 0 events = 0.20%
+  E1-E18 baseline B0_D3, hold-out 2                       n= 1523  upper bound for 0 events = 0.20%
+
+## Machine values (OCR/embedded text) before any acceptance policy, evaluated fields
+  digital  n=790: CORRECT=790  -> wrong=0 (0.0%), unresolved=0 (0.0%)
+  scanned  n=790: CORRECT=741, UNRESOLVED=49  -> wrong=0 (0.0%), unresolved=49 (6.2%)
+  images   n=790: CORRECT=752, UNRESOLVED=38  -> wrong=0 (0.0%), unresolved=38 (4.8%)
+
+## Exact-match per field (machine value, all three corpora): CORRECT / evaluated
+  field                                    digital         scanned          images
+  business_registration_number           160 / 160       160 / 160       159 / 160
+  company_name                           120 / 120       117 / 120       120 / 120
+  department                               29 / 29         28 / 29         27 / 29
+  gpa                                      29 / 29         29 / 29         29 / 29
+  gpa_scale                                29 / 29         29 / 29         29 / 29
+  issue_date                               55 / 55         55 / 55         55 / 55
+  student_id                               55 / 55         52 / 55         54 / 55
+  student_name                             58 / 58         57 / 58         58 / 58
+  university_name                          58 / 58         21 / 58         24 / 58
+  valid_from                               40 / 40         38 / 40         40 / 40
+  valid_until                            117 / 117       115 / 117       117 / 117
+  workplace_name                           40 / 40         40 / 40         40 / 40
+
+## Fields that were not CORRECT on scans/photos (all three corpora)
+   54  TRANSCRIPT.university_name
+   17  ENROLLMENT_CERTIFICATE.university_name
+    4  ENROLLMENT_CERTIFICATE.student_id
+    3  BUSINESS_REGISTRATION_CERTIFICATE.company_name
+    3  ENROLLMENT_CERTIFICATE.department
+    2  SME_CONFIRMATION_CERTIFICATE.valid_from
+    2  SME_CONFIRMATION_CERTIFICATE.valid_until
+    1  SME_CONFIRMATION_CERTIFICATE.business_registration_number
+    1  ENROLLMENT_CERTIFICATE.student_name
+  total 87

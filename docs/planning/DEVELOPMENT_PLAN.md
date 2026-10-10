@@ -1,9 +1,3 @@
-# Development Plan
+# Development Plan (superseded)
 
-Week 1: finalize Phase 1A bootstrap, run setup on team machines, review data model and API, collect synthetic samples.
-
-Week 2: verify PaddleOCR runtime, test Korean documents, implement real extraction rules, tune classifier keywords.
-
-Week 3: confirm checklist rules with Flash21, connect remaining UI flows, add manual review decisions if required, expand integration tests.
-
-Week 4: run evaluation set, document failures, polish demo, prepare requirements/UI/DB/test reports and presentation.
+The four-week bootstrap plan that used to be here (finalise Phase 1A, verify PaddleOCR, confirm rules with 플래시21, run an evaluation set) was completed or replaced by the phase work recorded in `evaluation/` (Phases B to F). The current plan, with October, November and December milestones, acceptance criteria and fallbacks, is `docs/planning/ROADMAP.md`. Report templates for the next milestones: `NOVEMBER_REPORT_TEMPLATE.md` and `DECEMBER_FINAL_REPORT_TEMPLATE.md` in this folder.

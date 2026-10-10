@@ -1,6 +1,28 @@
 # ADVS midterm deck — source of every number and claim
 
-Deck: `docs/midterm/ADVS_midterm.pptx` (PDF: `ADVS_midterm.pdf`). Paths are relative to the repository root; "§" is a section of that file. A number that is not in this table is not in the deck (checked by script, see the end). D3 figures appear only on slide 13, marked 진행 중 (unmerged).
+Deck: `docs/midterm/ADVS_midterm.pptx` (PDF: `ADVS_midterm.pdf`), **18 slides**: slides 1–8 are the 5-minute main path (course limit: 5 min + 2 min Q&A), slides 9–18 are the appendix for Q&A. Paths are relative to the repository root. Evidence labels: [V] verified in the repository, [E] external, [H] hypothesis, [U] unknown.
+
+## Main path and Phase F appendix slides (new in the Phase F update)
+
+| Slide | Number / claim | Source |
+|---|---|---|
+| 1 | 2026-10-14, team and mentor names | deck brief; `docs/midterm/RESULTS.md` heading |
+| 2 | Problem types and the principle "rules decide, evidence supports, humans review"; 제출 가능 is not official approval | `README.md`; `docs/midterm/RESULTS.md` line 5 |
+| 3 | 6 document types (4 business, 2 student); 7 pipeline stages; no LLM/VLM in the system; D3 implemented but unmerged; photo preprocessing = orientation and format only | `docs/midterm/RESULTS.md` (requirements table); `docs/architecture/ARCHITECTURE.md`; `evaluation/phase_f/TECHNICAL_AUDIT.md` (functionality table) |
+| 4 | Status meanings; 90-day student rule; student number required; screenshots D1, D2, D6 (4 items for a person) | `docs/midterm/DEMO_SCRIPT.md`; `docs/midterm/screenshots_v2/after/1280x720/`; rows 4 and 6 of the legacy table below |
+| 5 | Digital 790/790, scans 741/790, photos 752/790 field accuracy; 93.8 % and 95.2 % (741/790, 752/790); false READY 0/40 per input type, 95 % upper bound 7.5 % (rule of three 3/40), about 21 % counting scenario types; injections 0/474 and 0/666 (E1–E12), bounds 0.63 % and 0.45 % | `evaluation/phase_f/results/denominators.txt` (script `evaluation/phase_f/scripts/denominators.py`, reads committed `evaluation/phase_d2` scored JSONs); `evaluation/phase_f/EVALUATION_PROTOCOL.md` (uncertainty table) |
+| 5 | Review fields per scanned submission 7.23 / 6.59 | `docs/midterm/metrics.csv`; `evaluation/phase_d2/PHASE_D2_REPORT.md` §11 |
+| 6 | 160/160 and 159/160 business registration numbers (scan / photo); 208/212 scan dates; 21/58 and 24/58 university_name (scan / photo); 1 of 22 scanned submissions finished without a person; hold-out 3 not judged; hidden PDF text trusted (probe-confirmed) | `evaluation/phase_f/results/denominators.txt`; `evaluation/phase_f/results/text_layer_probe.txt`; `evaluation/phase_f/TECHNICAL_AUDIT.md` D-1, D-4; `docs/midterm/RESULTS.md` |
+| 7 | OCR vs PaddleOCR-VL vs hybrid; PaddleOCR-VL external facts (model card, pipeline docs); ~16 s/page CPU for current OCR; dev machine without NVIDIA GPU; not integrated in October | [E] `huggingface.co/PaddlePaddle/PaddleOCR-VL`, `paddleocr.ai` PaddleOCR-VL pipeline page; [V] `evaluation/phase_f/APPROACH_EVALUATION.md` (all approaches A–H with evidence labels) |
+| 8 | Plan for Oct/Nov/Dec; adoption of a VLM only if pre-registered conditions hold; hold-out 3 judged once | `docs/planning/ROADMAP.md`; `evaluation/phase_f/APPROACH_EVALUATION.md` |
+| 15 | Approach table A–H | `evaluation/phase_f/APPROACH_EVALUATION.md` |
+| 16 | Metric baselines 790/790 · 741/790 · 752/790, 207/207 classification, 0/12 digital false READY, review ≥ 1 field 18/72 · 70/72 · 70/72; 0/40 and 7.5 %, about 21 % | `evaluation/phase_f/EVALUATION_PROTOCOL.md`; `evaluation/phase_f/results/denominators.txt` |
+| 17 | November/December tasks and gates | `docs/planning/ROADMAP.md` |
+| 18 | Q&A answers (real documents, forged PDF, why no VLM, "0 failures") | slides 5, 6, 7 above |
+| Notes | Main-path target times 15/30/40/45/50/40/40/40 s = 5:00 | deck planning |
+
+## Legacy rows for the reused appendix slides
+Slides 9–14 are the earlier deck's slides 6–11 (statuses, safety design, how tested, results detail, lessons, demo scenes) with a "[부록]" prefix. The rows below keep the old slide numbers: old 6 → new 9, old 7 → 10, old 8 → 11, old 9 → 12, old 10 → 13, old 11 → 14. Old slides 1–5, 12–14 are replaced by the main path above; their rows are kept only where the claim is still used in the notes.
 
 | Slide | Number / claim on the slide (or in its notes) | Source |
 |---|---|---|
