@@ -265,6 +265,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Project Overview */
+        get: operations["project_overview_api_v1_projects__project_id__overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/project-summaries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Project Summaries */
+        get: operations["project_summaries_api_v1_project_summaries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/upload-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Upload Rules */
+        get: operations["upload_rules_api_v1_upload_rules_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/pages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Document Pages */
+        get: operations["document_pages_api_v1_documents__document_id__pages_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/pages/{page_number}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Document Page Image */
+        get: operations["document_page_image_api_v1_documents__document_id__pages__page_number__image_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/reviews": {
         parameters: {
             query?: never;
@@ -364,6 +449,11 @@ export interface components {
             /** Height */
             height: number;
         };
+        /**
+         * CheckState
+         * @enum {string}
+         */
+        CheckState: "CURRENT" | "NOT_CURRENT";
         /** ChecklistCreate */
         ChecklistCreate: {
             /** Name */
@@ -529,6 +619,7 @@ export interface components {
             transform?: {
                 [key: string]: unknown;
             } | null;
+            normalized_box?: components["schemas"]["BoundingBoxRead"] | null;
         };
         /** FieldRead */
         FieldRead: {
@@ -563,6 +654,11 @@ export interface components {
             effective_source?: components["schemas"]["EffectiveValueSource"] | null;
             current_review_decision?: components["schemas"]["FieldReviewDecision"] | null;
             auto_acceptance?: components["schemas"]["AutoAcceptanceRead"] | null;
+            /**
+             * Used By Rules
+             * @default false
+             */
+            used_by_rules: boolean;
         };
         /** FieldReviewCreate */
         FieldReviewCreate: {
@@ -639,10 +735,104 @@ export interface components {
             detail?: components["schemas"]["ValidationError"][];
         };
         /**
+         * NextStep
+         * @enum {string}
+         */
+        NextStep: "UPLOAD_DOCUMENTS" | "WAIT_PROCESSING" | "REVIEW_FIELDS" | "RUN_CHECK" | "FIX_ISSUES" | "DONE";
+        /** OtherDocumentOverview */
+        OtherDocumentOverview: {
+            document: components["schemas"]["OverviewDocumentRef"];
+            /** Reason */
+            reason: string;
+        };
+        /**
          * OverallStatus
          * @enum {string}
          */
         OverallStatus: "READY" | "REVIEW_REQUIRED" | "NEEDS_CORRECTION";
+        /** OverviewCounts */
+        OverviewCounts: {
+            /** Requirements Total */
+            requirements_total: number;
+            /** Required Total */
+            required_total: number;
+            /** Required Ok */
+            required_ok: number;
+            /** Required Missing */
+            required_missing: number;
+            /** Issues Needs Correction */
+            issues_needs_correction: number;
+            /** Issues Review Required */
+            issues_review_required: number;
+            /** Review Open */
+            review_open: number;
+            /** Review Done */
+            review_done: number;
+            /** Documents Total */
+            documents_total: number;
+            /** Documents Processing */
+            documents_processing: number;
+            /** Documents Failed */
+            documents_failed: number;
+        };
+        /** OverviewDocumentRef */
+        OverviewDocumentRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Original Filename */
+            original_filename: string;
+            /** Processing Status */
+            processing_status: string;
+            document_type: components["schemas"]["DocumentType"];
+            /** Error Message */
+            error_message?: string | null;
+        };
+        /** OverviewIssue */
+        OverviewIssue: {
+            /** Code */
+            code: string;
+            status_effect: components["schemas"]["OverallStatus"];
+            /** Message */
+            message: string;
+            /** Document Id */
+            document_id?: string | null;
+            document_type?: components["schemas"]["DocumentType"] | null;
+            /** Field Name */
+            field_name?: string | null;
+            /** Related Document Id */
+            related_document_id?: string | null;
+            related_document_type?: components["schemas"]["DocumentType"] | null;
+            /** Related Field Name */
+            related_field_name?: string | null;
+            /** Rule Id */
+            rule_id?: string | null;
+            /** Field Id */
+            field_id?: string | null;
+            /** Related Field Id */
+            related_field_id?: string | null;
+            /** Value */
+            value?: string | null;
+            /** Related Value */
+            related_value?: string | null;
+            /** Reference Date */
+            reference_date?: string | null;
+            /** Expected Value */
+            expected_value?: string | null;
+            /** Max Age Days */
+            max_age_days?: number | null;
+        };
+        /** PageInfoRead */
+        PageInfoRead: {
+            /** Page Number */
+            page_number: number;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+        };
         /** ProjectCreate */
         ProjectCreate: {
             /** Name */
@@ -656,6 +846,37 @@ export interface components {
             applicant_name?: string | null;
             /** Company Name */
             company_name?: string | null;
+        };
+        /** ProjectOverviewRead */
+        ProjectOverviewRead: {
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            check_state: components["schemas"]["CheckState"];
+            status: components["schemas"]["OverallStatus"] | null;
+            /** Evaluation Date */
+            evaluation_date: string | null;
+            /** Evaluated At */
+            evaluated_at: string | null;
+            /**
+             * Suggested Evaluation Date
+             * Format: date
+             */
+            suggested_evaluation_date: string;
+            /** Status Item Count */
+            status_item_count: number | null;
+            next_step: components["schemas"]["NextStep"];
+            counts: components["schemas"]["OverviewCounts"];
+            /** Requirements */
+            requirements: components["schemas"]["RequirementOverview"][];
+            /** Other Documents */
+            other_documents: components["schemas"]["OtherDocumentOverview"][];
+            /** Issues */
+            issues: components["schemas"]["OverviewIssue"][];
+            /** Notices */
+            notices: components["schemas"]["VerificationIssueRead"][];
         };
         /** ProjectRead */
         ProjectRead: {
@@ -682,6 +903,46 @@ export interface components {
              */
             created_at: string;
         };
+        /**
+         * ProjectSummaryRead
+         * @description One line per submission for the list screen (same source as the overview).
+         */
+        ProjectSummaryRead: {
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            check_state: components["schemas"]["CheckState"];
+            status: components["schemas"]["OverallStatus"] | null;
+            /** Status Item Count */
+            status_item_count: number | null;
+            next_step: components["schemas"]["NextStep"];
+            /** Required Ok */
+            required_ok: number;
+            /** Required Total */
+            required_total: number;
+            /** Review Open */
+            review_open: number;
+        };
+        /** RequirementOverview */
+        RequirementOverview: {
+            document_type: components["schemas"]["DocumentType"];
+            /** Display Name */
+            display_name: string;
+            /** Required */
+            required: boolean;
+            state: components["schemas"]["RequirementState"];
+            /** Documents */
+            documents: components["schemas"]["OverviewDocumentRef"][];
+            /** Issue Codes */
+            issue_codes: string[];
+        };
+        /**
+         * RequirementState
+         * @enum {string}
+         */
+        RequirementState: "MISSING" | "PROCESSING" | "FAILED" | "NOT_CHECKED" | "OK" | "REVIEW_REQUIRED" | "NEEDS_CORRECTION";
         /** ReviewItemRead */
         ReviewItemRead: {
             /**
@@ -777,6 +1038,20 @@ export interface components {
             rule_results: components["schemas"]["RuleEvaluationRead"][];
             /** Disclaimer */
             disclaimer: string;
+        };
+        /**
+         * UploadRulesRead
+         * @description What the upload endpoint accepts, so clients never keep their own allow-list.
+         */
+        UploadRulesRead: {
+            /** Extensions */
+            extensions: string[];
+            /** Mime Types */
+            mime_types: string[];
+            /** Max Size Mb */
+            max_size_mb: number;
+            /** Max Pages */
+            max_pages: number;
         };
         /** ValidationError */
         ValidationError: {
@@ -1504,6 +1779,140 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReviewItemRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    project_overview_api_v1_projects__project_id__overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectOverviewRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    project_summaries_api_v1_project_summaries_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectSummaryRead"][];
+                };
+            };
+        };
+    };
+    upload_rules_api_v1_upload_rules_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadRulesRead"];
+                };
+            };
+        };
+    };
+    document_pages_api_v1_documents__document_id__pages_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageInfoRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    document_page_image_api_v1_documents__document_id__pages__page_number__image_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+                page_number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
