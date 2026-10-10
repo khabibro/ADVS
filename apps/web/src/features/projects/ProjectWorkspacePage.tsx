@@ -15,8 +15,8 @@ import { apiErrorMessage } from "@/lib/api-error";
 import {
   useProjectInvalidation,
   useProjectOverview,
-  useVerifyProject,
 } from "@/lib/queries";
+import { useAutoCheck, useStatusChange } from "@/lib/use-auto-check";
 import { formatDateTime } from "@/lib/presentation";
 import { queryKeys } from "@/lib/query-keys";
 import { api } from "@/services/api";
@@ -40,7 +40,8 @@ export function ProjectWorkspacePage({ projectId }: { projectId: string }) {
     queryKey: queryKeys.reviewItems(projectId),
     queryFn: () => api.reviewItems(projectId),
   });
-  const verify = useVerifyProject(projectId);
+  const verify = useAutoCheck(projectId, overviewQuery.data);
+  const changedFrom = useStatusChange(overviewQuery.data);
   const invalidate = useProjectInvalidation(projectId);
 
   const requirementNames = useMemo(() => {
@@ -91,7 +92,7 @@ export function ProjectWorkspacePage({ projectId }: { projectId: string }) {
         </header>
 
         <StatusBanner
-          changedFrom={null}
+          changedFrom={changedFrom}
           checkError={verify.isError ? apiErrorMessage(verify.error, "verify") : null}
           checking={verify.isPending}
           onRecheck={(date) => verify.mutate(date)}
