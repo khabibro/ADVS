@@ -129,6 +129,9 @@ describe("DocumentDetailPage", () => {
     const box = screen.getByRole("button", { name: "유효기간 종료일 위치" });
     expect(box.className).toContain("border-amber-500");
     expect(screen.getByText(/유효기간 2026-10-31/)).toBeInTheDocument();
+    // The value the machine read is shown (labelled as unconfirmed) next to the missing confirmed value.
+    expect(screen.getByText("아직 확인된 값이 없습니다")).toBeInTheDocument();
+    expect(screen.getByText(/자동으로 읽은 값\(확인 전\)/)).toBeInTheDocument();
   });
 
   it("opens on the field named in the link from an issue", async () => {
