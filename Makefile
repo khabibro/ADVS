@@ -13,7 +13,7 @@ demo-stop:
 	scripts/demo stop
 
 demo-rehearsal:
-	$(API_BIN)/python -I scripts/demo_rehearsal
+	apps/api/$(API_BIN)/python -I scripts/demo_rehearsal
 
 dev:
 	docker compose up --build
