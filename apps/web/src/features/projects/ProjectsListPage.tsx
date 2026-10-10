@@ -7,15 +7,16 @@ import { Card } from "@advs/ui";
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/page-state";
 import { StatusChip } from "@/components/status-chip";
 import { apiErrorMessage } from "@/lib/api-error";
-import { formatDateTime, overallStatus } from "@/lib/presentation";
+import { bannerFor } from "@/lib/copy";
+import { formatDateTime } from "@/lib/presentation";
 import { queryKeys } from "@/lib/query-keys";
 import { api } from "@/services/api";
-import type { Project } from "@/types/api";
+import type { Project, ProjectSummary } from "@/types/api";
 
-function completionLabel(project: Project): string {
-  const required = project.expected_documents.filter((item) => item.required);
-  if (required.length === 0) return "필수 서류 없음";
-  return `필수 서류 ${required.length}종`;
+function progressLabel(summary: ProjectSummary | undefined, project: Project): string {
+  const required = project.expected_documents.filter((item) => item.required).length;
+  if (!summary) return `필수 서류 ${required}종`;
+  return `필수 서류 ${summary.required_ok} / ${summary.required_total} 확인 완료`;
 }
 
 export function ProjectsListPage() {
@@ -23,6 +24,12 @@ export function ProjectsListPage() {
     queryKey: queryKeys.projects(),
     queryFn: api.projects,
   });
+
+  const summariesQuery = useQuery({
+    queryKey: queryKeys.summaries(),
+    queryFn: api.projectSummaries,
+  });
+  const summaries = new Map((summariesQuery.data ?? []).map((item) => [item.project_id, item]));
 
   return (
     <div className="space-y-8">
@@ -71,7 +78,15 @@ export function ProjectsListPage() {
       ) : (
         <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {projectsQuery.data.map((project) => {
-            const status = overallStatus(project.status);
+            const summary = summaries.get(project.id);
+            const banner = summary
+              ? bannerFor({
+                  status: summary.status,
+                  status_item_count: summary.status_item_count,
+                  next_step: summary.next_step,
+                  counts: { review_open: summary.review_open, required_total: summary.required_total },
+                })
+              : null;
             return (
               <li key={project.id}>
                 <Link
@@ -86,15 +101,14 @@ export function ProjectsListPage() {
                           {project.workflow?.name ?? "업무 미지정"}
                         </p>
                       </div>
-                      <StatusChip
-                        label={status.label}
-                        tone={status.tone}
-                        title={status.description}
-                      />
+                      {banner ? (
+                        <StatusChip label={banner.label} tone={banner.tone} loading={banner.tone === "info"} />
+                      ) : null}
                     </div>
+                    {banner ? <p className="text-sm leading-6">{banner.headline}</p> : null}
                     <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-3 text-xs text-muted-foreground">
                       <span className="min-w-0 truncate">
-                        {completionLabel(project)} · {formatDateTime(project.created_at)}
+                        {progressLabel(summary, project)} · {formatDateTime(project.created_at)}
                       </span>
                       <span className="flex shrink-0 items-center gap-1 font-medium text-primary">
                         열기
