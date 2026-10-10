@@ -20,13 +20,16 @@ All numbers: **fictional test documents** built on the layouts of a few real sam
 | Authentication, privacy controls, audit log | planned | not built |
 
 ## Safety (re-checked: 555 backend tests pass (re-run 2026-10-10 on the v2 branch); rehearsal 3/3 runs)
-| Measure | Result | Source |
-|---|---|---|
-| False 제출 가능, dev data (all sets, all versions) | **0** | `evaluation/phase_d2/B2_D2_dev_report.md`, `B2_D2_holdout_report.md` |
-| False 제출 가능, hold-out 2 (judged once, before the final policy change) | **0** | `evaluation/phase_d2/PHASE_D2_REPORT.md` §6 |
-| False 제출 가능, injected OCR errors E1–E12 (474 dev + 666 hold-out-1 cases) | **0** | `B2_D2_inj_dev.md`, `B2_D2_inj_holdout.md` |
-| Wrong auto-accepted values, same runs (incl. the common-mode variants) | **0** | same |
-| Wrong values acted on, hold-out 2 | 0 | `PHASE_D2_REPORT.md` §6 |
+| Measure | Result (events / n) | 95 % upper bound | Source |
+|---|---|---|---|
+| False 제출 가능, submissions whose correct status is not READY, development + hold-outs 1–2, per input type | **0 / 40** (12 + 14 + 14; the same 12–14 scenario types re-instantiated) | 7.5 % (about 21 % counting each scenario type once) | `evaluation/phase_f/results/denominators.txt` |
+| False 제출 가능, dev data (all sets, all versions) | **0** | see the row above | `evaluation/phase_d2/B2_D2_dev_report.md`, `B2_D2_holdout_report.md` |
+| False 제출 가능, hold-out 2 (judged once, before the final policy change) | **0** (included in the 40) | | `evaluation/phase_d2/PHASE_D2_REPORT.md` §6 |
+| False 제출 가능, injected OCR errors E1–E12 | **0 / 474** (dev) and **0 / 666** (hold-out 1) | 0.63 % and 0.45 % (cases share their base documents: optimistic) | `B2_D2_inj_dev.md`, `B2_D2_inj_holdout.md` |
+| Wrong auto-accepted values, same runs (incl. the common-mode variants) | **0** | same | same |
+| Wrong values acted on, hold-out 2 | 0 | | `PHASE_D2_REPORT.md` §6 |
+
+These bounds describe the **synthetic** test data only; the real-world false-제출-가능 rate is not measured and cannot be stated.
 
 ## Accuracy
 | Measure | Dev | Hold-out | Source |
@@ -48,6 +51,7 @@ On the D2 final build, decision-blocking vs total fields (D3 measurement of the 
 ## Honest limits
 - **Fictional documents** on a few real layouts; digital extraction fit those layouts once already (63 % on the first hold-out, fixed in D2). A **real-document pilot is still to come**.
 - Residual risks: a misread repeated identically on several documents can corroborate itself when no application value exists (the H14-type case, `PHASE_D_REPORT.md` §5, §8; never 제출 가능 in any measured run). D3's extended injection suite (E13–E18, unmerged branch) found **1 false auto-accept** under the D2 policy (case E3c-both on hold-out-2 data, 0 false 제출 가능; `D3_configs.md`).
-- Hold-out set 3 exists but has **not been run** — gap. The final D2 policy was not re-judged on hold-out 2 (used up); it is stricter than what was judged.
+- Hold-out set 3 has **not been judged** — gap (a raw OCR capture was logged on 2026-10-06 but never scored). The final D2 policy was not re-judged on hold-out 2 (used up); it is stricter than what was judged.
+- **A PDF's text layer is trusted without checking** (verified probe: hidden text overrides what the page shows; `evaluation/phase_f/results/text_layer_probe.txt`) — recorded for November.
 - No authentication or access control; tested on SQLite only (PostgreSQL is configured in Docker Compose but not tested this phase); the admin app is an empty shell.
 - OCR scans take about 16 s per page on this Mac (CPU); digital documents ~0.1 s per submission.

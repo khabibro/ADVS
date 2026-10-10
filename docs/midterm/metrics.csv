@@ -58,3 +58,7 @@ Phase E2,backend,pytest tests passed,555,run 2026-10-10 (apps/api; v2 branch)
 Phase E2,web,vitest tests passed,107,run 2026-10-10 (apps/web)
 Phase E2,web,playwright end-to-end tests passed,15 of 15,run 2026-10-10 (apps/web/e2e/ui-flows.spec.ts)
 Gap,holdout 3,not run,n/a (gap),.gitignore / evaluation/phase_d3 (guarded set)
+Phase F,dev + hold-outs 1-2,false READY events / not-READY submissions per input type,0 / 40 (95% upper bound 7.5%),evaluation/phase_f/results/denominators.txt
+Phase F,dev + hold-outs 1-2,wrong machine values scans / photos,0 / 741 and 0 / 752 produced,evaluation/phase_f/results/denominators.txt
+Phase F,dev + hold-outs 1-2,scanned university_name exact match (scans / photos),21/58 and 24/58,evaluation/phase_f/results/denominators.txt
+Phase F,probe,hidden PDF text trusted as digital original,yes (verified),evaluation/phase_f/results/text_layer_probe.txt
