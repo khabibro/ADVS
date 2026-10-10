@@ -50,6 +50,10 @@ export const SUBMISSION_ISSUE_COPY: Record<string, IssueCopy> = {
     title: "한 파일에 서로 다른 서류가 들어 있습니다.",
     fix: "서류별로 파일을 나누어 다시 업로드해 주세요.",
   },
+  TEXT_LAYER_MISMATCH: {
+    title: "PDF 안의 숨은 글자가 화면에 보이는 내용과 다릅니다.",
+    fix: "원본 서류를 확인하고, 필요하면 발급처에서 새로 받은 파일을 올려 주세요.",
+  },
   CLASSIFICATION_REQUIRES_REVIEW: {
     title: "서류 종류를 확신할 수 없습니다.",
     fix: "올바른 서류인지 확인하고, 아니라면 다시 업로드해 주세요.",
