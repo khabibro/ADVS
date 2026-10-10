@@ -44,6 +44,7 @@ from app.schemas.api import (
     ProjectCreate,
     ProjectOverviewRead,
     ProjectRead,
+    ProjectSummaryRead,
     ReviewItemRead,
     RuleEvaluationRead,
     SubmissionVerificationRead,
@@ -569,6 +570,29 @@ def project_overview(project_id: uuid.UUID, db: Session = Depends(get_db)):
     if overview is None:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
     return overview
+
+
+@router.get("/project-summaries", response_model=list[ProjectSummaryRead])
+def project_summaries(db: Session = Depends(get_db)):
+    ids = db.scalars(select(Project.id).order_by(Project.created_at.desc())).all()
+    summaries = []
+    for project_id in ids:
+        overview = overview_service.build(db, project_id)
+        if overview is None:
+            continue
+        summaries.append(
+            ProjectSummaryRead(
+                project_id=project_id,
+                check_state=overview.check_state,
+                status=overview.status,
+                status_item_count=overview.status_item_count,
+                next_step=overview.next_step,
+                required_ok=overview.counts.required_ok,
+                required_total=overview.counts.required_total,
+                review_open=overview.counts.review_open,
+            )
+        )
+    return summaries
 
 
 @router.get("/upload-rules", response_model=UploadRulesRead)
