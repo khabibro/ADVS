@@ -219,3 +219,40 @@ def test_project_summaries_match_the_overview(client: TestClient, db_session) ->
     assert summary["status_item_count"] == overview["status_item_count"] == 1
     assert summary["next_step"] == overview["next_step"]
     assert summary["required_total"] == overview["counts"]["required_total"]
+
+
+def test_overview_is_read_only_and_leaves_a_stale_check_for_the_writer(
+    client: TestClient, db_session
+) -> None:
+    """Polling the overview while documents are analysed must not lock or write the project."""
+    from sqlalchemy import func, select
+
+    from app.models.entities import ValidationResult
+
+    project, submission, _ = _business_project(db_session)
+    _both_valid(db_session, submission)
+    _verify(client, project.id)
+
+    def stored_rows() -> int:
+        return db_session.scalar(
+            select(func.count())
+            .select_from(ValidationResult)
+            .where(ValidationResult.project_id == project.id)
+        )
+
+    before = stored_rows()
+    assert before > 0
+    mine = [d.id for d in db_session.query(Document).filter_by(submission_id=submission.id)]
+    row = (
+        db_session.query(ExtractedField)
+        .filter(ExtractedField.document_id.in_(mine), ExtractedField.field_name == "company_name")
+        .first()
+    )
+    row.normalized_value = "다른상사"  # an input changes: the stored check is now stale
+    db_session.commit()
+
+    overview = _overview(client, project.id)
+    assert overview["check_state"] == "NOT_CURRENT"
+    assert stored_rows() == before  # not invalidated by the read
+    assert client.get(f"/api/v1/projects/{project.id}/verification").json()["is_current"] is False
+    assert stored_rows() == 0  # the writer path cleans it up
