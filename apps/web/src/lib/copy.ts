@@ -270,7 +270,11 @@ export interface Banner {
   nextStep: string;
 }
 
-export function bannerFor(overview: ProjectOverview): Banner {
+type BannerInput = Pick<ProjectOverview, "status" | "status_item_count" | "next_step"> & {
+  counts: Pick<ProjectOverview["counts"], "review_open" | "required_total">;
+};
+
+export function bannerFor(overview: BannerInput): Banner {
   const next = NEXT_STEP_COPY[overview.next_step];
   const n = overview.status_item_count ?? 0;
   switch (overview.status) {
