@@ -1,6 +1,6 @@
 # Classification Domain
 
-`DocumentClassifier` (`document_intelligence/classification/classifier.py`, `classifier_version = "heuristic-v2"`) is a deterministic, explainable keyword-evidence classifier. No ML/LLM.
+`DocumentClassifier` (`document_intelligence/classification/classifier.py`, `classifier_version = "heuristic-v4-abstain"`) is a deterministic, explainable keyword-evidence classifier. No ML/LLM. For OCR-read documents a **title gate** (`classification/title_gate.py`) additionally requires a clean title (or two independent identifiers); a near-match of a look-alike qualifier (for example a garbled 지방세 납세증명서) is classified `UNKNOWN` and held for review, and an unestablished document never corroborates another one.
 
 Each document type has a fixed signal list, each signal weighted by how strong evidence it is:
 
