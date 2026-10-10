@@ -47,7 +47,7 @@ describe("apiErrorMessage", () => {
       ["FILE_TOO_LARGE", "파일 크기가 허용 범위를 초과했습니다."],
       ["EMPTY_FILE", "비어 있는 파일은 업로드할 수 없습니다."],
       ["CORRUPT_DOCUMENT", "PDF 파일을 읽을 수 없습니다."],
-      ["NETWORK_ERROR", "서버에 연결할 수 없습니다."],
+      ["NETWORK_ERROR", "서버에 연결할 수 없습니다. 네트워크 연결을 확인하고 다시 시도해 주세요."],
     ];
     for (const [code, expected] of cases) {
       expect(apiErrorMessage(new ApiError(400, code as never))).toBe(expected);
