@@ -101,7 +101,9 @@ class ProjectOverviewService:
         )
         if project is None:
             return None
-        stored = self.verification.get_latest(db, project_id)
+        # Read-only: the screen polls this while documents are analysed, so it must not take
+        # the project write lock (SQLite would make the analysis request fail with "locked").
+        stored = self.verification.get_latest(db, project_id, read_only=True)
         result = stored.result if stored.is_current else None
         documents = list(
             db.scalars(
