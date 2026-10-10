@@ -81,6 +81,24 @@ describe("useAutoCheck", () => {
   });
 });
 
+describe("evaluation date", () => {
+  it("keeps the date of the earlier check for the automatic re-check", async () => {
+    window.sessionStorage.clear();
+    const current = overview({ check_state: "CURRENT", status: "REVIEW_REQUIRED", evaluation_date: "2026-10-05", status_item_count: 1 });
+    const { rerender } = renderHook(({ o }) => useAutoCheck("p", o), { wrapper, initialProps: { o: current } });
+    expect(api.verify).not.toHaveBeenCalled();
+    // After a confirmation the stored check is gone (the API no longer knows its date).
+    rerender({ o: overview({ suggested_evaluation_date: "2026-10-10" }, { review_done: 1 }) });
+    await waitFor(() => expect(api.verify).toHaveBeenCalledWith("p", "2026-10-05"));
+  });
+
+  it("falls back to the API's suggestion when nothing was remembered", async () => {
+    window.sessionStorage.clear();
+    renderHook(() => useAutoCheck("q", overview({ suggested_evaluation_date: "2026-10-10" })), { wrapper });
+    await waitFor(() => expect(api.verify).toHaveBeenCalledWith("q", "2026-10-10"));
+  });
+});
+
 describe("useStatusChange", () => {
   it("reports the previous final status when it changes", () => {
     const { result, rerender } = renderHook(({ o }) => useStatusChange(o), {

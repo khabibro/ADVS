@@ -5,6 +5,25 @@ import { bannerFor } from "@/lib/copy";
 import { useVerifyProject } from "@/lib/queries";
 import type { ProjectOverview } from "@/types/api";
 
+const dateKey = (projectId: string) => `advs:evaluation-date:${projectId}`;
+
+/** The check date this browser last used for the submission (a person's choice, kept across re-checks). */
+export function rememberEvaluationDate(projectId: string, date: string): void {
+  try {
+    window.sessionStorage.setItem(dateKey(projectId), date);
+  } catch {
+    /* storage unavailable: the API's suggestion is used */
+  }
+}
+
+function rememberedEvaluationDate(projectId: string): string | null {
+  try {
+    return window.sessionStorage.getItem(dateKey(projectId));
+  } catch {
+    return null;
+  }
+}
+
 const FINAL_LABELS: ReadonlySet<string> = new Set(["제출 가능", "확인 필요", "보완 필요"]);
 
 /**
@@ -32,8 +51,15 @@ export function useAutoCheck(projectId: string, overview: ProjectOverview | unde
     ].join("|");
     if (attempted.current === key) return;
     attempted.current = key;
-    mutate(overview.suggested_evaluation_date);
-  }, [overview, mutate]);
+    // Keep the date of the earlier check (the API only knows it while that check is current).
+    mutate(rememberedEvaluationDate(projectId) ?? overview.suggested_evaluation_date);
+  }, [overview, mutate, projectId]);
+
+  // Remember the date of every current check, so the next automatic re-check uses the same one.
+  const currentDate = overview?.check_state === "CURRENT" ? overview.evaluation_date : null;
+  useEffect(() => {
+    if (currentDate) rememberEvaluationDate(projectId, currentDate);
+  }, [currentDate, projectId]);
 
   return verify;
 }
