@@ -168,6 +168,7 @@ def preload() -> int:
         for scn in reversed(SCENARIOS):
             out = client.run(scn)
             print(f"  {scn.code} {out.status:<17} {out.seconds:5.1f}s  {scn.title}")
+            time.sleep(1.1)  # created_at has one-second resolution; keep the list order stable
     finally:
         client.close()
     return 0

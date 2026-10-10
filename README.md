@@ -17,8 +17,7 @@ MENTOR-DEFINED MVP DOCUMENT DOMAIN:
 - Transcript / 성적증명서
 
 Existing Graduation Certificate / 졸업증명서 and Career Certificate / 경력증명서 support is
-preserved. Phase 2 defines structured facts; it does not yet perform cross-document identity
-matching, generalized validity decisions, or GPA threshold evaluation.
+preserved. Cross-document checks (business number, company name, student number and name), validity dates and the student issue-date rule run as configurable workflow rules; see `docs/midterm/RESULTS.md` for what is measured.
 
 This is not production-ready OCR/extraction. PaddleOCR is the only real OCR provider; mock OCR remains available for tests and local pipeline development.
 
