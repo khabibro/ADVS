@@ -1,0 +1,22 @@
+# G-2 university_name on scans and photos — replay of cached OCR, development data only (test_variants, hold-out 1, hold-out 2)
+# command: cd apps/api && PYTHONPATH=. python ../../evaluation/phase_g/scripts/university_replay.py --data-root <main checkout>/evaluation
+
+## before (main @ 95ef2da)
+all            images   correct  24/ 58  wrong  0  missing  34  Wilson95 [0.30, 0.54]
+all            scanned  correct  21/ 58  wrong  0  missing  37  Wilson95 [0.25, 0.49]
+hold-out 1     images   correct   4/ 20  wrong  0  missing  16  Wilson95 [0.08, 0.42]
+hold-out 1     scanned  correct   3/ 20  wrong  0  missing  17  Wilson95 [0.05, 0.36]
+hold-out 2     images   correct  11/ 20  wrong  0  missing   9  Wilson95 [0.34, 0.74]
+hold-out 2     scanned  correct  10/ 20  wrong  0  missing  10  Wilson95 [0.30, 0.70]
+test_variants  images   correct   9/ 18  wrong  0  missing   9  Wilson95 [0.29, 0.71]
+test_variants  scanned  correct   8/ 18  wrong  0  missing  10  Wilson95 [0.25, 0.66]
+
+## after (phase-g/fixes)
+all            images   correct  57/ 58  wrong  0  missing   1  Wilson95 [0.91, 1.00]
+all            scanned  correct  56/ 58  wrong  0  missing   2  Wilson95 [0.88, 0.99]
+hold-out 1     images   correct  19/ 20  wrong  0  missing   1  Wilson95 [0.76, 0.99]
+hold-out 1     scanned  correct  18/ 20  wrong  0  missing   2  Wilson95 [0.70, 0.97]
+hold-out 2     images   correct  20/ 20  wrong  0  missing   0  Wilson95 [0.84, 1.00]
+hold-out 2     scanned  correct  20/ 20  wrong  0  missing   0  Wilson95 [0.84, 1.00]
+test_variants  images   correct  18/ 18  wrong  0  missing   0  Wilson95 [0.82, 1.00]
+test_variants  scanned  correct  18/ 18  wrong  0  missing   0  Wilson95 [0.82, 1.00]
