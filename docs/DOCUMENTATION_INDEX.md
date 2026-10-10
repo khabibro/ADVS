@@ -26,8 +26,13 @@ Start here for ADVS engineering work.
 - `security/document-privacy.md`
 
 ## Planning
-- `planning/ROADMAP.md`
-- `planning/DEVELOPMENT_PLAN.md`
+- `planning/ROADMAP.md` (current October–December plan)
+- `planning/DEVELOPMENT_PLAN.md` (superseded)
+- `planning/NOVEMBER_REPORT_TEMPLATE.md`, `planning/DECEMBER_FINAL_REPORT_TEMPLATE.md`
+
+## Evaluation and audit
+- `../evaluation/phase_f/TECHNICAL_AUDIT.md`, `APPROACH_EVALUATION.md`, `EVALUATION_PROTOCOL.md`
+- `midterm/` (results pack, demo script, slides and their sources)
 
 Archived bootstrap docs are retained under `archive/`.
 

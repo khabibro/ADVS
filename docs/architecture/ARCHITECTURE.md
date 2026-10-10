@@ -42,12 +42,16 @@ ocr/            models.py (OCRDocumentResult/OCRPage/OCRLine/BoundingBox, OCRPro
                 providers.py (OCRProvider, PaddleOCRProvider, MockOCRProvider)
                 text_assembly.py (reading-order line/page assembly)
 preprocessing/  processor.py (PdfProcessor, ImagePreprocessor, is_meaningful_text)
-classification/ classifier.py (DocumentClassifier, weighted signal scoring)
-extraction/     base.py (BaseDocumentExtractor, label-proximity helpers)
-                graduation.py / career.py / business_registration.py / sme_confirmation.py
+                (the text layer is trusted when it is long enough; there is no hidden-text or provenance check yet)
+classification/ classifier.py (DocumentClassifier, weighted signal scoring), title_gate.py (look-alike / unclean-title gate)
+extraction/     base.py (BaseDocumentExtractor, label-proximity helpers), fields.py
+                business_registration.py / sme_confirmation.py / national_tax_payment.py / social_insurance_payment.py
+                enrollment.py / transcript.py / graduation.py / career.py
                 registry.py (ExtractorRegistry)
+evidence.py, auto_acceptance.py (independent-confirmation policy for OCR values)
+layout/         geometry helpers shared by extractors
 normalization/  field_normalizer.py (normalize_date/normalize_business_number/normalize_text_field)
-validation/     engine.py (ValidationEngine, ConfiguredRule, rule-type dispatch)
+validation/     engine.py (ValidationEngine, ConfiguredRule, rule-type dispatch), submission.py (cross-document rules)
 evidence_sufficiency.py (field evidence assessment policy and effective-value source types)
 ```
 
@@ -101,8 +105,8 @@ confirmed machine value, sufficiently evidenced machine value, or unavailable va
 Corrections reuse canonical normalization; no review mutates OCR confidence, evidence, or machine
 raw/normalized values.
 
-Review writes and submission-verification invalidation share one transaction. The client explicitly
-re-runs verification; OCR is not rerun. Each processing attempt increments `Document.processing_version`
+Review writes and submission-verification invalidation share one transaction. The web app re-runs
+verification automatically after the last review or an upload (`lib/use-auto-check.ts`, existing verify endpoint); OCR is not rerun. Each processing attempt increments `Document.processing_version`
 and conservatively marks current reviews stale before replacing derived extraction rows. Workflow
 rule changes invalidate verification but do not invalidate evidence reviews.
 
