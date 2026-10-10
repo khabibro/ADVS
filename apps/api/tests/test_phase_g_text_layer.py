@@ -76,6 +76,21 @@ def test_white_on_white_text_is_not_returned(tmp_path: Path) -> None:
     assert "not_drawn" in _layer(result)["reasons"]
 
 
+def test_white_text_over_other_visible_text_is_not_returned(tmp_path: Path) -> None:
+    """White text drawn across a line of real text still erases a few pixels of it, so the render
+    test alone calls it visible; its colour against the page behind it gives it away."""
+
+    def build(page: fitz.Page) -> None:
+        _text(page, 72, VISIBLE)
+        _text(page, 76, HIDDEN_DATE, color=(1, 1, 1))
+
+    result = _read(_pdf(tmp_path, build))
+    assert "2030-01-01" not in result.text
+    assert "2024-02-20" in result.text
+    assert _layer(result)["trusted"] is False
+    assert "2030-01-01" in _layer(result)["hidden_tokens"]
+
+
 def test_tiny_and_off_page_text_is_not_returned(tmp_path: Path) -> None:
     def build(page: fitz.Page) -> None:
         _text(page, 72, VISIBLE)
