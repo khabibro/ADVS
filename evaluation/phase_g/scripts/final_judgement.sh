@@ -11,9 +11,10 @@ VLM=/Users/admin/Documents/ADVS-vlm/research/vlm_poc
 CACHE=$EV/phase_d3/ocr_cache_holdout3
 mkdir -p "$OUT"
 echo "frozen VLM config: $(python3 -c "import json;print(json.load(open('$VLM/results/frozen.json'))['combined_sha256'])")" | tee "$OUT/session.log"
-echo "candidate commit: $(git -C /Users/admin/Documents/ADVS-gint rev-parse HEAD)  baseline commit: $(git -C /Users/admin/Documents/ADVS rev-parse HEAD)" | tee -a "$OUT/session.log"
-# 1. baseline (main)
-cd /Users/admin/Documents/ADVS/apps/api
+echo "candidate commit: $(git -C /Users/admin/Documents/ADVS-gint rev-parse HEAD)  baseline app commit: $(git -C /Users/admin/Documents/ADVS-gbase rev-parse HEAD)" | tee -a "$OUT/session.log"
+# 1. baseline: main's application code (95ef2da) run by the integrated harness (main's own harness has no hold-out 3 option;
+#    on development data this combination reproduces main's recorded numbers exactly)
+cd /Users/admin/Documents/ADVS-gbase/apps/api
 PYTHONPATH=. $PY ../../evaluation/harness/run_variants.py --corpus holdout3 --output "$OUT/H3_main_raw.json" --ocr-cache "$CACHE" --ocr-mode replay --label H3_main >/dev/null 2>"$OUT/H3_main.err"
 PYTHONPATH=. $PY ../../evaluation/harness/score_d2.py --raw "$OUT/H3_main_raw.json" --corpus holdout3 --out-json "$OUT/H3_main.json" --out-md "$OUT/H3_main_report.md" --label H3_main | tee -a "$OUT/session.log"
 # 2. candidate (phase-g/integrated)
