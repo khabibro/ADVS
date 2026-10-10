@@ -1,7 +1,7 @@
 import logging
 import uuid
 
-from fastapi import APIRouter, Depends, File, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, status
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session, selectinload
 
@@ -40,6 +40,7 @@ from app.schemas.api import (
     FieldRead,
     FieldReviewCreate,
     FieldReviewRead,
+    PageInfoRead,
     ProjectCreate,
     ProjectOverviewRead,
     ProjectRead,
@@ -60,6 +61,7 @@ from app.services.document_validation import (
     validate_effective_document,
 )
 from app.services.overview import ProjectOverviewService
+from app.services.pages import EvidenceBoxNormalizer, page_infos, render_page_png
 from app.services.processing import _ACTIVE_STATUSES, DocumentProcessingService
 from app.services.reviews import FieldReviewService, ReviewValidationError, StaleReviewError
 from app.services.storage.local import (
@@ -419,6 +421,7 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
     project = db.get(Project, submission.project_id) if submission else None
     decisions = decisions_for_project(db, project)
     by_name = {item.field_name: item for item in document.extracted_fields}
+    normalizer = EvidenceBoxNormalizer(document)
     for name in sorted(set(by_name) | set(current_reviews)):
         item = by_name.get(name)
         decision = decisions.get((document.id, name))
@@ -436,6 +439,8 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
                 needs_review=True,
             )
         )
+        for evidence in field_read.evidence or []:
+            evidence.normalized_box = normalizer.normalize(evidence.model_dump())
         field_read.evidence_assessment = effective.assessment.state
         field_read.assessment_reasons = list(effective.assessment.reasons)
         field_read.policy_version = effective.assessment.policy_version
@@ -536,6 +541,17 @@ def review_items(project_id: uuid.UUID, db: Session = Depends(get_db)):
     items = field_review_service.review_items(db, project_id)
     if items is None:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
+    normalizers: dict[uuid.UUID, EvidenceBoxNormalizer] = {}
+    for item in items:
+        for evidence in item.get("evidence") or []:
+            document_id = item["document_id"]
+            if document_id not in normalizers:
+                document = db.get(Document, document_id)
+                if document is None:
+                    break
+                normalizers[document_id] = EvidenceBoxNormalizer(document)
+            box = normalizers[document_id].normalize(evidence)
+            evidence["normalized_box"] = box.model_dump() if box else None
     return items
 
 
@@ -555,6 +571,33 @@ def upload_rules():
         mime_types=sorted({canonical_mime(f"x{ext}") for ext in ALLOWED_EXT}),
         max_size_mb=settings.max_upload_size_mb,
         max_pages=settings.max_pdf_pages,
+    )
+
+
+@router.get("/documents/{document_id}/pages", response_model=list[PageInfoRead])
+def document_pages(document_id: uuid.UUID, db: Session = Depends(get_db)):
+    document = db.get(Document, document_id)
+    if document is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Document not found", 404)
+    try:
+        return page_infos(document)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Document pages unavailable", 404) from exc
+
+
+@router.get("/documents/{document_id}/pages/{page_number}/image")
+def document_page_image(document_id: uuid.UUID, page_number: int, db: Session = Depends(get_db)):
+    document = db.get(Document, document_id)
+    if document is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Document not found", 404)
+    try:
+        png = render_page_png(document, page_number)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Document page unavailable", 404) from exc
+    if png is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Page not found", 404)
+    return Response(
+        content=png, media_type="image/png", headers={"Cache-Control": "private, max-age=300"}
     )
 
 
