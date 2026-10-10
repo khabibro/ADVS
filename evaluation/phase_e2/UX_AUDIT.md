@@ -47,3 +47,46 @@ Korean status labels, plain disclaimer wording, no raw enums, retry on load erro
 
 ## 4. Fix order
 AC-1…AC-8 and UX-1, UX-2 first (they share one API addition: the project overview), then UX-4…UX-8, UX-9, UX-10, UX-11, then the rest, then tests and accessibility.
+
+## 5. Resolution at the end of Part A (2026-10-10)
+Tests named below are in `apps/web/e2e/ui-flows.spec.ts` (E2E), `apps/web/src/**/*.test.ts(x)` (unit) and `apps/api/tests/test_phase_e2_*.py` (API).
+
+| # | Result | How / evidence |
+|---|---|---|
+| AC-1 row state | **fixed** | `GET /projects/{id}/overview` returns `requirements[].state`; the row shows it. E2E "every screen shows exactly what the API decided" |
+| AC-2 counts | **fixed** | `counts.required_ok/required_total` from the API |
+| AC-3 review count | **fixed** | `counts.review_open/review_done` (progress "3 / 7 완료") |
+| AC-4 next step | **fixed** | `next_step` code from the API; the 4-step bar is gone |
+| AC-5 "점검 전" | **fixed** | `check_state`; the check re-runs by itself (`use-auto-check`), E2E D6 |
+| AC-6 duplicates inferred | **fixed** | the screen shows only API issues and notices; the same finding is reported once by the API (`_unique`) |
+| AC-7 values on issues | **fixed** | `issues[].value/related_value/reference_date/expected_value/max_age_days`; no extra requests |
+| AC-8 allow-list | **fixed** | `GET /upload-rules`; E2E "a photo (JPG) is accepted" |
+| AC-9 list | **fixed** | `GET /project-summaries` on the list (unit + E2E) |
+| AC-10 per-document chip | **fixed** | labelled "이 서류 자체 점검"; submission result is the banner |
+| AC-11 typo | **fixed** | |
+| UX-1 manual re-check | **fixed** | E2E D6: Enter ×4, banner turns 제출 가능, "방금 확인 필요 → 제출 가능" |
+| UX-2 banner | **fixed** | status, sentence with the API's N, next step, 점검 기준일 with its explanation |
+| UX-3 empty state | **fixed** | an untouched submission shows "필요한 서류 N종을 업로드해 주세요" and no check/review panels (`U0_empty_submission.png`) |
+| UX-4 row upload | **fixed** | per-row 업로드 / 새 서류로 교체; E2E D8; a file the backend recognises as another type says so |
+| UX-5 processing | **fixed** | 업로드 중 → 분석 중 with elapsed seconds and the expected time (`U1_processing.png`) |
+| UX-6 failure copy | **fixed** | one cause-specific message with what to do; E2E "a file the backend cannot read…" |
+| UX-7 repeated issues | **fixed** | issues once, grouped by severity; review items only in the review list |
+| UX-8 issue text | **fixed** | what is wrong · document and field · 해결 방법 · 근거 보기 link; unit test fails if an issue code has no Korean text or fix |
+| UX-9 evidence | **fixed** | page image with highlighted boxes; the review list crops the original (label and value) |
+| UX-10 badges | **fixed** | 디지털 원본 / 자동 확인 — reason / 확인 필요 / 담당자 확인 / 담당자 수정; fields no rule uses are "참고 항목" |
+| UX-11 review | **fixed** | progress, Enter to confirm, 값 수정 (type, Enter, Esc), 판단 불가, focus moves to the next item |
+| UX-12 date format | **partly** | the date is shown in Korean format with its explanation; the native date picker inside "날짜를 바꿔 다시 점검하기" follows the browser's locale |
+| UX-13 multi-document PDF | **covered, not separately tested** | the row state comes from the API after the automatic check; the F13 file was not re-run end to end |
+| UX-14 unknown file | **fixed** | "확인이 필요한 파일" with the reason; the missing requirement row says 미제출 (E2E D5) |
+| UX-15 network error | **fixed** | "네트워크 연결을 확인하고 다시 시도해 주세요" |
+| UX-16 mobile | **partly** | file names wrap, no horizontal scroll (E2E at 390 px); the page is still long with four review cards |
+| UX-17 list | **fixed** | |
+| UX-18 accessibility | **fixed** | axe (wcag2a/2aa/21a/21aa): 0 serious or critical violations on list, new submission, D1, D2, D5, D6 and a document page at desktop width; list, D6, D2 at 390 px |
+| UX-19 admin, UX-20 reviewer queue, UX-21 history | **B** | Part B (after the midterm) |
+
+### Found while building Part A (not in the audit above)
+- **SQLite lock:** polling the overview while a document was analysed made `POST /documents/{id}/process` fail with "database is locked" (the upload E2E found it). The overview is now read-only (`get_latest(read_only=True)`) and SQLite runs in WAL mode with a 30 s busy timeout.
+- **Evidence crop** showed only the label; it now spans every evidence box (label and value).
+- **Duplicate error text** (message and detail identical) removed from the review item error.
+- **Check date:** after a review the API no longer knows the earlier date (the stored check is invalidated), so the screen remembers it for the automatic re-check.
+- `make demo-rehearsal` itself pointed at the wrong virtualenv path (never run through `make` before).
