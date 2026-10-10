@@ -174,14 +174,21 @@ function FieldRow({
           </span>
         </span>
         <span className={`mt-1 block break-all ${secondary ? "text-sm" : "text-lg font-bold"}`}>
-          {value ?? <span className="text-base font-normal text-amber-900">확인된 값이 없습니다</span>}
+          {value ?? <span className="text-base font-normal text-amber-900">아직 확인된 값이 없습니다</span>}
         </span>
+        {!value && field.normalized_value ? (
+          <span className="mt-0.5 block text-sm">
+            자동으로 읽은 값(확인 전): <span className="font-semibold">{field.normalized_value}</span>
+          </span>
+        ) : null}
         {source.detail ? <span className="mt-1 block text-sm text-amber-950">{source.detail}</span> : null}
       </button>
       {selected && evidence ? (
         <p className="mt-2 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
           {evidence.page_number}페이지 · {evidence.source_kind === "embedded_pdf_text" ? "PDF 내장 텍스트" : "인식한 글자"}:{" "}
-          <span className="whitespace-pre-wrap break-words text-foreground">{evidence.source_text}</span>
+          <span className="whitespace-pre-wrap break-words text-foreground">
+            {(field.evidence ?? []).map((e) => e.source_text).join(" ")}
+          </span>
         </p>
       ) : null}
     </li>
