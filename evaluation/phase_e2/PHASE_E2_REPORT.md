@@ -11,7 +11,7 @@ Branch `phase-e2/uiux` → merged into `main` with `--no-ff`; tag **`midterm-dem
 Before screenshots are the v1 screens; after screenshots are the v2 screens (`docs/midterm/screenshots_v2/before|after/`, also at 1920×1080 and 390 px).
 | Area | Change | Before → after |
 |---|---|---|
-| Result screen | Status banner: label, one sentence with the API's N ("아래 1개 항목을 보완해 주세요"), next step, 점검 기준일 with its explanation; no "(공식 승인 아님)" omitted on 제출 가능 | `before/D2_workspace.png` → `after/1280x720/D2_workspace.png` |
+| Result screen | Status banner: label, one sentence with the API's N ("아래 1개 항목을 보완해 주세요"), next step, 점검 기준일 with its explanation; 제출 가능 always says "(공식 승인 아님)" | `before/D2_workspace.png` → `after/1280x720/D2_workspace.png` |
 | Requirement checklist | One row per document, state from the API (제출됨 · 확인 완료 / 보완 필요 / 확인 필요 / 미제출 / 분석 중 …), file names, the issues for that row, upload or replace in the row | `before/D8_workspace.png` → `after/1280x720/D8_workspace.png` |
 | Issues | Grouped by severity: what is wrong with the real values, which document and field, how to fix, link to the evidence | `before/D3_workspace.png` → `after/1280x720/D3_workspace.png` |
 | Evidence | Document page: the original next to the fields, boxes outlined, click a field or a box; source badges (디지털 원본 / 자동 확인 — reason / 확인 필요 / 담당자 확인 / 담당자 수정); fields no rule uses are "참고 항목" | `before/D6_document_detail.png` → `after/1280x720/D6_document_detail.png` |
@@ -63,7 +63,7 @@ The rehearsal now also compares the overview with the check for every scenario, 
 ## 6. Tags
 - **`midterm-demo-v2`** — Part A (this branch merged into `main`).
 - **`midterm-demo-2026-10-14`** — v1, unchanged.
-Present from v2 if you want the clearer screens; present from v1 (`git checkout midterm-demo-2026-10-14`, script `DEMO_SCRIPT_v1.md`) if you prefer the version rehearsed on 2026-10-10 morning. Both pass their rehearsal.
+Present from v2 if you want the clearer screens; present from v1 (`git checkout midterm-demo-2026-10-14`, script `DEMO_SCRIPT_v1.md`) if you prefer the version already rehearsed in Phase E. Both pass their rehearsal.
 
 ## 7. Git identity used
 - **Author of every commit:** `Munira <munira@knu.ac.kr>` (repository-local config); **pushing account:** `munira117` via the SSH alias `github-munira` (`ssh -T` greeted munira117; pushes were accepted).
