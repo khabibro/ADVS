@@ -418,9 +418,12 @@ def _right_associated(label: OCRLine, value: OCRLine) -> bool:
         return False
     overlap = min(a.y + a.height, b.y + b.height) - max(a.y, b.y)
     gap = b.x - (a.x + a.width)
-    # detector boxes of neighbouring cells may overlap slightly at their margins
+    # detector boxes of neighbouring cells may overlap slightly at their margins; a value cell that
+    # begins with the label's own closing bracket ("법인명(단체명)" + "):주식회사...") overlaps by
+    # that bracket as well
+    tolerance = 1.0 if value.text.lstrip().startswith(")") else 0.5
     return overlap >= max(a.height, b.height) * 0.5 and (
-        -0.5 * min(a.height, b.height) <= gap <= 12 * min(a.height, b.height)
+        -tolerance * min(a.height, b.height) <= gap <= 12 * min(a.height, b.height)
     )
 
 

@@ -64,6 +64,22 @@ _OCR_FAILURE_HINT = "ocr_failure"
 _PROVIDER_CACHE: dict[tuple, object] = {}
 
 
+_RED_INK_MIN_RATIO = 0.003  # share of red-dominant pixels in a crop that counts as a stamp
+
+
+def has_red_ink(image: Image.Image) -> bool:
+    """True when a noticeable share of the crop is red ink (a seal or stamp): pixels whose red
+    channel exceeds both other channels by a wide margin."""
+    from PIL import ImageChops
+
+    red, green, blue = image.convert("RGB").split()
+    ink = ImageChops.subtract(red, ImageChops.lighter(green, blue)).point(
+        lambda value: 255 if value > 60 else 0
+    )
+    pixels = image.width * image.height
+    return pixels > 0 and ink.histogram()[255] / pixels >= _RED_INK_MIN_RATIO
+
+
 class OCRProvider(ABC):
     @abstractmethod
     async def extract_document(
@@ -335,7 +351,7 @@ class PaddleOCRProvider(OCRProvider):
                 if not page_requests:
                     continue
                 with Image.open(image_path) as image:
-                    page_image = image.convert("L")
+                    page_image = image.convert("RGB")
                 for request in page_requests:
                     readings.append(await self._read_region(page_image, request))
         except OCRProviderError:
@@ -359,7 +375,14 @@ class PaddleOCRProvider(OCRProvider):
         )
         if right - left < 4 or bottom - top < 4:
             return empty
-        crop = ImageOps.autocontrast(page_image.crop((left, top, right, bottom)), cutoff=2)
+        rgb_crop = page_image.convert("RGB").crop((left, top, right, bottom))
+        stamp = has_red_ink(rgb_crop)
+        # Stamp-aware reading: where red ink (seal / stamp) overlaps the value, read the red channel,
+        # in which red ink is bright and black text stays dark. It only changes how this one region
+        # is rendered for the recogniser; it adds no evidence and confirms nothing by itself.
+        gray = rgb_crop.getchannel("R") if stamp else rgb_crop.convert("L")
+        preprocess = self._SECOND_PASS_PREPROCESS + ("+red-suppressed" if stamp else "")
+        crop = ImageOps.autocontrast(gray, cutoff=2)
         crop = crop.resize(
             (int(crop.width * self._SECOND_PASS_SCALE), int(crop.height * self._SECOND_PASS_SCALE)),
             Image.Resampling.LANCZOS,
@@ -387,7 +410,7 @@ class PaddleOCRProvider(OCRProvider):
             request.page_number,
             " ".join(line.text for line in lines),
             min(confidences) if confidences else None,
-            self._SECOND_PASS_PREPROCESS,
+            preprocess,
         )
 
     async def _retry_page_with_orientation(self, page: OCRPage, image_path: Path) -> OCRPage:

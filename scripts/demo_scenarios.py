@@ -42,7 +42,7 @@ class Scenario:
     workflow: str  # business | student
     expect_status: str
     expect_issues: tuple[str, ...] = ()  # issue codes that must be present
-    review: bool = False  # D6: reviewer confirms the remaining fields
+    review: bool = False  # D9: reviewer confirms the remaining fields
 
 
 SCENARIOS: tuple[Scenario, ...] = (
@@ -56,11 +56,16 @@ SCENARIOS: tuple[Scenario, ...] = (
     # certificate, so the submission is held for review (확인 필요), never 제출 가능.
     Scenario("D5", "D5 유사 문서 (지방세 납세증명서)", "B11", "digital", "business",
              "REVIEW_REQUIRED", ("UNCLASSIFIED_DOCUMENT_REQUIRES_REVIEW",)),
-    Scenario("D6", "D6 스캔본 제출 + 사람 확인", "B01", "scanned", "business", "REVIEW_REQUIRED",
-             review=True),
+    # Since D3 the clean scan of B01 is decided without a person: every value has an independent
+    # confirmation (another document, check digit, internal arithmetic). It stays a scan example.
+    Scenario("D6", "D6 스캔본 제출 (자동 확인)", "B01", "scanned", "business", "READY"),
     Scenario("D7", "D7 정상 제출 (학생)", "S01", "digital", "student", "READY"),
     Scenario("D8", "D8 필수 서류 누락", "B08", "digital", "business", "NEEDS_CORRECTION",
              ("MISSING_REQUIRED_DOCUMENT",)),
+    # A scanned student file keeps values with no independent confirmation (dates, student number):
+    # a person confirms them against the original, then it becomes 제출 가능.
+    Scenario("D9", "D9 스캔본 제출 + 사람 확인 (학생)", "S01", "scanned", "student", "REVIEW_REQUIRED",
+             review=True),
 )
 
 
@@ -170,7 +175,7 @@ class DemoClient:
 def preload() -> int:
     client = DemoClient()
     try:
-        # seed.py creates an empty "Demo verification project"; keep the demo list to D1-D8.
+        # seed.py creates an empty "Demo verification project"; keep the demo list to D1-D9.
         for project in client.http.get("/projects").json():
             if not project["name"][:2].startswith("D") or not project["name"][1:2].isdigit():
                 client.delete_project(project["id"])

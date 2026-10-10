@@ -65,9 +65,9 @@ if (process.env.FLOW === "1") {
     return p;
   };
 
-  // Review flow on a fresh copy of D6: confirm with the keyboard; the status updates by itself.
+  // Review flow on a fresh copy of D9: confirm with the keyboard; the status updates by itself.
   const py = path.join(root, "apps/api/.venv312/bin/python");
-  const d6 = execFileSync(py, ["-I", path.join(root, "scripts/demo_scenarios.py"), "run", "D6", "[캡처] D6 사람 확인"], { encoding: "utf8", env: { ...process.env, ADVS_API_URL: api } }).trim();
+  const d6 = execFileSync(py, ["-I", path.join(root, "scripts/demo_scenarios.py"), "run", "D9", "[캡처] D9 사람 확인"], { encoding: "utf8", env: { ...process.env, ADVS_API_URL: api } }).trim();
   created.push(d6);
   await go(`/projects/${d6}`);
   await shot("R1_review_needed");

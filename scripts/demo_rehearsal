@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Rehearse the midterm demo through the real API (run this on the morning of the presentation).
 
-    scripts/demo_rehearsal            # reset + pre-load, then re-run D1-D8 live and assert
+    scripts/demo_rehearsal            # reset + pre-load, then re-run D1-D9 live and assert
     scripts/demo_rehearsal --no-reset # skip the reset (API must already be running)
 
 Every scenario is uploaded as a temporary "[리허설]" project, processed by the real pipeline,
@@ -27,6 +27,7 @@ DOC_TYPES = {
     "D1": {"BUSINESS_REGISTRATION_CERTIFICATE", "SME_CONFIRMATION_CERTIFICATE",
            "NATIONAL_TAX_PAYMENT_CERTIFICATE", "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE"},
     "D7": {"ENROLLMENT_CERTIFICATE", "TRANSCRIPT"},
+    "D9": {"ENROLLMENT_CERTIFICATE", "TRANSCRIPT"},
 }
 
 
@@ -76,6 +77,13 @@ def check(scn: Scenario, out: Outcome, client: DemoClient) -> list[str]:
         if issue is None or issue["document_type"] != "BUSINESS_REGISTRATION_CERTIFICATE":
             fails.append("missing 사업자등록증 not reported")
     fails += check_overview(scn, out, client)
+    if scn.code == "D6":
+        decided = [f for d in out.documents for f in d["extracted_fields"]
+                   if (f.get("auto_acceptance") or {}).get("accepted")]
+        if not decided:
+            fails.append("D6: no field was auto-accepted (the scan should be decided without a person)")
+        if out.review_items and any(i["queue_status"] == "PENDING" for i in out.review_items):
+            fails.append("D6: a reviewer item is still open on a READY scan")
     if scn.review:
         accepted = [f for d in out.documents for f in d["extracted_fields"]
                     if (f.get("auto_acceptance") or {}).get("accepted")]

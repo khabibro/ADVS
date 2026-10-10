@@ -114,7 +114,7 @@ reset_state() {
   (cd "$ROOT/apps/api" && PYTHONPATH="$ROOT:." "$PY" "$ROOT/scripts/seed.py")
   start_api
   wait_ocr_ready
-  say "pre-loading demo submissions D1-D8 (OCR for D6 takes a little while)"
+  say "pre-loading demo submissions D1-D9 (OCR for D6 and D9 takes a little while)"
   "$PY" -I "$ROOT/scripts/demo_scenarios.py" preload
 }
 

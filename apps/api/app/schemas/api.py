@@ -127,6 +127,10 @@ class AutoAcceptanceRead(BaseModel):
     corroborating_document_ids: list[uuid.UUID] = []
     second_pass_value: str | None = None
     reason: str | None = None
+    robust: bool = False
+    repair_candidate: str | None = None
+    repair_provenance: str | None = None
+    confusion_table_version: str | None = None
 
 
 class FieldRead(BaseModel):
@@ -146,6 +150,9 @@ class FieldRead(BaseModel):
     effective_source: EffectiveValueSource | None = None
     current_review_decision: FieldReviewDecision | None = None
     auto_acceptance: AutoAcceptanceRead | None = None
+    # False = no active rule or required field of the workflow uses this field: it is shown as
+    # "informational, not verified" and never holds a submission in REVIEW_REQUIRED.
+    decision_relevant: bool = True
     # True when a rule of the project's workflow reads this field (so it can change the status).
     used_by_rules: bool = False
     model_config = ConfigDict(from_attributes=True)

@@ -16,6 +16,10 @@ S4  S3, or a second OCR pass of the field's region that agrees (fields with no c
 S5  S4 + the application's own values (project company name / applicant name) as an
     independent source, and a veto when they disagree
 S6  S5 + a disagreeing second pass vetoes any acceptance of a numeric field
+S8  S7 + internal confirmations from the document's own content (GPA arithmetic, date-pair
+    consistency, a date printed twice) -- see confirmations.py
+S9  S8 + decision-robust acceptance of a lone decision-driving value (every plausible misreading
+    leads to the same verification outcome)
 S7  S6 + a second pass that does not contain a name's value vetoes the acceptance of that name
     (a second pass never *accepts* a name -- rule 4 -- it can only contradict it)
 
@@ -37,12 +41,24 @@ import re
 import unicodedata
 import uuid
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
 from enum import StrEnum
 from typing import Any
 
 from app.core.domain import DocumentType
+from app.document_intelligence.candidate_repair import PROVENANCE, propose_repair
+from app.document_intelligence.confirmations import (
+    business_number_type_plausible,
+    date_pair,
+    gpa_arithmetic,
+    issue_date_box_for,
+    parse_iso,
+    printed_twice,
+    scale_confirmation,
+)
+from app.document_intelligence.decision_robust import RuleSpec, is_decision_robust
+from app.document_intelligence.internal_evidence import DocFacts
 from app.document_intelligence.normalization.field_normalizer import (
     DATE_RE,
     canonicalize_numeric_text,
@@ -51,6 +67,7 @@ from app.document_intelligence.normalization.field_normalizer import (
     normalize_date,
     strip_legal_entity_markers,
 )
+from app.document_intelligence.ocr_confusions import CONFUSION_TABLE_VERSION
 
 AUTO_ACCEPT_POLICY_VERSION = "auto-accept-v1"
 
@@ -64,6 +81,8 @@ class Strategy(StrEnum):
     S5 = "S5"
     S6 = "S6"
     S7 = "S7"
+    S8 = "S8"
+    S9 = "S9"
 
 
 @dataclass(frozen=True)
@@ -74,6 +93,8 @@ class Features:
     application: bool = False
     second_pass_veto: bool = False
     name_veto: bool = False
+    internal: bool = False  # D3-1..D3-4: confirmation from the document's own content
+    robust: bool = False  # D3-5: acceptance for the decision when every plausible misreading agrees
 
 
 STRATEGY_FEATURES: dict[Strategy, Features] = {
@@ -97,6 +118,25 @@ STRATEGY_FEATURES: dict[Strategy, Features] = {
         application=True,
         second_pass_veto=True,
         name_veto=True,
+    ),
+    Strategy.S8: Features(
+        validators=True,
+        corroboration=True,
+        second_pass=True,
+        application=True,
+        second_pass_veto=True,
+        name_veto=True,
+        internal=True,
+    ),
+    Strategy.S9: Features(
+        validators=True,
+        corroboration=True,
+        second_pass=True,
+        application=True,
+        second_pass_veto=True,
+        name_veto=True,
+        internal=True,
+        robust=True,
     ),
 }
 
@@ -258,6 +298,7 @@ class FieldInput:
     # Other values of the same kind printed on the same document (a transcript's per-semester
     # GPAs): a cumulative value must lie among them.
     peer_values: tuple[float, ...] = ()
+    facts: DocFacts | None = None  # what the document's own boxes say (internal_evidence.py)
 
 
 @dataclass(frozen=True)
@@ -267,6 +308,7 @@ class ProjectContext:
     reference_date: date | None = None
     issue_max_age_days: int | None = None  # the workflow's ISSUE_DATE_MAX_AGE, if configured
     gpa_threshold: float | None = None  # the workflow's GPA threshold, if configured
+    rules: tuple[RuleSpec, ...] = ()  # the workflow's active rules on decision-driving fields
 
 
 @dataclass(frozen=True)
@@ -279,6 +321,10 @@ class AutoDecision:
     corroborating_document_ids: tuple[uuid.UUID, ...] = ()
     second_pass_value: str | None = None
     reason: str | None = None  # why it was NOT accepted
+    robust: bool = False  # accepted for the decision only (every plausible misreading agrees)
+    repair_candidate: str | None = (
+        None  # D3-9: a proposed repair of a failed checksum (never applied)
+    )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -290,6 +336,12 @@ class AutoDecision:
             "corroborating_document_ids": [str(item) for item in self.corroborating_document_ids],
             "second_pass_value": self.second_pass_value,
             "reason": self.reason,
+            "robust": self.robust,
+            "repair_candidate": self.repair_candidate,
+            "repair_provenance": PROVENANCE if self.repair_candidate else None,
+            "confusion_table_version": CONFUSION_TABLE_VERSION
+            if self.robust or self.repair_candidate
+            else None,
         }
 
 
@@ -313,6 +365,11 @@ def _valid_format(item: FieldInput, index: _Index, context: ProjectContext) -> s
     if name == "business_registration_number":
         if not (len(value) == 10 and is_valid_business_number(value)):
             return "FORMAT_BRN_CHECKSUM"
+        if (
+            item.facts is not None
+            and business_number_type_plausible(value, item.facts.entity_type) is False
+        ):
+            return "BRN_TYPE_CODE_IMPLAUSIBLE"
         return None
     if name in ("issue_date", "valid_from", "valid_until"):
         try:
@@ -393,6 +450,35 @@ def _near_decision_boundary(item: FieldInput, context: ProjectContext) -> bool:
     return False
 
 
+ROBUST_FIELDS = frozenset({"gpa", "valid_from", "valid_until", "issue_date"})
+INTERNAL_FIELDS = frozenset({"gpa", "gpa_scale", "issue_date", "valid_from", "valid_until"})
+
+
+def _internal_verdict(item: FieldInput, index: _Index, context: ProjectContext):  # type: ignore[no-untyped-def]
+    """Confirmation from the document's own content (D3-1..D3-3); None when no rule applies."""
+    if item.field_name == "gpa":
+        return gpa_arithmetic(item.facts, float(item.value or 0))
+    if item.field_name == "gpa_scale":
+        return scale_confirmation(item.facts, item.value or "")
+
+    def sibling(name: str):  # type: ignore[no-untyped-def]
+        other = index.sibling(item.document_id, name)
+        return parse_iso(other.value) if other is not None else None
+
+    issue, start, end = sibling("issue_date"), sibling("valid_from"), sibling("valid_until")
+    if item.field_name in ("valid_from", "valid_until", "issue_date"):
+        pair = date_pair(item.document_type, issue, start, end)
+        if pair.state != "NONE":
+            return pair
+        if item.field_name == "valid_until" and end is not None and issue is None:
+            boxed = issue_date_box_for(item.document_type, item.facts, end)
+            if boxed.state != "NONE":
+                return boxed
+    if item.field_name == "issue_date":
+        return printed_twice(item.facts, item.value or "")
+    return None
+
+
 HAS_VALIDATOR = frozenset(
     {
         "business_registration_number",
@@ -438,10 +524,13 @@ def decide(
         if rule is None:
             decisions[key] = _no(strategy, "NO_RULE_FOR_FIELD")
             continue
-        if item.needs_review:
+        semantic = bool(item.extraction_method and "semantic" in item.extraction_method)
+        # An unlabelled issue date is an inference; only the document's own content may confirm it.
+        internal_only = features.internal and semantic and item.field_name in INTERNAL_FIELDS
+        if item.needs_review and not internal_only:
             decisions[key] = _no(strategy, "EXTRACTION_MARKED_FOR_REVIEW", rule.rule_id)
             continue
-        if item.extraction_method and "semantic" in item.extraction_method:
+        if semantic and not internal_only:
             decisions[key] = _no(strategy, "SEMANTIC_INFERENCE", rule.rule_id)
             continue
         if item.confidence is None or item.confidence < rule.floor:
@@ -458,7 +547,48 @@ def decide(
         if features.validators and item.field_name in HAS_VALIDATOR:
             problem = _valid_format(item, index, context)
             if problem:
-                decisions[key] = _no(strategy, problem, rule.rule_id)
+                decision = _no(strategy, problem, rule.rule_id)
+                if problem == "FORMAT_BRN_CHECKSUM" and features.internal:
+                    proposal = propose_repair(
+                        item.value,
+                        is_valid_business_number,
+                        (
+                            other.value
+                            for document_id, named in index.by_doc.items()
+                            if document_id != item.document_id
+                            for other in [named.get("business_registration_number")]
+                            if other is not None and other.value
+                        ),
+                    )
+                    if proposal is not None:
+                        decision = replace(decision, repair_candidate=proposal.value)
+                decisions[key] = decision
+                continue
+
+        if features.internal and item.field_name in INTERNAL_FIELDS:
+            verdict = _internal_verdict(item, index, context)
+            if (
+                verdict is not None
+                and verdict.state == "CONFIRMED"
+                and _near_decision_boundary(item, context)
+            ):
+                # internal confirmations are tolerance-based (a one-day shift still fits a
+                # profile), so they cannot pin a value that sits next to a decision boundary
+                decisions[key] = _no(strategy, "NEAR_DECISION_BOUNDARY", rule.rule_id)
+                continue
+            if verdict is not None and verdict.state == "CONFIRMED":
+                decisions[key] = AutoDecision(
+                    True,
+                    strategy.value,
+                    rule_id=f"{rule.rule_id}:{verdict.source.upper()}",
+                    sources=(verdict.source,),
+                )
+                continue
+            if verdict is not None and verdict.state == "MISMATCH":
+                decisions[key] = _no(strategy, f"{verdict.source.upper()}_MISMATCH", rule.rule_id)
+                continue
+            if internal_only:
+                decisions[key] = _no(strategy, "SEMANTIC_INFERENCE", rule.rule_id)
                 continue
 
         if not features.corroboration:
@@ -600,4 +730,27 @@ def _decide_corroborated(
             sources=("second_pass",),
             second_pass_value=second_value,
         )
+    if features.robust and item.field_name in ROBUST_FIELDS and not item.needs_review:
+        scale_item = index.sibling(item.document_id, "gpa_scale")
+        siblings = {
+            name: parse_iso(other.value)
+            for name in ("issue_date", "valid_from", "valid_until")
+            if (other := index.sibling(item.document_id, name)) is not None
+        }
+        if is_decision_robust(
+            list(context.rules),
+            context.reference_date,
+            item.field_name,
+            item.document_type,
+            item.value,
+            scale=float(scale_item.value) if scale_item and scale_item.value else None,
+            siblings=siblings,
+        ):
+            return AutoDecision(
+                True,
+                strategy.value,
+                rule_id=f"{rule.rule_id}:DECISION_ROBUST",
+                sources=("decision_robust",),
+                robust=True,
+            )
     return _no(strategy, "NO_INDEPENDENT_CONFIRMATION", rule.rule_id)
