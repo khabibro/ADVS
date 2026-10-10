@@ -16,7 +16,7 @@ import {
   useProjectInvalidation,
   useProjectOverview,
 } from "@/lib/queries";
-import { useAutoCheck, useStatusChange } from "@/lib/use-auto-check";
+import { rememberEvaluationDate, useAutoCheck, useStatusChange } from "@/lib/use-auto-check";
 import { formatDateTime } from "@/lib/presentation";
 import { queryKeys } from "@/lib/query-keys";
 import { api } from "@/services/api";
@@ -91,7 +91,10 @@ export function ProjectWorkspacePage({ projectId }: { projectId: string }) {
           changedFrom={changedFrom}
           checkError={verify.isError ? apiErrorMessage(verify.error, "verify") : null}
           checking={verify.isPending}
-          onRecheck={(date) => verify.mutate(date)}
+          onRecheck={(date) => {
+            rememberEvaluationDate(projectId, date);
+            verify.mutate(date);
+          }}
           overview={overview}
         />
 
