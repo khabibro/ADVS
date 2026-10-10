@@ -203,3 +203,19 @@ def test_document_fields_say_whether_a_rule_uses_them(client: TestClient, db_ses
     assert fields["business_registration_number"] is True
     assert fields["valid_until"] is True
     assert fields["fax_number"] is False
+
+
+def test_project_summaries_match_the_overview(client: TestClient, db_session) -> None:
+    project, submission, _ = _business_project(db_session)
+    _both_valid(db_session, submission, brn_sme="9999999999")
+    _verify(client, project.id)
+    overview = _overview(client, project.id)
+    summary = next(
+        s
+        for s in client.get("/api/v1/project-summaries").json()
+        if s["project_id"] == str(project.id)
+    )
+    assert summary["status"] == overview["status"] == "NEEDS_CORRECTION"
+    assert summary["status_item_count"] == overview["status_item_count"] == 1
+    assert summary["next_step"] == overview["next_step"]
+    assert summary["required_total"] == overview["counts"]["required_total"]

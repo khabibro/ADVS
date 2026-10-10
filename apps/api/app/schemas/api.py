@@ -380,3 +380,16 @@ class PageInfoRead(BaseModel):
     page_number: int
     width: int
     height: int
+
+
+class ProjectSummaryRead(BaseModel):
+    """One line per submission for the list screen (same source as the overview)."""
+
+    project_id: uuid.UUID
+    check_state: CheckState
+    status: OverallStatus | None
+    status_item_count: int | None
+    next_step: NextStep
+    required_ok: int
+    required_total: int
+    review_open: int
