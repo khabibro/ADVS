@@ -75,6 +75,7 @@ def check(scn: Scenario, out: Outcome, client: DemoClient) -> list[str]:
         issue = next((i for i in out.issues if i["code"] == "MISSING_REQUIRED_DOCUMENT"), None)
         if issue is None or issue["document_type"] != "BUSINESS_REGISTRATION_CERTIFICATE":
             fails.append("missing 사업자등록증 not reported")
+    fails += check_overview(scn, out, client)
     if scn.review:
         accepted = [f for d in out.documents for f in d["extracted_fields"]
                     if (f.get("auto_acceptance") or {}).get("accepted")]
@@ -83,7 +84,19 @@ def check(scn: Scenario, out: Outcome, client: DemoClient) -> list[str]:
             fails.append("no field was auto-accepted")
         if not pending:
             fails.append("nothing left for the reviewer")
-        confirmed = client.confirm_open_items(out)
+        before = client.overview(out.project_id)
+        if before["next_step"] != "REVIEW_FIELDS" or before["counts"]["review_open"] != len(pending):
+            fails.append(f"overview before review: {before['next_step']} / {before['counts']['review_open']}")
+        confirmed = client.confirm_open_items(out, recheck=False)
+        # What the screen sees right after the last confirmation: a stale check, nothing left to
+        # review, so it re-runs the check by itself (no manual button).
+        stale = client.overview(out.project_id)
+        if stale["check_state"] != "NOT_CURRENT" or stale["next_step"] != "RUN_CHECK":
+            fails.append(f"after review the overview says {stale['check_state']} / {stale['next_step']}")
+        client.verify(out)
+        after = client.overview(out.project_id)
+        if after["status"] != "READY" or after["next_step"] != "DONE" or after["counts"]["review_done"] != confirmed:
+            fails.append(f"final overview {after['status']} / {after['next_step']} / done {after['counts']['review_done']}")
         if confirmed == 0 or out.status != "READY":
             fails.append(f"after {confirmed} confirmations status is {out.status}, expected READY")
         out.review_items = [i for i in out.review_items if i["queue_status"] == "PENDING"]
@@ -92,9 +105,50 @@ def check(scn: Scenario, out: Outcome, client: DemoClient) -> list[str]:
     return fails
 
 
+def check_overview(scn: Scenario, out: Outcome, client: DemoClient) -> list[str]:
+    """The overview the web app renders must agree with the check it summarises."""
+    fails: list[str] = []
+    ov = client.overview(out.project_id)
+    if ov["check_state"] != "CURRENT" or ov["status"] != out.status:
+        fails.append(f"overview {ov['check_state']}/{ov['status']} vs check {out.status}")
+    required = [r for r in ov["requirements"] if r["required"]]
+    if ov["counts"]["required_ok"] != sum(1 for r in required if r["state"] == "OK"):
+        fails.append("overview required_ok does not match its requirement rows")
+    if scn.expect_status == "READY" and (ov["next_step"] != "DONE" or ov["status_item_count"] != 0):
+        fails.append(f"READY overview next_step {ov['next_step']} count {ov['status_item_count']}")
+    if scn.code == "D2":
+        issue = next((i for i in ov["issues"] if i["code"] == "EXPIRED_DOCUMENT"), None)
+        if not issue or issue["value"] != "2026-08-31" or issue["reference_date"] != "2026-10-05":
+            fails.append(f"D2 issue values {issue and (issue['value'], issue['reference_date'])}")
+    if scn.code == "D3":
+        issue = next((i for i in ov["issues"] if i["code"] == "INFORMATION_MISMATCH"), None)
+        if not issue or not issue["value"] or not issue["related_value"] or issue["value"] == issue["related_value"]:
+            fails.append("D3 mismatch does not quote two different values")
+    if scn.code == "D5" and not any(o["reason"] == "UNKNOWN_TYPE" for o in ov["other_documents"]):
+        fails.append("D5 unrecognised file not listed as other document")
+    if scn.code == "D8":
+        br = next(r for r in ov["requirements"] if r["document_type"] == "BUSINESS_REGISTRATION_CERTIFICATE")
+        if br["state"] != "MISSING" or ov["next_step"] != "UPLOAD_DOCUMENTS":
+            fails.append(f"D8 row {br['state']} next_step {ov['next_step']}")
+    return fails
+
+
+def ui_smoke() -> tuple[bool, str]:
+    """Browser check that every demo screen shows what the API decided (needs the web app)."""
+    web = os.environ.get("WEB_PORT", "3000")
+    env = {**os.environ, "WEB_URL": f"http://localhost:{web}",
+           "API_URL": os.environ.get("ADVS_API_URL", "http://localhost:8000/api/v1")}
+    cmd = ["pnpm", "--filter", "@advs/web", "exec", "playwright", "test", "e2e/ui-flows.spec.ts",
+           "-g", "equal the overview|no raw enum|list shows the same|projector sizes", "--reporter=line"]
+    result = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True, text=True)
+    last = (result.stdout.strip().splitlines() or [""])[-1]
+    return result.returncode == 0, last
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--no-reset", action="store_true")
+    parser.add_argument("--no-ui", action="store_true", help="skip the browser smoke test")
     args = parser.parse_args()
 
     if not args.no_reset:
@@ -137,6 +191,10 @@ def main() -> int:
         except Exception:
             ok = False
         rows.append((name, f"{name} app reachable ({url})", "PASS" if ok else "FAIL", "-", ""))
+
+    if not args.no_ui:
+        ok, detail = ui_smoke()
+        rows.append(("ui", f"browser: screens equal the API ({detail})", "PASS" if ok else "FAIL", "-", ""))
 
     print()
     print(f"{'#':<6}{'Result':<7}{'Time':>8}  Scenario")

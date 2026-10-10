@@ -134,8 +134,17 @@ class DemoClient:
             self.http.get(f"/documents/{d['id']}").raise_for_status().json() for d in out.documents
         ]
 
-    def confirm_open_items(self, out: Outcome, reviewer: str = "데모 검토자") -> int:
-        """Reviewer confirms every field still waiting for a human (what the screen's 확인 button does)."""
+    def overview(self, project_id: str) -> dict[str, Any]:
+        """The read model the web app renders (GET /projects/{id}/overview)."""
+        return self.http.get(f"/projects/{project_id}/overview").raise_for_status().json()
+
+    def confirm_open_items(
+        self, out: Outcome, reviewer: str = "데모 검토자", *, recheck: bool = True
+    ) -> int:
+        """Reviewer confirms every field still waiting for a human (what the screen's 확인 button does).
+
+        With ``recheck`` the check is re-run afterwards, which the web app now does by itself.
+        """
         confirmed = 0
         for item in out.review_items:
             if item["queue_status"] != "PENDING" or item["machine_normalized_value"] is None:
@@ -150,7 +159,8 @@ class DemoClient:
                 },
             ).raise_for_status()
             confirmed += 1
-        self.verify(out)
+        if recheck:
+            self.verify(out)
         return confirmed
 
     def delete_project(self, project_id: str) -> None:
