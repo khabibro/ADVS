@@ -89,7 +89,7 @@ describe("target mismatch notice", () => {
     expect(targetMismatchNotice("중소기업확인서", { document_type: "BUSINESS_REGISTRATION_CERTIFICATE" }, "사업자등록증")).toContain(
       "사업자등록증(으)로 인식",
     );
-    expect(targetMismatchNotice("중소기업확인서", { document_type: "UNKNOWN" }, "문서 종류 확인 필요")).toContain(
+    expect(targetMismatchNotice("중소기업확인서", { document_type: "UNKNOWN" }, "서류 종류 확인 필요")).toContain(
       "확인할 수 없어",
     );
   });
