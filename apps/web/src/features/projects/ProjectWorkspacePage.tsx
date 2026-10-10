@@ -8,7 +8,7 @@ import { ErrorState, SkeletonRows } from "@/components/page-state";
 import { IssueList } from "@/features/overview/IssueList";
 import { RequirementChecklist } from "@/features/overview/RequirementChecklist";
 import { StatusBanner } from "@/features/overview/StatusBanner";
-import { ReviewSection } from "@/features/reviews/ReviewSection";
+import { ReviewPanel } from "@/features/reviews/ReviewPanel";
 import { UploadProvider } from "@/features/upload/UploadProvider";
 import { UploadDropzone, UploadNotices, UploadQueueList } from "@/features/upload/UploadParts";
 import { apiErrorMessage } from "@/lib/api-error";
@@ -32,10 +32,6 @@ export function ProjectWorkspacePage({ projectId }: { projectId: string }) {
     queryFn: () => api.project(projectId),
   });
   const overviewQuery = useProjectOverview(projectId);
-  const verificationQuery = useQuery({
-    queryKey: queryKeys.verification(projectId),
-    queryFn: () => api.verification(projectId),
-  });
   const reviewItemsQuery = useQuery({
     queryKey: queryKeys.reviewItems(projectId),
     queryFn: () => api.reviewItems(projectId),
@@ -52,7 +48,7 @@ export function ProjectWorkspacePage({ projectId }: { projectId: string }) {
     return names;
   }, [projectQuery.data]);
 
-  const queries = [projectQuery, overviewQuery, verificationQuery, reviewItemsQuery];
+  const queries = [projectQuery, overviewQuery, reviewItemsQuery];
   const firstError = queries.find((query) => query.isError);
   if (firstError) {
     return (
@@ -120,13 +116,12 @@ export function ProjectWorkspacePage({ projectId }: { projectId: string }) {
 
         <IssueList issues={overview.issues} notices={overview.notices} projectId={projectId} />
 
-        <div className="border-t border-border pt-8">
-          <ReviewSection
-            projectId={projectId}
-            reviewItems={reviewItemsQuery.data!}
-            verification={verificationQuery.data!}
-          />
-        </div>
+        <ReviewPanel
+          done={overview.counts.review_done}
+          items={reviewItemsQuery.data!}
+          open={overview.counts.review_open}
+          projectId={projectId}
+        />
 
         <p className="flex items-start gap-2 rounded-lg bg-muted px-4 py-3 text-xs leading-5 text-muted-foreground">
           <Info aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
