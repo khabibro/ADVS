@@ -25,3 +25,10 @@ The retained reports are in `evaluation/reports/`:
 All legacy datasets, scorers, reports, caches, and scratch results were moved
 out of the repository to `~/ADVS_archive_20261004/`. The archive README lists
 the original paths and the recovery location for each group.
+
+## Phase reports and write-ups
+
+- `phase_c/`, `phase_d/`, `phase_d2/`: scored runs, injection results and reports of the extraction, auto-acceptance and safety phases (`PHASE_D_REPORT.md`, `PHASE_D2_REPORT.md`).
+- `phase_e/`, `phase_e2/`: demo readiness and the interface (`PHASE_E_REPORT.md`, `PHASE_E2_REPORT.md`, `UX_AUDIT.md`).
+- `phase_f/`: technical audit, approach evaluation (existing OCR, PaddleOCR-VL, hybrids), evaluation protocol with denominators and uncertainty, and two reproducible scripts (`scripts/denominators.py`, `scripts/text_layer_probe.py`).
+- Hold-out set 3 is unseen and reserved for the single D3 judgement; do not run or open it.
