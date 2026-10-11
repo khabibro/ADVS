@@ -243,6 +243,9 @@ text(s, 0.9, 5.15, 11.5, 1.5, [
     {"t": "팀 올림조노바 무니라 · 굴로모프 하비빌로", "size": 22, "color": WHITE},
     {"t": "멘토 이현지 (플래시21)   지도교수 김동균", "size": 22, "color": WHITE, "space": 6},
     {"t": "2026년 10월 15일", "size": 20, "color": RGBColor(0xC7, 0xD3, 0xE8), "space": 6}])
+lk = text(s, 0.9, 6.55, 11.5, 0.45, [{"t": "GitHub: github.com/khabibro/ADVS", "size": 16, "color": WHITE}])
+lk.click_action.hyperlink.address = "https://github.com/khabibro/ADVS"
+lk.text_frame.paragraphs[0].runs[0].font.underline = True
 src("Team, mentor, professor names; date", "docs/midterm/slides_sources.md (v3 deck), course brief", "slide 1 row")
 notes(s, 10, True, "ADVS는 행정 서류를 제출하기 전에 점검하는 시스템입니다. 오늘은 만든 것, 결과, 그리고 어떻게 달성했는지를 화면으로 보여 드리겠습니다.",
       "ADVS checks administrative documents before submission; today: what we built, the results and how we got them.")
@@ -666,7 +669,13 @@ s = new_slide(None, number=True)
 box(s, 0, 0, SW, SH, fill=NAVY, shape=MSO_SHAPE.RECTANGLE)
 text(s, 0.9, 2.2, 11.5, 1.2, [{"t": "감사합니다", "size": 54, "bold": True, "color": WHITE}])
 text(s, 0.9, 3.7, 11.5, 0.8, [{"t": "질문 · Q&A", "size": 32, "color": RGBColor(0xC7, 0xD3, 0xE8)}])
-text(s, 0.9, 5.6, 11.5, 0.5, [{"t": "올림조노바 무니라 · 굴로모프 하비빌로", "size": 20, "color": WHITE}])
+text(s, 0.9, 5.9, 8.0, 0.5, [{"t": "올림조노바 무니라 · 굴로모프 하비빌로", "size": 20, "color": WHITE}])
+box(s, 9.55, 1.9, 3.3, 3.3, fill=WHITE, shape=MSO_SHAPE.RECTANGLE)
+s.shapes.add_picture(str(TMP / "qr_github.png"), Inches(9.65), Inches(2.0), width=Inches(3.1))
+lk = text(s, 0.9, 4.75, 8.4, 0.6, [{"t": "github.com/khabibro/ADVS", "size": 28, "bold": True, "color": WHITE}])
+lk.click_action.hyperlink.address = "https://github.com/khabibro/ADVS"
+lk.text_frame.paragraphs[0].runs[0].font.underline = True
+src("GitHub repository link and QR code (public repository)", "https://github.com/khabibro/ADVS", "owner-confirmed 2026-10-11")
 text(s, 11.9, 7.05, 1.0, 0.32, [{"t": str(count), "size": 12, "color": RGBColor(0xC7, 0xD3, 0xE8), "align": PP_ALIGN.RIGHT}])
 notes(s, 10, True, "질문 받겠습니다. (준비한 답변) 1) 실제 문서에서도 되나요? 가상 테스트 문서로만 검증했고, 실제 스캔·사진과 읽기 전용 파일럿이 다음 단계입니다. 2) OCR이 틀리면요? 독립 확인이 없는 값은 자동으로 받아들이지 않고 사람이 원본과 대조합니다. 처음 보는 문서에서 틀린 값은 0개였지만 실제 문서는 측정하지 않았습니다. 3) 왜 잘못된 승인이 0이라고 확신하나요? 확신하지 않습니다. 열네 건 중 0건은 95퍼센트 상한이 약 21퍼센트이고, 가상 문서 기준입니다. 4) 위·변조 서류는요? 화면과 다른 숨은 글자는 읽지 않고 확인 필요로 막았고 진위 자체는 발급기관 확인이 필요합니다. 5) 역할은 어떻게 나눴나요? 하비빌로는 백엔드·문서 분석·평가, 무니라는 UI/UX와 프론트엔드이고, 요구사항·테스트·멘토링·발표는 함께 했습니다.",
       "Prepared answers: (1) real documents: only fictional tests so far, real scans and a read-only pilot next; (2) wrong OCR: values without independent confirmation are never accepted automatically and a person compares them; 0 wrong values on unseen documents, real documents not measured; (3) why trust 0: we do not; 0/14 has a 95% upper bound of about 21%, on synthetic data; (4) tampered PDFs: hidden text is not read and is flagged, authenticity needs the issuer; (5) roles: Habibillo backend, document analysis and evaluation; Munira UI/UX and frontend; shared requirements, testing, mentoring and presentation.")
