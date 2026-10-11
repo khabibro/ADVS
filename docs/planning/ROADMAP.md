@@ -13,7 +13,7 @@ Presentation date: **2026-10-15**. Demo build: **`midterm-demo-v3`** (merge of `
 | N2 PDF text-layer trust check (D-1) | **done**: hidden text is ignored and flagged `TEXT_LAYER_MISMATCH`; 0 of 705 manipulated copies missed, 0 of 307 normal pages flagged, 12/12 manipulated submissions held at 확인 필요 |
 | N3 `university_name` (D-3) | **done**: scans 21/58 → 56/58, photos 24/58 → 57/58 (development); hold-out 3: 9/20 → 19/20 and 11/20 → 20/20 |
 | N4 D3 merged, hold-out 3 judged once | **done**: 0 false 제출 가능 (0/14 per input type), injections 0/1,525, review fields per scan 7.68 → 4.28 |
-| F1 VLM decision gate | PaddleOCR-VL 1.6 was compared in isolation (`research/vlm_poc/COMPARISON.md`): **insufficient evidence** (the gate's physical/real set does not exist yet). Selective crop verification looks promising in simulation; page parsing is not a replacement. The evaluation is presented as planned for the second midterm. |
+| F1 VLM decision gate | PaddleOCR-VL 1.6 was compared in isolation (`research/vlm_poc/COMPARISON.md` (branch `research/vlm-poc`, tag `archive/research-vlm-poc`; not merged into `main`)): **insufficient evidence** (the gate's physical/real set does not exist yet). Selective crop verification looks promising in simulation; page parsing is not a replacement. The evaluation is presented as planned for the second midterm. |
 | Still open | D-2 partly (policy by design), D-5 real/physical data, D-6 photo gate, D-7 background OCR, D-8–D-10 minor, D-11 login and PostgreSQL, the owner-accepted H14 residual risk |
 
 ## 1. Baseline (frozen at tag `midterm-demo-v2`)

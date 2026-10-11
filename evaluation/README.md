@@ -33,4 +33,4 @@ the original paths and the recovery location for each group.
 - `phase_f/`: technical audit, approach evaluation (existing OCR, PaddleOCR-VL, hybrids), evaluation protocol with denominators and uncertainty, and two reproducible scripts (`scripts/denominators.py`, `scripts/text_layer_probe.py`).
 - Hold-out set 3 is unseen and reserved for the single D3 judgement; do not run or open it.
 
-- `phase_g/`: Phase G gate scripts and results: development-data gates (`results/dev_final/`, `results/gate_summary_dev_final.md`), PDF manipulation suites, `university_replay.py` before/after, the single hold-out 3 judgement (`final/`), and `PHASE_G_REPORT.md`. The isolated PaddleOCR-VL comparison is in `research/vlm_poc/` (`COMPARISON.md`).
+- `phase_g/`: Phase G gate scripts and results: development-data gates (`results/dev_final/`, `results/gate_summary_dev_final.md`), PDF manipulation suites, `university_replay.py` before/after, the single hold-out 3 judgement (`final/`), and `PHASE_G_REPORT.md`. The isolated PaddleOCR-VL comparison is in `research/vlm_poc/` (`COMPARISON.md`) on the branch `research/vlm-poc` (tag `archive/research-vlm-poc`); it is not merged into `main`.
