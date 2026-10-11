@@ -146,8 +146,8 @@ def ui_smoke() -> tuple[bool, str]:
     web = os.environ.get("WEB_PORT", "3000")
     env = {**os.environ, "WEB_URL": f"http://localhost:{web}",
            "API_URL": os.environ.get("ADVS_API_URL", "http://localhost:8000/api/v1")}
-    cmd = ["pnpm", "--filter", "@advs/web", "exec", "playwright", "test", "e2e/ui-flows.spec.ts",
-           "-g", "equal the overview|no raw enum|list shows the same|projector sizes", "--reporter=line"]
+    cmd = ["pnpm", "--filter", "@advs/web", "exec", "playwright", "test", "e2e/ui-flows.spec.ts", "e2e/slot-upload.spec.ts",
+           "-g", "equal the overview|no raw enum|list shows the same|projector sizes|slot upload buttons|drop zone", "--reporter=line"]
     result = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True, text=True)
     last = (result.stdout.strip().splitlines() or [""])[-1]
     return result.returncode == 0, last

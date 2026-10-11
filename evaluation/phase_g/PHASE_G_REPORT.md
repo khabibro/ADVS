@@ -122,7 +122,7 @@ One scanned enrolment certificate is misclassified on hold-out 3 in both baselin
 
 ## 6. Presentation tag and deck
 
-The gates passed on 2026-10-11, well before the 2026-10-13 18:00 deadline: **present from `midterm-demo-v3`** (superseded: present from `midterm-demo-v3.1`, the same code after the OCR-only cleanup). `DEMO_SCRIPT.md` is v3 (D1–D9); the v2 script is `DEMO_SCRIPT_v2.md`; screenshots are in `docs/midterm/screenshots_v3/` (1280×720 with the review and upload flows, 1920×1080, 390×844). `midterm-demo-v2` and `midterm-demo-2026-10-14` were not moved.
+The gates passed on 2026-10-11, well before the 2026-10-13 18:00 deadline: **present from `midterm-demo-v3`** (superseded: present from `midterm-demo-v3.2`: `midterm-demo-v3.1`, the same code after the OCR-only cleanup, plus the fix for the per-slot upload buttons). `DEMO_SCRIPT.md` is v3 (D1–D9); the v2 script is `DEMO_SCRIPT_v2.md`; screenshots are in `docs/midterm/screenshots_v3/` (1280×720 with the review and upload flows, 1920×1080, 390×844). `midterm-demo-v2` and `midterm-demo-2026-10-14` were not moved.
 
 Deck changes (`docs/midterm/ADVS_midterm.pptx`/`.pdf`, 18 slides, re-rendered; every changed slide checked visually): the date is **2026-10-15** (footers; it said 10-14); scan/photo accuracy, injections, review burden, the limits slide (university name and hidden-text gaps now closed; hold-out 3 judged once), approach table, protocol baselines and the plan/limits appendix carry v3 numbers, each traced in `slides_sources.md`; D9 replaces D6 as the human-review example. (A later cleanup on 2026-10-11 aligned the deck, the roadmap and the documents with the OCR-only scope decision; see §7.)
 
@@ -137,7 +137,7 @@ The owner decided that the MVP uses traditional OCR only. The second-reader expe
 ## 9. Reproduce
 
 ```bash
-git checkout midterm-demo-v3.1 && make demo-reset && make demo-rehearsal           # demo and rehearsal
+git checkout midterm-demo-v3.2 && make demo-reset && make demo-rehearsal           # demo and rehearsal
 cd apps/api && PYTHONPATH=. pytest -q                                              # 613 tests
 evaluation/phase_g/scripts/dev_gates.sh F <main checkout>/evaluation <out-dir>      # development-data gates (OCR replayed from caches)
 python evaluation/phase_g/scripts/gate_summary.py <out-dir> F dev holdout holdout2

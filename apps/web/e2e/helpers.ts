@@ -71,3 +71,11 @@ export async function demoProjects(request: APIRequestContext) {
   const projects: Array<{ id: string; name: string }> = await (await request.get(`${API}/projects`)).json();
   return projects.filter((p) => /^D\d /.test(p.name)).sort((a, b) => a.name.localeCompare(b.name));
 }
+
+/** A fresh, empty submission for a workflow ("기업 제출서류 점검" or "학생 제출서류 점검"). */
+export async function createEmptyProject(request: APIRequestContext, workflow: string, name: string): Promise<string> {
+  const workflows = await (await request.get(`${API}/workflows`)).json();
+  const workflowId = workflows.find((w: { name: string }) => w.name === workflow).id;
+  const project = await (await request.post(`${API}/projects`, { data: { name, workflow_id: workflowId } })).json();
+  return project.id as string;
+}

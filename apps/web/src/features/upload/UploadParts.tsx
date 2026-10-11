@@ -117,6 +117,7 @@ export function RowUploadButton({
           if (files && files.length > 0) addFiles(Array.from(files), documentType);
           event.currentTarget.value = "";
         }}
+        ref={inputRef}
         tabIndex={-1}
         type="file"
       />

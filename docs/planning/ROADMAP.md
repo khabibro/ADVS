@@ -6,7 +6,7 @@ This file replaces the original Phase 1A–3 plan (kept in §9 as history). Evid
 
 ## 0. Status after Phase G (2026-10-11)
 
-Presentation date: **2026-10-15**. Demo build: **`midterm-demo-v3.1`** (merge of `phase-g/integrated`; the code of `midterm-demo-v3` without the removed VLM experiment references); `midterm-demo-v2` and `midterm-demo-2026-10-14` are unchanged. Done in Phase G, with evidence in `evaluation/phase_g/PHASE_G_REPORT.md`:
+Presentation date: **2026-10-15**. Demo build: **`midterm-demo-v3.2`** (merge of `phase-g/integrated`; `midterm-demo-v3.1` plus the fix for the per-slot upload buttons, which did not open the file chooser); `midterm-demo-v2` and `midterm-demo-2026-10-14` are unchanged. Done in Phase G, with evidence in `evaluation/phase_g/PHASE_G_REPORT.md`:
 
 | Roadmap item | Status |
 |---|---|

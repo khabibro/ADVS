@@ -136,4 +136,20 @@ describe("upload", () => {
     expect(notice).toBeInTheDocument();
     expect(within(screen.getByRole("status")).getAllByRole("listitem").length).toBeGreaterThan(0);
   });
+
+  it("opens the file chooser of its own input when the slot button is clicked (mouse and keyboard)", async () => {
+    const user = userEvent.setup();
+    setup(true);
+    const row = (await screen.findByTestId("row-upload-SME_CONFIRMATION_CERTIFICATE")) as HTMLInputElement;
+    const opened = vi.fn();
+    row.addEventListener("click", opened);
+    const button = screen.getByRole("button", { name: /중소기업확인서 업로드/ });
+    await waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+    expect(opened).toHaveBeenCalledTimes(1);
+    button.focus();
+    await user.keyboard("{Enter}");
+    await user.keyboard(" ");
+    expect(opened).toHaveBeenCalledTimes(3);
+  });
 });
