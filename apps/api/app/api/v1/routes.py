@@ -429,6 +429,9 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
         else set()
     )
     by_name = {item.field_name: item for item in document.extracted_fields}
+    rules_project = field_review_service.project_with_rules(db, project.id) if project else None
+    relevant = field_review_service.review_dependencies(rules_project) if rules_project else set()
+    document_type_value = DocumentType(document.document_type)
     normalizer = EvidenceBoxNormalizer(document)
     for name in sorted(set(by_name) | set(current_reviews)):
         item = by_name.get(name)
@@ -458,6 +461,7 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
         field_read.current_review_decision = (
             FieldReviewDecision(effective.review.decision) if effective.review else None
         )
+        field_read.decision_relevant = (document_type_value, name) in relevant
         field_read.auto_acceptance = (
             AutoAcceptanceRead(**decision.to_dict()) if decision is not None else None
         )

@@ -2,7 +2,7 @@
 
 AI-Based Administrative Document Analysis and Automated Verification System.
 
-CURRENT PHASE: midterm stabilisation (demo build tagged `midterm-demo-v2`); roadmap in `docs/planning/ROADMAP.md`, audit and evaluation write-ups in `evaluation/phase_f/`.
+CURRENT PHASE: midterm stabilisation (demo build tagged `midterm-demo-v3`, previous builds `midterm-demo-v2` and `midterm-demo-2026-10-14`); roadmap in `docs/planning/ROADMAP.md`, audit and evaluation write-ups in `evaluation/phase_f/`.
 
 ADVS is a workflow-centric modular monorepo for uploading Korean administrative documents, extracting text through direct PDF text or OCR, classifying the document, extracting structured fields, and validating results against workflow-scoped checklist rules. A document is required only when the selected workflow requires it.
 
@@ -87,7 +87,7 @@ Default ports:
 
 ## OCR
 
-PaddleOCR is the default real OCR engine. Digital PDFs with a usable text layer are extracted directly with PyMuPDF; scanned PDFs and images go through PaddleOCR.
+PaddleOCR is the default real OCR engine. Digital PDFs with a usable, visible text layer are extracted directly with PyMuPDF (hidden text is ignored and flagged); scanned PDFs and images go through PaddleOCR.
 
 ```bash
 OCR_PROVIDER=paddle

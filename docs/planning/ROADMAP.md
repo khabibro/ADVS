@@ -4,6 +4,18 @@ This file replaces the original Phase 1A–3 plan (kept in §9 as history). Evid
 
 **Dates.** The windows are **October, November and December 2026**. The course deck lists the first midterm presentation on 10/22 (week 8), the second on 11/19 (week 12) and the final on 12/10 (week 15), with a result report in mid-December; the master improvement plan assumes a midterm on 10/14. Precise dates below are therefore *conditional on the confirmed course deadlines*. Effort is given as S / M / L with its repository basis, not in days.
 
+## 0. Status after Phase G (2026-10-11)
+
+Presentation date: **2026-10-15**. Demo build: **`midterm-demo-v3`** (merge of `phase-g/integrated`); `midterm-demo-v2` and `midterm-demo-2026-10-14` are unchanged. Done in Phase G, with evidence in `evaluation/phase_g/PHASE_G_REPORT.md`:
+
+| Roadmap item | Status |
+|---|---|
+| N2 PDF text-layer trust check (D-1) | **done**: hidden text is ignored and flagged `TEXT_LAYER_MISMATCH`; 0 of 705 manipulated copies missed, 0 of 307 normal pages flagged, 12/12 manipulated submissions held at 확인 필요 |
+| N3 `university_name` (D-3) | **done**: scans 21/58 → 56/58, photos 24/58 → 57/58 (development); hold-out 3: 9/20 → 19/20 and 11/20 → 20/20 |
+| N4 D3 merged, hold-out 3 judged once | **done**: 0 false 제출 가능 (0/14 per input type), injections 0/1,525, review fields per scan 7.68 → 4.28 |
+| F1 VLM decision gate | PaddleOCR-VL 1.6 was compared in isolation (`research/vlm_poc/COMPARISON.md`): **insufficient evidence** (the gate's physical/real set does not exist yet). Selective crop verification looks promising in simulation; page parsing is not a replacement. The evaluation is presented as planned for the second midterm. |
+| Still open | D-2 partly (policy by design), D-5 real/physical data, D-6 photo gate, D-7 background OCR, D-8–D-10 minor, D-11 login and PostgreSQL, the owner-accepted H14 residual risk |
+
 ## 1. Baseline (frozen at tag `midterm-demo-v2`)
 
 - Pipeline: upload → PDF text layer or PaddleOCR (PP-OCRv5 Korean mobile) → deterministic classification → per-type extraction with evidence → auto-acceptance policy → database-driven rules → status → review → overview API → web app. No LLM, VLM or second OCR engine. [V]

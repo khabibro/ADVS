@@ -22,6 +22,8 @@ from app.document_intelligence.auto_acceptance import (
     decide,
     parse_strategy,
 )
+from app.document_intelligence.decision_robust import RuleSpec
+from app.document_intelligence.internal_evidence import extract_facts
 from app.models.entities import (
     Document,
     DocumentRequirement,
@@ -31,6 +33,7 @@ from app.models.entities import (
     ValidationResult,
     ValidationRule,
 )
+from app.services.requirements import required_fields
 
 Decisions = dict[tuple[uuid.UUID, str], AutoDecision]
 
@@ -83,6 +86,80 @@ def second_pass_by_field(document: Document) -> dict[str, SecondPassInput]:
                 preprocess=item.get("preprocess", ""),
             )
     return found
+
+
+def _rule_specs(db: Session, project: Project) -> tuple[RuleSpec, ...]:
+    """The workflow's active rules on decision-driving fields, as outcome specifications (used to
+    decide whether a misreading could change any verification outcome)."""
+    if project.checklist_id is None:
+        return ()
+    requirements = db.scalars(
+        select(DocumentRequirement)
+        .options(selectinload(DocumentRequirement.rules))
+        .where(DocumentRequirement.checklist_id == project.checklist_id)
+    ).all()
+    specs: list[RuleSpec] = []
+    for requirement in requirements:
+        try:
+            document_type = DocumentType(requirement.document_type)
+        except ValueError:
+            continue
+        if requirement.required and "valid_until" in required_fields(requirement):
+            specs.append(RuleSpec(document_type, "valid_until", "on_or_after_ref"))
+        for rule in requirement.rules:
+            params = rule.params or {}
+            field = str(params.get("field", ""))
+            if rule.rule_type == RuleType.ISSUE_DATE_MAX_AGE.value:
+                specs.append(
+                    RuleSpec(
+                        document_type,
+                        "issue_date",
+                        "max_age",
+                        days=int(params.get("max_age_days", 90)),
+                    )
+                )
+            elif rule.rule_type == RuleType.DATE_NOT_EXPIRED.value:
+                specs.append(
+                    RuleSpec(
+                        document_type, str(params.get("field", "valid_until")), "on_or_after_ref"
+                    )
+                )
+            elif rule.rule_type == RuleType.DATE_COMPARISON.value and field:
+                operator = params.get("operator")
+                bound = params.get("expected_value")
+                if (
+                    params.get("comparison_source") == "EVALUATION_DATE"
+                    and operator == "ON_OR_AFTER"
+                ):
+                    specs.append(RuleSpec(document_type, field, "on_or_after_ref"))
+                elif bound and operator in ("ON_OR_BEFORE", "ON_OR_AFTER"):
+                    try:
+                        parsed = date.fromisoformat(str(bound))
+                    except ValueError:
+                        continue
+                    specs.append(
+                        RuleSpec(
+                            document_type,
+                            field,
+                            "on_or_before" if operator == "ON_OR_BEFORE" else "on_or_after",
+                            bound_date=parsed,
+                        )
+                    )
+            elif rule.rule_type == RuleType.NUMERIC_COMPARISON.value and field:
+                operator = params.get("operator")
+                try:
+                    number = float(str(params.get("expected_value")))
+                except ValueError:
+                    continue
+                specs.append(
+                    RuleSpec(
+                        document_type,
+                        field,
+                        "at_least" if operator == "GREATER_THAN_OR_EQUAL" else "at_most",
+                        bound_number=number,
+                    )
+                )
+    return tuple(specs)
 
 
 def _workflow_boundaries(db: Session, project: Project) -> tuple[int | None, float | None]:
@@ -159,6 +236,23 @@ def decisions_for_project(
         ):
             continue
         second = second_pass_by_field(document)
+        facts = (
+            extract_facts(
+                [
+                    {
+                        "page_number": r.page_number,
+                        "lines": r.lines or [],
+                        "metadata": r.metadata_json or {},
+                    }
+                    for r in document.ocr_results
+                ]
+            )
+            if any(
+                "ocr" in {entry.get("source_kind") for entry in (f.evidence or [])}
+                for f in document.extracted_fields
+            )
+            else None
+        )
         gpas = semester_gpas(document) if document_type == DocumentType.TRANSCRIPT else ()
         for item in document.extracted_fields:
             kinds = {entry.get("source_kind") for entry in (item.evidence or [])}
@@ -176,6 +270,7 @@ def decisions_for_project(
                     second_pass=second.get(item.field_name),
                     has_current_review=(document.id, item.field_name) in reviews,
                     peer_values=gpas if item.field_name == "gpa" else (),
+                    facts=facts,
                 )
             )
     max_age, gpa_threshold = _workflow_boundaries(db, project)
@@ -185,5 +280,6 @@ def decisions_for_project(
         reference_date=reference_date,
         issue_max_age_days=max_age,
         gpa_threshold=gpa_threshold,
+        rules=_rule_specs(db, project),
     )
     return decide(inputs, context, strategy)

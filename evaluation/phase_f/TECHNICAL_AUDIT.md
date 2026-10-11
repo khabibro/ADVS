@@ -143,3 +143,13 @@ The honest denominator for the safety claim is small. Among submissions whose co
 ## 9. Audit conclusion
 
 The October system is a **well-tested pipeline on synthetic data** whose strength is safe abstention, not OCR sophistication. On the available evidence, **recognition is not the bottleneck** (0 wrong machine values per 790 fields; business numbers and dates are almost always read correctly even on scans); the bottlenecks are (a) the cost of proving a correct OCR value is correct (the confirmation policy), (b) an extraction/layout defect on student documents (`university_name`), and (c) the absence of any real or physical data. That conclusion drives the recommendation in `APPROACH_EVALUATION.md`.
+
+## 10. Status after Phase G (added later; sections 1–9 describe the audit as written)
+
+| ID | Status | Evidence |
+|---|---|---|
+| D-1 hidden PDF text trusted | **Fixed on `phase-g/fixes`**: only visible text is read; pages with hidden date/number text, unreadable fonts, picture pages or overlapping texts go to OCR; `TEXT_LAYER_MISMATCH` is raised when the hidden tokens are not on the page | `apps/api/tests/test_phase_g_text_layer.py`; 0 flagged pages on 307 development PDFs, text identical to the old extraction |
+| D-3 `university_name` on scans/photos | **Fixed (development data)**: 21/58 → 56/58 scans, 24/58 → 57/58 photos, 0 wrong values | `evaluation/phase_g/results/university_name_before_after.txt`, `apps/api/tests/test_phase_g_university_name.py` |
+| D-2, D-4 | D-2 addressed by D3 (separate branch); D-4 is a design constraint | `evaluation/phase_d3/` |
+| D-5, D-6, D-7, D-8, D-9, D-10, D-11 | Deferred, see `evaluation/phase_g/PHASE_G_REPORT.md` for reasons and target milestones | — |
+| D-12 stale documents | Remaining items fixed (`layout/` line, `date.today()` note in the test-set README, text-layer description) | git history of `phase-g/fixes` |

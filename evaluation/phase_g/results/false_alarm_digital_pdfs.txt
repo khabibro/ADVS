@@ -1,0 +1,4 @@
+307 digital-ish pdfs (non-scanned dirs)
+flagged pages: {}
+pages whose text differs from old: 0
+12.3 s

@@ -7,7 +7,7 @@ const REPO = path.resolve(__dirname, "../../..");
 const VARIANTS = path.join(REPO, "evaluation/datasets/synthetic/test_variants");
 export const SUBMISSION_DATE = "2026-10-05";
 
-type Code = "D1" | "D2" | "D3" | "D4" | "D5" | "D6" | "D7" | "D8";
+type Code = "D1" | "D2" | "D3" | "D4" | "D5" | "D6" | "D7" | "D8" | "D9";
 const SCENARIOS: Record<Code, { set: string; version: "digital" | "scanned"; workflow: string }> = {
   D1: { set: "B01", version: "digital", workflow: "기업 제출서류 점검" },
   D2: { set: "B05", version: "digital", workflow: "기업 제출서류 점검" },
@@ -17,6 +17,7 @@ const SCENARIOS: Record<Code, { set: string; version: "digital" | "scanned"; wor
   D6: { set: "B01", version: "scanned", workflow: "기업 제출서류 점검" },
   D7: { set: "S01", version: "digital", workflow: "학생 제출서류 점검" },
   D8: { set: "B08", version: "digital", workflow: "기업 제출서류 점검" },
+  D9: { set: "S01", version: "scanned", workflow: "학생 제출서류 점검" },
 };
 
 export function scenarioFiles(code: Code): string[] {
@@ -52,6 +53,14 @@ export async function createScenarioProject(
   }
   await request.post(`${API}/projects/${project.id}/verify`, { data: { evaluation_date: SUBMISSION_DATE } });
   return project.id as string;
+}
+
+/** Items a person still has to confirm (what the screen counts as "확인할 항목"). */
+export async function pendingReviewCount(request: APIRequestContext, projectId: string): Promise<number> {
+  const items: Array<{ queue_status: string; machine_normalized_value: string | null }> = await (
+    await request.get(`${API}/projects/${projectId}/review-items`)
+  ).json();
+  return items.filter((item) => item.queue_status === "PENDING" && item.machine_normalized_value !== null).length;
 }
 
 export async function deleteProject(request: APIRequestContext, id: string) {

@@ -65,9 +65,9 @@ if (process.env.FLOW === "1") {
     return p;
   };
 
-  // Review flow on a fresh copy of D6: confirm with the keyboard; the status updates by itself.
+  // Review flow on a fresh copy of D9: confirm with the keyboard; the status updates by itself.
   const py = path.join(root, "apps/api/.venv312/bin/python");
-  const d6 = execFileSync(py, ["-I", path.join(root, "scripts/demo_scenarios.py"), "run", "D6", "[캡처] D6 사람 확인"], { encoding: "utf8", env: { ...process.env, ADVS_API_URL: api } }).trim();
+  const d6 = execFileSync(py, ["-I", path.join(root, "scripts/demo_scenarios.py"), "run", "D9", "[캡처] D9 사람 확인"], { encoding: "utf8", env: { ...process.env, ADVS_API_URL: api } }).trim();
   created.push(d6);
   await go(`/projects/${d6}`);
   await shot("R1_review_needed");
@@ -75,13 +75,10 @@ if (process.env.FLOW === "1") {
   await shot("R2_review_list", false);
   const confirm = page.getByRole("button", { name: /원본과 같음/ });
   await confirm.first().focus();
-  for (const remaining of [3, 2]) {
-    await page.keyboard.press("Enter");
-    await page.getByRole("heading", { name: `확인할 항목 ${remaining}개` }).waitFor();
-  }
-  await shot("R3_review_progress", false);
+  // D9 leaves two dates for a person: confirm the first, look at the progress, confirm the last.
   await page.keyboard.press("Enter");
   await page.getByRole("heading", { name: "확인할 항목 1개" }).waitFor();
+  await shot("R3_review_progress", false);
   await page.keyboard.press("Enter");
   await page.locator('section[aria-labelledby="status-heading"]').getByRole("heading", { name: "제출 가능" }).waitFor({ timeout: 30000 });
   await page.evaluate(() => window.scrollTo(0, 0));

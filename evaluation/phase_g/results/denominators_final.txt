@@ -1,0 +1,72 @@
+
+## dev (test_variants), Phase G final code  (evaluation/phase_g/results/dev_final/F_dev.json)
+  digital  READY_expected_not_READY=0, actual_REVIEW_REQUIRED=7, correct_READY=4, correct_not_READY=12, correct_status_undefined=6, needs_human>0=6, submissions=22
+  scanned  READY_expected_not_READY=2, actual_REVIEW_REQUIRED=18, correct_READY=4, correct_not_READY=12, correct_status_undefined=6, needs_human>0=19, submissions=22
+  images   READY_expected_not_READY=2, actual_REVIEW_REQUIRED=17, correct_READY=4, correct_not_READY=12, correct_status_undefined=6, needs_human>0=17, submissions=22
+
+## hold-out 1 (development data), Phase G final code  (evaluation/phase_g/results/dev_final/F_holdout.json)
+  digital  READY_expected_not_READY=0, actual_REVIEW_REQUIRED=7, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=6, submissions=25
+  scanned  READY_expected_not_READY=3, actual_REVIEW_REQUIRED=22, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=23, submissions=25
+  images   READY_expected_not_READY=2, actual_REVIEW_REQUIRED=21, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=21, submissions=25
+
+## hold-out 2 (development data), Phase G final code  (evaluation/phase_g/results/dev_final/F_holdout2.json)
+  digital  READY_expected_not_READY=0, actual_REVIEW_REQUIRED=7, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=6, submissions=25
+  scanned  READY_expected_not_READY=2, actual_REVIEW_REQUIRED=21, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=22, submissions=25
+  images   READY_expected_not_READY=3, actual_REVIEW_REQUIRED=21, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=23, submissions=25
+
+## hold-out 3 (judged once), main baseline  (evaluation/phase_g/final/H3_main.json)
+  digital  READY_expected_not_READY=0, actual_REVIEW_REQUIRED=7, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=6, submissions=25
+           -> not-READY submissions n=14, false READY=0, 95% upper bound (rule of three) = 21.4%
+  scanned  READY_expected_not_READY=4, actual_REVIEW_REQUIRED=24, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=25, submissions=25
+           -> not-READY submissions n=14, false READY=0, 95% upper bound (rule of three) = 21.4%
+  images   READY_expected_not_READY=4, actual_REVIEW_REQUIRED=24, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=25, submissions=25
+           -> not-READY submissions n=14, false READY=0, 95% upper bound (rule of three) = 21.4%
+
+## hold-out 3 (judged once), Phase G integrated  (evaluation/phase_g/final/H3_integrated.json)
+  digital  READY_expected_not_READY=0, actual_REVIEW_REQUIRED=7, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=6, submissions=25
+           -> not-READY submissions n=14, false READY=0, 95% upper bound (rule of three) = 21.4%
+  scanned  READY_expected_not_READY=4, actual_REVIEW_REQUIRED=23, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=24, submissions=25
+           -> not-READY submissions n=14, false READY=0, 95% upper bound (rule of three) = 21.4%
+  images   READY_expected_not_READY=4, actual_REVIEW_REQUIRED=23, correct_READY=4, correct_not_READY=14, correct_status_undefined=7, needs_human>0=24, submissions=25
+           -> not-READY submissions n=14, false READY=0, 95% upper bound (rule of three) = 21.4%
+
+## Totals over the three corpora (the same 22-25 scenarios, different values: NOT independent samples)
+  digital  submissions whose correct status is not READY: n=40; false READY observed=0; 95% upper bound on the false-READY rate (rule of three) = 7.5%
+  scanned  submissions whose correct status is not READY: n=40; false READY observed=0; 95% upper bound on the false-READY rate (rule of three) = 7.5%
+  images   submissions whose correct status is not READY: n=40; false READY observed=0; 95% upper bound on the false-READY rate (rule of three) = 7.5%
+
+## Injected-error suites (cases are derived from the same base documents: bounds are optimistic)
+  E1-E18 Phase G final code, development                  n= 1354  upper bound for 0 events = 0.22%
+  E1-E18 Phase G final code, hold-out 1                   n= 1532  upper bound for 0 events = 0.20%
+  E1-E18 Phase G final code, hold-out 2                   n= 1523  upper bound for 0 events = 0.20%
+  E1-E18 Phase G final code, hold-out 3 (judged once)     n= 1525  upper bound for 0 events = 0.20%
+
+## Machine values (OCR/embedded text) before any acceptance policy, evaluated fields
+  digital  n=790: CORRECT=790  -> wrong=0 (0.0%), unresolved=0 (0.0%)
+  scanned  n=790: CORRECT=779, UNRESOLVED=11  -> wrong=0 (0.0%), unresolved=11 (1.4%)
+  images   n=790: CORRECT=785, UNRESOLVED=5  -> wrong=0 (0.0%), unresolved=5 (0.6%)
+
+## Exact-match per field (machine value, all three corpora): CORRECT / evaluated
+  field                                    digital         scanned          images
+  business_registration_number           160 / 160       160 / 160       159 / 160
+  company_name                           120 / 120       120 / 120       120 / 120
+  department                               29 / 29         28 / 29         27 / 29
+  gpa                                      29 / 29         29 / 29         29 / 29
+  gpa_scale                                29 / 29         29 / 29         29 / 29
+  issue_date                               55 / 55         55 / 55         55 / 55
+  student_id                               55 / 55         52 / 55         54 / 55
+  student_name                             58 / 58         57 / 58         58 / 58
+  university_name                          58 / 58         56 / 58         57 / 58
+  valid_from                               40 / 40         38 / 40         40 / 40
+  valid_until                            117 / 117       115 / 117       117 / 117
+  workplace_name                           40 / 40         40 / 40         40 / 40
+
+## Fields that were not CORRECT on scans/photos (all three corpora)
+    4  ENROLLMENT_CERTIFICATE.student_id
+    3  ENROLLMENT_CERTIFICATE.university_name
+    3  ENROLLMENT_CERTIFICATE.department
+    2  SME_CONFIRMATION_CERTIFICATE.valid_from
+    2  SME_CONFIRMATION_CERTIFICATE.valid_until
+    1  SME_CONFIRMATION_CERTIFICATE.business_registration_number
+    1  ENROLLMENT_CERTIFICATE.student_name
+  total 16

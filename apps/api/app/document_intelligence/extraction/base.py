@@ -418,9 +418,12 @@ def _right_associated(label: OCRLine, value: OCRLine) -> bool:
         return False
     overlap = min(a.y + a.height, b.y + b.height) - max(a.y, b.y)
     gap = b.x - (a.x + a.width)
-    # detector boxes of neighbouring cells may overlap slightly at their margins
+    # detector boxes of neighbouring cells may overlap slightly at their margins; a value cell that
+    # begins with the label's own closing bracket ("법인명(단체명)" + "):주식회사...") overlaps by
+    # that bracket as well
+    tolerance = 1.0 if value.text.lstrip().startswith(")") else 0.5
     return overlap >= max(a.height, b.height) * 0.5 and (
-        -0.5 * min(a.height, b.height) <= gap <= 12 * min(a.height, b.height)
+        -tolerance * min(a.height, b.height) <= gap <= 12 * min(a.height, b.height)
     )
 
 
@@ -747,7 +750,11 @@ _GPA_WITH_SCALE_RE = re.compile(r"(\d(?:\.\d{1,3})?)\s*/\s*(\d(?:\.\d{1,3})?)")
 _CUMULATIVE_GPA_HEADERS = ("총평점평균", "누적평점평균", "전체평점평균", "총평균평점")
 _CUMULATIVE_CREDITS_LABEL = "총취득학점"
 _SEMESTER_GPA_RE = re.compile(r"평점평균\s*:?\s*(\d(?:\.\d{1,3})?\s*/\s*\d(?:\.\d{1,3})?)")
-_ISSUER_UNIVERSITY_RE = re.compile(r"([가-힣A-Za-z0-9㈜()·]{2,30}대학교)(?:총장)?")
+# The issuer title that follows the name. OCR often fuses it to the name ("OO대학교총장"), reads
+# 장 as 창, or loses it under a seal and keeps only "총".
+_ISSUER_UNIVERSITY_RE = re.compile(r"([가-힣A-Za-z0-9㈜()·]{2,30}대학교)(?:총[장창]?)?")
+_ISSUER_TITLE_TAIL_RE = re.compile(r"\s*총\s*[장창]?\s*$")
+_UNIVERSITY_STEM_RE = re.compile(r"[가-힣A-Za-z0-9㈜()·]{2,30}대학")
 
 
 def _boxed(items: list[tuple[str, EvidenceRef | None]]) -> list[tuple[str, EvidenceRef]]:
@@ -835,29 +842,60 @@ def _x_overlap(a: BoundingBox, b: BoundingBox) -> bool:
     return min(a.x + a.width, b.x + b.width) - max(a.x, b.x) > 0
 
 
+def _joined_university_lines(
+    lines: list[tuple[str, EvidenceRef | None]],
+) -> list[tuple[str, list[EvidenceRef]]]:
+    """Issuer-line candidates as (text, evidence). A name that ends in "대학" next to a separate
+    box holding the last syllable "교" (a seal or stamp split the OCR box in two) is rejoined,
+    but only when the two boxes are on one row, left to right, with a gap no wider than a line."""
+    joined: list[tuple[str, list[EvidenceRef]]] = []
+    boxed = [(text, ev) for text, ev in lines if ev is not None and ev.bounding_box is not None]
+    for text, evidence in lines:
+        if evidence is not None:
+            joined.append((text, [evidence]))
+    for left_text, left in boxed:
+        stem = _compact(_normalize_extraction_text(left_text))
+        if not _UNIVERSITY_STEM_RE.fullmatch(stem):
+            continue
+        assert left.bounding_box is not None
+        for right_text, right in boxed:
+            tail = _compact(_normalize_extraction_text(right_text))
+            if (
+                right is left
+                or right.page_number != left.page_number
+                or tail not in {"교", "교총장"}
+            ):
+                continue
+            a, b = left.bounding_box, right.bounding_box
+            assert b is not None
+            same_row = abs((a.y + a.height / 2) - (b.y + b.height / 2)) <= 0.75 * max(
+                a.height, b.height
+            )
+            gap = b.x - (a.x + a.width)
+            if same_row and -a.height <= gap <= 1.5 * a.height:
+                joined.append((stem + tail, [left, right]))
+    return joined
+
+
 def issuer_university_candidate(source: ExtractionInput) -> ExtractionCandidate | None:
     """The university named by the issuer line ("OO대학교 총장", often
     letter-spaced "O O 대 학 교 총 장"), the way 재학증명서/성적증명서 name
     their school when no 대학교 label is printed. Several different
     universities on one document -> no answer."""
     names: dict[str, ExtractionCandidate] = {}
-    for text, evidence in _source_lines(source):
+    for text, evidences in _joined_university_lines(_source_lines(source)):
         collapsed = _normalize_extraction_text(text).strip()
         match = _ISSUER_UNIVERSITY_RE.fullmatch(_compact(collapsed))
         if not match:
             continue
-        tokens = collapsed.split()
-        if tokens and tokens[-1] == "총장":
-            tokens = tokens[:-1]
-        elif collapsed.endswith("총 장"):
-            tokens = tokens[:-2]
-        name = "".join(tokens) if all(len(token) == 1 for token in tokens) else " ".join(tokens)
+        tokens = _ISSUER_TITLE_TAIL_RE.sub("", collapsed).split()
+        # Letter-spaced print ("가 나 다라 대 학 교"): when at least half the tokens are single
+        # syllables the gaps are spacing, not word breaks.
+        spaced = sum(len(token) == 1 for token in tokens) * 2 >= len(tokens)
+        name = "".join(tokens) if spaced else " ".join(tokens)
         if _compact(name) != match.group(1):
             continue
-        names.setdefault(
-            _compact(name),
-            ExtractionCandidate(name, [evidence] if evidence is not None else []),
-        )
+        names.setdefault(_compact(name), ExtractionCandidate(name, list(evidences)))
     if len(names) != 1:
         return None
     return next(iter(names.values()))

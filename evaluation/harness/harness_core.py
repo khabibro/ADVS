@@ -42,9 +42,10 @@ SYNTHETIC = REPO_ROOT / "evaluation" / "datasets" / "synthetic"
 CORPORA = {
     "dev": SYNTHETIC / "test_variants",
     "holdout": SYNTHETIC / "holdout",  # hold-out set 1: development data since Phase D2 (decision D-1)
-    "holdout2": SYNTHETIC / "holdout2",  # hold-out set 2: final judgement only
+    "holdout2": SYNTHETIC / "holdout2",  # hold-out set 2: development data since Phase D3
+    "holdout3": SYNTHETIC / "holdout3",  # hold-out set 3: final judgement only
 }
-GUARDED = {"holdout2"}
+GUARDED = {"holdout3"}
 HOLDOUT_LOG = REPO_ROOT / "evaluation" / "phase_d" / "holdout_runs.log"
 
 EXT_MIME = {
@@ -99,7 +100,7 @@ def guard_corpus(corpus: str, argv: list[str] | None = None) -> Path:
 
 
 def guard_path(path: Path) -> Path:
-    if "holdout2" in path.resolve().parts and os.environ.get("ADVS_FINAL_JUDGEMENT") != "1":
+    if "holdout3" in path.resolve().parts and os.environ.get("ADVS_FINAL_JUDGEMENT") != "1":
         raise SystemExit(f"Refusing to open a hold-out path outside final judgement: {path}")
     return path
 
@@ -198,7 +199,7 @@ class OCRCacheProvider:
         from app.document_intelligence.ocr.models import RegionReading
 
         digest = sha256_file(path)
-        folder = self.cache_dir / "second_pass"
+        folder = self.cache_dir / "second_pass_v2"  # v2: stamp-aware reading (D3-7)
         folder.mkdir(parents=True, exist_ok=True)
         readings = []
         for request in requests:
@@ -462,8 +463,18 @@ class Runner:
         file_results = self.upload_and_process(project_id, files)
         verification = self.verify(project_id)
         self.capture_details(file_results)
+        reviews = self.client.get(f"/api/v1/projects/{project_id}/review-items")
+        review_items = (
+            [
+                {"document_id": item["document_id"], "field_name": item["field_name"], "queue_status": item["queue_status"], "state": item["assessment_state"]}
+                for item in reviews.json()
+            ]
+            if reviews.status_code == 200
+            else []
+        )
         return {
             "project_id": project_id,
+            "review_items": review_items,
             "actual_submission_status": verification.get("status"),
             "actual_issue_codes": verification.get("issue_codes"),
             "notices": verification.get("notices"),

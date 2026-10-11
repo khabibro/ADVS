@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { API, createScenarioProject, deleteProject, demoProjects, variantFile } from "./helpers";
+import { API, createScenarioProject, deleteProject, demoProjects, pendingReviewCount, variantFile } from "./helpers";
 
 /**
  * Applicant and reviewer flows through the real API and web app (start the demo first:
@@ -108,20 +108,22 @@ test.describe("applicant flows", () => {
 });
 
 test.describe("reviewer flow", () => {
-  test("D6: confirm the values one by one with the keyboard; the status updates by itself", async ({ page, request }) => {
-    const id = await createScenarioProject(request, "D6", "[E2E] D6");
+  test("D9: confirm the values one by one with the keyboard; the status updates by itself", async ({ page, request }) => {
+    const id = await createScenarioProject(request, "D9", "[E2E] D9");
     try {
+      const total = await pendingReviewCount(request, id);
+      expect(total).toBeGreaterThan(1); // a scan that still needs a person
       await open(page, id);
       await expect(banner(page).getByRole("heading", { name: "확인 필요" })).toBeVisible();
-      await expect(banner(page)).toContainText("담당자 확인이 필요한 항목이 4개 있습니다.");
-      await expect(page.getByRole("heading", { name: "확인할 항목 4개" })).toBeVisible();
-      await expect(page.getByText("0 / 4 완료")).toBeVisible();
+      await expect(banner(page)).toContainText(`담당자 확인이 필요한 항목이 ${total}개 있습니다.`);
+      await expect(page.getByRole("heading", { name: `확인할 항목 ${total}개` })).toBeVisible();
+      await expect(page.getByText(`0 / ${total} 완료`)).toBeVisible();
       // The original is shown next to every value.
       await expect(page.getByTestId("evidence-crop").first()).toBeVisible();
 
       const confirm = page.getByRole("button", { name: /원본과 같음/ });
       await confirm.first().focus();
-      for (const remaining of [3, 2, 1]) {
+      for (let remaining = total - 1; remaining >= 1; remaining--) {
         await page.keyboard.press("Enter");
         await expect(page.getByRole("heading", { name: `확인할 항목 ${remaining}개` })).toBeVisible();
       }
@@ -129,21 +131,23 @@ test.describe("reviewer flow", () => {
       // No "자동 점검 실행" click: the check re-runs and the banner changes.
       await expect(banner(page).getByRole("heading", { name: "제출 가능" })).toBeVisible({ timeout: 30_000 });
       await expect(banner(page)).toContainText("방금 확인 필요 → 제출 가능(으)로 바뀌었습니다");
-      await expect(page.getByText("확인할 항목을 모두 처리했습니다 (4개 완료).")).toBeVisible();
+      await expect(page.getByText(`확인할 항목을 모두 처리했습니다 (${total}개 완료).`)).toBeVisible();
     } finally {
       await deleteProject(request, id);
     }
   });
 
-  test("D6: a value can be corrected instead of confirmed", async ({ page, request }) => {
-    const id = await createScenarioProject(request, "D6", "[E2E] D6 correct");
+  test("D9: a value can be corrected instead of confirmed", async ({ page, request }) => {
+    const id = await createScenarioProject(request, "D9", "[E2E] D9 correct");
     try {
+      const total = await pendingReviewCount(request, id);
       await open(page, id);
       await page.getByRole("button", { name: "값 수정" }).first().click();
-      await page.getByLabel(/올바른 값을 입력/).fill("2027-03-30");
+      // D9 leaves the two issue dates for a person; a plausible earlier date is a valid correction.
+      await page.getByLabel(/올바른 값을 입력/).fill("2026-09-29");
       await page.keyboard.press("Enter");
-      await expect(page.getByRole("heading", { name: "확인할 항목 3개" })).toBeVisible();
-      await expect(page.getByText("1 / 4 완료")).toBeVisible();
+      await expect(page.getByRole("heading", { name: `확인할 항목 ${total - 1}개` })).toBeVisible();
+      await expect(page.getByText(`1 / ${total} 완료`)).toBeVisible();
     } finally {
       await deleteProject(request, id);
     }
@@ -162,9 +166,9 @@ test.describe("every screen shows exactly what the API decided", () => {
     NOT_CHECKED: "분석 완료 · 점검 대기",
   } as const;
 
-  test("D1-D8: banner, count, rows and issues equal the overview response", async ({ page, request }) => {
+  test("D1-D9: banner, count, rows and issues equal the overview response", async ({ page, request }) => {
     const projects = await demoProjects(request);
-    expect(projects.length).toBe(8);
+    expect(projects.length).toBe(9);
     for (const project of projects) {
       const overview = await (await request.get(`${API}/projects/${project.id}/overview`)).json();
       await open(page, project.id);
@@ -223,9 +227,9 @@ test.describe("accessibility (axe: no serious or critical violations)", () => {
   test("list, new submission, submission screens and document detail", async ({ page, request }) => {
     const demo = await demoProjects(request);
     const byName = (code: string) => demo.find((p) => p.name.startsWith(code))!;
-    const targets = ["/projects", "/projects/new", `/projects/${byName("D1").id}`, `/projects/${byName("D2").id}`, `/projects/${byName("D5").id}`, `/projects/${byName("D6").id}`];
-    const docs: Array<{ id: string }> = await (await request.get(`${API}/projects/${byName("D6").id}/documents`)).json();
-    targets.push(`/projects/${byName("D6").id}/documents/${docs[0].id}`);
+    const targets = ["/projects", "/projects/new", `/projects/${byName("D1").id}`, `/projects/${byName("D2").id}`, `/projects/${byName("D5").id}`, `/projects/${byName("D9").id}`];
+    const docs: Array<{ id: string }> = await (await request.get(`${API}/projects/${byName("D9").id}/documents`)).json();
+    targets.push(`/projects/${byName("D9").id}/documents/${docs[0].id}`);
     for (const target of targets) {
       await page.goto(target);
       await page.waitForLoadState("networkidle");
@@ -236,7 +240,7 @@ test.describe("accessibility (axe: no serious or critical violations)", () => {
   test("the same screens at phone width: no horizontal scroll and no violations", async ({ page, request }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     const demo = await demoProjects(request);
-    for (const target of ["/projects", `/projects/${demo.find((p) => p.name.startsWith("D6"))!.id}`, `/projects/${demo.find((p) => p.name.startsWith("D2"))!.id}`]) {
+    for (const target of ["/projects", `/projects/${demo.find((p) => p.name.startsWith("D9"))!.id}`, `/projects/${demo.find((p) => p.name.startsWith("D2"))!.id}`]) {
       await page.goto(target);
       await page.waitForLoadState("networkidle");
       const wide = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);

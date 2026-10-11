@@ -41,7 +41,7 @@ Module map (`apps/api/app/document_intelligence/`):
 ocr/            models.py (OCRDocumentResult/OCRPage/OCRLine/BoundingBox, OCRProviderError)
                 providers.py (OCRProvider, PaddleOCRProvider, MockOCRProvider)
                 text_assembly.py (reading-order line/page assembly)
-preprocessing/  processor.py (PdfProcessor, ImagePreprocessor, is_meaningful_text)
+preprocessing/  processor.py (PdfProcessor, ImagePreprocessor, is_meaningful_text), text_layer.py (visible-text check, hidden-text audit, provenance)
                 (the text layer is trusted when it is long enough; there is no hidden-text or provenance check yet)
 classification/ classifier.py (DocumentClassifier, weighted signal scoring), title_gate.py (look-alike / unclean-title gate)
 extraction/     base.py (BaseDocumentExtractor, label-proximity helpers), fields.py
@@ -49,7 +49,7 @@ extraction/     base.py (BaseDocumentExtractor, label-proximity helpers), fields
                 enrollment.py / transcript.py / graduation.py / career.py
                 registry.py (ExtractorRegistry)
 evidence.py, auto_acceptance.py (independent-confirmation policy for OCR values)
-layout/         geometry helpers shared by extractors
+layout/         structural layout derived from OCR geometry (columns, headers, sections, structure)
 normalization/  field_normalizer.py (normalize_date/normalize_business_number/normalize_text_field)
 validation/     engine.py (ValidationEngine, ConfiguredRule, rule-type dispatch), submission.py (cross-document rules)
 evidence_sufficiency.py (field evidence assessment policy and effective-value source types)

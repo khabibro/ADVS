@@ -9,6 +9,7 @@ hold-out 1 and hold-out 2). Never touches hold-out set 3. Writes nothing but std
 import collections
 import json
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -16,6 +17,13 @@ RUNS = {
     "dev (test_variants), final policy B2-D2": "evaluation/phase_d2/B2_D2_dev.json",
     "hold-out 1 (development data since D2), final policy B2-D2": "evaluation/phase_d2/B2_D2_holdout.json",
     "hold-out 2 (judged once, before the final policy), B1-D2": "evaluation/phase_d2/H2_B1.json",
+}
+RUNS_PHASE_G = {  # `--phase-g`: the same counts for the final code (development corpora) and for hold-out 3 (judged once)
+    "dev (test_variants), Phase G final code": "evaluation/phase_g/results/dev_final/F_dev.json",
+    "hold-out 1 (development data), Phase G final code": "evaluation/phase_g/results/dev_final/F_holdout.json",
+    "hold-out 2 (development data), Phase G final code": "evaluation/phase_g/results/dev_final/F_holdout2.json",
+    "hold-out 3 (judged once), main baseline": "evaluation/phase_g/final/H3_main.json",
+    "hold-out 3 (judged once), Phase G integrated": "evaluation/phase_g/final/H3_integrated.json",
 }
 VERSIONS = ("digital", "scanned", "images")
 
@@ -30,7 +38,8 @@ def main() -> None:
     totals = {v: collections.Counter() for v in VERSIONS}
     fields = {v: collections.Counter() for v in VERSIONS}
     unresolved = collections.Counter()
-    for name, rel in RUNS.items():
+    runs = RUNS_PHASE_G if "--phase-g" in sys.argv else RUNS
+    for name, rel in runs.items():
         data = json.loads((ROOT / rel).read_text(encoding="utf-8"))
         print(f"\n## {name}  ({rel})")
         for version in VERSIONS:
@@ -57,12 +66,18 @@ def main() -> None:
                     for field, fv in f.get("fields", {}).items():
                         if fv.get("category") != "EVALUATED":
                             continue
+                        if "hold-out 3" in name:  # judged once: reported on its own, never pooled with development data
+                            continue
                         fields[version][fv["outcome"]] += 1
                         per_field[version][field][fv["outcome"]] += 1
                         if version != "digital" and fv["outcome"] != "CORRECT":
                             unresolved[(f["expected"], field)] += 1
             print(f"  {version:8} " + ", ".join(f"{k}={c[k]}" for k in sorted(c)))
-            totals[version].update(c)
+            if "hold-out 3" not in name:
+                totals[version].update(c)
+            elif "--phase-g" in sys.argv:
+                n3 = c["correct_not_READY"]
+                print(f"           -> not-READY submissions n={n3}, false READY={c['false_ready']}, 95% upper bound (rule of three) = {upper_bound_95(n3):.1%}")
     print("\n## Totals over the three corpora (the same 22-25 scenarios, different values: NOT independent samples)")
     for version in VERSIONS:
         t = totals[version]
@@ -70,9 +85,11 @@ def main() -> None:
         print(f"  {version:8} submissions whose correct status is not READY: n={n}; false READY observed={t['false_ready']}; "
               f"95% upper bound on the false-READY rate (rule of three) = {upper_bound_95(n):.1%}")
     print("\n## Injected-error suites (cases are derived from the same base documents: bounds are optimistic)")
-    for label, n in (("E1-E12, development", 474), ("E1-E12, hold-out 1", 666),
+    suites = (("E1-E18 Phase G final code, development", 1354), ("E1-E18 Phase G final code, hold-out 1", 1532),
+              ("E1-E18 Phase G final code, hold-out 2", 1523), ("E1-E18 Phase G final code, hold-out 3 (judged once)", 1525)) if "--phase-g" in sys.argv else (("E1-E12, development", 474), ("E1-E12, hold-out 1", 666),
                      ("E1-E18 baseline B0_D3 (main policy), development", 1353),
-                     ("E1-E18 baseline B0_D3, hold-out 1", 1532), ("E1-E18 baseline B0_D3, hold-out 2", 1523)):
+                     ("E1-E18 baseline B0_D3, hold-out 1", 1532), ("E1-E18 baseline B0_D3, hold-out 2", 1523))
+    for label, n in suites:
         print(f"  {label:55} n={n:5}  upper bound for 0 events = {upper_bound_95(n):.2%}")
     print("\n## Machine values (OCR/embedded text) before any acceptance policy, evaluated fields")
     for version in VERSIONS:

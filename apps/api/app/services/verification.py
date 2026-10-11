@@ -336,6 +336,9 @@ class SubmissionVerificationService:
                     multiple_documents_in_file=bool(
                         (row.classification_meta or {}).get("multiple_documents_in_file")
                     ),
+                    text_layer_mismatch=bool(
+                        ((row.classification_meta or {}).get("text_layer") or {}).get("mismatch")
+                    ),
                     created_at=row.created_at.isoformat(),
                 )
             )
