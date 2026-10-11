@@ -6,7 +6,7 @@ Status today: a working pipeline and review flow on fictional documents; safety 
 
 ## October (done): fix, judge, freeze, present
 - Hidden PDF text is ignored and flagged; scanned `university_name` extraction fixed (21/58 → 56/58 on scans); D3 internal confirmation merged; hold-out set 3 judged once.
-- Present from tag `midterm-demo-v3`; rehearsal 3× the morning of the talk.
+- Present from tag `midterm-demo-v3.1`; rehearsal 3× the morning of the talk.
 - Documents, slides and results traceable to evidence, with n and uncertainty for safety claims.
 - Confirm the exam date and the presentation format (5 min + 2 min Q&A in the course deck).
 

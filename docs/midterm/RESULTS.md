@@ -1,4 +1,4 @@
-# ADVS — Midterm results (2026-10-15, build `midterm-demo-v3`)
+# ADVS — Midterm results (2026-10-15, build `midterm-demo-v3.1`, same code as `midterm-demo-v3`)
 
 **AI 기반 행정 제출서류 분석 및 자동 점검 시스템 (ADVS).** ADVS reads Korean administrative documents (embedded PDF text, or OCR for scans and photos), classifies them, extracts fields with their evidence, and checks a submission against a workflow checklist. It answers 제출 가능 / 보완 필요 / 확인 필요 with a reason per issue; a person confirms only the values the system cannot confirm itself. 제출 가능 means "no blocking issue found in the configured pre-check", not official approval.
 

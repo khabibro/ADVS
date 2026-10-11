@@ -2,11 +2,11 @@
 
 This file replaces the original Phase 1A–3 plan (kept in §9 as history). Evidence behind every statement is in `evaluation/phase_f/` (`TECHNICAL_AUDIT.md`, `APPROACH_EVALUATION.md`, `EVALUATION_PROTOCOL.md`). Evidence labels: **[V]** verified in this repository, **[E]** external source, **[H]** hypothesis needing an experiment.
 
-**Dates.** The windows are **October, November and December 2026**. The course deck lists the first midterm presentation on 10/22 (week 8), the second on 11/19 (week 12) and the final on 12/10 (week 15), with a result report in mid-December; the master improvement plan assumes a midterm on 10/14. Precise dates below are therefore *conditional on the confirmed course deadlines*. Effort is given as S / M / L with its repository basis, not in days.
+**Dates.** The windows are **October, November and December 2026**. The first midterm presentation is on **10/15** (confirmed by the professor); the course deck lists the second on 11/19 (week 12) and the final on 12/10 (week 15), with a result report in mid-December. Dates after October remain *conditional on the confirmed course deadlines*. Effort is given as S / M / L with its repository basis, not in days.
 
 ## 0. Status after Phase G (2026-10-11)
 
-Presentation date: **2026-10-15**. Demo build: **`midterm-demo-v3`** (merge of `phase-g/integrated`); `midterm-demo-v2` and `midterm-demo-2026-10-14` are unchanged. Done in Phase G, with evidence in `evaluation/phase_g/PHASE_G_REPORT.md`:
+Presentation date: **2026-10-15**. Demo build: **`midterm-demo-v3.1`** (merge of `phase-g/integrated`; the code of `midterm-demo-v3` without the removed VLM experiment references); `midterm-demo-v2` and `midterm-demo-2026-10-14` are unchanged. Done in Phase G, with evidence in `evaluation/phase_g/PHASE_G_REPORT.md`:
 
 | Roadmap item | Status |
 |---|---|
@@ -35,7 +35,7 @@ Goal: the demonstrated MVP is stable and every claim is true and traceable.
 | O1 | Freeze the demo | the exam needs the rehearsed build | nothing; tag `midterm-demo-v2` is the demo | present from the tag; new work only on branches | `make demo-rehearsal` passes 3 times in a row the morning of the talk | fallback tag `midterm-demo-2026-10-14` |
 | O2 | Align documents with code | conflicts between deck, plans and code (`TECHNICAL_AUDIT.md` §6) | `docs/midterm/*`, `docs/planning/*`, architecture, testing and classification docs, READMEs | edit documents only | every number in the deck traces to `slides_sources.md`, with n and uncertainty for safety claims | none |
 | O3 | Record defects for November | D-1…D-11 must not be lost | this roadmap, `TECHNICAL_AUDIT.md` | list with evidence and owner | each has an ID, evidence and a milestone | none |
-| O4 | **Confirm the date and the format with the TA or professor** | course deck: 5 min + 2 min Q&A (time over = penalty), first midterm 10/22; master plan: 10/14 and a 10-minute talk | none | ask; adapt the deck (it has a marked 5-minute path) | a written confirmation | if unconfirmed, prepare both: 5-minute path and 10-minute version |
+| O4 | **Confirm the date and the format with the TA or professor** | course deck: 5 min + 2 min Q&A (time over = penalty), first midterm date now confirmed as 10/15; master plan assumed 10/14 and a 10-minute talk | none | ask; adapt the deck (it has a marked 5-minute path) | a written confirmation | if unconfirmed, prepare both: 5-minute path and 10-minute version |
 | O5 | Backup demo | a 5-minute slot cannot hold a live demo | a recorded 60–90 s clip of D1, D2 and D6 plus the screenshots in `docs/midterm/screenshots_v2/` | screen recording | plays offline | live demo only in Q&A |
 | O6 | (Optional, no code) start the physical corpus | the single biggest evidence gap (D-5) | print 10–15 fictional test documents; photograph (2 phones, desk, angle, lamp glare, shadow) and scan at 200 and 300 DPI | follow `EVALUATION_PROTOCOL.md` §1–2 | files stored with the capture conditions | continues in November |
 | O7 | Keep hold-out set 3 unseen | it is the only judgement set for D3 | none | no run, no inspection | `holdout_runs.log` shows no hold-out-3 entry from this phase | none |
@@ -91,7 +91,7 @@ The MVP uses traditional OCR only (PP-OCRv5 Korean through PaddleOCR; embedded P
 
 | Risk | Mitigation |
 |---|---|
-| Course dates and format unconfirmed (10/14 vs 10/22; 5 min) | O4; two versions of the talk |
+| Talk format unconfirmed (date confirmed 10/15; 5 min vs 10 min) | O4; two versions of the talk |
 | Real data and physical captures need people and authorisation | start O6 in October; N5 before N6 |
 | D3 changes demo D6 and its stress suite found one false READY in a correlated case | judge once on hold-out 3; owner decision on the residual; update demo and rehearsal before merge |
 | Synthetic data too clean to calibrate or to show OCR differences | physical corpus; do not quote bounds as real-world |

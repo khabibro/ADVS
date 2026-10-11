@@ -1,6 +1,6 @@
 # ADVS midterm demo — presenter script, v3 (8–10 minutes)
 
-This script is for the **v3 build** (tag `midterm-demo-v3`: hidden-text check for PDFs, university-name fix, internal automation D3). The v2 script and tag (`midterm-demo-v2`) stay available: `DEMO_SCRIPT_v2.md`; the v1 script and tag: `DEMO_SCRIPT_v1.md`.
+This script is for the **v3 build** (present from tag `midterm-demo-v3.1`, same code as `midterm-demo-v3`: hidden-text check for PDFs, university-name fix, internal automation D3). The v2 script and tag (`midterm-demo-v2`) stay available: `DEMO_SCRIPT_v2.md`; the v1 script and tag: `DEMO_SCRIPT_v1.md`.
 
 Before you start: `make demo` (and, the morning of the presentation, `make demo-rehearsal`). Open **http://localhost:3000/projects**. Nine submissions (D1–D9) are already processed; the list shows D1 at the top with each one's status and what to do. Browser zoom 100 %, window 1280×720 or larger. Do **not** change the 점검 기준일 (2026-10-05, the date the test documents were made for).
 
