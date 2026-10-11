@@ -57,8 +57,19 @@ Phase E rehearsal,demo set,digital submission processing time,0.1-0.3 s,evaluati
 Phase E2,backend,pytest tests passed,555,run 2026-10-10 (apps/api; v2 branch)
 Phase E2,web,vitest tests passed,107,run 2026-10-10 (apps/web)
 Phase E2,web,playwright end-to-end tests passed,15 of 15,run 2026-10-10 (apps/web/e2e/ui-flows.spec.ts)
-Gap,holdout 3,not run,n/a (gap),.gitignore / evaluation/phase_d3 (guarded set)
 Phase F,dev + hold-outs 1-2,false READY events / not-READY submissions per input type,0 / 40 (95% upper bound 7.5%),evaluation/phase_f/results/denominators.txt
 Phase F,dev + hold-outs 1-2,wrong machine values scans / photos,0 / 741 and 0 / 752 produced,evaluation/phase_f/results/denominators.txt
 Phase F,dev + hold-outs 1-2,scanned university_name exact match (scans / photos),21/58 and 24/58,evaluation/phase_f/results/denominators.txt
 Phase F,probe,hidden PDF text trusted as digital original,yes (verified),evaluation/phase_f/results/text_layer_probe.txt
+Phase G,dev + hold-outs 1-2,false READY events / not-READY submissions per input type,0 / 40 (95% upper bound 7.5%),evaluation/phase_g/results/denominators_final.txt
+Phase G,dev + hold-outs 1-2,field accuracy digital / scans / photos (0 wrong),790/790 and 779/790 and 785/790,evaluation/phase_g/results/denominators_final.txt
+Phase G,dev + hold-outs 1-2,scanned university_name exact match (scans / photos),56/58 and 57/58,evaluation/phase_g/results/university_name_before_after.txt
+Phase G,dev,review fields per scanned submission (scans / photos),3.73 and 3.09,evaluation/phase_g/results/gate_summary_dev_final.md
+Phase G,hold-out 3 (judged once),false READY events / not-READY submissions per input type,0 / 14 (95% upper bound 21.4%),evaluation/phase_g/final/H3_integrated_report.md
+Phase G,hold-out 3 (judged once),field accuracy scans / photos (0 wrong),268/275 and 273/275 (main baseline 257/275 and 264/275),evaluation/phase_g/final/H3_integrated.json
+Phase G,hold-out 3 (judged once),review fields per submission scans / photos,4.28 and 4.08 (main baseline 7.68 and 7.32),evaluation/phase_g/final/H3_integrated_report.md
+Phase G,hold-out 3 (judged once),injected errors E1-E18 false auto-accept / false READY,0 / 1525 (95% upper bound 0.20%),evaluation/phase_g/final/H3_integrated_inj.md
+Phase G,dev + hold-outs 1-2,injected errors E1-E18 false READY,0/1354 and 0/1532 and 1/1523 (H14 owner-accepted),evaluation/phase_g/results/gate_summary_dev_final.md
+Phase G,manipulated PDFs,hidden text read / still trusted,0 of 705 effective manipulations (pipeline: 0 of 12 reached READY),evaluation/phase_g/results/pdf_manipulation_suite.md
+Phase G,normal digital PDFs,pages flagged untrusted,0 / 307,evaluation/phase_g/results/false_alarm_digital_pdfs.txt
+Gap,holdout 3,judged once on the Phase G build (OCR cache from 2026-10-06 reused),done,evaluation/phase_g/final/

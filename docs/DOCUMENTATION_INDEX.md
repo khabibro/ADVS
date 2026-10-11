@@ -32,6 +32,7 @@ Start here for ADVS engineering work.
 
 ## Evaluation and audit
 - `../evaluation/phase_f/TECHNICAL_AUDIT.md`, `APPROACH_EVALUATION.md`, `EVALUATION_PROTOCOL.md`
+- `../evaluation/phase_g/PHASE_G_REPORT.md` (fixes, D3, hold-out 3 judgement, merge gates, deck changes) and `../research/vlm_poc/COMPARISON.md` (isolated PaddleOCR-VL comparison)
 - `midterm/` (results pack, demo script, slides and their sources)
 
 Archived bootstrap docs are retained under `archive/`.

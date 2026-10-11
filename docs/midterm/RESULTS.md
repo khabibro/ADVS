@@ -1,8 +1,8 @@
-# ADVS — Midterm results (2026-10-14)
+# ADVS — Midterm results (2026-10-15, build `midterm-demo-v3`)
 
 **AI 기반 행정 제출서류 분석 및 자동 점검 시스템 (ADVS).** ADVS reads Korean administrative documents (embedded PDF text, or OCR for scans and photos), classifies them, extracts fields with their evidence, and checks a submission against a workflow checklist. It answers 제출 가능 / 보완 필요 / 확인 필요 with a reason per issue; a person confirms only the values the system cannot confirm itself. 제출 가능 means "no blocking issue found in the configured pre-check", not official approval.
 
-All numbers: **fictional test documents** built on the layouts of a few real samples, run through the real pipeline by scripts. Sources are repo paths; "dev" = `test_variants` (22 sets × digital/scanned/images) and hold-out set 1 (used as development data after Phase D); hold-out 2 was judged once.
+All numbers: **fictional test documents** built on the layouts of a few real samples, run through the real pipeline by scripts. Sources are repo paths; "dev" = `test_variants` (22 sets × digital/scanned/images), hold-out sets 1 and 2 (development data); **hold-out set 3 was judged once** on the Phase G build (below).
 
 ## Mentor requirements → status
 | Requirement | Status | Note |
@@ -15,43 +15,44 @@ All numbers: **fictional test documents** built on the layouts of a few real sam
 | Student: issue date within 90 days; student number required | implemented | configurable seed rule (`scripts/seed.py`) |
 | GPA threshold | partly | rule exists (seed value 3.0); the mentor's real threshold is **to be confirmed** |
 | Look-alike / unsupported document (e.g. 지방세 instead of 국세) | implemented | never 제출 가능; held for 확인 필요 (demo D5) |
-| Human review of unconfirmed values | implemented | demo D6 |
+| Human review of unconfirmed values | implemented | demo D9 (D6 is now decided automatically) |
 | Official verification (National Tax Service API, issuance numbers) | planned | `ROADMAP.md` |
 | Authentication, privacy controls, audit log | planned | not built |
 
-## Safety (re-checked: 555 backend tests pass (re-run 2026-10-10 on the v2 branch); rehearsal 3/3 runs)
+## Safety (re-checked on the v3 build: 613 backend tests, 108 web unit tests, 22 browser tests (15 run, 7 skipped: they need the mentor's real documents, deliberately not used), rehearsal 3/3 runs)
 | Measure | Result (events / n) | 95 % upper bound | Source |
 |---|---|---|---|
-| False 제출 가능, submissions whose correct status is not READY, development + hold-outs 1–2, per input type | **0 / 40** (12 + 14 + 14; the same 12–14 scenario types re-instantiated) | 7.5 % (about 21 % counting each scenario type once) | `evaluation/phase_f/results/denominators.txt` |
-| False 제출 가능, dev data (all sets, all versions) | **0** | see the row above | `evaluation/phase_d2/B2_D2_dev_report.md`, `B2_D2_holdout_report.md` |
-| False 제출 가능, hold-out 2 (judged once, before the final policy change) | **0** (included in the 40) | | `evaluation/phase_d2/PHASE_D2_REPORT.md` §6 |
-| False 제출 가능, injected OCR errors E1–E12 | **0 / 474** (dev) and **0 / 666** (hold-out 1) | 0.63 % and 0.45 % (cases share their base documents: optimistic) | `B2_D2_inj_dev.md`, `B2_D2_inj_holdout.md` |
-| Wrong auto-accepted values, same runs (incl. the common-mode variants) | **0** | same | same |
-| Wrong values acted on, hold-out 2 | 0 | | `PHASE_D2_REPORT.md` §6 |
+| False 제출 가능, submissions whose correct status is not READY, development + hold-outs 1–2, per input type | **0 / 40** (12 + 14 + 14; the same scenario types re-instantiated) | 7.5 % (about 21 % counting each scenario type once) | `evaluation/phase_g/results/denominators_final.txt` |
+| False 제출 가능, **hold-out 3 (judged once)**, per input type | **0 / 14** (digital, scans, photos) | 21.4 % (14 scenario types) | `evaluation/phase_g/final/H3_integrated_report.md`, `denominators_final.txt` |
+| False 제출 가능, injected OCR errors E1–E18, development / hold-out 1 / hold-out 2 / **hold-out 3** | **0 / 1,354**, **0 / 1,532**, **1 / 1,523** (the owner-accepted H14 case: both OCR passes make the same error), **0 / 1,525** | 0.22 %, 0.20 %, 0.20 %, 0.20 % (cases share base documents: optimistic) | `evaluation/phase_g/results/gate_summary_dev_final.md`, `evaluation/phase_g/final/H3_integrated_inj.md` |
+| False auto-accepts on single-error injections | **0** in all four suites (the only false auto-accept is the H14 case above) | | same |
+| Manipulated PDFs (hidden text: invisible, white-on-white, tiny): hidden date and number never read | **0 / 705** missed; pipeline run: **0 / 12** reached 제출 가능, 12 / 12 flagged `TEXT_LAYER_MISMATCH` | 0.43 % (705), 25 % (12) | `evaluation/phase_g/results/pdf_manipulation_suite.md`, `pdf_manipulation_pipeline.md` |
+| False alarms on normal digital PDFs | **0 / 307** pages flagged | 1.0 % | `evaluation/phase_g/results/false_alarm_digital_pdfs.txt` |
 
-These bounds describe the **synthetic** test data only; the real-world false-제출-가능 rate is not measured and cannot be stated.
+These bounds describe the **synthetic** test data only; the real-world false-제출-가능 rate is not measured and cannot be stated. Extracting visible text does not prove a document is authentic.
 
-## Accuracy
-| Measure | Dev | Hold-out | Source |
+## Accuracy (machine value, before any acceptance policy)
+| Measure | Development corpora (dev + hold-outs 1–2, 790 fields per input type) | Hold-out 3, judged once | Source |
 |---|---|---|---|
-| Digital extraction, fields correct | 240/240 | 275/275 (set 1), 275/275 (set 2, judged once) | `B2_D2_dev_report.md`, `B2_D2_holdout_report.md`, `PHASE_D2_REPORT.md` §6 |
-| Per type, hold-out 2 (BR / SME / tax / social / enrolment / transcript) | – | 28/28, 56/56, 42/42, 41/41, 48/48, 60/60 | `PHASE_D2_REPORT.md` §6 |
-| Classification (all versions) | 100 % match (incl. 3 look-alike sets → UNKNOWN) | digital 79/79, scanned 79/79, images 78/79 (set 1) | `B2_D2_dev_report.md` §2, `B2_D2_holdout_report.md` |
-| Scanned / photo fields correct, wrong | 228 and 230 of 240, 0 wrong | 254 and 258 of 275, 0 wrong | same reports §3 |
+| Digital extraction, fields correct | **790 / 790** | 274 / 275 (baseline: the same 274 / 275; one student name on a layout without a student number) | `denominators_final.txt` |
+| Scans, fields correct (0 wrong) | **779 / 790 (98.6 %)** (before Phase G: 741 / 790) | **268 / 275 (97.5 %)** (main baseline 257 / 275) | same |
+| Photos, fields correct (0 wrong) | **785 / 790 (99.4 %)** (before: 752 / 790) | **273 / 275 (99.3 %)** (main baseline 264 / 275) | same |
+| `university_name` on scans / photos | **56 / 58, 57 / 58** (before: 21 / 58, 24 / 58) | **19 / 20, 20 / 20** (main baseline 9 / 20, 11 / 20) | `evaluation/phase_g/results/university_name_before_after.txt`, hold-out 3 reports |
+| Classification | 100 % match on development data | 1 scanned enrolment certificate misclassified on hold-out 3 (baseline: the same one) | `H3_integrated_report.md` |
 
 ## Automation (OCR scans and photos; review burden = fields a person must still check, per submission)
 | Stage | Scanned / images | Source |
 |---|---|---|
 | Baseline B0 (every OCR field to a person) | 11.64 / 11.64 | `evaluation/phase_d/PHASE_D_REPORT.md` §3 |
-| Phase D (before D2 safety fixes) | 3.82 / 3.55 dev | `PHASE_D_REPORT.md` §4 |
-| **D2 final (this demo build, on `main`)** | **7.23 / 6.59 dev** (−38 % / −43 %); 7.40 / 6.84 hold-out 1 | `B2_D2_dev_report.md` §5, `PHASE_D2_REPORT.md` §11 |
-| D3 (unmerged branch, **not in the demo**) | 3.82 / 3.14 dev, total; decision-blocking 2.68 / 2.09 | `phase-d3/internal-automation:evaluation/phase_d3/D3_configs.md` |
-On the D2 final build, decision-blocking vs total fields (D3 measurement of the same policy, dev): 5.41 / 4.82 vs 7.23 / 6.59 (same file). Digital documents: 0.91 fields per submission. Auto-accepted OCR fields: 40.4 % scanned / 46.2 % images (dev). The safety policy of D2 cost about 3 fields per scan (dates and GPA now always need a person) — a deliberate, owner-approved trade.
+| D2 (the v2 demo build) | 7.23 / 6.59 dev | `evaluation/phase_d2/PHASE_D2_REPORT.md` §11 |
+| **v3 build** (D3 internal automation merged) | **3.73 / 3.09 dev**; 4.16 / 3.52 hold-out 1; 3.84 / 3.72 hold-out 2 | `evaluation/phase_g/results/gate_summary_dev_final.md` |
+| **Hold-out 3, judged once** | **4.28 / 4.08** (main baseline 7.68 / 7.32) | `evaluation/phase_g/final/` |
+Auto-decided scanned submissions (no person needed): 4 of 22 scans and 5 of 22 photos on dev (v2: 1 and 1); 2 of 25 on hold-out 3 (baseline 1 of 25). The clean scan D6 now reaches 제출 가능 without a reviewer; D9 (scanned student documents) still needs two confirmations.
 
 ## Honest limits
 - **Fictional documents** on a few real layouts; digital extraction fit those layouts once already (63 % on the first hold-out, fixed in D2). A **real-document pilot is still to come**.
-- Residual risks: a misread repeated identically on several documents can corroborate itself when no application value exists (the H14-type case, `PHASE_D_REPORT.md` §5, §8; never 제출 가능 in any measured run). D3's extended injection suite (E13–E18, unmerged branch) found **1 false auto-accept** under the D2 policy (case E3c-both on hold-out-2 data, 0 false 제출 가능; `D3_configs.md`).
-- Hold-out set 3 has **not been judged** — gap (a raw OCR capture was logged on 2026-10-06 but never scored). The final D2 policy was not re-judged on hold-out 2 (used up); it is stricter than what was judged.
-- **A PDF's text layer is trusted without checking** (verified probe: hidden text overrides what the page shows; `evaluation/phase_f/results/text_layer_probe.txt`) — recorded for November.
+- Residual risks: the H14 case (a misread repeated identically on several documents corroborates itself when no application value exists) remains an **owner-accepted residual**: 1 false auto-accept and 1 false 제출 가능 in the 1,523 hold-out 2 injections, none on hold-out 3; no special-case code was added for it.
+- Hold-out set 3 was judged **once** on the Phase G build. A raw OCR capture of it had been logged on 2026-10-06 and was never scored; its OCR cache was reused (OCR does not depend on the code under test).
+- Digital PDFs are no longer trusted blindly: invisible, white-on-white, tiny and covered text is ignored and flagged. Not covered: forged but visible content, and authenticity in general.
 - No authentication or access control; tested on SQLite only (PostgreSQL is configured in Docker Compose but not tested this phase); the admin app is an empty shell.
 - OCR scans take about 16 s per page on this Mac (CPU); digital documents ~0.1 s per submission.

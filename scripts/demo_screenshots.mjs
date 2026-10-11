@@ -75,13 +75,10 @@ if (process.env.FLOW === "1") {
   await shot("R2_review_list", false);
   const confirm = page.getByRole("button", { name: /원본과 같음/ });
   await confirm.first().focus();
-  for (const remaining of [3, 2]) {
-    await page.keyboard.press("Enter");
-    await page.getByRole("heading", { name: `확인할 항목 ${remaining}개` }).waitFor();
-  }
-  await shot("R3_review_progress", false);
+  // D9 leaves two dates for a person: confirm the first, look at the progress, confirm the last.
   await page.keyboard.press("Enter");
   await page.getByRole("heading", { name: "확인할 항목 1개" }).waitFor();
+  await shot("R3_review_progress", false);
   await page.keyboard.press("Enter");
   await page.locator('section[aria-labelledby="status-heading"]').getByRole("heading", { name: "제출 가능" }).waitFor({ timeout: 30000 });
   await page.evaluate(() => window.scrollTo(0, 0));
