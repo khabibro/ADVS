@@ -1,0 +1,28 @@
+{
+ "model": "PaddlePaddle/PaddleOCR-VL-1.6",
+ "weights": "PaddlePaddle/PaddleOCR-VL-1.6-GGUF @ 511b09642bb324401f15f97cc23bc67e8f0a291d (official GGUF, llama.cpp build 11429 d81235049, Metal)",
+ "native_reference_revision": "PaddlePaddle/PaddleOCR-VL-1.6 @ c5630abae1d940eafe0697512a0325494b02ab42 (paddle CPU, used only to cross-check the GGUF route)",
+ "pipeline": {
+  "pipeline_version": "v1.6",
+  "device": "cpu",
+  "vl_rec_backend": "llama-cpp-server",
+  "vl_rec_server_url": "http://127.0.0.1:8111/v1",
+  "vl_rec_api_model_name": "PaddleOCR-VL-1.6-GGUF"
+ },
+ "server": "llama-server --jinja --chat-template-file chat_template.jinja -ngl 99 -c 8192 --temp 0 --port 8111",
+ "method_B": "official pipeline page parse (layout PP-DocLayoutV3 + VLM per block), blocks flattened to OCR lines by adapter.py, then the production extractors",
+ "method_D": {
+  "prompt": "OCR:",
+  "pad_px": 24,
+  "max_new_tokens": 64,
+  "temperature": 0,
+  "crop_source": "evidence boxes of the production OCR extraction (replay), same raster as production (PDF scale 4.0)"
+ },
+ "status": "FROZEN before the hold-out 3 run; see results/frozen.json for hashes",
+ "adapter": {
+  "file": "analysis/adapter.py",
+  "mode": "both",
+  "description": "table cells get synthetic grid boxes from row/column position (colspan/rowspan honoured) plus label : value row lines; text blocks one line per text line"
+ },
+ "tuning": "adapter mode chosen on test_variants only (rows 842, pairs 895, grid 854, both 931 correct of 1035 fields); no setting was tuned on hold-out 3 or on hold-out 1/2 results"
+}
