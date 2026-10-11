@@ -1,4 +1,4 @@
-# Phase G report — close the known shortcomings, test them, compare OCR and VLM in isolation
+# Phase G report — close the known shortcomings and test them
 
 Date: 2026-10-11. Presentation: 2026-10-15. Demo build: **`midterm-demo-v3`** (the deck matches v3). Evidence labels: every number below comes from a file named next to it.
 
@@ -89,7 +89,7 @@ The branch already contained the internal confirmations (GPA arithmetic, validit
 
 `phase-g/integrated` = `main` + `phase-g/fixes` + `phase-g/d3` (full gates after each merge). Gates on development data (final code): backend 613 passed, ruff, format, mypy clean; web lint, typecheck, build clean, 108 unit tests; Playwright 22 tests: 15 pass (the 7 skipped need real mentor PDFs via `MENTOR_DIR`, deliberately not set), axe included; `make demo-rehearsal` **3 of 3 passes** (D1–D9, web, admin, browser smoke test).
 
-**Hold-out 3 was run once**, with `ADVS_FINAL_JUDGEMENT=1`, after the VLM configuration was frozen (hash recorded), with the frozen scorer `score_v2.py` sha256 `49674a9c…2ad2594`, injection suites E1–E18 (Phase D `a81e4ef2…`, D2 `08229da0…`, D3 `968e4c1a…`). Baseline = main's application code (`95ef2da`) under the integrated harness (the same combination reproduces main's recorded development numbers exactly); candidate = `phase-g/integrated` at `d0177c7`. Files: `evaluation/phase_g/final/`. **Notes on honesty:** a raw OCR capture of hold-out 3 had been logged on 2026-10-06 (never scored); its OCR cache was reused (OCR output does not depend on the code under test). Three launch attempts of the session aborted before opening any hold-out data (an argument-parsing error, then a missing `manifest.json` in the baseline worktree); the VLM stage was re-run once with a corrected dataset path; no setting was changed after seeing results. The hold-out access log is committed.
+**Hold-out 3 was run once**, with `ADVS_FINAL_JUDGEMENT=1`, with the frozen scorer `score_v2.py` sha256 `49674a9c…2ad2594`, injection suites E1–E18 (Phase D `a81e4ef2…`, D2 `08229da0…`, D3 `968e4c1a…`). Baseline = main's application code (`95ef2da`) under the integrated harness (the same combination reproduces main's recorded development numbers exactly); candidate = `phase-g/integrated` at `d0177c7`. Files: `evaluation/phase_g/final/`. **Notes on honesty:** a raw OCR capture of hold-out 3 had been logged on 2026-10-06 (never scored); its OCR cache was reused (OCR output does not depend on the code under test). Three launch attempts of the session aborted before opening any hold-out data (an argument-parsing error, then a missing `manifest.json` in the baseline worktree); no setting was changed after seeing results. The hold-out access log is committed.
 
 | Hold-out 3 (judged once) | main baseline | integrated |
 |---|---|---|
@@ -124,13 +124,11 @@ One scanned enrolment certificate is misclassified on hold-out 3 in both baselin
 
 The gates passed on 2026-10-11, well before the 2026-10-13 18:00 deadline: **present from `midterm-demo-v3`**. `DEMO_SCRIPT.md` is v3 (D1–D9); the v2 script is `DEMO_SCRIPT_v2.md`; screenshots are in `docs/midterm/screenshots_v3/` (1280×720 with the review and upload flows, 1920×1080, 390×844). `midterm-demo-v2` and `midterm-demo-2026-10-14` were not moved.
 
-Deck changes (`docs/midterm/ADVS_midterm.pptx`/`.pdf`, 18 slides, re-rendered; every changed slide checked visually): the date is **2026-10-15** (footers; it said 10-14); scan/photo accuracy, injections, review burden, the limits slide (university name and hidden-text gaps now closed; hold-out 3 judged once), approach table, protocol baselines and the plan/limits appendix carry v3 numbers, each traced in `slides_sources.md`; D9 replaces D6 as the human-review example. **The roadmap slide has the requested line:** "2차 중간발표: PaddleOCR-VL 선택적 검증 실험 — 기존 OCR과 동일 데이터로 비교 (정확도, 오류 상관, 자동화 효과, 속도)". **No VLM result is in the main deck, and the optional preliminary VLM slide was not created**: the roadmap gate is not met (see §7), so there is no "clear improvement under the gate" to show.
+Deck changes (`docs/midterm/ADVS_midterm.pptx`/`.pdf`, 18 slides, re-rendered; every changed slide checked visually): the date is **2026-10-15** (footers; it said 10-14); scan/photo accuracy, injections, review burden, the limits slide (university name and hidden-text gaps now closed; hold-out 3 judged once), approach table, protocol baselines and the plan/limits appendix carry v3 numbers, each traced in `slides_sources.md`; D9 replaces D6 as the human-review example. (A later cleanup on 2026-10-11 aligned the deck, the roadmap and the documents with the OCR-only scope decision; see §7.)
 
-## 7. OCR vs VLM (isolated; `research/vlm_poc/COMPARISON.md` (branch `research/vlm-poc`, tag `archive/research-vlm-poc`; not merged into `main`))
+## 7. Scope decision (2026-10-11)
 
-PaddleOCR-VL **1.6** (Apache-2.0, 0.9 B; revision `c5630aba…`) running as the official **GGUF build, BF16, not quantised** (revision `511b0964…`, verified in the file header), served by llama.cpp 0.6.0 (build 11429, Metal) on an Apple M3 Pro / 18 GB, driven through the official PaddleOCR pipeline; the native Paddle CPU route (75–114 s per page here) was used only to cross-check: on an 8-file sample **29 of 30 extracted field values were identical** (the one difference: transcript GPA, native 3.87, GGUF 3.8, expected 3.80 — the GGUF was right). Isolated in `research/vlm_poc/` (its own venv; nothing in `apps/`, no lockfile change). Configuration frozen and hashed (`results/frozen.json`, combined sha256 `90f00bbf…`) **before** the hold-out 3 run, and verified unchanged right before it. Failure example: the VLM omitted the label `학번` (`：2023123456`), so no student number was found, identically on both routes.
-
-**Headline (hold-out 3, judged once, 960 fields):** current OCR (A) 97.0 % scans / 99.3 % photos / 99.7 % digital correct with **0 wrong** values; VLM page parse (B) **89.1 % / 90.2 % / 89.6 %** with 1–2 % wrong non-null values (not on the page: 새봄 → 새붐, GPA 3.80 → 3.5); joint errors rare (scans: 3 of 396 both wrong, 0 identical); selective crop verification (D) would confirm **215 of the 217 fields a person must confirm today with 0 wrong accepted (≤1.4 %)** and never reproduced an injected error (1,385 of 1,385 caught); speed 8.3 s per page (B), 0.34 s per crop (D) on Apple Metal vs about 16 s per page for the current CPU OCR. **Recommendation: insufficient evidence — continue testing.** The roadmap gate needs a lower review rate on a physical or real set, which does not exist; independence rests on very few joint events; hardware for deployment is undecided. D looks promising in simulation; B is not a replacement.
+The owner decided that the MVP uses traditional OCR only. The second-reader experiment that Phase G had run in isolation was removed from the active project: its code, results, documentation, roadmap entries and deck content. The retained direction is traditional OCR → deterministic field extraction and normalisation → validation and cross-document checks → safe submission decision, with a person confirming uncertain or conflicting values. The Phase G fixes, D3 and the hold-out 3 judgement above concern that pipeline and are unchanged.
 
 ## 8. Remaining risks
 
@@ -146,6 +144,5 @@ python evaluation/phase_g/scripts/gate_summary.py <out-dir> F dev holdout holdou
 cd apps/api && PYTHONPATH=. python ../../evaluation/phase_g/scripts/pdf_manipulation_suite.py <synthetic dir>
 python evaluation/phase_f/scripts/denominators.py --phase-g                        # denominators and bounds
 cd apps/api && PYTHONPATH=. python ../../evaluation/phase_g/scripts/university_replay.py --data-root <main checkout>/evaluation
-# hold-out 3 (once; the set is used up): evaluation/phase_g/scripts/final_judgement.sh and final_judgement_vlm.sh
-# VLM experiment: research/vlm_poc/README.md
+# hold-out 3 (once; the set is used up): evaluation/phase_g/scripts/final_judgement.sh
 ```

@@ -20,14 +20,12 @@ Status of every section: **PENDING** unless stated. Do not fill a section with a
 ## 4. D3 result
 - Acceptance table, false READY and false auto-accept with n and bounds, burden numbers, merge decision: PENDING.
 
-## 5. OCR versus VLM feasibility (only if attempted)
-- Thresholds fixed **before** the experiment (ε for joint errors, minimum improvement, latency budget): PENDING — write them here first.
-- Environment, model revision, hardware: PENDING.
-- Per-reader and hybrid metrics, error-correlation table, failure cases: PENDING.
-- If not attempted: reason (hardware, time, data) and what was improved instead: PENDING.
+## 5. Physical-corpus evaluation
+- Corpus composition (document types, capture conditions, counts), answer key, privacy and permissions: PENDING.
+- Baseline accuracy per input type with n and intervals; failure cases by cause: PENDING.
 
 ## 6. Decision and rationale
-Proceed / defer / reject integration of PaddleOCR-VL, with the evidence for the decision: PENDING.
+Which measured defects are fixed next, with the evidence for the decision: PENDING.
 
 ## 7. Remaining risks and next steps
 PENDING (start from `docs/planning/ROADMAP.md` §7).

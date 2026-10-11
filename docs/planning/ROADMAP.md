@@ -13,12 +13,12 @@ Presentation date: **2026-10-15**. Demo build: **`midterm-demo-v3`** (merge of `
 | N2 PDF text-layer trust check (D-1) | **done**: hidden text is ignored and flagged `TEXT_LAYER_MISMATCH`; 0 of 705 manipulated copies missed, 0 of 307 normal pages flagged, 12/12 manipulated submissions held at 확인 필요 |
 | N3 `university_name` (D-3) | **done**: scans 21/58 → 56/58, photos 24/58 → 57/58 (development); hold-out 3: 9/20 → 19/20 and 11/20 → 20/20 |
 | N4 D3 merged, hold-out 3 judged once | **done**: 0 false 제출 가능 (0/14 per input type), injections 0/1,525, review fields per scan 7.68 → 4.28 |
-| F1 VLM decision gate | PaddleOCR-VL 1.6 was compared in isolation (`research/vlm_poc/COMPARISON.md` (branch `research/vlm-poc`, tag `archive/research-vlm-poc`; not merged into `main`)): **insufficient evidence** (the gate's physical/real set does not exist yet). Selective crop verification looks promising in simulation; page parsing is not a replacement. The evaluation is presented as planned for the second midterm. |
+| Scope decision (owner, 2026-10-11) | **OCR-only MVP.** The product direction is traditional OCR → deterministic extraction and normalisation → validation and cross-document checks → safe submission decision. No second recognition model is planned. |
 | Still open | D-2 partly (policy by design), D-5 real/physical data, D-6 photo gate, D-7 background OCR, D-8–D-10 minor, D-11 login and PostgreSQL, the owner-accepted H14 residual risk |
 
 ## 1. Baseline (frozen at tag `midterm-demo-v2`)
 
-- Pipeline: upload → PDF text layer or PaddleOCR (PP-OCRv5 Korean mobile) → deterministic classification → per-type extraction with evidence → auto-acceptance policy → database-driven rules → status → review → overview API → web app. No LLM, VLM or second OCR engine. [V]
+- Pipeline: upload → PDF text layer or PaddleOCR (PP-OCRv5 Korean mobile) → deterministic classification → per-type extraction with evidence → auto-acceptance policy → database-driven rules → status → review → overview API → web app. No LLM and no second recognition model; this is the scope of the project. [V]
 - Six mentor-defined document types; fictional data only; SQLite only; no login; admin app is a placeholder. [V]
 - Results on synthetic data: digital 790/790 correct fields; scans 741/790 and photos 752/790 with **0 wrong** machine values; 0 false READY in 40 not-READY submissions per input type (95 % upper bound 7.5 %) and in 474 + 666 injected cases. Real-world risk is not measured. [V] (`evaluation/phase_f/results/denominators.txt`)
 
@@ -42,7 +42,7 @@ Goal: the demonstrated MVP is stable and every claim is true and traceable.
 
 **Acceptance for October:** documents consistent with code; rehearsal 3×; hold-out 3 untouched; demo tag unchanged; the format question answered or both formats prepared.
 
-**Deferred on purpose (not in October):** any change to extraction, classification, validation, policy or dependencies; PaddleOCR-VL in any form; D3 merge; login; PostgreSQL.
+**Deferred on purpose (not in October):** any change to extraction, classification, validation, policy or dependencies; D3 merge; login; PostgreSQL.
 
 ## 4. November 2026: measure, fix the verified defects, test feasibility
 
@@ -67,34 +67,25 @@ Goal: a controlled research and engineering iteration. Mandatory items first; op
 | ID | Task | Why | How | Completion measure | Fallback |
 |---|---|---|---|---|---|
 | R1 | Photo quality gate and perspective correction (H) | D-6 | measure on the physical corpus first; prototype offline with OpenCV (already installed); never wire globally without a per-image fallback | usable-photo rate and false-reject rate before/after | document that it was not justified |
-| R2 | **Isolated PaddleOCR-VL proof of concept** (B/C/D) | answer the research question with evidence | separate environment (`paddlepaddle(-gpu) ≥ 3.2.1`, `paddleocr[doc-parser] ≥ 3.4.0`), GPU with CUDA ≥ 11.8 (vLLM: CC ≥ 8.0, CUDA ≥ 12.6) or a measured CPU/MLX run; recorded OCR outputs; same documents; error-correlation table | metrics of `EVALUATION_PROTOCOL.md` §7 with thresholds fixed beforehand | if hardware, time or data make it unreliable: write that down and improve the baseline instead |
 | R3 | Conformal acceptance on real or physical data | the synthetic data have too few errors for calibration | needs error-bearing data (D3 report: ≥ 19 samples per field at α = 0.05, ≥ 99 at α = 0.01) | per-field bounds with sample sizes | keep hand-set floors |
 
-**Acceptance for November:** baseline report (N1) with n and bounds; N2 and N3 verified before/after; D3 judged once with a merge decision; physical corpus with an answer key and measured baseline; the feasibility decision (proceed, defer or reject VLM integration) written down with its rationale; remaining risks listed. Not required: integrating PaddleOCR-VL.
+**Acceptance for November:** baseline report (N1) with n and bounds; N2 and N3 verified before/after; D3 judged once with a merge decision; physical corpus with an answer key and measured baseline; remaining risks listed.
 
 ## 5. December 2026: final system and evaluation
 
 | ID | Task | Why | Completion measure | Fallback |
 |---|---|---|---|---|
-| F1 | **Decision gate for selective VLM verification** | evidence-driven, not fashion-driven | adopt (approach D) **only if all hold**: lower human-review rate on the physical/real set at an unchanged upper bound for false auto-accept and false READY; independence shown by the correlation table wherever agreement is used; latency and hardware fit; decision logic unchanged | otherwise retain A + E (+ D3 if it passed) and report the VLM result as negative or inconclusive |
 | F2 | Authentication, per-project access, roles | production gap (`docs/security/document-privacy.md`) | every route protected; tests for cross-project access | document as future work |
 | F3 | Privacy: no personal data in logs, retention and deletion, audit log | same | log inspection tests; retention job; audit view | document |
 | F4 | Optional external checks (National Tax Service registry API; issuance-number links) | the only route to authenticity beyond text/visible consistency | works behind a switch, only with the mentor's agreement | omit |
 | F5 | End-to-end suite, regression tests, deployment instructions, final architecture document | final exam and result report | a fresh deployment works from the documents; suites green | trim scope |
 | F6 | Final evaluation report and presentation | graded deliverable | reproducible metrics with n and bounds; failure analysis; honest limits (`docs/planning/DECEMBER_FINAL_REPORT_TEMPLATE.md`) | none |
 
-**Acceptance for December:** the final comparison (baseline vs chosen alternative) reproducible from the repository; false READY reported with its denominator and bound on a fresh judgement set and on the real pilot if authorised; security basics in place; deployment verified; limitations stated.
+**Acceptance for December:** the final comparison (baseline vs the final build) reproducible from the repository; false READY reported with its denominator and bound on a fresh judgement set and on the real pilot if authorised; security basics in place; deployment verified; limitations stated.
 
-## 6. Conditions for adopting or rejecting PaddleOCR-VL
+## 6. Scope
 
-| Decision | Condition |
-|---|---|
-| **Do not adopt before the exam** | project constraint; no evidence exists |
-| **Run an isolated PoC in November** | N1–N5 are on track; hardware available or a CPU/MLX run measured |
-| **Adopt selective verification (D) in December** | all four conditions of F1 hold |
-| **Adopt as the only engine (B)** | never on current evidence: also requires better exact-field accuracy for decision-driving fields **and** a usable uncertainty signal |
-| **Both engines everywhere (C)** | only if the correlation table shows independence and the latency budget allows it |
-| **Reject / defer** | no improvement at fixed bounds, high joint-error rate, unacceptable latency, or an integration that would change decision logic |
+The MVP uses traditional OCR only (PP-OCRv5 Korean through PaddleOCR; embedded PDF text where a trustworthy text layer exists). Improvements stay deterministic and measurable: extraction and normalisation rules, validation and cross-document checks, the confirmation policy, the PDF text-layer check, and (optionally) a photo quality gate. Traditional OCR does not guarantee authenticity and does not eliminate extraction errors; uncertain or conflicting values go to a person.
 
 ## 7. Dependencies and risks
 
@@ -104,7 +95,6 @@ Goal: a controlled research and engineering iteration. Mandatory items first; op
 | Real data and physical captures need people and authorisation | start O6 in October; N5 before N6 |
 | D3 changes demo D6 and its stress suite found one false READY in a correlated case | judge once on hold-out 3; owner decision on the residual; update demo and rehearsal before merge |
 | Synthetic data too clean to calibrate or to show OCR differences | physical corpus; do not quote bounds as real-world |
-| PoC hardware (no NVIDIA GPU on the development Mac; 18 GB RAM) | measure CPU/MLX or use external GPU; otherwise skip R2 |
 | Parallel work causes merge conflicts | one branch per task, merge main into the branch (no rebase), full gates and rehearsal after every merge |
 | Scope creep | optional items are dropped first; mandatory work = N1–N5, N7–N9, F2, F3, F5, F6 |
 

@@ -21,6 +21,18 @@ Frontend uses App Router pages and a centralized API client. Backend routes stay
 
 ## Document intelligence pipeline
 
+Scope: the MVP recognises text with traditional OCR only (PP-OCRv5 Korean through PaddleOCR) and with the embedded text layer of digital PDFs. In order:
+
+1. Receive a PDF or an image.
+2. Use the embedded PDF text where it is trustworthy (only text a person can see; hidden text is ignored and flagged).
+3. Run the OCR pipeline where image-based recognition is needed.
+4. Normalise and map extracted values into the field schema of each document type.
+5. Run deterministic field-level validation and cross-document checks.
+6. Mark uncertain or conflicting values for human review.
+7. Return a submission decision (제출 가능 / 보완 필요 / 확인 필요) only when the validation and safety conditions are met.
+
+Traditional OCR does not guarantee authenticity and does not eliminate extraction errors; that is why values without independent confirmation are never accepted automatically.
+
 ```
 upload -> file signature/decode validation -> store
   -> PdfProcessor (direct text layer, if meaningful)

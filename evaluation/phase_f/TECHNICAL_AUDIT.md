@@ -44,7 +44,7 @@ upload  ->  signature + decode validation  ->  local storage
         ->  /overview read model -> Next.js web app (renders only what the API returned)
 ```
 
-- **Backend:** FastAPI, SQLAlchemy 2, Alembic, PyMuPDF, Pillow; PaddleOCR 3.2.0 / PaddlePaddle 3.1.1 as an optional extra (`apps/api/pyproject.toml`). **No LLM, VLM, second OCR engine or network model call exists** (`grep -iw "llm|openai|anthropic|vlm"` finds only the comment "No LLM" in `classifier.py`).
+- **Backend:** FastAPI, SQLAlchemy 2, Alembic, PyMuPDF, Pillow; PaddleOCR 3.2.0 / PaddlePaddle 3.1.1 as an optional extra (`apps/api/pyproject.toml`). **No LLM, second recognition model or network model call exists** (`grep -iw "llm|openai|anthropic"` finds only the comment "No LLM" in `classifier.py`).
 - **Database:** SQLAlchemy models for PostgreSQL; all runs and tests used **SQLite** (WAL mode since Phase E2).
 - **Frontend:** Next.js 15 web app (applicant and reviewer flows); the admin app is an empty placeholder.
 - **Status model:** 제출 가능 / 확인 필요 / 보완 필요, worst effect wins; missing evidence yields 확인 필요, never a pass.
@@ -103,7 +103,7 @@ The honest denominator for the safety claim is small. Among submissions whose co
 
 | # | Document says | Code / evidence says | Resolution |
 |---|---|---|---|
-| 1 | September plan deck (`ADVS.pptx`, slides 6–7): ADVS is a **hybrid with an LLM** for ambiguous text; stack includes LLM | No LLM anywhere; classification and extraction are deterministic (`classifier.py` says "No LLM") | The October deck says "no LLM / VLM yet"; the approach evaluation (`APPROACH_EVALUATION.md`) decides whether to add one |
+| 1 | September plan deck (`ADVS.pptx`, slides 6–7): ADVS is a **hybrid with an LLM** for ambiguous text; stack includes LLM | No LLM anywhere; classification and extraction are deterministic (`classifier.py` says "No LLM") | The deck and documents state that the system uses traditional OCR and deterministic rules only; this is the project scope (owner decision, 2026-10-11) |
 | 2 | September deck, slide 3: MVP types are 졸업증명서, 경력증명서, 사업자등록증, 중소기업확인서 | Current scope is the mentor's six (four business, two student); 졸업/경력 support is preserved but not in the demo | Report scope as the six; mention history |
 | 3 | September deck, slide 7: PostgreSQL in the stack | Models target PostgreSQL; everything was run and tested on SQLite | State "PostgreSQL schema, tested on SQLite" |
 | 4 | Course deck (slide 5): **5 minutes presentation + 2 minutes Q&A**, penalty for overtime; **first midterm presentation 10/22 (week 8)**, second 11/19, final 12/10 | The master plan and the deck brief say the midterm is **2026-10-14** and plan a 10-minute talk plus demo | **Open question for the owner:** confirm the date and the allowed time. The deck now marks a 5-minute path (§ deck notes) |
@@ -135,7 +135,7 @@ The honest denominator for the safety claim is small. Among submissions whose co
 | **Date and format mismatch**: the course deck says first midterm is 10/22 and each team has 5 minutes + 2 minutes Q&A | unknown / high | confirm with the TA or professor; the deck has a marked 5-minute path; consider a recorded demo clip |
 | The live demo cannot fit a 5-minute slot | medium / high | recorded 60–90 s clip or screenshots; live demo during Q&A only |
 | D3 unmerged and changes D6 | known | present from `midterm-demo-v2`; D3 only as 진행 중 on the roadmap |
-| Questions about forged PDFs, real documents, LLM use | high / medium | answers prepared in the deck notes: D-1 is a recorded gap, no real documents yet, LLM/VLM are evaluated, not used |
+| Questions about forged PDFs, real documents, LLM use | high / medium | answers prepared in the deck notes: D-1 was a recorded gap (fixed in Phase G), no real documents yet, no LLM or second recognition model is used |
 | Port 3000 or OCR warm-up on stage | medium / medium | `make demo-rehearsal` the morning of the talk; fallback tag `midterm-demo-2026-10-14` |
 | Hold-out set 3 status: the run log (uncommitted, 2026-10-06 13:45) records a raw OCR capture (`H3_chosen_raw.json`, git-ignored); it was never scored here, but the owner should confirm that nobody read its results before D3 is judged on it | low / medium | do not open it; confirm with the owner |
 | Claims drifting from evidence | medium / high | every number in the deck is in `slides_sources.md`, with n and uncertainty for safety claims |

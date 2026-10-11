@@ -10,11 +10,10 @@ Status of every section: **PENDING**. The course asks for the background and goa
 
 ## 3. Experimental methodology
 - Data sets (development, judgement, physical, real pilot), provenance, permissions, splits, leakage controls: PENDING.
-- Metrics and denominators as in `evaluation/phase_f/EVALUATION_PROTOCOL.md`; reproducible configuration and model versions: PENDING.
+- Metrics and denominators as in `evaluation/phase_f/EVALUATION_PROTOCOL.md`; reproducible configuration and OCR model versions: PENDING.
 
 ## 4. Comparative results
-- Baseline versus the chosen alternative on the same documents, per document type and input type, paired tests, confidence intervals: PENDING.
-- If PaddleOCR-VL or another reader was evaluated: outputs, error correlation, human-review rate at fixed bounds: PENDING.
+- Baseline versus the final build on the same documents, per document type and input type, paired tests, confidence intervals: PENDING.
 
 ## 5. Failure analysis
 - Failure cases by cause; what was fixed, what remains: PENDING.

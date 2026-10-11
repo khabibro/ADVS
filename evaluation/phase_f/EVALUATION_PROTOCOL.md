@@ -1,6 +1,6 @@
 # ADVS evaluation protocol (Phase F, 2026-10-10)
 
-Purpose: one fair, reproducible way to compare the current extractor with any alternative (a second OCR engine, PaddleOCR-VL, a hybrid) and to state safety claims with their denominators and uncertainty. Evidence labels: **[V]** verified in this repository, **[E]** external, **[H]** hypothesis, **[U]** unknown. Numbers marked *baseline* are computed from committed scored runs by `evaluation/phase_f/scripts/denominators.py` (output: `results/denominators.txt`); hold-out set 3 is not involved.
+Purpose: one fair, reproducible way to compare the current extractor with any change to it (a new rule, a fix, a preprocessing step) and to state safety claims with their denominators and uncertainty. Evidence labels: **[V]** verified in this repository, **[E]** external, **[H]** hypothesis, **[U]** unknown. Numbers marked *baseline* are computed from committed scored runs by `evaluation/phase_f/scripts/denominators.py` (output: `results/denominators.txt`); hold-out set 3 is not involved.
 
 ## 1. Data inventory and rules
 
@@ -71,7 +71,7 @@ Do not conflate layers: metrics 1–5 measure **extraction and classification**;
 
 - Git commit, branch, working-tree status; scorer SHA-256; manifest SHA-256; injection-suite SHA-256; corpus name; random seed.
 - Current engine: `paddleocr==3.2.0`, `paddlepaddle==3.1.1`, `paddlex 3.2.1`, `PP-OCRv5_mobile_det`, `korean_PP-OCRv5_mobile_rec`, render DPI 288, document orientation on retry only, unwarping off; `auto_accept_strategy` (main default S7, D3 branch S8/S9); confidence floor 0.90; device and OS.
-- Any candidate: model identifier and **revision hash**, pipeline version (for PaddleOCR-VL: v1 / v1.5 / v1.6), serving backend, precision, hardware, batch size, prompts or decoding settings, wall-clock.
+- Any candidate change: commit, OCR model identifiers and versions (PP-OCRv5 Korean through paddleocr 3.2.0), hardware, wall-clock.
 - OCR outputs are **recorded once and replayed** (`--ocr-cache … --ocr-mode record|replay`, [V]) so that comparisons and re-scoring need no repeated inference.
 
 ## 5. Uncertainty: what "0 failures" means here
@@ -104,16 +104,16 @@ Every non-correct field and every wrong status gets exactly one primary cause, a
 | Verification logic | extraction was right; the rule or policy decided wrongly |
 | Data / annotation | the answer key or generator is wrong |
 
-**Error correlation (required before agreement counts as evidence).** For each field type and each pair of readers (OCR vs OCR-second-pass, OCR vs VLM): P(both wrong) and P(both wrong with the same output), with counts. Agreement is used as a confirmation source only where the second probability is below a pre-set ε, fixed in the November plan before the data are seen. Until measured, agreement of two models is treated as **not** independent.
+**Error correlation (required before agreement counts as evidence).** For each field type and the two readings the system already compares (the first OCR pass and the second-pass crop of the same engine): P(both wrong) and P(both wrong with the same output), with counts. Agreement is used as a confirmation source only where the second probability is below a pre-set ε, fixed before the data are seen. Until measured, agreement of two readings by the same engine is treated as only partly independent.
 
-## 7. Comparison protocol for the November feasibility study (optional PoC)
+## 7. Comparison protocol for a change to the extractor
 
 1. Same documents (physical corpus plus the development sets), same preprocessing, same normaliser and scorer.
-2. Record outputs of each reader once; score offline.
-3. Report metrics 1, 2, 4, 8, 10–13 per reader and for the hybrids (OCR first + VLM on the policy-selected fields; both on every document), per document type and input type, with the correlation table.
-4. Decision rule fixed beforehand: adopt only if the candidate lowers the human-review rate at an unchanged upper bound for false auto-accept and false READY, shows independence where agreement is used, and fits latency and hardware; otherwise record a negative or inconclusive result.
-5. Thresholds (ε, minimum improvement, latency budget) are written into the November report template **before** the experiment.
+2. Record outputs once; score offline.
+3. Report metrics 1, 2, 4, 8, 10–13 before and after, per document type and input type, with the correlation table where a confirmation rule changes.
+4. Decision rule fixed beforehand: accept the change only if the human-review rate falls at an unchanged upper bound for false auto-accept and false READY and the decision logic stays safe; otherwise record a negative or inconclusive result.
+5. Thresholds (ε, minimum improvement) are written into the report template **before** the experiment.
 
 ## 8. Schedule note
 
-October is for freezing and documenting; November builds the physical corpus and the ground truth, measures the baseline and, if feasible, runs the isolated study; December repeats the baseline on a fresh judgement set and writes the final comparison. Dates are not fixed here because the course dates are unconfirmed (the course deck lists the first midterm presentation on 10/22, the second on 11/19 and the final on 12/10; the master plan assumes 10/14).
+October is for freezing and documenting; November builds the physical corpus and the ground truth, measures the baseline; December repeats the baseline on a fresh judgement set and writes the final comparison. Dates are not fixed here because the course dates are unconfirmed (the course deck lists the first midterm presentation on 10/22, the second on 11/19 and the final on 12/10; the master plan assumes 10/14).
