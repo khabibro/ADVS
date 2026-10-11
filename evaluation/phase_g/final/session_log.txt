@@ -1,0 +1,10 @@
+frozen VLM config: 90f00bbfbb3547e60e666135aee1794e396d6ea0efb9144951d9b4a8ebd3e826
+candidate commit: d0177c73f14d1e29a8eff864563ef06a3d73e2e6  baseline app commit: 95ef2da1c65b1a3b174db779cba106c2a8ba1d8f
+scorer v2 sha256 49674a9c03e464310cda0278782062e1a4b996e334ff8d8cbdc78d10b5ad2594
+scorer v2 sha256 49674a9c03e464310cda0278782062e1a4b996e334ff8d8cbdc78d10b5ad2594
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+{"corpus": "holdout3", "scorer_sha256": "49674a9c03e464310cda0278782062e1a4b996e334ff8d8cbdc78d10b5ad2594", "rows": 978, "missing": {"a": 0, "b": 0}}
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+crops 640
+read 640 crops
+SESSION_DONE
