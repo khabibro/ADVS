@@ -33,6 +33,7 @@ from app.document_intelligence.ocr.providers import get_ocr_provider
 from app.document_intelligence.ocr.text_assembly import (
     assemble_document_text,
     assemble_page_text,
+    denoised_pages,
 )
 from app.document_intelligence.preprocessing.processor import PdfProcessor, is_meaningful_text
 from app.document_intelligence.preprocessing.text_layer import audit_text_layer
@@ -144,7 +145,10 @@ class DocumentProcessingService:
 
             self._set_status(db, document, ProcessingStatus.CLASSIFYING)
             classification = self.classifier.classify(
-                source_result.assembled_text, document.original_filename
+                assemble_document_text(denoised_pages(source_result.pages))
+                if source_result.pages
+                else source_result.assembled_text,
+                document.original_filename,
             )
             logger.info(
                 "classification_completed",
@@ -293,9 +297,13 @@ class DocumentProcessingService:
         (see classification/title_gate.py). Embedded PDF text is exact and is not gated."""
         if classification.predicted_type == DocumentType.UNKNOWN:
             return classification
-        ocr_pages = [
-            page for page in source_result.pages if page.metadata.get("source") != "direct_pdf_text"
-        ]
+        ocr_pages = denoised_pages(
+            [
+                page
+                for page in source_result.pages
+                if page.metadata.get("source") != "direct_pdf_text"
+            ]
+        )
         if not ocr_pages:
             return classification
         assessment = assess_title(ocr_pages, classification.predicted_type, classification.evidence)
@@ -323,7 +331,9 @@ class DocumentProcessingService:
         page_types: dict[int, DocumentType] = {}
         for page in source_result.pages:
             if is_meaningful_text(page.text):
-                page_types[page.page_number] = self.classifier.classify(page.text).predicted_type
+                page_types[page.page_number] = self.classifier.classify(
+                    denoised_pages([page])[0].text
+                ).predicted_type
         supported = {item for item in page_types.values() if item != DocumentType.UNKNOWN}
         if len(supported) < 2:
             return None

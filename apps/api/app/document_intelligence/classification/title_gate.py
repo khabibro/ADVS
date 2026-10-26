@@ -62,6 +62,9 @@ BENIGN_PREFIXES: dict[DocumentType, tuple[str, ...]] = {
 
 _BRACKETED = re.compile(r"\[[^\]]*\]|\([^)]*\)|\{[^}]*\}")
 _HANGUL = re.compile(r"[가-힣]")
+# A certificate serial number ("제 2026-0123456 호") often shares the title's band; it is a number,
+# not text that could change the document's type.
+_SERIAL_NUMBER = re.compile(r"제[0-9\-–.]{3,}호")
 
 
 @dataclass(frozen=True)
@@ -163,7 +166,7 @@ def assess_title(
                 raw_prefix = _adjacent_prefix(segments, title)
                 if raw_prefix is None:
                     continue
-                prefix = _squash(_BRACKETED.sub("", raw_prefix))
+                prefix = _SERIAL_NUMBER.sub("", _squash(_BRACKETED.sub("", raw_prefix)))
                 near = _near_lookalike(prefix)
                 if near:
                     return TitleAssessment(False, "LOOKALIKE_QUALIFIER_NEAR_MATCH", near)

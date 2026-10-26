@@ -22,7 +22,7 @@ from app.document_intelligence.normalization.field_normalizer import (
     normalize_text_field,
     split_date_range,
 )
-from app.document_intelligence.ocr.layout import TextRow, build_rows
+from app.document_intelligence.ocr.layout import TextRow, build_rows, split_stacked_label_boxes
 from app.document_intelligence.ocr.models import (
     BoundingBox,
     OCRDocumentResult,
@@ -276,7 +276,7 @@ def _source_observations(source: ExtractionInput) -> list[_RowObservation]:
         coordinate_space: CoordinateSpace = (
             "pdf_point" if source_kind == "embedded_pdf_text" else "pixel"
         )
-        ordered = order_lines(page.lines) or [
+        ordered = order_lines(split_stacked_label_boxes(page.lines)) or [
             OCRLine(text=line) for line in page.text.splitlines() if line.strip()
         ]
         if not ordered:
@@ -896,9 +896,64 @@ def issuer_university_candidate(source: ExtractionInput) -> ExtractionCandidate 
         if _compact(name) != match.group(1):
             continue
         names.setdefault(_compact(name), ExtractionCandidate(name, list(evidences)))
+    if not names:  # fallback only: a name that one box already holds is never overridden
+        for name, evidences in _issuer_row_names(source):
+            names.setdefault(_compact(name), ExtractionCandidate(name, list(evidences)))
     if len(names) != 1:
         return None
     return next(iter(names.values()))
+
+
+_ISSUER_ROW_RE = re.compile(r"([가-힣A-Za-z0-9㈜()·]{2,30}?대학교)총")
+_SELF_REFERENCE_PREFIXES = ("우리", "본", "당")
+_STRAY_MARKS_RE = re.compile("['\u2018\u2019`\"]")
+
+
+_EDGE_NOISE_RE = re.compile(r"^[0-9A-Za-z|!]|[0-9A-Za-z|!]$")
+
+
+def _strip_edge_noise(piece: str) -> str:
+    """A short Hangul box with one stray ASCII character at an edge ("5총", "1북": a speck read as a
+    digit) loses that character. Longer boxes and boxes without Hangul are left alone."""
+    if len(piece) > 3 or not re.search(r"[가-힣]", piece):
+        return piece
+    return _EDGE_NOISE_RE.sub("", piece)
+
+
+def _issuer_row_names(source: ExtractionInput) -> list[tuple[str, list[EvidenceRef]]]:
+    """University names from a letter-spaced issuer row ("경 북 대 학 교 총 장").
+
+    Large display type is often detected one glyph (or a few) per box, so no single box holds the
+    name. The row's boxes are joined left to right and the name is read only when the row BEGINS
+    with it and the title "총" follows directly ("…대학교총"); text after the title (a seal read as
+    noise) is ignored. A sentence that merely mentions a university is not an issuer row, because
+    it does not start with the name. Stray quote marks the recogniser adds next to a glyph are dropped."""
+    if isinstance(source, str):
+        return []
+    found: list[tuple[str, list[EvidenceRef]]] = []
+    for observation in _source_observations(source):
+        segments = [
+            (item, evidence)
+            for item, evidence in zip(observation.row.segments, observation.evidence, strict=True)
+            if item.text.strip() and evidence is not None
+        ]
+        if len(segments) < 2:
+            continue  # single boxes are handled by issuer_university_candidate itself
+        joined = ""
+        owners: list[tuple[int, int, EvidenceRef]] = []
+        for item, evidence in segments:
+            piece = _strip_edge_noise(
+                _compact(_STRAY_MARKS_RE.sub("", _normalize_extraction_text(item.text)))
+            )
+            owners.append((len(joined), len(joined) + len(piece), evidence))
+            joined += piece
+        match = _ISSUER_ROW_RE.match(joined)
+        if match is None or match.group(1).startswith(_SELF_REFERENCE_PREFIXES):
+            continue  # "우리 대학교 총장" in a sentence names no university
+        end = match.end()
+        used = [evidence for start, stop, evidence in owners if start < end and stop > 0]
+        found.append((match.group(1), used))
+    return found
 
 
 def _right_of_stack(first: BoundingBox, second: BoundingBox, value: BoundingBox) -> bool:
