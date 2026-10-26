@@ -215,3 +215,22 @@ def test_stray_ascii_specks_on_issuer_glyph_boxes_are_ignored() -> None:
     assert _fields(DocumentType.ENROLLMENT_CERTIFICATE, ascii_name)[
         "university_name"
     ].normalized_value in ("KAIST대학교", None)
+
+
+def test_overlapping_boxes_that_read_the_same_glyph_twice_do_not_repeat_it() -> None:
+    lines = [
+        _line("가 나 대", 600, 2400, 600, 120),
+        _line("대학교 총", 900, 2403, 600, 118),
+    ]  # boxes overlap by 300 px
+    assert (
+        _fields(DocumentType.TRANSCRIPT, lines)["university_name"].normalized_value == "가나대학교"
+    )
+    apart = [
+        _line("가 나 대", 600, 2400, 400, 120),
+        _line("대학교 총", 1100, 2403, 600, 118),
+    ]  # a real gap: nothing dropped
+    # no overlap: the text is kept as read (a repeated glyph there is not an overlap artefact)
+    assert (
+        _fields(DocumentType.TRANSCRIPT, apart)["university_name"].normalized_value
+        == "가나대대학교"
+    )

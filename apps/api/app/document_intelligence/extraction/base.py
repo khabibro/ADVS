@@ -920,6 +920,24 @@ def _strip_edge_noise(piece: str) -> str:
     return _EDGE_NOISE_RE.sub("", piece)
 
 
+def _drop_overlap_repeat(
+    joined: str, piece: str, previous: BoundingBox, current: BoundingBox
+) -> str:
+    """Two detections that overlap horizontally can both read the glyph in the overlap ("경 북 대" +
+    "대 학 교" -> "경북대대학교"). When the boxes overlap by at least a third of the narrower one
+    and the new piece starts with what the text already ends with (one or two characters), the
+    repeat is dropped."""
+    overlap = min(previous.x + previous.width, current.x + current.width) - max(
+        previous.x, current.x
+    )
+    if overlap < min(previous.width, current.width) / 3:
+        return piece
+    for size in (2, 1):
+        if len(piece) > size and joined.endswith(piece[:size]):
+            return piece[size:]
+    return piece
+
+
 def _issuer_row_names(source: ExtractionInput) -> list[tuple[str, list[EvidenceRef]]]:
     """University names from a letter-spaced issuer row ("경 북 대 학 교 총 장").
 
@@ -941,10 +959,15 @@ def _issuer_row_names(source: ExtractionInput) -> list[tuple[str, list[EvidenceR
             continue  # single boxes are handled by issuer_university_candidate itself
         joined = ""
         owners: list[tuple[int, int, EvidenceRef]] = []
+        previous_box: BoundingBox | None = None
         for item, evidence in segments:
             piece = _strip_edge_noise(
                 _compact(_STRAY_MARKS_RE.sub("", _normalize_extraction_text(item.text)))
             )
+            box = item.bounding_box
+            if previous_box is not None and box is not None:
+                piece = _drop_overlap_repeat(joined, piece, previous_box, box)
+            previous_box = box
             owners.append((len(joined), len(joined) + len(piece), evidence))
             joined += piece
         match = _ISSUER_ROW_RE.match(joined)
