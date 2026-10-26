@@ -52,3 +52,6 @@ evaluation/phase_d3/ocr_cache*/
 # Hold-out run log and raw hold-out outputs are never committed
 evaluation/phase_d*/holdout_runs.log
 evaluation/phase_d*/H*_raw.json
+
+# Real documents (private, never committed; see evaluation/real_docs)
+data/private_real/
