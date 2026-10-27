@@ -212,6 +212,9 @@ def main() -> None:
                     [
                         student_identity_rule("student_id", value_type="identifier"),
                         student_identity_rule("student_name"),
+                        # same school on both documents (generic affixes ignored; a difference of one
+                        # character is routed to review, not failed; see institution_key)
+                        student_identity_rule("university_name", value_type="institution"),
                         (
                             RuleType.DATE_COMPARISON,
                             Severity.ERROR,

@@ -176,7 +176,43 @@ def _comparison_key(value: str, value_type: str) -> str:
     normalized = normalize_lexical_text(value)
     if value_type == "identifier":
         return "".join(character for character in normalized if character.isalnum())
+    if value_type == "institution":
+        return institution_key(normalized)
     return re.sub(r"\s+", "", normalized)
+
+
+# Generic affixes of an institution name that carry no identity (ownership kind, legal form, the title that
+# follows the name on an issuer line). No institution is named here.
+_INSTITUTION_GENERIC_PREFIXES = ("학교법인", "재단법인", "국립", "공립", "사립")
+_INSTITUTION_GENERIC_SUFFIXES = ("총장", "총창")
+_PARENTHESISED_RE = re.compile(r"[(（][^)）]*[)）]")
+
+
+def institution_key(value: str) -> str:
+    """Comparison key of an institution name: spacing (letter-spaced print), parenthesised marks, generic
+    ownership/legal-form prefixes and the issuer title are dropped. Nothing else is changed."""
+    text = "".join(_PARENTHESISED_RE.sub("", normalize_lexical_text(value)).split())
+    changed = True
+    while changed:
+        changed = False
+        for prefix in _INSTITUTION_GENERIC_PREFIXES:
+            if text.startswith(prefix) and len(text) > len(prefix):
+                text, changed = text[len(prefix) :], True
+        for suffix in _INSTITUTION_GENERIC_SUFFIXES:
+            if text.endswith(suffix) and len(text) > len(suffix):
+                text, changed = text[: -len(suffix)], True
+    return text
+
+
+def _one_edit_apart(left: str, right: str) -> bool:
+    """True when the two keys differ by exactly one substituted, inserted or dropped character (a
+    probable recognition error). Used only to send a difference to a person instead of failing it."""
+    if left == right or abs(len(left) - len(right)) > 1 or min(len(left), len(right)) < 4:
+        return False
+    if len(left) == len(right):
+        return sum(a != b for a, b in zip(left, right, strict=True)) == 1
+    longer, shorter = (left, right) if len(left) > len(right) else (right, left)
+    return any(longer[:i] + longer[i + 1 :] == shorter for i in range(len(longer)))
 
 
 #: Attributes that identify the submitter and may be printed on any one document of the submission. They
@@ -335,7 +371,7 @@ class SubmissionVerificationEngine:
         if operator != RuleOperator.EQUALS:
             raise RuleConfigurationError("FIELD_COMPARISON only supports EQUALS")
         value_type = rule.params.get("value_type", "string")
-        if value_type not in {"string", "identifier"}:
+        if value_type not in {"string", "identifier", "institution"}:
             raise RuleConfigurationError("Unsupported field-comparison value type")
 
     def _validate_value_rule(
@@ -790,9 +826,36 @@ class SubmissionVerificationEngine:
         if source_name in _COMPANY_NAME_FIELDS or target_name in _COMPANY_NAME_FIELDS:
             source_value = strip_legal_entity_markers(source_value)
             target_value = strip_legal_entity_markers(target_value)
-        passed = _comparison_key(source_value, value_type) == _comparison_key(
-            target_value, value_type
-        )
+        source_key = _comparison_key(source_value, value_type)
+        target_key = _comparison_key(target_value, value_type)
+        passed = source_key == target_key
+        if not passed and value_type == "institution" and _one_edit_apart(source_key, target_key):
+            # one character apart: most likely a recognition error, so a person decides; never an error
+            return RuleEvaluationResult(
+                rule.id,
+                rule.rule_type,
+                RuleOutcome.UNRESOLVED,
+                VerificationIssue(
+                    code="OCR_UNCERTAIN",
+                    status_effect=OverallStatus.REVIEW_REQUIRED,
+                    message="일부 정보를 확인할 수 없어 검토가 필요합니다.",
+                    document_id=source.id,
+                    document_type=source_type,
+                    field_name=source_name,
+                    related_document_id=target.id,
+                    related_document_type=target_type,
+                    related_field_name=target_name,
+                    rule_id=rule.id,
+                    field_id=source_field.id,
+                    related_field_id=target_field.id,
+                ),
+                source.id,
+                source_type,
+                source_name,
+                target.id,
+                target_type,
+                target_name,
+            )
         if passed:
             return RuleEvaluationResult(
                 rule.id,
