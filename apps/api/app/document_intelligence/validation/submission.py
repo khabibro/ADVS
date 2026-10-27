@@ -179,6 +179,32 @@ def _comparison_key(value: str, value_type: str) -> str:
     return re.sub(r"\s+", "", normalized)
 
 
+#: Attributes that identify the submitter and may be printed on any one document of the submission. They
+#: are required on at least one document (not on each), are compared across documents only when both
+#: documents print them, and a value on a single document stays unconfirmed unless other evidence exists
+#: (the acceptance policy already requires that for OCR-read identifiers).
+SUBMISSION_WIDE_FIELDS = frozenset({"student_id"})
+
+
+def value_exists(snapshot: FieldSnapshot | None) -> bool:
+    """A value was read (confirmed, or still waiting for a person)."""
+    return snapshot is not None and (
+        snapshot.normalized_value is not None
+        or snapshot.assessment_state == EvidenceAssessmentState.REVIEW_REQUIRED
+    )
+
+
+def field_absent(snapshot: FieldSnapshot | None) -> bool:
+    """Nothing was read for this field (not even a value for a person to confirm)."""
+    if snapshot is None:
+        return True
+    if value_exists(snapshot):
+        return False
+    return snapshot.assessment_state in (None, EvidenceAssessmentState.UNAVAILABLE) and not (
+        snapshot.assessment_state is None and snapshot.needs_review
+    )
+
+
 class SubmissionVerificationEngine:
     """Deterministic rules over persisted canonical document fields.
 
@@ -204,6 +230,16 @@ class SubmissionVerificationEngine:
             document = selected.get(requirement.document_type)
             if document is not None:
                 for name in requirement.required_fields:
+                    if (
+                        name in SUBMISSION_WIDE_FIELDS
+                        and field_absent(document.fields.get(name))
+                        and any(
+                            value_exists(other.fields.get(name))
+                            for other in selected.values()
+                            if other is not None and other.id != document.id
+                        )
+                    ):
+                        continue  # satisfied by another document of the submission
                     rule = SubmissionRule(
                         requirement.id, RuleType.REQUIRED_FIELD, Severity.WARNING, {}
                     )
@@ -712,6 +748,24 @@ class SubmissionVerificationEngine:
             )
         source_field = source.fields.get(source_name)
         target_field = target.fields.get(target_name)
+        if source_name == target_name and source_name in SUBMISSION_WIDE_FIELDS:
+            # Compared only when both documents print it. When one does not, the other's value is still
+            # checked on its own (a value on a single document stays unconfirmed), but nothing is compared.
+            for printed, doc, name, other_field in (
+                (source_field, source, source_name, target_field),
+                (target_field, target, target_name, source_field),
+            ):
+                if value_exists(printed) and field_absent(other_field):
+                    unresolved_single = self._unresolved_field(rule, doc, printed, name)
+                    return unresolved_single or RuleEvaluationResult(
+                        rule.id,
+                        rule.rule_type,
+                        RuleOutcome.NOT_APPLICABLE,
+                        document_type=source_type,
+                        field_name=source_name,
+                        related_document_type=target_type,
+                        related_field_name=target_name,
+                    )
         unresolved = self._unresolved_field(
             rule,
             source,

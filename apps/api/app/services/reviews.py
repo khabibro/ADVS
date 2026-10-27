@@ -33,6 +33,7 @@ from app.document_intelligence.normalization.field_normalizer import (
     normalize_gpa_scale,
     normalize_text_field,
 )
+from app.document_intelligence.validation.submission import SUBMISSION_WIDE_FIELDS
 from app.models.entities import (
     Checklist,
     Document,
@@ -402,6 +403,27 @@ class FieldReviewService:
                 if dependency_type != document_type:
                     continue
                 field = fields.get(field_name)
+                if (
+                    field_name in SUBMISSION_WIDE_FIELDS
+                    and (field is None or field.normalized_value is None)
+                    and any(
+                        other.id != document.id
+                        and (
+                            any(
+                                item.field_name == field_name and item.normalized_value is not None
+                                for item in other.extracted_fields
+                            )
+                            or getattr(
+                                current.get((other.id, field_name)),
+                                "reviewed_normalized_value",
+                                None,
+                            )
+                            is not None
+                        )
+                        for other in documents
+                    )
+                ):
+                    continue  # the submission-wide field is read on another document
                 review = current.get((document.id, field_name))
                 effective = self.resolver.resolve(
                     field,

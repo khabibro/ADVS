@@ -46,7 +46,12 @@ def check(scn: Scenario, out: Outcome, client: DemoClient) -> list[str]:
             fails.append(f"missing issue {code} (got {sorted(codes)})")
     types = {d["document_type"] for d in out.documents}
     if scn.code in DOC_TYPES and types != DOC_TYPES[scn.code]:
-        fails.append(f"document types {sorted(types)}")
+        detail = [
+            f"{d.get('processing_status')}/{d.get('error_code') or d.get('processing_error_code')}"
+            f"/needs_review={(d.get('classification_meta') or {}).get('needs_review')}"
+            for d in out.documents
+        ]
+        fails.append(f"document types {sorted(types)} (processing {detail})")
     if scn.expect_status == "READY" and codes:
         fails.append(f"READY but issues {sorted(codes)}")
 
