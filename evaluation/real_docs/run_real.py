@@ -35,6 +35,7 @@ def main() -> int:
     ap.add_argument("--strategy", default=None, help="auto-accept strategy override (default: the app's)")
     ap.add_argument("--label", default="run")
     ap.add_argument("--submissions", type=Path, default=None, help="SUBMISSIONS.json of a variant set (files are resolved next to it)")
+    ap.add_argument("--repeat", type=int, default=1, help="run the file set N times in this process (determinism check)")
     ap.add_argument("--each", action="store_true", help="also run every file as its own submission")
     args = ap.parse_args()
 
@@ -127,7 +128,8 @@ def main() -> int:
             result = run(client, group, f"sub_{sub['id']}", sub.get("eval_date"))
             print(f"{sub['id']:28s} {result['verification'].get('status')}", flush=True)
         if files:
-            combined = run(client, None, "submission_all")
+            for n in range(args.repeat):
+                combined = run(client, None, "submission_all" if args.repeat == 1 else f"submission_rep{n + 1}")
         if args.each and files:
             for f in files:
                 run(client, [f], f"single_{hashlib.sha256(f.name.encode()).hexdigest()[:8]}")
