@@ -252,7 +252,7 @@ class Runner:
     ) -> None:
         self.corpus = corpus
         self.root = guard_corpus(corpus)
-        self.manifest = json.loads((self.root / "manifest.json").read_text(encoding="utf-8"))
+        self.manifest = json.loads((self.root / os.environ.get("ADVS_MANIFEST_FILE", "manifest.json")).read_text(encoding="utf-8"))
         self.submission_date = self.manifest["submission_date"]
         self.project_values = project_values
         self.skip_ocr = skip_ocr
