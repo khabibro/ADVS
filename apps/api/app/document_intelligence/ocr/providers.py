@@ -23,7 +23,7 @@ from app.document_intelligence.ocr.models import (
     RegionRequest,
 )
 from app.document_intelligence.ocr.text_assembly import assemble_page_text
-from app.document_intelligence.ocr.worker import run_ocr
+from app.document_intelligence.ocr.worker import on_recycle, run_ocr
 from app.document_intelligence.preprocessing.processor import ImagePreprocessor
 
 # Deterministic synthetic fixtures for mock/dev/test use. Selected by a
@@ -153,6 +153,7 @@ class PaddleOCRProvider(OCRProvider):
         self.cache_dir = settings.paddle_ocr_cache_dir or None
         self.render_scale = self._render_scale(settings.paddle_ocr_render_dpi)
         self.doc_orientation = settings.paddle_ocr_doc_orientation
+        on_recycle(self._drop_engines)
 
     @staticmethod
     def _render_scale(render_dpi: int) -> float:
@@ -161,6 +162,10 @@ class PaddleOCRProvider(OCRProvider):
         glyphs and business-number digits degrade badly, and beyond ~400 DPI
         the cost grows quadratically for no measured gain."""
         return max(1.5, min(float(render_dpi) / 72.0, 6.0))
+
+    def _drop_engines(self) -> None:
+        for name in ("_engine", "_orientation_engine"):
+            self.__dict__.pop(name, None)
 
     @cached_property
     def _engine(self) -> Any:
