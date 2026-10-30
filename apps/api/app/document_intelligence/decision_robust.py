@@ -63,7 +63,9 @@ def outcomes(
             elif spec.kind == "max_age" and spec.days is not None:
                 if reference is None:
                     return None
-                result.append(reference - parsed <= timedelta(days=spec.days))
+                # the engine's issue-date rule has two bounds: not older than `days` and not after the
+                # reference date (a date in the future fails it as well)
+                result.append(timedelta(0) <= reference - parsed <= timedelta(days=spec.days))
         else:
             try:
                 number = float(value)
