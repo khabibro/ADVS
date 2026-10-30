@@ -297,3 +297,28 @@ The code under test is unchanged since the freeze, so the gates of section 6 sta
 - Fictional gates: `evaluation/real_docs/gate_corpus_v3.sh <label> <dev|holdout|holdout2|holdout3> <out>`.
 - Determinism: the same files give bit-identical results across fresh processes and repeats in one process (20 runs checked earlier); seed A on the frozen commit reproduced the previous freeze with 0 differences.
 - Statistics: Wilson 95% intervals; the rule of three when the count is 0.
+
+## 11. Method change after the fresh-capture test
+
+Section 9 is the official test result of `real-docs-freeze-3` and is not edited. From here on the fresh set (G0-G5, seed 20261030) is **development data**: fixes are measured on it as development, not as a test. The final claim needs a new, untouched set of full-resolution captures (planned: `~/Desktop/fresh2/`, transferred without a chat application), run once on the new frozen commit and once on `real-docs-freeze-3`. Root causes of the fresh-capture failures: `ROOT_CAUSES.md`.
+
+## 12. Post-fix: iPhone photo upload (branch `fix/phone-photo-upload`, commit `cf27959`)
+
+Frozen-version finding (section 9.4): all 3 original iPhone photos were rejected as `CORRUPT_DOCUMENT` (MPO, 2 frames). Fix: MPO accepted and only its first image kept; GPS, device, time and thumbnail metadata removed from the stored copy (an unrotated JPEG by dropping metadata segments, pixels unchanged; an EXIF-rotated image stored upright as lossless PNG without an orientation tag; PNG text chunks and WebP EXIF/XMP removed); HEIC/HEIF recognised and refused with its own code, separate from "unsupported" and "corrupt". Pixel and size limits unchanged. 16 synthetic tests (MPO with a gain-map frame, GPS tag, large JPEG, EXIF-rotated, truncated, unsupported formats, derived images).
+
+Gates on `cf27959`: backend 672 passed (ruff, format, mypy clean); web lint, typecheck and 110 tests passed (uncached); Playwright 22 passed, 7 skipped (mentor files absent), axe 0 serious or critical; `make demo-rehearsal` 3 of 3 ALL PASS (D9 32.2, 32.3, 32.1 s); manipulated PDFs: 4 manipulations x 237 copies, 0 hidden tokens read; fictional sets (v3 manifests) compared field by field with the freeze-3 run: hold-outs 1, 2, 3 **0 differences**; the development set differs only in the four files of the EXIF-orientation format set (F08), whose OCR cache is keyed by the stored bytes: re-run live they give the same document types and the same 24 field values as the frozen reference; injections E1-E18 identical (0, 0, 1, 0 false auto-accept; the one is the known hold-out 2 H14); real pair 11/11, 0 wrong auto-accepts; security audit passed.
+
+**G0b post-fix (the three original iPhone photos, 4032x2268, run once on the fix commit; separate from the frozen results):**
+
+| | frozen (section 9.4) | post-fix |
+|---|---|---|
+| uploads accepted | 0/7 | **7/7** |
+| document type (3 files alone) | n/a | 2/3 (the enrolment photo is typed UNKNOWN) |
+| fields correct (2 pairs, 22 fields) | n/a | 11/22 (50.0%, Wilson 30-70) |
+| auto-accepted / correct to review / missing | n/a | 2 / 7 / 11 |
+| wrong values, wrong accepted | n/a | 0, 0 |
+| status of the 2 pairs, false READY | n/a | REVIEW_REQUIRED, 0/2 |
+| processing errors | n/a | 0 |
+| time per document | n/a | 17-50 s |
+
+Both transcript photos now yield name, issue date, GPA and GPA scale (and the student number on the 4.5 transcript): at full resolution the transcript header is read where the chat-compressed version of the same photograph (G0, 2576 px) was not. This is the only direct comparison of resolution available so far; section "Resolution sweep" of `ROOT_CAUSES.md` measures it on development pages. 2 pairs of 3 documents are not a test of accuracy.
