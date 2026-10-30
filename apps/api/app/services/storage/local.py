@@ -12,6 +12,7 @@ from PIL import Image, UnidentifiedImageError
 
 from app.core.config import Settings
 from app.core.errors import ApiErrorCode, api_error
+from app.services.storage.sanitize import ImageSanitizeError, sanitize_stored_image
 
 ALLOWED_MIME = {
     "application/pdf",
@@ -60,6 +61,22 @@ _SIGNATURES: dict[str, tuple[bytes, ...]] = {
     ".webp": (b"RIFF",),
 }
 _MAX_SIGNATURE_BYTES = 12
+#: ISO base media "ftyp" brands used by iPhone HEIC/HEIF photos. Recognised only to give an
+#: accurate message; they are not supported (the decoder is not part of the traditional-OCR stack).
+_HEIF_BRANDS = frozenset({b"heic", b"heix", b"hevc", b"hevx", b"heim", b"heis", b"mif1", b"msf1"})
+_HEIF_EXTENSIONS = frozenset({".heic", ".heif"})
+#: Decoder formats accepted per extension. An iPhone photo with an HDR gain map or depth data is
+#: an MPO file: a JPEG whose first image is the photograph (Pillow reports "MPO", several frames).
+_DECODER_FORMATS = {
+    ".png": {"PNG"},
+    ".jpg": {"JPEG", "MPO"},
+    ".jpeg": {"JPEG", "MPO"},
+    ".webp": {"WEBP"},
+}
+
+
+def _is_heif(header: bytes) -> bool:
+    return header[4:8] == b"ftyp" and header[8:12] in _HEIF_BRANDS
 
 
 def sanitize_filename(name: str) -> str:
@@ -91,6 +108,10 @@ class LocalStorageService:
     async def save_upload(self, file: UploadFile) -> tuple[str, int, str]:
         original = sanitize_filename(file.filename or "upload")
         ext = Path(original).suffix.lower()
+        if ext in _HEIF_EXTENSIONS:
+            raise api_error(
+                ApiErrorCode.HEIC_NOT_SUPPORTED, "HEIC/HEIF photos are not supported."
+            )
         if ext not in ALLOWED_EXT:
             raise api_error(
                 ApiErrorCode.INVALID_FILE_TYPE, "PDF, PNG, JPG, JPEG and WebP files are supported."
@@ -113,15 +134,37 @@ class LocalStorageService:
                     out.write(chunk)
             if size == 0:
                 raise api_error(ApiErrorCode.EMPTY_FILE, "Uploaded file is empty.")
+            if _is_heif(header):
+                raise api_error(
+                    ApiErrorCode.HEIC_NOT_SUPPORTED, "HEIC/HEIF photos are not supported."
+                )
             if not _matches_signature(header, ext):
                 raise api_error(
                     ApiErrorCode.INVALID_FILE_TYPE, "File content does not match its extension."
                 )
             self._validate_decodable(path, ext)
+            if ext != ".pdf":
+                path, storage_key, size = self._sanitize_image(path, ext, storage_key, size)
         except BaseException:
             path.unlink(missing_ok=True)
             raise
         return storage_key, size, digest.hexdigest()
+
+    def _sanitize_image(
+        self, path: Path, ext: str, storage_key: str, size: int
+    ) -> tuple[Path, str, int]:
+        """Store the image without location/device metadata, upright and as its first image only
+        (see sanitize.py). The caller's checksum stays that of the bytes as received."""
+        try:
+            cleaned = sanitize_stored_image(path, extension=ext)
+            with Image.open(cleaned) as img:
+                img.load()  # the cleaned copy must decode exactly like the upload did
+        except (ImageSanitizeError, OSError, ValueError, UnidentifiedImageError) as exc:
+            path.unlink(missing_ok=True)
+            raise api_error(
+                ApiErrorCode.CORRUPT_DOCUMENT, "File could not be opened; it may be corrupt."
+            ) from exc
+        return cleaned, cleaned.name, cleaned.stat().st_size
 
     def _validate_decodable(self, path: Path, ext: str) -> None:
         """Confirm the file actually opens as the format it claims to be,
@@ -153,14 +196,10 @@ class LocalStorageService:
                     warnings.simplefilter("error", Image.DecompressionBombWarning)
                     with Image.open(path) as img:
                         self._validate_dimensions(*img.size)
-                        if (
-                            img.format
-                            != {".png": "PNG", ".jpg": "JPEG", ".jpeg": "JPEG", ".webp": "WEBP"}[
-                                ext
-                            ]
-                        ):
+                        if img.format not in _DECODER_FORMATS[ext]:
                             raise ValueError("Decoder format mismatch")
-                        if getattr(img, "n_frames", 1) != 1:
+                        # Only an MPO may have more than one frame; its first is the photograph.
+                        if img.format != "MPO" and getattr(img, "n_frames", 1) != 1:
                             raise ValueError("Multi-frame image unsupported")
                         img.verify()
                     # verify() checks container integrity; load() additionally
