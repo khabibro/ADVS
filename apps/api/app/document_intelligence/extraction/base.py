@@ -10,6 +10,7 @@ from app.document_intelligence.extraction.fields import (
     looks_like_boilerplate,
     score_candidate,
 )
+from app.document_intelligence.label_tolerance import find_label, starts_with_label
 from app.document_intelligence.normalization.field_normalizer import (
     BUSINESS_NUMBER_RE,
     canonicalize_numeric_text,
@@ -749,7 +750,24 @@ def candidate_right_of_label(
 _GPA_WITH_SCALE_RE = re.compile(r"(\d(?:\.\d{1,3})?)\s*/\s*(\d(?:\.\d{1,3})?)")
 _CUMULATIVE_GPA_HEADERS = ("총평점평균", "누적평점평균", "전체평점평균", "총평균평점")
 _CUMULATIVE_CREDITS_LABEL = "총취득학점"
-_SEMESTER_GPA_RE = re.compile(r"평점평균\s*:?\s*(\d(?:\.\d{1,3})?\s*/\s*\d(?:\.\d{1,3})?)")
+_GPA_LABEL = "평점평균"
+_GPA_RATIO_AFTER_LABEL_RE = re.compile(r"\s*:?\s*(\d(?:\.\d{1,3})?\s*/\s*\d(?:\.\d{1,3})?)")
+_CREDITS_LABEL = "취득학점"
+_CREDITS_VALUE_RE = re.compile(r":?\s*(\d{1,3})(?!\d)")
+
+
+def _gpa_ratio_in(text: str) -> str | None:
+    """The "x/y" printed after a 평점평균 label (one misread syllable of the label tolerated). The
+    ratio carries its own scale, which is what the caller needs; nothing about it is trusted here."""
+    cleaned = _normalize_extraction_text(text)
+    compact = _compact(cleaned)
+    after = find_label(compact, _GPA_LABEL)
+    if after < 0:
+        return None
+    match = _GPA_RATIO_AFTER_LABEL_RE.match(compact[after:])
+    return match.group(1) if match else None
+
+
 # The issuer title that follows the name. OCR often fuses it to the name ("OO대학교총장"), reads
 # 장 as 창, or loses it under a seal and keeps only "총".
 _ISSUER_UNIVERSITY_RE = re.compile(r"([가-힣A-Za-z0-9㈜()·]{2,30}대학교)(?:총[장창]?)?")
@@ -809,33 +827,75 @@ def cumulative_gpa_candidates(source: ExtractionInput) -> list[ExtractionCandida
                         )
                     )
                     break
-        elif compact.startswith(_CUMULATIVE_CREDITS_LABEL):
-            below_matches: list[tuple[float, ExtractionCandidate]] = []
-            for other, other_evidence in lines:
-                other_box = other_evidence.bounding_box
-                assert other_box is not None
-                if (
-                    other_evidence.page_number != evidence.page_number
-                    or not 0 < other_box.y - box.y <= 3 * max(box.height, other_box.height)
-                    or not _x_overlap(box, other_box)
-                ):
-                    continue
-                match = _SEMESTER_GPA_RE.search(_normalize_extraction_text(other))
-                if match:
-                    below_matches.append(
-                        (
-                            other_box.y - box.y,
-                            ExtractionCandidate(
-                                match.group(1),
-                                [evidence, other_evidence],
-                                has_explicit_separator=True,
-                                relation="after_total_credits",
-                            ),
-                        )
-                    )
-            if below_matches:
-                found.append(min(below_matches, key=lambda item: item[0])[1])
+        elif starts_with_label(compact, _CUMULATIVE_CREDITS_LABEL):
+            candidate = _gpa_line_below(lines, evidence, relation="after_total_credits")
+            if candidate is not None:
+                found.append(candidate)
+    if not found:
+        # The anchor text may be unreadable altogether. The total-credits line is then the one
+        # whose number equals the sum of the other credits lines (a count the page itself proves).
+        total_line = _total_credits_line_by_sum(lines)
+        if total_line is not None:
+            candidate = _gpa_line_below(lines, total_line, relation="after_credit_sum_line")
+            if candidate is not None:
+                found.append(candidate)
     return found
+
+
+def _gpa_line_below(
+    lines: list[tuple[str, EvidenceRef]], anchor: EvidenceRef, *, relation: str
+) -> ExtractionCandidate | None:
+    """The 평점평균 "x/y" line printed right under `anchor` in the same column (the nearest one)."""
+    box = anchor.bounding_box
+    assert box is not None
+    best: tuple[float, ExtractionCandidate] | None = None
+    for other, other_evidence in lines:
+        other_box = other_evidence.bounding_box
+        assert other_box is not None
+        if (
+            other_evidence.page_number != anchor.page_number
+            or not 0 < other_box.y - box.y <= 3 * max(box.height, other_box.height)
+            or not _x_overlap(box, other_box)
+        ):
+            continue
+        ratio = _gpa_ratio_in(other)
+        if ratio is None:
+            continue
+        candidate = ExtractionCandidate(
+            ratio,
+            [anchor, other_evidence],
+            has_explicit_separator=True,
+            relation=relation,
+        )
+        if best is None or other_box.y - box.y < best[0]:
+            best = (other_box.y - box.y, candidate)
+    return best[1] if best else None
+
+
+def _credit_lines(lines: list[tuple[str, EvidenceRef]]) -> list[tuple[int, EvidenceRef]]:
+    credits: list[tuple[int, EvidenceRef]] = []
+    for text, evidence in lines:
+        compact = _compact(_normalize_extraction_text(text))
+        after = find_label(compact, _CREDITS_LABEL)
+        if after < 0 or after - len(_CREDITS_LABEL) > 2:  # at most a one-syllable prefix ("총")
+            continue
+        match = _CREDITS_VALUE_RE.match(compact[after:])
+        if match:
+            credits.append((int(match.group(1)), evidence))
+    return credits
+
+
+def _total_credits_line_by_sum(lines: list[tuple[str, EvidenceRef]]) -> EvidenceRef | None:
+    """The one credits line equal to the sum of all the others (at least two others), or None."""
+    credits = _credit_lines(lines)
+    if len(credits) < 3:
+        return None
+    totals = [
+        evidence
+        for index, (value, evidence) in enumerate(credits)
+        if value > 0 and value == sum(v for i, (v, _) in enumerate(credits) if i != index)
+    ]
+    return totals[0] if len(totals) == 1 else None
 
 
 def _x_overlap(a: BoundingBox, b: BoundingBox) -> bool:
