@@ -37,6 +37,8 @@ def main() -> int:
     ap.add_argument("--submissions", type=Path, default=None, help="SUBMISSIONS.json of a variant set (files are resolved next to it)")
     ap.add_argument("--repeat", type=int, default=1, help="run the file set N times in this process (determinism check)")
     ap.add_argument("--each", action="store_true", help="also run every file as its own submission")
+    ap.add_argument("--memo-ocr", action="store_true", help="read each distinct file with OCR once per run (the output is deterministic); the same bytes in another submission reuse it")
+    ap.add_argument("--drop-requirement", default=None, help="also create a copy of the workflow without this document type; a submission selects it with \"workflow\": \"reduced\"")
     args = ap.parse_args()
 
     tmp = Path(tempfile.mkdtemp(prefix="advs_real_"))
@@ -61,6 +63,44 @@ def main() -> int:
     name = "학생 제출서류 점검" if args.workflow == "student" else "기업 제출서류 점검"
     with SessionLocal() as db:
         checklist_id = db.scalar(select(Checklist).where(Checklist.name == name)).id
+    reduced_id = None
+    if args.drop_requirement:
+        from app.models.entities import DocumentRequirement, ValidationRule
+
+        with SessionLocal() as db:
+            base = db.scalar(select(Checklist).where(Checklist.name == name))
+            copy_ = Checklist(name=f"{name} (without {args.drop_requirement})", description=base.description, is_active=True)
+            db.add(copy_)
+            db.flush()
+            for req in base.requirements:
+                if req.document_type == args.drop_requirement:
+                    continue
+                new_req = DocumentRequirement(document_type=req.document_type, required=req.required)
+                new_req.rules.extend(ValidationRule(rule_type=r.rule_type, severity=r.severity, params=dict(r.params)) for r in req.rules)
+                copy_.requirements.append(new_req)
+            db.commit()
+            reduced_id = copy_.id
+    if args.memo_ocr:
+        import copy as _copy
+
+        import app.services.processing as _processing
+
+        _real_provider, _memo = _processing.get_ocr_provider, {}
+
+        class _MemoProvider:
+            def __init__(self, inner):
+                self._inner = inner
+
+            def __getattr__(self, attr):
+                return getattr(self._inner, attr)
+
+            async def extract_document(self, path, mime_type, filename):
+                key = (hashlib.sha256(Path(path).read_bytes()).hexdigest(), mime_type)
+                if key not in _memo:
+                    _memo[key] = await self._inner.extract_document(path, mime_type, filename)
+                return _copy.deepcopy(_memo[key])
+
+        _processing.get_ocr_provider = lambda settings: _MemoProvider(_real_provider(settings))
     from harness_core import Runner
 
     if args.submissions is None and args.files is None:
@@ -73,8 +113,9 @@ def main() -> int:
             "files": {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in files},
             "submissions": args.submissions.name if args.submissions else None}
 
-    def run(client, group: list[Path] | None, tag: str, eval_date: str | None = None, extra_dates: list[str] | None = None) -> dict:
-        project = client.post("/api/v1/projects", json={"name": f"{args.label}-{tag}", "workflow_id": str(checklist_id)})
+    def run(client, group: list[Path] | None, tag: str, eval_date: str | None = None, extra_dates: list[str] | None = None, workflow: str | None = None) -> dict:
+        wid = reduced_id if workflow == "reduced" and reduced_id is not None else checklist_id
+        project = client.post("/api/v1/projects", json={"name": f"{args.label}-{tag}", "workflow_id": str(wid)})
         project.raise_for_status()
         pid = project.json()["id"]
         records = []
@@ -129,7 +170,7 @@ def main() -> int:
         combined = {"verification": {}}
         for sub in sub_list:
             group = [args.submissions.parent / name for name in sub["files"]]
-            result = run(client, group, f"sub_{sub['id']}", sub.get("eval_date"), sub.get("extra_eval_dates"))
+            result = run(client, group, f"sub_{sub['id']}", sub.get("eval_date"), sub.get("extra_eval_dates"), sub.get("workflow"))
             print(f"{sub['id']:28s} {result['verification'].get('status')}", flush=True)
         if files:
             for n in range(args.repeat):
