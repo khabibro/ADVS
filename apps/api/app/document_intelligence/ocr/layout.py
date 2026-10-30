@@ -200,11 +200,53 @@ def split_stacked_label_boxes(lines: list[OCRLine]) -> list[OCRLine]:
     boxed = [item for item in lines if item.bounding_box is not None and item.text.strip()]
     if len(boxed) < 3:
         return lines
+    boxed = [*boxed, *_detached_colon_tails(boxed)]
     out: list[OCRLine] = []
     for item in lines:
         pieces = _split_one(item, boxed)
         out.extend(pieces if pieces is not None else [item])
     return out
+
+
+_LABEL_SYLLABLES_RE = re.compile(r"[가-힣]{1,3}")
+
+
+def _detached_colon_tails(boxed: list[OCRLine]) -> list[OCRLine]:
+    """Label tails whose colon was detected as the start of the next box: "번" followed on the same
+    row by ":<value>". They are joined into a virtual tail used only to decide whether a fused box is
+    a stack of labels; the lines themselves are not changed."""
+    tails: list[OCRLine] = []
+    for label in boxed:
+        label_box = label.bounding_box
+        if label_box is None or not _LABEL_SYLLABLES_RE.fullmatch("".join(label.text.split())):
+            continue
+        for other in boxed:
+            other_box = other.bounding_box
+            if other is label or other_box is None or other.text.strip()[:1] not in (":", "："):
+                continue
+            gap = other_box.x - (label_box.x + label_box.width)
+            overlap = min(label_box.y + label_box.height, other_box.y + other_box.height) - max(
+                label_box.y, other_box.y
+            )
+            if -0.5 * label_box.height <= gap <= 1.5 * label_box.height and overlap >= 0.5 * min(
+                label_box.height, other_box.height
+            ):
+                top = min(label_box.y, other_box.y)
+                bottom = max(label_box.y + label_box.height, other_box.y + other_box.height)
+                tails.append(
+                    replace(
+                        label,
+                        text="".join(label.text.split()) + ":",
+                        bounding_box=BoundingBox(
+                            label_box.x,
+                            top,
+                            other_box.x + other_box.width - label_box.x,
+                            bottom - top,
+                        ),
+                        polygon=None,
+                    )
+                )
+    return tails
 
 
 def _split_one(item: OCRLine, boxed: list[OCRLine]) -> list[OCRLine] | None:

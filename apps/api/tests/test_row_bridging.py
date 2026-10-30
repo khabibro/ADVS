@@ -32,3 +32,32 @@ def test_flagged_seal_box_does_not_chain_rows_and_its_text_is_kept() -> None:
     assert "2031년 05월 03일" in rows  # the date is a row of its own again
     assert any("㉠㉡" in row for row in rows)  # nothing was dropped
     assert len(rows) == 4
+
+
+def test_stacked_labels_are_split_when_the_colon_is_detected_with_the_value() -> None:
+    from app.document_intelligence.ocr.layout import split_stacked_label_boxes
+
+    lines = [
+        line(
+            "학성", 100, 100, 44
+        ),  # first syllables of two stacked labels, fused into one tall box
+        line("번", 160, 102, 18),  # the label tail, without its colon
+        line(":1234567890", 178, 100, 22),  # the colon starts the value box
+        line("명", 160, 122, 18),
+        line(":김하늘", 178, 122, 22),
+    ]
+    texts = sorted(item.text for item in split_stacked_label_boxes(lines) if item.text in "학성")
+    assert texts == ["성", "학"]
+
+
+def test_a_fused_box_without_tails_on_every_row_is_left_alone() -> None:
+    from app.document_intelligence.ocr.layout import split_stacked_label_boxes
+
+    lines = [
+        line("학성", 100, 100, 44),
+        line("번", 160, 102, 18),
+        line(":1234567890", 178, 100, 22),
+    ]
+    assert [
+        item.text for item in split_stacked_label_boxes(lines) if item.text in ("학성", "학", "성")
+    ] == ["학성"]
