@@ -8,8 +8,7 @@ per-field values and screenshots are kept privately (git-ignored) and are not pa
 - Evaluation date for all runs: 2026-08-03 (the 90-day rule is inclusive: `age <= 90 days`; for an issue date of
   2026-07-29, 2026-10-27 is valid and 2026-10-28 gives `ISSUE_DATE_TOO_OLD`).
 - OCR: PaddleOCR PP-OCRv5 Korean (traditional OCR only; no vision-language model, no LLM reader). Nothing was uploaded to any online service.
-- Status of this report: seed B (held-out variants) is **done**. The fresh-capture test (new phone photographs and
-  re-scans of the same two certificates) is **pending**: see section 9.
+- Status of this report: seed B (held-out variants) is **done**. The fresh-capture test (3 newly issued certificates photographed with a phone, run once on the frozen commit and once on the baseline) is **done**: see section 9.
 
 ## 1. Data and consent
 
@@ -192,11 +191,102 @@ Live PaddleOCR on CPU, one document at a time, per document including the second
 
 Total seed B wall time 2077 s for 68 documents.
 
-## 9. Fresh captures: PENDING
+## 9. Fresh captures (test, run once on the frozen commit and once on the baseline)
 
-The owner will place new phone photographs and re-scans of the same two certificates in `~/Desktop/fresh/`. They will be run
-**once** on the same frozen commit (`45f1e30`) and reported as a separate section here. Gold values are inherited from the originals. Nothing will be tuned on them.
-This section has no results yet.
+### 9.1 Data and protocol
+
+- Three certificates newly issued on 2026-10-30 to the owner (consent given): an enrolment certificate, a transcript on the 4.5 scale and a transcript on the 4.3 scale. Each was photographed once with an iPhone (G0, "as taken" and rotated upright). The test set was generated from those three photos with seed 20261030 (`manifest.json`, SHA-256 of all 80 files verified, none equal to the earlier originals): G1 flattened, G2 scan quality, G3 geometry, G3b rotation by 90 and 180 degrees (known limit, reported separately), G4 photo effects, G5 formats. The photos reached the generator at 2576x1449 px, so the flattened page is about 140 DPI effective (200 DPI for seed B).
+- Gold values were drafted from the photos and **confirmed by the owner against the paper documents** (2026-10-30); the three internet issue numbers were re-checked against the full-resolution images. Scored fields: document type, `student_name`, `student_id` (transcripts; absent on the enrolment certificate), `university_name`, `department` (enrolment certificate only: the transcript has no department field), `issue_date`, `gpa`, `gpa_scale`. The printed 백분율 is not extracted (no such field) and is an observation only.
+- Submissions: R45 = enrolment + transcript 4.5, R43 = enrolment + transcript 4.3, paired by group and recipe (54 pairs incl. the 2 iPhone-original pairs), 2 two-page PDFs, and every file alone for document-type results (81). 137 submissions per run. Inspection date 2026-11-02; expiry checks re-verified the G1 uploads on 2027-01-28 and 2027-01-29.
+- Runs: the frozen commit `45f1e30` and the baseline `1018406`, each **once**, from clean checkouts, with the same inputs, live PaddleOCR, scratch database. No code was changed before or during the runs. Wall time 5,621 s (frozen) and 4,493 s (baseline). **Processing errors: 0** in both runs (no OCR_BUSY, no timeouts). Upload rejections: 7 per run, all in G0b (section 9.4).
+- The variants (G1-G5) are correlated: they are 3 photographs. Intervals treat fields as independent and are optimistic.
+
+### 9.2 Results per group, baseline then frozen
+
+Fields correct = correct and auto-accepted + correct but sent to review + correctly absent. Wilson 95% in the brackets (percent range).
+
+| group | subs | document type (files) | fields correct | auto-accepted | correct, to review | missing | wrong caught | wrong accepted | review fields / sub | false READY |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **G0 real photos** baseline | 4 | 6/6 | 24/44 (54.5%, 40-68) | 0 | 20 | 20 | 0 | 0 | 10.00 | 0/4 |
+| **G0 real photos** frozen | 4 | 6/6 | 25/44 (56.8%, 42-70) | 4 | 17 | 19 | 0 | 0 | 9.00 | 0/4 |
+| G1 flat baseline | 4 | 5/6 | 22/44 (50.0%, 36-64) | 0 | 18 | 22 | 0 | 0 | 10.00 | 0/4 |
+| G1 flat frozen | 4 | 5/6 | 22/44 (50.0%, 36-64) | 0 | 18 | 22 | 0 | 0 | 10.00 | 0/4 |
+| G2 scan quality baseline | 12 | 17/18 | 78/132 (59.1%, 51-67) | 0 | 66 | 54 | 0 | 0 | 10.00 | 0/12 |
+| G2 scan quality frozen | 12 | 17/18 | 82/132 (62.1%, 54-70) | 14 | 56 | 50 | 0 | 0 | 8.83 | 0/12 |
+| G3 geometry baseline | 12 | 18/18 | 69/132 (52.3%, 44-61) | 0 | 57 | 61 | 2 | 0 | 10.00 | 0/12 |
+| G3 geometry frozen | 12 | 18/18 | 69/132 (52.3%, 44-61) | 4 | 53 | 61 | 2 | 0 | 9.67 | 0/12 |
+| G3b 90/180 degrees baseline | 4 | 4/6 | 15/44 (34.1%, 22-49) | 0 | 11 | 29 | 0 | 0 | 10.00 | 0/4 |
+| G3b 90/180 degrees frozen | 4 | 4/6 | 17/44 (38.6%, 26-53) | 1 | 12 | 27 | 0 | 0 | 9.75 | 0/4 |
+| G4 photo style baseline | 12 | 18/18 | 76/132 (57.6%, 49-66) | 0 | 64 | 54 | 2 | 0 | 10.00 | 0/12 |
+| G4 photo style frozen | 12 | 18/18 | 79/132 (59.8%, 51-68) | 1 | 66 | 51 | 2 | 0 | 9.92 | 0/12 |
+| G5 formats baseline | 6 | 6/6 | 30/44 (68.2%, 53-80) | 0 | 26 | 14 | 0 | 0 | 6.67 | 0/6 |
+| G5 formats frozen | 6 | 6/6 | 30/44 (68.2%, 53-80) | 2 | 24 | 14 | 0 | 0 | 6.33 | 0/6 |
+
+Totals:
+
+| set | baseline | frozen |
+|---|---|---|
+| G0 (the three real photos, as taken and upright) | 24/44 (54.5%, 40-68) | 25/44 (56.8%, 42-70) |
+| G1-G5 without G3b (computer-made variants of the 3 photos) | 275/484 (56.8%, 52-61) | 282/484 (58.3%, 54-63) |
+| all scored groups with G0 and G3b | 314/572 (54.9%, 51-59) | 324/572 (56.6%, 53-61) |
+| document type, all files alone (incl. G0, G3b) | 74/78 (94.9%, 88-98) | 74/78 (94.9%, 88-98) |
+| wrong values auto-accepted | 0/0 (nothing auto-accepted) | **0/26** (rule of three upper 11.5%) |
+| false READY | 0/54 (upper 5.6%) | 0/54 (upper 5.6%) |
+| statuses | 54 of 54 pairs REVIEW_REQUIRED | 54 of 54 pairs REVIEW_REQUIRED |
+| submissions flagged `CLASSIFICATION_REQUIRES_REVIEW` (52 pairs) | 50 | 10 |
+| document processing time, p50 / p95 / max | 26.2 / 50.8 / 70.1 s | 34.0 / 72.2 / 84.7 s |
+
+Reading of the numbers:
+
+- **The frozen code is safe on the new documents: 0 wrong auto-accepts and 0 false READY.** Every pair ends REVIEW_REQUIRED; the system abstains rather than guesses.
+- **The improvement over the baseline is small here**: +1 field on G0, +7 over G1-G5, but the fixes do remove most classification reviews (50 to 10 submissions) and allow 26 auto-accepts where the baseline allows none.
+- **Accuracy is clearly lower than on seed B (84.5%)**: 56.8% on the real photos. The new photographs are lower in resolution (about 140 DPI effective) and are different documents, so seed B's result does not generalise to them. This is a negative result and is reported as it is: the two certificates of seeds A and B were also the documents the fixes were developed on.
+- **Where the fields are lost (G0, frozen)**: both transcripts lose `student_name`, `student_id` and `issue_date` (the header row, 6 of 6 reads missing for each in G0), and the 4.5 transcript also loses `gpa` and `gpa_scale`; the enrolment certificate is read (name, university, department read correctly; `issue_date` missing on 2 of the 4 photo reads). No wrong value was read on G0.
+- **Wrong caught (4, G3 and G4)**: a value was read incorrectly and was not accepted. No wrong value was ever accepted.
+
+### 9.3 4.5 scale versus 4.3 scale transcript
+
+| | 4.5 transcript | 4.3 transcript |
+|---|---|---|
+| `gpa` and `gpa_scale` read (pair submissions, frozen and baseline, 26 each) | 6/26, always correct | 18/26, always correct |
+| auto-accepted | 0/26 | 0/26 |
+| reasons the correct value went to review | no independent confirmation, second pass disagreed | near the decision boundary, confidence below floor, no independent confirmation |
+| GPA rule (>= 3.0) | never evaluated (the value is not accepted, so it is unresolved, never a failure) | same |
+| `GRADING_SCALE_MISMATCH` | appears as a review reason on 2 geometry variants of the 4.5 transcript, and as a field reason, not as a submission issue | not seen |
+| printed 백분율 | printed (90.00 on both) but **not extracted** | same |
+
+Observations (not scored): the printed legend is 4.3-based on both transcripts, but the 4.5 transcript states its GPA "/4.5" (the same inconsistency as in section 7). The cumulative GPA is 3.62/4.5 on one transcript and 3.40/4.3 on the other while the 백분율 is the same (90.00): 3.40/4.3 is not a proportional conversion of 3.62/4.5 (that would give about 3.46). This is why a threshold on the raw GPA is scale-blind (a design question for the next task, not decided here).
+
+### 9.4 Upload of the original iPhone photos (G0b): frozen-version finding
+
+The three original photos (4032x2268 px, EXIF orientation 1, GPS tag present, 2 frames) were uploaded as taken. **All 3 files were rejected as `CORRUPT_DOCUMENT` on both commits (7 upload attempts per commit: 4 in the two pairs, 3 alone)**, so no result exists for them.
+
+- Cause: the photos are MPO files (a JPEG with a second embedded image, here a 210 KB gain map). `apps/api/app/services/storage/local.py:154-163` requires `img.format == "JPEG"` and a single frame; Pillow reports `MPO` with 2 frames, so the check raises `ValueError('Decoder format mismatch')`, mapped to `CORRUPT_DOCUMENT`.
+- User-facing effect: the web message (`copy.ts:341`) tells the user the file may be damaged although it decodes without error. Any iPhone photo with an HDR gain map will be rejected the same way.
+- Not caused by size, EXIF orientation or the decoder. Fixing it is the separate task `fix/phone-photo-upload`; its result will be reported as a separate "post-fix" row, not merged into the tables above.
+- Both runs therefore tested the as-taken photos only in the downscaled form (2576x1449) that the generator received (G0).
+
+### 9.5 Expiry checks (G1, 4 pairs)
+
+Expected: 2027-01-28 (last valid day, issue + 90 days) valid; 2027-01-29 `ISSUE_DATE_TOO_OLD` and 보완 필요.
+Actual (frozen and baseline, all 4 pairs): REVIEW_REQUIRED on the main date and on both expiry dates; `ISSUE_DATE_TOO_OLD` was **not** raised on 2027-01-29. The enrolment certificate's issue date was not auto-accepted (semantic inference, or not read), so the age rule has no reliable value to judge and the engine routes it to a person instead of failing it. This is the intended conservative behaviour (never a false failure and never a false pass) but the expected 보완 필요 for an expired certificate only appears after a person confirms the date. The boundary rule itself is covered by unit tests (inclusive, 90 days).
+
+### 9.6 Other findings
+
+- **Two-page PDFs (enrolment + transcript in one file), 2 files**: the system types the file as one document (TRANSCRIPT) and reports the enrolment certificate as missing: NEEDS_CORRECTION on both commits. This is a false 보완 필요 (the applicant did submit both) and it fails safe; splitting a multi-certificate PDF is not implemented.
+- **G3b (90/180 degrees)**: 38.6% fields correct (baseline 34.1%), documents typed 4/6: the known rotation limitation.
+- Document type: 74/78 files typed correctly on both commits; the 4 wrong are all enrolment certificates (G1 one, G2 one, G3b two): the same four files on both commits.
+
+### 9.7 Gates
+
+The code under test is unchanged since the freeze, so the gates of section 6 stand (they were run on `45f1e30`). Re-run in this session: web lint, typecheck and `vitest` **without cache**: passed, 109 tests (the web code is identical to the freeze: no difference in `apps/web` or `packages` between `45f1e30` and this branch).
+
+### 9.8 For the paper
+
+- Headline on real fresh photos (G0, frozen): 25/44 fields correct (56.8%, Wilson 42-70), 0 wrong auto-accepted, 0/4 false READY; 4 of 44 fields auto-accepted. All variants (G1-G5 without G3b): 282/484 (58.3%, Wilson 54-63), 0/21 wrong auto-accepted, 0/46 false READY.
+- Safety held on documents the code had never seen (0 wrong auto-accepts, 0 false READY; baseline likewise). Accuracy did not transfer from the development documents: on seed B 84.5%, on fresh photos 56.8%.
+- Automation is low: no submission reached READY; 9 review fields per pair on average. The system works as a safe pre-filter, not as an automatic decider on phone photographs.
+- Limitations: three documents of one person; low-resolution photographs; header row of the transcripts not read; GPA on the 4.5 transcript mostly unread; no 백분율 extraction; rotation by 90 or 180 degrees; two-page PDFs not split; iPhone MPO photos rejected at upload (frozen version).
 
 ## 10. Reproducibility
 

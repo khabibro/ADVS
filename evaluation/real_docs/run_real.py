@@ -73,7 +73,7 @@ def main() -> int:
             "files": {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in files},
             "submissions": args.submissions.name if args.submissions else None}
 
-    def run(client, group: list[Path] | None, tag: str, eval_date: str | None = None) -> dict:
+    def run(client, group: list[Path] | None, tag: str, eval_date: str | None = None, extra_dates: list[str] | None = None) -> dict:
         project = client.post("/api/v1/projects", json={"name": f"{args.label}-{tag}", "workflow_id": str(checklist_id)})
         project.raise_for_status()
         pid = project.json()["id"]
@@ -113,7 +113,11 @@ def main() -> int:
                     continue
                 rows = db.scalars(select(OCRResult).where(OCRResult.document_id == uuid.UUID(rec["document_id"])).order_by(OCRResult.page_number)).all()
                 ocr[rec["file"]] = [{"page": r.page_number, "text": r.normalized_text, "lines": r.lines, "metadata": r.metadata_json} for r in rows]
-        out = {"tag": tag, "verification": verify.json() if verify.status_code == 200 else {"error": verify.text},
+        extra = {}
+        for d in extra_dates or []:  # re-verify the same uploaded submission on another inspection date (no re-OCR)
+            vr = client.post(f"/api/v1/projects/{pid}/verify", json={"evaluation_date": d})
+            extra[d] = vr.json() if vr.status_code == 200 else {"error": vr.text}
+        out = {"tag": tag, "extra_verifications": extra, "verification": verify.json() if verify.status_code == 200 else {"error": verify.text},
                "review_items": reviews.json() if reviews.status_code == 200 else [], "overview": overview.json() if overview.status_code == 200 else None,
                "documents": records, "document_details": details}
         (args.out / f"{tag}.json").write_text(json.dumps(out, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
@@ -125,7 +129,7 @@ def main() -> int:
         combined = {"verification": {}}
         for sub in sub_list:
             group = [args.submissions.parent / name for name in sub["files"]]
-            result = run(client, group, f"sub_{sub['id']}", sub.get("eval_date"))
+            result = run(client, group, f"sub_{sub['id']}", sub.get("eval_date"), sub.get("extra_eval_dates"))
             print(f"{sub['id']:28s} {result['verification'].get('status')}", flush=True)
         if files:
             for n in range(args.repeat):
