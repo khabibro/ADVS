@@ -87,6 +87,12 @@ def _vertical_overlap(left: OCRLine, right: OCRLine) -> float:
     )
 
 
+def _cannot_bridge(line: OCRLine) -> bool:
+    """A box the OCR provider flagged as a seal or stamp read as text (red ink under an unsure
+    reading). It stays in the text but must not link two visual rows."""
+    return line.bridge_exempt
+
+
 def build_rows(page: OCRPage, overlap_ratio: float = DEFAULT_OVERLAP_RATIO) -> list[TextRow]:
     """Group a page's lines into visual rows.
 
@@ -106,7 +112,16 @@ def build_rows(page: OCRPage, overlap_ratio: float = DEFAULT_OVERLAP_RATIO) -> l
     rows: list[tuple[int, TextRow]] = []
 
     with_geometry = [
-        line for line in page.lines if line.bounding_box is not None and line.text.strip()
+        line
+        for line in page.lines
+        if line.bounding_box is not None and line.text.strip() and not _cannot_bridge(line)
+    ]
+    # Boxes that must not chain two rows together (a red seal read as text, confidence far below
+    # anything a value can be taken from) stay in the text as rows of their own.
+    isolated = [
+        line
+        for line in page.lines
+        if line.bounding_box is not None and line.text.strip() and _cannot_bridge(line)
     ]
     without_geometry = [
         line for line in page.lines if line.bounding_box is None and line.text.strip()
@@ -147,7 +162,8 @@ def build_rows(page: OCRPage, overlap_ratio: float = DEFAULT_OVERLAP_RATIO) -> l
         )
 
     rows.extend(
-        (position[id(line)], TextRow(page.page_number, (line,))) for line in without_geometry
+        (position[id(line)], TextRow(page.page_number, (line,)))
+        for line in [*without_geometry, *isolated]
     )
     rows.sort(key=lambda item: item[0])
     return [row for _, row in rows]

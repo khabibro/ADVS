@@ -34,6 +34,8 @@ class OCRLine:
     polygon: tuple[tuple[float, float], ...] | None = None
     detection_confidence: float | None = None
     orientation_degrees: float | None = None
+    #: A box that must not link two visual rows (a seal or stamp read as text). It stays in the text.
+    bridge_exempt: bool = False
 
 
 @dataclass

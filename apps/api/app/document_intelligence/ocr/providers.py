@@ -317,6 +317,7 @@ class PaddleOCRProvider(OCRProvider):
                 page = self._normalize_page(raw=raw, page_number=idx, duration_ms=0)
                 page = await self._retry_page_with_orientation(page, image_path)
                 page.page_number = idx
+                self._mark_red_ink_boxes(page, image_path)
                 page.duration_ms = int((time.perf_counter() - page_start) * 1000)
                 page.metadata["transform"] = {**transform, **page.metadata.get("transform", {})}
                 # A page can render below the configured DPI (budget fit to the
@@ -334,6 +335,37 @@ class PaddleOCRProvider(OCRProvider):
         if not pages or not any(page.text.strip() for page in pages):
             raise OCRProviderError(ProcessingErrorCode.OCR_EMPTY_RESULT)
         return pages
+
+    #: A box on red ink (seal or stamp) whose reading is this unsure must not chain rows together.
+    _SEAL_BOX_MAX_CONFIDENCE = 0.5
+
+    def _mark_red_ink_boxes(self, page: OCRPage, image_path: Path) -> None:
+        candidates = [
+            line
+            for line in page.lines
+            if line.bounding_box is not None
+            and (line.confidence or 0.0) < self._SEAL_BOX_MAX_CONFIDENCE
+        ]
+        if not candidates:
+            return
+        try:
+            with Image.open(image_path) as image:
+                rgb = image.convert("RGB")
+                for line in candidates:
+                    box = line.bounding_box
+                    assert box is not None
+                    crop = rgb.crop(
+                        (
+                            max(0, int(box.x)),
+                            max(0, int(box.y)),
+                            min(rgb.width, int(box.x + box.width)),
+                            min(rgb.height, int(box.y + box.height)),
+                        )
+                    )
+                    if crop.width >= 4 and crop.height >= 4 and has_red_ink(crop):
+                        line.bridge_exempt = True
+        except Exception:
+            return  # a mask is an aid; reading never depends on it
 
     # Second pass: crop the field's region, normalise contrast and upscale -- a different
     # input to the recogniser than the first pass, so a reading error caused by the page
