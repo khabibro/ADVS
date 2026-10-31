@@ -1,11 +1,19 @@
 import logging
 import uuid
+from datetime import date
+from typing import Any
 
 from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, status
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session, selectinload
 
-from app.core.access import require_admin, resolve_check_date
+from app.core.access import (
+    SOURCE_ADMIN_RECHECK,
+    applicant_access,
+    check_date_for_project,
+    require_admin,
+    resolve_check_date,
+)
 from app.core.config import get_settings
 from app.core.domain import (
     DOCUMENT_TYPE_DISPLAY_NAMES,
@@ -26,6 +34,7 @@ from app.models.entities import (
     Checklist,
     Document,
     DocumentRequirement,
+    ExtractedField,
     FieldReview,
     Project,
     Submission,
@@ -43,9 +52,11 @@ from app.schemas.api import (
     FieldReviewRead,
     PageInfoRead,
     ProjectCreate,
+    ProjectCreated,
     ProjectOverviewRead,
     ProjectRead,
     ProjectSummaryRead,
+    RecheckRequest,
     ReviewItemRead,
     RuleEvaluationRead,
     SubmissionVerificationRead,
@@ -57,6 +68,7 @@ from app.schemas.api import (
     WorkflowRead,
     WorkflowSummary,
 )
+from app.services.applicant_messages import applicant_message
 from app.services.auto_acceptance import decisions_for_project
 from app.services.consistency import lock_project
 from app.services.document_validation import (
@@ -79,7 +91,7 @@ from app.services.verification import (
 )
 from app.services.workflows import WorkflowService
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(applicant_access)])
 workflow_service = WorkflowService()
 submission_verification_service = SubmissionVerificationService()
 field_review_service = FieldReviewService()
@@ -143,10 +155,38 @@ def _project_read(project: Project) -> ProjectRead:
     )
 
 
+def _issue_read(db: Session, issue: Any, evaluation_date: date | None) -> VerificationIssueRead:
+    read = VerificationIssueRead.model_validate(issue, from_attributes=True)
+    valid_until: date | None = None
+    if issue.code == "EXPIRED_DOCUMENT" and issue.field_id is not None:
+        field = db.get(ExtractedField, issue.field_id)
+        review = db.scalar(
+            select(FieldReview).where(
+                FieldReview.extracted_field_id == issue.field_id, FieldReview.is_current.is_(True)
+            )
+        )
+        shown = (review.reviewed_normalized_value if review else None) or (
+            field.normalized_value if field else None
+        )
+        try:
+            valid_until = date.fromisoformat(str(shown or ""))
+        except ValueError:
+            valid_until = None
+    message = applicant_message(
+        issue.code,
+        issue.document_type.value if issue.document_type else None,
+        valid_until=valid_until,
+        evaluation_date=evaluation_date,
+    )
+    read.applicant_message, read.applicant_action = message.message, message.action
+    return read
+
+
 def _verification_read(
-    project: Project, stored: StoredSubmissionVerification
+    db: Session, project: Project, stored: StoredSubmissionVerification
 ) -> SubmissionVerificationRead:
     result = stored.result
+    when = result.evaluation_date if result else None
     return SubmissionVerificationRead(
         project_id=project.id,
         workflow_id=project.checklist_id,
@@ -154,14 +194,8 @@ def _verification_read(
         evaluation_date=result.evaluation_date if result else None,
         evaluated_at=stored.evaluated_at,
         is_current=stored.is_current,
-        issues=[
-            VerificationIssueRead.model_validate(issue, from_attributes=True)
-            for issue in (result.issues if result else ())
-        ],
-        notices=[
-            VerificationIssueRead.model_validate(issue, from_attributes=True)
-            for issue in (result.notices if result else ())
-        ],
+        issues=[_issue_read(db, issue, when) for issue in (result.issues if result else ())],
+        notices=[_issue_read(db, issue, when) for issue in (result.notices if result else ())],
         rule_results=[
             RuleEvaluationRead.model_validate(item, from_attributes=True)
             for item in (result.rule_results if result else ())
@@ -188,7 +222,7 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@router.get("/projects", response_model=list[ProjectRead])
+@router.get("/projects", response_model=list[ProjectRead], dependencies=[Depends(require_admin)])
 def list_projects(db: Session = Depends(get_db)):
     projects = db.scalars(
         select(Project)
@@ -201,7 +235,7 @@ def list_projects(db: Session = Depends(get_db)):
     return [_project_read(project) for project in projects]
 
 
-@router.post("/projects", response_model=ProjectRead, status_code=status.HTTP_201_CREATED)
+@router.post("/projects", response_model=ProjectCreated, status_code=status.HTTP_201_CREATED)
 def create_project(payload: ProjectCreate, db: Session = Depends(get_db)):
     user = demo_user(db)
     workflow = _require_active_workflow(payload.workflow_id, db)
@@ -218,7 +252,7 @@ def create_project(payload: ProjectCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(project)
     project.checklist = workflow
-    return _project_read(project)
+    return ProjectCreated(**_project_read(project).model_dump(), access_token=project.access_token)
 
 
 @router.get("/projects/{project_id}", response_model=ProjectRead)
@@ -269,7 +303,9 @@ def get_workflow(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
 
 
 @router.delete(
-    "/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin)]
+    "/projects/{project_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_admin)],
 )
 def delete_project(project_id: uuid.UUID, db: Session = Depends(get_db)):
     project = lock_project(db, project_id)
@@ -334,7 +370,9 @@ def get_checklist(checklist_id: uuid.UUID, db: Session = Depends(get_db)):
 
 
 @router.patch(
-    "/checklists/{checklist_id}", response_model=ChecklistRead, dependencies=[Depends(require_admin)]
+    "/checklists/{checklist_id}",
+    response_model=ChecklistRead,
+    dependencies=[Depends(require_admin)],
 )
 def update_checklist(
     checklist_id: uuid.UUID, payload: ChecklistCreate, db: Session = Depends(get_db)
@@ -535,7 +573,7 @@ def verify_project(
     if not project:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
     try:
-        check_date = resolve_check_date(payload.evaluation_date)
+        check_date = check_date_for_project(db, project, payload.evaluation_date)
         stored = submission_verification_service.verify(
             db, project_id, check_date.value, date_source=check_date.source
         )
@@ -543,7 +581,43 @@ def verify_project(
         db.rollback()
         raise api_error(ApiErrorCode.VALIDATION_FAILED, str(exc), 400) from exc
     db.refresh(project)
-    return _verification_read(project, stored)
+    return _verification_read(db, project, stored)
+
+
+@router.post(
+    "/projects/{project_id}/recheck",
+    response_model=SubmissionVerificationRead,
+    dependencies=[Depends(require_admin)],
+)
+def recheck_project(project_id: uuid.UUID, payload: RecheckRequest, db: Session = Depends(get_db)):
+    """Explicit admin re-check: moves the submission's check date, with a logged reason."""
+    project = lock_project(db, project_id)
+    if project is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
+    chosen = payload.check_date or resolve_check_date(None).value
+    db.add(
+        AuditLog(
+            project_id=project.id,
+            event_name="check_date_changed",
+            metadata_json={
+                "old": project.check_date.isoformat() if project.check_date else None,
+                "new": chosen.isoformat(),
+                "reason": payload.reason,
+                "actor": "admin (no login yet)",
+            },
+        )
+    )
+    project.check_date, project.check_date_source = chosen, SOURCE_ADMIN_RECHECK
+    db.flush()
+    try:
+        stored = submission_verification_service.verify(
+            db, project_id, chosen, date_source=SOURCE_ADMIN_RECHECK
+        )
+    except (RuleConfigurationError, ValueError) as exc:
+        db.rollback()
+        raise api_error(ApiErrorCode.VALIDATION_FAILED, str(exc), 400) from exc
+    db.refresh(project)
+    return _verification_read(db, project, stored)
 
 
 @router.get("/projects/{project_id}/verification", response_model=SubmissionVerificationRead)
@@ -559,7 +633,7 @@ def verification(project_id: uuid.UUID, db: Session = Depends(get_db)):
     if not project:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
     stored = submission_verification_service.get_latest(db, project_id)
-    return _verification_read(project, stored)
+    return _verification_read(db, project, stored)
 
 
 @router.get("/projects/{project_id}/review-items", response_model=list[ReviewItemRead])
@@ -589,7 +663,11 @@ def project_overview(project_id: uuid.UUID, db: Session = Depends(get_db)):
     return overview
 
 
-@router.get("/project-summaries", response_model=list[ProjectSummaryRead])
+@router.get(
+    "/project-summaries",
+    response_model=list[ProjectSummaryRead],
+    dependencies=[Depends(require_admin)],
+)
 def project_summaries(db: Session = Depends(get_db)):
     ids = db.scalars(select(Project.id).order_by(Project.created_at.desc())).all()
     summaries = []

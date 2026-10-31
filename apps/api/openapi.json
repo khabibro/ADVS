@@ -67,7 +67,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProjectRead"
+                  "$ref": "#/components/schemas/ProjectCreated"
                 }
               }
             }
@@ -672,6 +672,57 @@
         }
       }
     },
+    "/api/v1/projects/{project_id}/recheck": {
+      "post": {
+        "summary": "Recheck Project",
+        "description": "Explicit admin re-check: moves the submission's check date, with a logged reason.",
+        "operationId": "recheck_project_api_v1_projects__project_id__recheck_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecheckRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionVerificationRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects/{project_id}/verification-history": {
       "get": {
         "summary": "Verification",
@@ -1178,6 +1229,44 @@
               }
             ],
             "title": "Reason"
+          },
+          "robust": {
+            "type": "boolean",
+            "title": "Robust",
+            "default": false
+          },
+          "repair_candidate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repair Candidate"
+          },
+          "repair_provenance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repair Provenance"
+          },
+          "confusion_table_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confusion Table Version"
           }
         },
         "type": "object",
@@ -1853,6 +1942,11 @@
               }
             ]
           },
+          "decision_relevant": {
+            "type": "boolean",
+            "title": "Decision Relevant",
+            "default": true
+          },
           "used_by_rules": {
             "type": "boolean",
             "title": "Used By Rules",
@@ -2379,6 +2473,28 @@
             ],
             "title": "Related Field Id"
           },
+          "applicant_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applicant Message"
+          },
+          "applicant_action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applicant Action"
+          },
           "value": {
             "anyOf": [
               {
@@ -2507,6 +2623,94 @@
           "workflow_id"
         ],
         "title": "ProjectCreate"
+      },
+      "ProjectCreated": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "workflow_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Id"
+          },
+          "workflow": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expected_documents": {
+            "items": {
+              "$ref": "#/components/schemas/WorkflowDocumentRequirementRead"
+            },
+            "type": "array",
+            "title": "Expected Documents"
+          },
+          "applicant_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applicant Name"
+          },
+          "company_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OverallStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "workflow_id",
+          "expected_documents",
+          "status",
+          "created_at",
+          "access_token"
+        ],
+        "title": "ProjectCreated",
+        "description": "Returned once, at creation: the token that opens this submission (the applicant link)."
       },
       "ProjectOverviewRead": {
         "properties": {
@@ -2763,6 +2967,33 @@
         ],
         "title": "ProjectSummaryRead",
         "description": "One line per submission for the list screen (same source as the overview)."
+      },
+      "RecheckRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason"
+          },
+          "check_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Check Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "RecheckRequest"
       },
       "RequirementOverview": {
         "properties": {
@@ -3454,6 +3685,28 @@
               }
             ],
             "title": "Related Field Id"
+          },
+          "applicant_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applicant Message"
+          },
+          "applicant_action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applicant Action"
           }
         },
         "type": "object",
@@ -3467,15 +3720,19 @@
       "VerificationRequest": {
         "properties": {
           "evaluation_date": {
-            "type": "string",
-            "format": "date",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Evaluation Date"
           }
         },
         "type": "object",
-        "required": [
-          "evaluation_date"
-        ],
         "title": "VerificationRequest"
       },
       "WorkflowDocumentRequirementRead": {

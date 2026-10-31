@@ -1,8 +1,10 @@
+import secrets
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
     Boolean,
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -47,6 +49,14 @@ class Project(Base, TimestampMixin):
     applicant_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     company_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     status: Mapped[str] = mapped_column(String(40), default="REVIEW_REQUIRED", index=True)
+    # Capability for the applicant link: the unguessable token that opens this submission.
+    access_token: Mapped[str] = mapped_column(
+        String(64), default=lambda: secrets.token_urlsafe(24), index=True
+    )
+    # The check date, fixed once at the first check (the date the applicant submitted) and reused
+    # by every later check; changed only by an explicit, logged admin re-check.
+    check_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    check_date_source: Mapped[str | None] = mapped_column(String(40), nullable=True)
     checklist = relationship("Checklist")
     submissions = relationship("Submission", back_populates="project", cascade="all, delete-orphan")
 

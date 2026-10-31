@@ -164,7 +164,9 @@ class ProjectOverviewService:
             status=status,
             evaluation_date=result.evaluation_date if result else None,
             evaluated_at=stored.evaluated_at if result else None,
-            suggested_evaluation_date=result.evaluation_date if result else resolve_check_date(None).value,
+            suggested_evaluation_date=result.evaluation_date
+            if result
+            else (project.check_date or resolve_check_date(None).value),
             status_item_count=item_count,
             next_step=self._next_step(counts, status, issues),
             counts=counts,

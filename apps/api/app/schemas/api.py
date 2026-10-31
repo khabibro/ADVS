@@ -61,6 +61,18 @@ class ProjectRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ProjectCreated(ProjectRead):
+    """Returned once, at creation: the token that opens this submission (the applicant link)."""
+
+    access_token: str
+
+
+class RecheckRequest(BaseModel):
+    reason: str = Field(min_length=3, max_length=500)
+    # Absent = a fresh date from the check-date policy.
+    check_date: date | None = None
+
+
 class ChecklistCreate(BaseModel):
     name: str
     description: str | None = None
@@ -259,6 +271,9 @@ class VerificationIssueRead(BaseModel):
     rule_id: uuid.UUID | None = None
     field_id: uuid.UUID | None = None
     related_field_id: uuid.UUID | None = None
+    # What the applicant is told, and who has to act (APPLICANT can fix it; STAFF = wait).
+    applicant_message: str | None = None
+    applicant_action: str | None = None
 
 
 class RuleEvaluationRead(BaseModel):
