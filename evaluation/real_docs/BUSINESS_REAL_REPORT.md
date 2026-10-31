@@ -2,6 +2,20 @@
 
 Masked report: counts and rates only. No document text, company names, numbers, document dates or images are in this file. Per-file detail is in `data/private_real/business/` (git-ignored).
 
+## Safety finding (read first): 지방세 납세증명서 typed as 국세 without a review flag
+
+Real 지방세 납세증명서 (local-tax certificate, a look-alike) is classified as 국세 납세증명서 (national-tax certificate) by the system:
+
+- In the full-set submissions: typed as 국세 in 19 of 19 files.
+- In the single-file run (each original alone, both commits): **2 of 4 look-alike originals were typed as 국세 with no classification-review flag.** The other 2 were flagged.
+- Why nothing went wrong in this test: no submission reached 제출 가능 at all (0 of 76 valid ones), and the N4 submissions were held by a classification-review code or by other review items.
+- **Hidden path to a false 제출 가능:** the protection today is that business submissions end in review for other reasons. When automation increases (for example when company-name notation and issue-date reading are fixed), a 지방세 certificate typed as 국세 with no flag could satisfy the 국세 requirement and a submission without the real 국세 certificate could reach 제출 가능. The classifier does not currently separate the two types on its own.
+- Status: not fixed; found on the mentor's set, handled after the generalisation run (see the plan: classification fix first, never accept 지방세 as 국세, synthetic test from the layout pattern with invented values).
+
+## Correction (N1 check date)
+
+The plan's check date for N1 was 2026-11-03 (the day after the 국세 certificate's last valid day, 2026-11-02). The main runs used 2026-11-02, so N1 was tested on its last valid day, not after expiry. N1 was re-run alone with 2026-11-03 on both commits (19 reduced + 1 standard submissions). Result: identical on frozen and baseline, **19/19 REVIEW_REQUIRED, no expiry code, none 제출 가능**; the standard checklist stays NEEDS_CORRECTION for the missing 중소기업확인서. So the day-after-expiry case is **not** reported as expired (unlike N6, long expired: 16/19 with the expiry code). The cause was not investigated (rule: business results stay out of the accuracy work until the generalisation run). The "N1 sits on a boundary day" limitation below no longer applies to the re-run.
+
 ## 1. Setup
 
 - 14 original files (2 companies; 3 certificate types plus one look-alike type, 지방세) → 268 files (G0 original, G1 scan 200 dpi, G2 scan quality, G3 geometry, G3b known limit 90°/180°, G4 photo style, G5 formats). Gold values confirmed by the owner (2026-10-31). Printed validity dates of the look-alike certificate are recorded as observations, not scored.
@@ -47,7 +61,7 @@ All scored fields (G0 + variants): 319 correct auto-accepted, 383 correct sent t
 
 | case | meaning | reduced (b) | standard (a) |
 |---|---|---|---|
-| N1 | national-tax certificate on its last valid day (check date 2026-11-02) | 19/19 REVIEW_REQUIRED | NEEDS_CORRECTION |
+| N1 | national-tax certificate, valid until 2026-11-02; main run at check date 2026-11-02 (last valid day), re-run at 2026-11-03 (day after expiry) | 19/19 REVIEW_REQUIRED on both dates; no expiry code on 2026-11-03 | NEEDS_CORRECTION |
 | N2 | old social-insurance certificate | 19/19 REVIEW_REQUIRED, no expiry code | NEEDS_CORRECTION |
 | N3 | company / number mismatch | 19/19 REVIEW_REQUIRED | NEEDS_CORRECTION |
 | N4 | 지방세 in place of 국세 | 19/19 REVIEW_REQUIRED (classification-review code on every one) | NEEDS_CORRECTION |
@@ -83,9 +97,9 @@ Caveat: the system does not state why an item went to review and I did not inves
 
 - Safety held on the mentor's real business documents: 0 wrong auto-accepted of 319, 0 false READY of 192, 0 of 114 negatives READY (2 companies, 14 originals; variants correlated).
 - Business documents are **not automated yet**: 0/76 valid submissions READY. Causes: unread `issue_date`, company-name notation, and the policy that an unconfirmed value goes to a person.
-- Negative detection is coarse: only clear expiry (N6) is reported specifically; mismatch, duplicate, old insurance certificate and look-alike end in the same status as a valid submission.
+- Negative detection is coarse: only long expiry (N6) is reported specifically (N1, one day after expiry, is not); mismatch, duplicate, old insurance certificate and look-alike end in the same status as a valid submission.
 - The accuracy fixes made on student documents have no effect, positive or negative, on this set (identical on both commits). This set has not influenced the fixes.
-- Limits: 2 companies, one issuer format per type, variants derived from 14 files, one check date, N1 sits on a boundary day.
+- Limits: 2 companies, one issuer format per type, variants derived from 14 files, one check date for all but N1.
 
 ## 6. Not done
 
