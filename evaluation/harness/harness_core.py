@@ -263,6 +263,9 @@ class Runner:
         os.environ["OCR_PROVIDER"] = "paddle"
         os.environ["APP_ENV"] = "test"
         os.environ["LOG_LEVEL"] = "WARNING"
+        # test harness: the evaluation date and review decisions are driven through the API
+        os.environ["ADMIN_ENABLED"] = "true"
+        os.environ["ALLOW_CLIENT_EVALUATION_DATE"] = "true"
         os.environ.setdefault(
             "PADDLE_OCR_CACHE_DIR", str(REPO_ROOT / "apps" / "api" / "storage" / "paddleocr-cache")
         )

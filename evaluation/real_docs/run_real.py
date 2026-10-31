@@ -43,7 +43,9 @@ def main() -> int:
 
     tmp = Path(tempfile.mkdtemp(prefix="advs_real_"))
     os.environ.update({"DATABASE_URL": f"sqlite:///{tmp / 'real.db'}", "STORAGE_PATH": str(tmp / "storage"), "OCR_PROVIDER": "paddle",
-                       "APP_ENV": "test", "LOG_LEVEL": "WARNING"})
+                       "APP_ENV": "test", "LOG_LEVEL": "WARNING",
+                       # test harness: the evaluation date and review decisions are driven through the API
+                       "ADMIN_ENABLED": "true", "ALLOW_CLIENT_EVALUATION_DATE": "true"})
     os.environ.setdefault("PADDLE_OCR_CACHE_DIR", str(REPO / "apps" / "api" / "storage" / "paddleocr-cache"))
     if args.strategy:
         os.environ["AUTO_ACCEPT_STRATEGY"] = args.strategy
