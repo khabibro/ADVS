@@ -12,7 +12,7 @@ add before any real deployment. They describe the code on `feature/admin-checkli
 | Applicant cannot edit checklists or delete a submission | Same switch: `POST/PATCH /checklists`, `DELETE /projects/{id}` and the explicit re-check `POST /projects/{id}/recheck` answer 404 unless `ADMIN_ENABLED=true`. The re-check needs a reason and writes an audit log row. | `routes.py` |
 | A submission is reachable only with its link | Every route that names a project, or a document of one, needs that submission's random token (`X-Submission-Token` header, or `?token=` for image URLs). Wrong, missing or unknown gives 404 (existence is not revealed). The token is returned once, when the submission is created. | `access.py`, `projects.access_token` |
 | No public list of submissions | `GET /projects` and `GET /project-summaries` answer 404 unless `ADMIN_ENABLED=true`. | `routes.py` |
-| A finalised submission cannot be changed | After "제출하기", uploads and edits answer 409 (`SUBMISSION_FINALISED`, "제출이 완료되었습니다. 수정하려면 제출을 취소하세요."). The applicant can reopen (`POST /projects/{id}/reopen`) only while no reviewer decision exists; afterwards only `POST /projects/{id}/admin-reopen` (admin, reason required). Both clear the frozen date and write an audit row. | `routes.py` |
+| A finalised submission cannot be changed | After "제출하기", uploads, edits and re-processing of a document answer 409 (`SUBMISSION_FINALISED`, "제출이 완료되었습니다. 수정하려면 제출을 취소하세요."). The applicant can reopen (`POST /projects/{id}/reopen`) only while no reviewer decision exists; afterwards only `POST /projects/{id}/admin-reopen` (admin, reason required). Both clear the frozen date and write an audit row. | `routes.py` |
 | Link token stays out of Referers and logs | Every response carries `Referrer-Policy: no-referrer`. A log filter replaces any `?token=` value with `[redacted]` in the access and HTTP-client log lines. | `app/main.py`, `app/core/logging.py` |
 | Uploads are cleaned | Size limits, MPO/GPS/metadata stripping, page and pixel limits (unchanged). | `services/storage/sanitize.py` |
 
@@ -32,6 +32,7 @@ deployment) as well as with the test-mode conftest.
   the demo API can confirm values, edit checklists and delete submissions. Do not expose the demo
   API to a network you do not control. The demo never enables `ALLOW_CLIENT_EVALUATION_DATE`; it
   uses `CHECK_DATE_MODE=fixed` (`2026-10-05`).
+- **Admin path = same process.** Re-processing a finalised document is allowed when `ADMIN_ENABLED=true` (and logged as "admin (no login yet)"). While admin and applicant share one process, as in the demo, an applicant can take that path too.
 - Links are bearer secrets: anyone holding one can use it. They are not rotated, expired or
   revoked. Image requests carry the token in the URL (`?token=`, because `<img>` cannot send a
   header). The API sends `Referrer-Policy: no-referrer` and redacts the value in its own logs, but

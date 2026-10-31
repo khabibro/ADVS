@@ -486,3 +486,39 @@ def test_admin_reopen_is_unreachable_when_admin_is_off(client, db_session, appli
     assert response.status_code == 404
     shown = client.get(f"/api/v1/projects/{project_id}", headers=_h(project_id)).json()
     assert shown["finalised_at"] is not None
+
+
+def test_reprocessing_after_finalise_is_refused_for_the_applicant(
+    client, db_session, applicant_mode
+):
+    project_id = _project(client, db_session)
+    document_id = _upload(client, project_id).json()["id"]
+    assert _finalise(client, project_id).status_code == 200
+    refused = client.post(f"/api/v1/documents/{document_id}/process", headers=_h(project_id))
+    assert refused.status_code == 409
+    assert refused.json()["detail"]["code"] == "SUBMISSION_FINALISED"
+    assert refused.json()["detail"]["message"] == FINALISED
+
+
+def test_reprocessing_before_finalise_still_works(client, db_session, applicant_mode):
+    project_id = _project(client, db_session)
+    document_id = _upload(client, project_id).json()["id"]
+    done = client.post(f"/api/v1/documents/{document_id}/process", headers=_h(project_id))
+    assert done.status_code == 200
+
+
+def test_admin_path_reprocesses_after_finalise_and_logs_it(client, db_session):
+    from sqlalchemy import select
+
+    from app.models.entities import AuditLog
+
+    project_id = _project(client, db_session)
+    document_id = _upload(client, project_id).json()["id"]
+    _finalise(client, project_id)
+    done = client.post(f"/api/v1/documents/{document_id}/process")
+    assert done.status_code == 200
+    log = db_session.scalars(
+        select(AuditLog).where(AuditLog.project_id == uuid.UUID(project_id))
+    ).all()
+    assert [row.event_name for row in log] == ["document_reprocessed_after_finalise"]
+    assert log[0].metadata_json["actor"] == "admin (no login yet)"

@@ -592,8 +592,25 @@ def get_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
 
 @router.post("/documents/{document_id}/process", response_model=DocumentRead)
 async def process_document(document_id: uuid.UUID, db: Session = Depends(get_db)):
-    if db.get(Document, document_id) is None:
+    document = db.get(Document, document_id)
+    if document is None:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Document not found", 404)
+    submission = db.get(Submission, document.submission_id)
+    project = db.get(Project, submission.project_id) if submission else None
+    if project is not None and project.finalised_at is not None:
+        # Re-reading a document can change its fields: after 제출하기 only the admin path may,
+        # and it is logged.
+        if not get_settings().admin_enabled:
+            raise api_error("SUBMISSION_FINALISED", FINALISED_MESSAGE, 409)
+        db.add(
+            AuditLog(
+                project_id=project.id,
+                document_id=document.id,
+                event_name="document_reprocessed_after_finalise",
+                metadata_json={"actor": "admin (no login yet)"},
+            )
+        )
+        db.commit()
     return await DocumentProcessingService().process(db, document_id)
 
 
