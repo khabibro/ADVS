@@ -58,6 +58,7 @@ class ProjectRead(BaseModel):
     company_name: str | None = None
     status: OverallStatus
     created_at: datetime
+    finalised_at: datetime | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -71,6 +72,10 @@ class RecheckRequest(BaseModel):
     reason: str = Field(min_length=3, max_length=500)
     # Absent = a fresh date from the check-date policy.
     check_date: date | None = None
+
+
+class ReopenRequest(BaseModel):
+    reason: str = Field(min_length=3, max_length=500)
 
 
 class ChecklistCreate(BaseModel):

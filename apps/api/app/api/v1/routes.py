@@ -58,6 +58,7 @@ from app.schemas.api import (
     ProjectRead,
     ProjectSummaryRead,
     RecheckRequest,
+    ReopenRequest,
     ReviewItemRead,
     RuleEvaluationRead,
     SubmissionVerificationRead,
@@ -153,7 +154,45 @@ def _project_read(project: Project) -> ProjectRead:
         company_name=project.company_name,
         status=normalize_overall_status(project.status),
         created_at=project.created_at,
+        finalised_at=project.finalised_at,
     )
+
+
+FINALISED_MESSAGE = "제출이 완료되었습니다. 수정하려면 제출을 취소하세요."
+
+
+def _require_draft(project: Project) -> None:
+    """Uploads and edits are refused once the applicant has finalised the submission."""
+    if project.finalised_at is not None:
+        raise api_error("SUBMISSION_FINALISED", FINALISED_MESSAGE, 409)
+
+
+def _has_reviewer_decision(db: Session, project_id: uuid.UUID) -> bool:
+    return (
+        db.scalar(select(FieldReview.id).where(FieldReview.project_id == project_id).limit(1))
+        is not None
+    )
+
+
+def _reopen(db: Session, project: Project, *, actor: str, reason: str | None) -> None:
+    db.add(
+        AuditLog(
+            project_id=project.id,
+            event_name="submission_reopened",
+            metadata_json={
+                "actor": actor,
+                "reason": reason,
+                "cleared_check_date": project.check_date.isoformat()
+                if project.check_date
+                else None,
+            },
+        )
+    )
+    project.finalised_at = None
+    project.check_date = None
+    project.check_date_source = None
+    invalidate_submission_verification(db, project.id)
+    db.commit()
 
 
 def _issue_read(db: Session, issue: Any, evaluation_date: date | None) -> VerificationIssueRead:
@@ -280,6 +319,7 @@ def update_project(project_id: uuid.UUID, payload: ProjectCreate, db: Session = 
     )
     if not project:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
+    _require_draft(project)
     workflow = _require_active_workflow(payload.workflow_id, db)
     project.checklist_id = workflow.id
     project.name = payload.name
@@ -402,6 +442,7 @@ async def upload_document(
     )
     if not project:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
+    _require_draft(project)
     submission = (
         project.submissions[0] if project.submissions else Submission(project_id=project.id)
     )
@@ -601,6 +642,44 @@ def finalise_project(project_id: uuid.UUID, db: Session = Depends(get_db)):
         raise api_error(ApiErrorCode.VALIDATION_FAILED, str(exc), 400) from exc
     db.refresh(project)
     return _verification_read(db, project, stored)
+
+
+@router.post("/projects/{project_id}/reopen", response_model=ProjectRead)
+def reopen_project(project_id: uuid.UUID, db: Session = Depends(get_db)):
+    """The applicant's "제출 취소": back to draft, only while no reviewer has decided anything."""
+    project = lock_project(db, project_id)
+    if project is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
+    if project.finalised_at is None:
+        raise api_error("SUBMISSION_NOT_FINALISED", "아직 제출하지 않은 신청입니다.", 409)
+    if _has_reviewer_decision(db, project_id):
+        raise api_error(
+            "REVIEW_ALREADY_STARTED",
+            "담당자가 확인을 시작해 제출을 취소할 수 없습니다. 담당자에게 문의해 주세요.",
+            409,
+        )
+    _reopen(db, project, actor="applicant", reason=None)
+    db.refresh(project)
+    return _project_read(project)
+
+
+@router.post(
+    "/projects/{project_id}/admin-reopen",
+    response_model=ProjectRead,
+    dependencies=[Depends(require_admin)],
+)
+def admin_reopen_project(
+    project_id: uuid.UUID, payload: ReopenRequest, db: Session = Depends(get_db)
+):
+    """After a reviewer decision only an admin may reopen a submission, with a logged reason."""
+    project = lock_project(db, project_id)
+    if project is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
+    if project.finalised_at is None:
+        raise api_error("SUBMISSION_NOT_FINALISED", "아직 제출하지 않은 신청입니다.", 409)
+    _reopen(db, project, actor="admin (no login yet)", reason=payload.reason)
+    db.refresh(project)
+    return _project_read(project)
 
 
 @router.post(

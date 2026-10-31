@@ -713,6 +713,98 @@
         }
       }
     },
+    "/api/v1/projects/{project_id}/reopen": {
+      "post": {
+        "summary": "Reopen Project",
+        "description": "The applicant's \"제출 취소\": back to draft, only while no reviewer has decided anything.",
+        "operationId": "reopen_project_api_v1_projects__project_id__reopen_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/admin-reopen": {
+      "post": {
+        "summary": "Admin Reopen Project",
+        "description": "After a reviewer decision only an admin may reopen a submission, with a logged reason.",
+        "operationId": "admin_reopen_project_api_v1_projects__project_id__admin_reopen_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReopenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects/{project_id}/recheck": {
       "post": {
         "summary": "Recheck Project",
@@ -2735,6 +2827,18 @@
             "format": "date-time",
             "title": "Created At"
           },
+          "finalised_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finalised At"
+          },
           "access_token": {
             "type": "string",
             "title": "Access Token"
@@ -2935,6 +3039,18 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "finalised_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finalised At"
           }
         },
         "type": "object",
@@ -3035,6 +3151,21 @@
           "reason"
         ],
         "title": "RecheckRequest"
+      },
+      "ReopenRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "ReopenRequest"
       },
       "RequirementOverview": {
         "properties": {

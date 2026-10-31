@@ -345,3 +345,144 @@ def test_core_flow_with_default_settings(client, db_session, applicant_mode):
     assert verify.json()["status"] != OverallStatus.READY.value
     status_ = client.get(f"/api/v1/projects/{project_id}/overview", headers=_h(project_id))
     assert status_.status_code == 200
+
+
+# ---- finalised submissions: no changes, reopen rules -------------------------------------------
+
+FINALISED = "제출이 완료되었습니다. 수정하려면 제출을 취소하세요."
+
+
+def _pdf() -> bytes:
+    import fitz
+
+    pdf = fitz.open()
+    pdf.new_page()
+    data = pdf.tobytes()
+    pdf.close()
+    return data
+
+
+def _upload(client, project_id: str):
+    return client.post(
+        f"/api/v1/projects/{project_id}/documents",
+        files={"file": ("a.pdf", _pdf(), "application/pdf")},
+        headers=_h(project_id),
+    )
+
+
+def _finalise(client, project_id: str):
+    return client.post(f"/api/v1/projects/{project_id}/finalise", headers=_h(project_id))
+
+
+def test_upload_and_edit_are_refused_after_finalise(client, db_session, applicant_mode):
+    project_id = _project(client, db_session)
+    assert _upload(client, project_id).status_code == 201
+    assert _finalise(client, project_id).status_code == 200
+    refused = _upload(client, project_id)
+    assert refused.status_code == 409
+    assert refused.json()["detail"]["code"] == "SUBMISSION_FINALISED"
+    assert refused.json()["detail"]["message"] == FINALISED
+    workflow_id = str(_workflow(db_session).id)
+    edit = client.patch(
+        f"/api/v1/projects/{project_id}",
+        json={"workflow_id": workflow_id, "name": "changed", "applicant_name": "다른 사람"},
+        headers=_h(project_id),
+    )
+    assert edit.status_code == 409 and edit.json()["detail"]["message"] == FINALISED
+    shown = client.get(f"/api/v1/projects/{project_id}", headers=_h(project_id)).json()
+    assert shown["finalised_at"] is not None
+
+
+def test_applicant_can_reopen_before_any_reviewer_decision(client, db_session, applicant_mode):
+    from sqlalchemy import select
+
+    from app.models.entities import AuditLog
+
+    project_id = _project(client, db_session)
+    _finalise(client, project_id)
+    reopened = client.post(f"/api/v1/projects/{project_id}/reopen", headers=_h(project_id))
+    assert reopened.status_code == 200 and reopened.json()["finalised_at"] is None
+    # back to draft: uploads work again and the frozen date is gone (checks preview today)
+    assert _upload(client, project_id).status_code == 201
+    assert _verify(client, project_id, None).json()["evaluation_date"] == date.today().isoformat()
+    log = db_session.scalars(
+        select(AuditLog).where(AuditLog.project_id == uuid.UUID(project_id))
+    ).all()
+    assert [row.event_name for row in log] == ["submission_reopened"]
+    assert log[0].metadata_json["actor"] == "applicant"
+    # a second reopen of a draft is refused
+    again = client.post(f"/api/v1/projects/{project_id}/reopen", headers=_h(project_id))
+    assert again.status_code == 409 and again.json()["detail"]["code"] == "SUBMISSION_NOT_FINALISED"
+
+
+def _add_reviewer_decision(db_session, project_id: str) -> None:
+    from datetime import UTC, datetime
+
+    from sqlalchemy import select
+
+    from app.models.entities import Document, FieldReview, Submission
+
+    submission = db_session.scalars(
+        select(Submission).where(Submission.project_id == uuid.UUID(project_id))
+    ).first()
+    document = db_session.scalars(
+        select(Document).where(Document.submission_id == submission.id)
+    ).first()
+    db_session.add(
+        FieldReview(
+            project_id=uuid.UUID(project_id),
+            document_id=document.id,
+            field_name="gpa",
+            decision="CONFIRMED",
+            processing_version=1,
+            policy_version="test",
+            is_current=True,
+            reviewed_at=datetime.now(UTC),
+        )
+    )
+    db_session.commit()
+
+
+def test_applicant_cannot_reopen_after_a_reviewer_decision(client, db_session, applicant_mode):
+    project_id = _project(client, db_session)
+    _upload(client, project_id)
+    _finalise(client, project_id)
+    _add_reviewer_decision(db_session, project_id)
+    refused = client.post(f"/api/v1/projects/{project_id}/reopen", headers=_h(project_id))
+    assert refused.status_code == 409
+    assert refused.json()["detail"]["code"] == "REVIEW_ALREADY_STARTED"
+    assert _upload(client, project_id).status_code == 409  # still finalised
+
+
+def test_admin_reopen_after_review_needs_a_reason_and_is_logged(client, db_session):
+    from sqlalchemy import select
+
+    from app.models.entities import AuditLog
+
+    project_id = _project(client, db_session)
+    _upload(client, project_id)
+    _finalise(client, project_id)
+    _add_reviewer_decision(db_session, project_id)
+    url = f"/api/v1/projects/{project_id}/admin-reopen"
+    assert client.post(url, json={"reason": "x"}).status_code == 422
+    done = client.post(url, json={"reason": "applicant sent a corrected certificate"})
+    assert done.status_code == 200 and done.json()["finalised_at"] is None
+    log = db_session.scalars(
+        select(AuditLog).where(AuditLog.project_id == uuid.UUID(project_id))
+    ).all()
+    assert log[-1].event_name == "submission_reopened"
+    assert log[-1].metadata_json["reason"] == "applicant sent a corrected certificate"
+    assert log[-1].metadata_json["actor"] == "admin (no login yet)"
+
+
+def test_admin_reopen_is_unreachable_when_admin_is_off(client, db_session, applicant_mode):
+    project_id = _project(client, db_session)
+    _finalise(client, project_id)
+    response = client.post(
+        f"/api/v1/projects/{project_id}/admin-reopen",
+        json={"reason": "applicant tries it"},
+        headers=_h(project_id),
+    )
+    assert response.status_code == 404
+    shown = client.get(f"/api/v1/projects/{project_id}", headers=_h(project_id)).json()
+    assert shown["finalised_at"] is not None
