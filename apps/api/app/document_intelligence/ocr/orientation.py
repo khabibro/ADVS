@@ -110,3 +110,17 @@ def rotate_image(src: Path, dst: Path, degrees: int) -> Path:
         rotated = image.transpose(_TRANSPOSE[degrees])
         rotated.save(dst, format="PNG")
     return dst
+
+
+def crop_centre(src: Path, dst: Path, fraction: float) -> Path:
+    """Write the centre `fraction` (of each side) of `src` to `dst`: a cheap sample of the page for scoring.
+
+    The centre of an image stays the centre under 90/180/270 rotation, so the same crop of each rotated copy is
+    the same region of the page, read in four directions."""
+    with Image.open(src) as image:
+        width, height = image.size
+        margin_x, margin_y = int(width * (1 - fraction) / 2), int(height * (1 - fraction) / 2)
+        image.crop((margin_x, margin_y, width - margin_x, height - margin_y)).save(
+            dst, format="PNG"
+        )
+    return dst
