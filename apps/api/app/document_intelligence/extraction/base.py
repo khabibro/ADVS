@@ -223,6 +223,8 @@ def _merge_separator_boxes(row: TextRow) -> TextRow:
 
 
 _STAMP_LIKE_MAX_CHARS = 6
+# A digit fragment must start at least this many date-box heights right of the date box.
+_STAMP_FRAGMENT_MIN_GAP = 0.5
 
 
 def _date_row_text(row: TextRow) -> str:
@@ -237,8 +239,23 @@ def _date_row_text(row: TextRow) -> str:
     date_box = dates[0].bounding_box
     others = [item for item in segments if item is not dates[0]]
 
+    def stamp_fragment(item: OCRLine, compact: str) -> bool:
+        """One or two digits printed clear of the date box: a seal read as characters.
+
+        The date is already a complete value in its own box, so a fragment that neither
+        touches nor continues it cannot change it. A fragment close to the box could be the
+        end of a date split in two and stays a blocker."""
+        if date_box is None or item.bounding_box is None or len(compact) > 2:
+            return False
+        if not compact.isdigit():
+            return False
+        gap = item.bounding_box.x - (date_box.x + date_box.width)
+        return gap >= date_box.height * _STAMP_FRAGMENT_MIN_GAP
+
     def mark_like(item: OCRLine) -> bool:
         compact = _compact(item.text)
+        if stamp_fragment(item, compact):
+            return True
         if compact.endswith((":", "：")) or any(ch.isdigit() for ch in compact):
             return False  # a label or another value, not a stamp
         if date_box is not None and item.bounding_box is not None:
@@ -1188,9 +1205,24 @@ def standalone_date_candidate(source: ExtractionInput) -> ExtractionCandidate | 
             if not _DOCUMENT_TITLE_RE.search(_compact(label))
         ):
             continue
-        if _followed_by_issuer(observations, index):
+        if _followed_by_issuer(observations, index) or _preceded_by_certification(
+            observations, index
+        ):
             return candidate
     return None
+
+
+def _preceded_by_certification(observations: list[_RowObservation], index: int) -> bool:
+    """True when a certification sentence ("위의 사실을 증명합니다.") sits just above the date on
+    the same page. The issuance block is anchored from above, so a stamp or signature that the
+    OCR shreds below the date cannot make the date disappear."""
+    page_number = observations[index].row.page_number
+    above = observations[max(0, index - _CERTIFICATION_LOOKBACK) : index]
+    return any(
+        item.row.page_number == page_number
+        and _CERTIFICATION_SENTENCE_RE.search(_compact(item.row.text))
+        for item in above
+    )
 
 
 def _followed_by_issuer(observations: list[_RowObservation], index: int) -> bool:
