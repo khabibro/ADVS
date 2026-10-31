@@ -156,7 +156,6 @@ class PaddleOCRProvider(OCRProvider):
         self.render_scale = self._render_scale(settings.paddle_ocr_render_dpi)
         self.doc_orientation = settings.paddle_ocr_doc_orientation
         self.rotation_search = settings.paddle_ocr_rotation_search
-        self.rotation_probe_fraction = settings.paddle_ocr_rotation_probe_fraction
         on_recycle(self._drop_engines)
 
     @staticmethod
@@ -456,13 +455,6 @@ class PaddleOCRProvider(OCRProvider):
             preprocess,
         )
 
-    @staticmethod
-    def _scratch_png(scratch: ExitStack) -> Path:
-        handle, name = tempfile.mkstemp(prefix="advs_rotation_", suffix=".png")
-        os.close(handle)
-        scratch.callback(Path(name).unlink, missing_ok=True)
-        return Path(name)
-
     async def _search_rotation(
         self, page: OCRPage, image_path: Path, scratch: ExitStack
     ) -> tuple[OCRPage, Path]:
@@ -478,55 +470,25 @@ class PaddleOCRProvider(OCRProvider):
         first = rotation_scoring.evidence_for(page.lines)
         if not (rotation_scoring.looks_unread(first) or self._looks_orientation_broken([page])):
             return page, image_path
-        probe = self.rotation_probe_fraction
         candidates = {0: first}
         pages = {0: page}
         paths = {0: image_path}
         try:
-            if probe < 1.0:
-                # Score every rotation (upright included) on the same centre sample; the full read of the
-                # winner follows only when it is not upright.
-                candidates = {}
-                for degrees in rotation_scoring.ROTATIONS:
-                    sample = self._scratch_png(scratch)
-                    source = image_path
-                    if degrees:
-                        source = rotation_scoring.rotate_image(
-                            image_path, self._scratch_png(scratch), degrees
-                        )
-                    rotation_scoring.crop_centre(source, sample, probe)
-                    raw = await run_ocr(
-                        partial(self._predict, sample), self.settings.ocr_timeout_seconds
-                    )
-                    read = self._normalize_page(
-                        raw=raw, page_number=page.page_number, duration_ms=0
-                    )
-                    candidates[degrees] = rotation_scoring.evidence_for(read.lines)
-                    paths[degrees] = source
-            else:
-                for degrees in rotation_scoring.ROTATIONS[1:]:
-                    rotated = rotation_scoring.rotate_image(
-                        image_path, self._scratch_png(scratch), degrees
-                    )
-                    raw = await run_ocr(
-                        partial(self._predict, rotated), self.settings.ocr_timeout_seconds
-                    )
-                    read = self._normalize_page(
-                        raw=raw, page_number=page.page_number, duration_ms=0
-                    )
-                    candidates[degrees] = rotation_scoring.evidence_for(read.lines)
-                    pages[degrees], paths[degrees] = read, rotated
-            chosen = rotation_scoring.pick_rotation(candidates)
-            if probe < 1.0 and chosen not in (None, 0):
+            for degrees in rotation_scoring.ROTATIONS[1:]:
+                handle, name = tempfile.mkstemp(prefix="advs_rotation_", suffix=".png")
+                os.close(handle)
+                scratch.callback(Path(name).unlink, missing_ok=True)
+                rotated = rotation_scoring.rotate_image(image_path, Path(name), degrees)
                 raw = await run_ocr(
-                    partial(self._predict, paths[chosen]), self.settings.ocr_timeout_seconds
+                    partial(self._predict, rotated), self.settings.ocr_timeout_seconds
                 )
-                pages[chosen] = self._normalize_page(
-                    raw=raw, page_number=page.page_number, duration_ms=0
-                )
+                read = self._normalize_page(raw=raw, page_number=page.page_number, duration_ms=0)
+                candidates[degrees] = rotation_scoring.evidence_for(read.lines)
+                pages[degrees], paths[degrees] = read, rotated
         except Exception:
             # A search must never turn a usable result into a failure.
             return page, image_path
+        chosen = rotation_scoring.pick_rotation(candidates)
         summary = {
             str(degrees): {
                 "label_hits": evidence.label_hits,
@@ -538,14 +500,13 @@ class PaddleOCRProvider(OCRProvider):
         page.metadata.setdefault("transform", {})["rotation_search"] = {
             "chosen": chosen,
             "evidence": summary,
-            "probe_fraction": probe,
         }
         if chosen is None or chosen == 0:
             return page, image_path
         best = pages[chosen]
         best.metadata["transform"] = {
             **best.metadata.get("transform", {}),
-            "rotation_search": {"chosen": chosen, "evidence": summary, "probe_fraction": probe},
+            "rotation_search": {"chosen": chosen, "evidence": summary},
             "orientation_degrees": chosen,
             "coordinate_reference": "rotated_image",
         }

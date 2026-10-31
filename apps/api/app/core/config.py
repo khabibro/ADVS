@@ -45,9 +45,6 @@ class Settings(BaseSettings):
     paddle_ocr_doc_orientation: bool = True
     # Read a page that looks unread in all four rotations and keep the best-reading one.
     paddle_ocr_rotation_search: bool = True
-    # 1.0 reads every rotation of the page in full; a smaller value scores the rotations on the centre
-    # sample of that fraction of each side and reads only the winner in full.
-    paddle_ocr_rotation_probe_fraction: float = 1.0
     log_level: str = "INFO"
     # Load the OCR model at API start (demo / production) instead of on the first upload.
     ocr_warmup: bool = False
