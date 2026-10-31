@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, statu
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.access import require_admin, resolve_check_date
 from app.core.config import get_settings
 from app.core.domain import (
     DOCUMENT_TYPE_DISPLAY_NAMES,
@@ -267,7 +268,9 @@ def get_workflow(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
     return _workflow_read(workflow)
 
 
-@router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin)]
+)
 def delete_project(project_id: uuid.UUID, db: Session = Depends(get_db)):
     project = lock_project(db, project_id)
     if project is None:
@@ -308,7 +311,12 @@ def list_checklists(db: Session = Depends(get_db)):
     return db.scalars(select(Checklist).order_by(Checklist.created_at.desc())).all()
 
 
-@router.post("/checklists", response_model=ChecklistRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/checklists",
+    response_model=ChecklistRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_admin)],
+)
 def create_checklist(payload: ChecklistCreate, db: Session = Depends(get_db)):
     checklist = Checklist(**payload.model_dump())
     db.add(checklist)
@@ -325,7 +333,9 @@ def get_checklist(checklist_id: uuid.UUID, db: Session = Depends(get_db)):
     return checklist
 
 
-@router.patch("/checklists/{checklist_id}", response_model=ChecklistRead)
+@router.patch(
+    "/checklists/{checklist_id}", response_model=ChecklistRead, dependencies=[Depends(require_admin)]
+)
 def update_checklist(
     checklist_id: uuid.UUID, payload: ChecklistCreate, db: Session = Depends(get_db)
 ):
@@ -525,7 +535,10 @@ def verify_project(
     if not project:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
     try:
-        stored = submission_verification_service.verify(db, project_id, payload.evaluation_date)
+        check_date = resolve_check_date(payload.evaluation_date)
+        stored = submission_verification_service.verify(
+            db, project_id, check_date.value, date_source=check_date.source
+        )
     except (RuleConfigurationError, ValueError) as exc:
         db.rollback()
         raise api_error(ApiErrorCode.VALIDATION_FAILED, str(exc), 400) from exc
@@ -652,6 +665,7 @@ def list_reviews(
     "/projects/{project_id}/documents/{document_id}/fields/{field_name}/review",
     response_model=FieldReviewRead,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_admin)],
 )
 def review_field(
     project_id: uuid.UUID,

@@ -13,6 +13,9 @@ _TMP_DIR = tempfile.mkdtemp(prefix="advs_api_tests_")
 os.environ.setdefault("DATABASE_URL", f"sqlite:///{_TMP_DIR}/integration.db")
 os.environ.setdefault("STORAGE_PATH", f"{_TMP_DIR}/storage")
 os.environ.setdefault("OCR_PROVIDER", "mock")
+# The existing integration tests drive review, checklist writes and explicit check dates through the API.
+os.environ.setdefault("ADMIN_ENABLED", "true")
+os.environ.setdefault("ALLOW_CLIENT_EVALUATION_DATE", "true")
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

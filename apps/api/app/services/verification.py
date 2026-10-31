@@ -84,7 +84,12 @@ class SubmissionVerificationService:
         self.field_resolver = EffectiveFieldResolver()
 
     def verify(
-        self, db: Session, project_id: uuid.UUID, evaluation_date: date
+        self,
+        db: Session,
+        project_id: uuid.UUID,
+        evaluation_date: date,
+        *,
+        date_source: str | None = None,
     ) -> StoredSubmissionVerification:
         lock_project(db, project_id)
         project = self._load_project(db, project_id)
@@ -114,7 +119,7 @@ class SubmissionVerificationService:
             raise
         evaluated_at = datetime.now(UTC)
         snapshot = self._snapshot(project, requirements, documents)
-        self._persist(db, project, result, evaluated_at, snapshot)
+        self._persist(db, project, result, evaluated_at, snapshot, date_source)
         return StoredSubmissionVerification(result, evaluated_at, True)
 
     def get_latest(
@@ -377,12 +382,14 @@ class SubmissionVerificationService:
         result: SubmissionVerificationResult,
         evaluated_at: datetime,
         snapshot: dict,
+        date_source: str | None = None,
     ) -> None:
         invalidate_submission_verification(db, project.id)
         for result_index, item in enumerate(result.rule_results):
             issue = item.issue
             details = {
                 "evaluation_date": result.evaluation_date.isoformat(),
+                "evaluation_date_source": date_source,
                 "input_snapshot": snapshot,
                 "engine_version": self.engine.version,
                 "rule_id": str(item.rule_id) if item.rule_id else None,

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -17,6 +18,14 @@ configure_logging(settings.log_level)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    if settings.allow_client_evaluation_date:
+        logging.getLogger(__name__).warning(
+            "ALLOW_CLIENT_EVALUATION_DATE is on: the client chooses the check date (test mode only)"
+        )
+    if settings.admin_enabled:
+        logging.getLogger(__name__).warning(
+            "ADMIN_ENABLED is on: review, checklist-write and delete endpoints are reachable"
+        )
     warmup = asyncio.create_task(warm_up_ocr(settings)) if settings.ocr_warmup else None
     yield
     if warmup is not None and not warmup.done():

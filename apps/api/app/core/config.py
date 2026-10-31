@@ -1,3 +1,4 @@
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
@@ -52,6 +53,18 @@ class Settings(BaseSettings):
     # Comma-separated workflow (checklist) ids for which auto-acceptance is switched off.
     auto_accept_disabled_workflows: str = ""
 
+    # Admin / reviewer endpoints (review decisions, checklist writes, project deletion) answer 404
+    # unless this is on. The applicant deployment leaves it off.
+    admin_enabled: bool = False
+    # TEST HARNESSES ONLY: accept the evaluation date sent by the client. Never on in `make demo`
+    # or any deployment profile; when on, a warning is logged at start and every stored check
+    # records that the date came from the client.
+    allow_client_evaluation_date: bool = False
+    # Check-date policy until checklists are versioned: "submission" = the server's date today,
+    # "fixed" = CHECK_DATE_FIXED.
+    check_date_mode: str = "submission"
+    check_date_fixed: date | None = None
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     @model_validator(mode="after")
@@ -65,6 +78,10 @@ class Settings(BaseSettings):
                 "OCR_PROVIDER=mock is not allowed when APP_ENV is production; "
                 "configure a real OCR provider (paddle)."
             )
+        if self.check_date_mode not in {"submission", "fixed"}:
+            raise ValueError("CHECK_DATE_MODE must be 'submission' or 'fixed'")
+        if self.check_date_mode == "fixed" and self.check_date_fixed is None:
+            raise ValueError("CHECK_DATE_MODE=fixed needs CHECK_DATE_FIXED=YYYY-MM-DD")
         return self
 
     @property

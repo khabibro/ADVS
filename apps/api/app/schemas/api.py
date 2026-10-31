@@ -242,7 +242,8 @@ class DocumentDetail(DocumentRead):
 
 
 class VerificationRequest(BaseModel):
-    evaluation_date: date
+    # Ignored by the server unless ALLOW_CLIENT_EVALUATION_DATE (test harnesses) is on.
+    evaluation_date: date | None = None
 
 
 class VerificationIssueRead(BaseModel):
