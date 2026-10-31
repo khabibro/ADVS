@@ -10,7 +10,7 @@ from __future__ import annotations
 import secrets
 import uuid
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 
 from fastapi import Depends, Request, status
 from sqlalchemy import select
@@ -25,6 +25,8 @@ SOURCE_CLIENT_TEST_MODE = "client_supplied_test_mode"
 SOURCE_SUBMISSION_DATE = "server_submission_date"
 SOURCE_FIXED_POLICY = "admin_fixed_date"
 SOURCE_ADMIN_RECHECK = "admin_recheck"
+SOURCE_DRAFT_PREVIEW = "draft_preview"
+SOURCE_FINALISED = "applicant_finalised"
 
 
 def require_admin() -> None:
@@ -50,16 +52,26 @@ def resolve_check_date(requested: date | None) -> CheckDate:
 def check_date_for_project(db: Session, project: Project, requested: date | None) -> CheckDate:
     """The check date of a submission.
 
-    Test mode (client date allowed) uses the requested date and stores nothing. Otherwise the
-    date is fixed once, at the first check, and every later check reuses it."""
+    Test mode (client date allowed) uses the requested date. A finalised (or admin re-checked)
+    submission reuses its stored date. A draft is checked as a preview with the policy date
+    (today, or the fixed admin date) and nothing is stored, so a later upload is never judged
+    against a date from before it."""
     if requested is not None and get_settings().allow_client_evaluation_date:
         return CheckDate(requested, SOURCE_CLIENT_TEST_MODE)
     if project.check_date is not None:
-        return CheckDate(project.check_date, project.check_date_source or SOURCE_SUBMISSION_DATE)
+        return CheckDate(project.check_date, project.check_date_source or SOURCE_FINALISED)
+    return CheckDate(resolve_check_date(None).value, SOURCE_DRAFT_PREVIEW)
+
+
+def finalise_check_date(db: Session, project: Project) -> CheckDate:
+    """Freeze the check date at the applicant's explicit submission (idempotent)."""
+    if project.check_date is not None:
+        return CheckDate(project.check_date, project.check_date_source or SOURCE_FINALISED)
     chosen = resolve_check_date(None)
-    project.check_date, project.check_date_source = chosen.value, chosen.source
+    project.check_date, project.check_date_source = chosen.value, SOURCE_FINALISED
+    project.finalised_at = datetime.now(UTC)
     db.flush()
-    return chosen
+    return CheckDate(chosen.value, SOURCE_FINALISED)
 
 
 def _supplied_token(request: Request) -> str | None:

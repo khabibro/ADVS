@@ -43,6 +43,14 @@ app.add_middleware(
 app.include_router(router, prefix="/api/v1")
 
 
+@app.middleware("http")
+async def no_referrer(request: Request, call_next):
+    """Image URLs carry the submission token in their query string: never leak it in a Referer."""
+    response = await call_next(request)
+    response.headers["Referrer-Policy"] = "no-referrer"
+    return response
+
+
 @app.get("/health")
 def root_health() -> dict[str, str]:
     return {"status": "ok"}

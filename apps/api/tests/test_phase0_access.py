@@ -206,19 +206,78 @@ class _FakeDate(date):
         return cls.current
 
 
-def test_check_date_is_stored_once_and_reused_a_week_later(
+def test_draft_checks_preview_today_and_finalise_freezes_the_date(
     client, db_session, applicant_mode, monkeypatch
 ):
+    """Upload on day 1, upload on day 5, finalise on day 5: the check date is day 5."""
     monkeypatch.setattr("app.core.access.date", _FakeDate)
-    _FakeDate.current = date(2026, 10, 5)
+    _FakeDate.current = date(2026, 10, 1)
     project_id = _project(client, db_session)
-    first = _verify(client, project_id, None).json()["evaluation_date"]
+    assert _verify(client, project_id, None).json()["evaluation_date"] == "2026-10-01"  # draft
+    _FakeDate.current = date(2026, 10, 3)
+    assert _verify(client, project_id, None).json()["evaluation_date"] == "2026-10-03"  # not frozen
+    _FakeDate.current = date(2026, 10, 5)
+    done = client.post(f"/api/v1/projects/{project_id}/finalise", headers=_h(project_id))
+    assert done.status_code == 200
+    assert done.json()["evaluation_date"] == "2026-10-05"
+    # later checks reuse it, a week on
     _FakeDate.current = date(2026, 10, 12)
-    again = _verify(client, project_id, None).json()["evaluation_date"]
-    assert first == again == "2026-10-05"
-    # a new submission made a week later gets its own date
+    assert _verify(client, project_id, None).json()["evaluation_date"] == "2026-10-05"
+    # finalising again changes nothing
+    again = client.post(f"/api/v1/projects/{project_id}/finalise", headers=_h(project_id))
+    assert again.json()["evaluation_date"] == "2026-10-05"
+    # a new submission made later gets its own date
     other = _project(client, db_session)
     assert _verify(client, other, None).json()["evaluation_date"] == "2026-10-12"
+
+
+def test_finalise_records_who_decided_the_date(client, db_session, applicant_mode):
+    from sqlalchemy import select
+
+    from app.models.entities import Project, ValidationResult
+
+    project_id = _project(client, db_session)
+    _verify(client, project_id, None)
+    rows = db_session.scalars(
+        select(ValidationResult).where(ValidationResult.project_id == uuid.UUID(project_id))
+    ).all()
+    assert rows and all(r.details.get("evaluation_date_source") == "draft_preview" for r in rows)
+    client.post(f"/api/v1/projects/{project_id}/finalise", headers=_h(project_id))
+    db_session.expire_all()
+    project = db_session.get(Project, uuid.UUID(project_id))
+    assert project.finalised_at is not None and project.check_date_source == "applicant_finalised"
+
+
+def test_finalise_needs_the_submission_token(client, db_session, applicant_mode):
+    project_id = _project(client, db_session)
+    assert client.post(f"/api/v1/projects/{project_id}/finalise").status_code == 404
+
+
+def test_responses_carry_a_no_referrer_policy(client):
+    assert client.get("/health").headers["Referrer-Policy"] == "no-referrer"
+    assert client.get("/api/v1/workflows").headers["Referrer-Policy"] == "no-referrer"
+
+
+def test_token_query_values_are_redacted_in_access_logs():
+    import logging
+
+    from app.core.logging import RedactTokens
+
+    record = logging.LogRecord(
+        "uvicorn.access",
+        logging.INFO,
+        __file__,
+        1,
+        '%s - "%s %s HTTP/%s" %d',
+        ("127.0.0.1:1", "GET", "/api/v1/documents/x/pages/1/image?token=SECRET123&a=1", "1.1", 200),
+        None,
+    )
+    assert RedactTokens().filter(record)
+    rendered = record.getMessage()
+    assert "SECRET123" not in rendered and "token=[redacted]&a=1" in rendered
+    plain = logging.LogRecord("x", logging.INFO, __file__, 1, "GET /p?token=ABC", (), None)
+    RedactTokens().filter(plain)
+    assert "ABC" not in plain.getMessage()
 
 
 def test_admin_recheck_changes_the_date_with_a_logged_reason(client, db_session, monkeypatch):

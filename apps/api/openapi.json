@@ -672,6 +672,47 @@
         }
       }
     },
+    "/api/v1/projects/{project_id}/finalise": {
+      "post": {
+        "summary": "Finalise Project",
+        "description": "The applicant's \"제출하기\": freezes the check date and runs the check under it.",
+        "operationId": "finalise_project_api_v1_projects__project_id__finalise_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionVerificationRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects/{project_id}/recheck": {
       "post": {
         "summary": "Recheck Project",

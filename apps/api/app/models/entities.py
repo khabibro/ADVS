@@ -53,10 +53,12 @@ class Project(Base, TimestampMixin):
     access_token: Mapped[str] = mapped_column(
         String(64), default=lambda: secrets.token_urlsafe(24), index=True
     )
-    # The check date, fixed once at the first check (the date the applicant submitted) and reused
-    # by every later check; changed only by an explicit, logged admin re-check.
+    # Draft checks use today's date as a preview and store nothing. The applicant's explicit
+    # "제출하기" (finalise) freezes the check date here; every later check reuses it and only a
+    # logged admin re-check changes it.
     check_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     check_date_source: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    finalised_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     checklist = relationship("Checklist")
     submissions = relationship("Submission", back_populates="project", cascade="all, delete-orphan")
 

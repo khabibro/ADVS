@@ -37,11 +37,14 @@ def upgrade() -> None:
         op.add_column("projects", sa.Column("check_date", sa.Date(), nullable=True))
     if not _has_column("projects", "check_date_source"):
         op.add_column("projects", sa.Column("check_date_source", sa.String(40), nullable=True))
+    if not _has_column("projects", "finalised_at"):
+        op.add_column("projects", sa.Column("finalised_at", sa.DateTime(timezone=True), nullable=True))
 
 
 def downgrade() -> None:
     op.drop_index("ix_projects_access_token", table_name="projects")
     with op.batch_alter_table("projects") as batch:
+        batch.drop_column("finalised_at")
         batch.drop_column("check_date_source")
         batch.drop_column("check_date")
         batch.drop_column("access_token")

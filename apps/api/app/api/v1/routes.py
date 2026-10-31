@@ -11,6 +11,7 @@ from app.core.access import (
     SOURCE_ADMIN_RECHECK,
     applicant_access,
     check_date_for_project,
+    finalise_check_date,
     require_admin,
     resolve_check_date,
 )
@@ -576,6 +577,24 @@ def verify_project(
         check_date = check_date_for_project(db, project, payload.evaluation_date)
         stored = submission_verification_service.verify(
             db, project_id, check_date.value, date_source=check_date.source
+        )
+    except (RuleConfigurationError, ValueError) as exc:
+        db.rollback()
+        raise api_error(ApiErrorCode.VALIDATION_FAILED, str(exc), 400) from exc
+    db.refresh(project)
+    return _verification_read(db, project, stored)
+
+
+@router.post("/projects/{project_id}/finalise", response_model=SubmissionVerificationRead)
+def finalise_project(project_id: uuid.UUID, db: Session = Depends(get_db)):
+    """The applicant's "제출하기": freezes the check date and runs the check under it."""
+    project = lock_project(db, project_id)
+    if project is None:
+        raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
+    chosen = finalise_check_date(db, project)
+    try:
+        stored = submission_verification_service.verify(
+            db, project_id, chosen.value, date_source=chosen.source
         )
     except (RuleConfigurationError, ValueError) as exc:
         db.rollback()
