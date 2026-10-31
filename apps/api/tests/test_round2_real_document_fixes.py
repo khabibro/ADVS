@@ -571,7 +571,7 @@ def test_provider_routes_normalized_image_and_cleans_the_temp_dir(tmp_path, monk
             from PIL import Image as PILImage
 
             with PILImage.open(target) as image:
-                seen["size"] = image.size
+                seen.setdefault("size", image.size)  # first pass; a rotation search may follow
                 seen["exists"] = True
             return [[([[0, 0], [40, 0], [40, 20], [0, 20]], ("재학증명서", 0.9))]]
 
@@ -597,7 +597,7 @@ def test_provider_leaves_an_upright_image_untouched(tmp_path) -> None:
 
     class _Engine:
         def predict(self, target):
-            seen["path"] = target
+            seen.setdefault("path", target)
             return [[([[0, 0], [40, 0], [40, 20], [0, 20]], ("사업자등록증", 0.9))]]
 
     provider = PaddleOCRProvider(_settings_with(tmp_path))

@@ -4,6 +4,7 @@ import tempfile
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
+from contextlib import ExitStack
 from functools import cached_property, partial
 from importlib.metadata import version
 from pathlib import Path
@@ -14,6 +15,7 @@ from PIL import Image
 
 from app.core.config import Settings
 from app.core.errors import ProcessingErrorCode
+from app.document_intelligence.ocr import orientation as rotation_scoring
 from app.document_intelligence.ocr.models import (
     BoundingBox,
     OCRLine,
@@ -153,6 +155,7 @@ class PaddleOCRProvider(OCRProvider):
         self.cache_dir = settings.paddle_ocr_cache_dir or None
         self.render_scale = self._render_scale(settings.paddle_ocr_render_dpi)
         self.doc_orientation = settings.paddle_ocr_doc_orientation
+        self.rotation_search = settings.paddle_ocr_rotation_search
         on_recycle(self._drop_engines)
 
     @staticmethod
@@ -315,9 +318,11 @@ class PaddleOCRProvider(OCRProvider):
                     self.settings.ocr_timeout_seconds,
                 )
                 page = self._normalize_page(raw=raw, page_number=idx, duration_ms=0)
-                page = await self._retry_page_with_orientation(page, image_path)
-                page.page_number = idx
-                self._mark_red_ink_boxes(page, image_path)
+                with ExitStack() as scratch:
+                    page, image_path = await self._search_rotation(page, image_path, scratch)
+                    page = await self._retry_page_with_orientation(page, image_path)
+                    page.page_number = idx
+                    self._mark_red_ink_boxes(page, image_path)
                 page.duration_ms = int((time.perf_counter() - page_start) * 1000)
                 page.metadata["transform"] = {**transform, **page.metadata.get("transform", {})}
                 # A page can render below the configured DPI (budget fit to the
@@ -449,6 +454,63 @@ class PaddleOCRProvider(OCRProvider):
             min(confidences) if confidences else None,
             preprocess,
         )
+
+    async def _search_rotation(
+        self, page: OCRPage, image_path: Path, scratch: ExitStack
+    ) -> tuple[OCRPage, Path]:
+        """Read a suspect page in all four rotations and keep the one that reads best.
+
+        Only a first pass that looks unread (no certificate word, little Hangul, low
+        confidence) is searched, so an upright page keeps its single pass. A rotation has
+        to beat upright on the OCR's own evidence; a tie keeps the page and lets the
+        built-in angle classifier try as before.
+        """
+        if not self.rotation_search:
+            return page, image_path
+        first = rotation_scoring.evidence_for(page.lines)
+        if not (rotation_scoring.looks_unread(first) or self._looks_orientation_broken([page])):
+            return page, image_path
+        candidates = {0: first}
+        pages = {0: page}
+        paths = {0: image_path}
+        try:
+            for degrees in rotation_scoring.ROTATIONS[1:]:
+                handle, name = tempfile.mkstemp(prefix="advs_rotation_", suffix=".png")
+                os.close(handle)
+                scratch.callback(Path(name).unlink, missing_ok=True)
+                rotated = rotation_scoring.rotate_image(image_path, Path(name), degrees)
+                raw = await run_ocr(
+                    partial(self._predict, rotated), self.settings.ocr_timeout_seconds
+                )
+                read = self._normalize_page(raw=raw, page_number=page.page_number, duration_ms=0)
+                candidates[degrees] = rotation_scoring.evidence_for(read.lines)
+                pages[degrees], paths[degrees] = read, rotated
+        except Exception:
+            # A search must never turn a usable result into a failure.
+            return page, image_path
+        chosen = rotation_scoring.pick_rotation(candidates)
+        summary = {
+            str(degrees): {
+                "label_hits": evidence.label_hits,
+                "hangul_chars": evidence.hangul_chars,
+                "mean_confidence": round(evidence.mean_confidence, 3),
+            }
+            for degrees, evidence in candidates.items()
+        }
+        page.metadata.setdefault("transform", {})["rotation_search"] = {
+            "chosen": chosen,
+            "evidence": summary,
+        }
+        if chosen is None or chosen == 0:
+            return page, image_path
+        best = pages[chosen]
+        best.metadata["transform"] = {
+            **best.metadata.get("transform", {}),
+            "rotation_search": {"chosen": chosen, "evidence": summary},
+            "orientation_degrees": chosen,
+            "coordinate_reference": "rotated_image",
+        }
+        return best, paths[chosen]
 
     async def _retry_page_with_orientation(self, page: OCRPage, image_path: Path) -> OCRPage:
         if not self.doc_orientation or not self._looks_orientation_broken([page]):
