@@ -67,6 +67,13 @@ _HANGUL = re.compile(r"[가-힣]")
 _SERIAL_NUMBER = re.compile(r"제[0-9\-–.]{3,}호")
 
 
+# Types whose body labels may establish the type when the title row carries unexplained characters before
+# the title (a logo or stamp fragment). Only types with no look-alike document: a transcript has none, while
+# the enrolment layout is shared with 휴학증명서 and 졸업예정증명서, whose labels are the same.
+BODY_LABELS_ESTABLISH: frozenset[DocumentType] = frozenset({DocumentType.TRANSCRIPT})
+MIN_BODY_LABELS = 2
+
+
 @dataclass(frozen=True)
 class TitleAssessment:
     established: bool
@@ -154,6 +161,15 @@ def _adjacent_prefix(segments: list[OCRLine], title: str) -> str | None:
     return prefix
 
 
+def _body_labels(document_type: DocumentType, evidence: list[str]) -> int:
+    """Identifier-level labels of the document's body that were read (the title itself is not one)."""
+    return sum(
+        1
+        for signal in SIGNALS.get(document_type, [])
+        if signal.weight == IDENTIFIER and signal.text in evidence
+    )
+
+
 def assess_title(
     pages: list[OCRPage], document_type: DocumentType, evidence: list[str]
 ) -> TitleAssessment:
@@ -175,6 +191,8 @@ def assess_title(
                     hangul.endswith(word) for word in BENIGN_PREFIXES.get(document_type, ())
                 ):
                     return TitleAssessment(True)
+                if document_type in BODY_LABELS_ESTABLISH and _body_labels(document_type, evidence) >= MIN_BODY_LABELS:
+                    return TitleAssessment(True)  # nothing that names another type: the body agrees
                 return TitleAssessment(False, "UNEXPLAINED_CHARACTERS_BEFORE_TITLE")
     # no clean in-row title: two independent identifier-level signals may still establish it
     strong = [

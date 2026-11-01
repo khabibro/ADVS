@@ -109,3 +109,38 @@ def test_a_field_label_far_to_the_left_on_the_title_row_is_not_part_of_the_title
     ]
     soc = DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE
     assert assess_title([page(*lines)], soc, ["완납증명원"]).established
+
+
+# ---- body labels establish a transcript whose title row carries unexplained characters (invented layout) ----
+
+TRN_ROW = [box("가나", 80, width=100), box("성적증명서", 220)]  # unexplained characters before the title
+
+
+def test_a_transcript_title_with_unexplained_characters_is_established_by_two_body_labels() -> None:
+    evidence = ["성적증명서", "평점평균", "취득학점"]
+    assert assess_title([page(*TRN_ROW)], TRN, evidence).established
+
+
+def test_one_body_label_or_none_does_not_establish_it() -> None:
+    assert not assess_title([page(*TRN_ROW)], TRN, ["성적증명서", "평점평균"]).established
+    assert not assess_title([page(*TRN_ROW)], TRN, ["성적증명서"]).established
+
+
+def test_a_supported_body_label_that_is_only_support_does_not_count() -> None:
+    # 백분율 / 학번 / GPA are support signals, not identifier-level
+    assert not assess_title([page(*TRN_ROW)], TRN, ["성적증명서", "백분율", "학번", "GPA"]).established
+
+
+def test_the_enrolment_layout_and_the_tax_certificate_are_not_established_by_body_labels() -> None:
+    enr_row = [box("가나", 80, width=100), box("재학증명서", 220)]
+    assert not assess_title([page(*enr_row)], ENR, ["재학증명서", "재학기간", "재학여부"]).established
+    tax_row = [box("가나", 80, width=100), box("납세증명서", 220)]
+    assert not assess_title([page(*tax_row)], TAX, ["납세증명서", "체납", "유효기간"]).established
+
+
+def test_a_look_alike_qualifier_before_a_transcript_title_is_still_a_near_match() -> None:
+    # the look-alike check comes first: body labels never override it
+    result = assess_title(
+        [page(box("지빙세", 100, width=150), box("성적증명서", 280))], TRN, ["성적증명서", "평점평균", "취득학점"]
+    )
+    assert result.established is False and result.near_match == "지방세"
