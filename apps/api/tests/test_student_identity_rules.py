@@ -234,16 +234,13 @@ def _admission_pair(left, right):
     )
 
 
-def test_admission_date_differences_are_never_silent() -> None:
-    reliable_equal = _admission_pair("2022-03-02", "2022-03-02")
-    assert reliable_equal.status == OverallStatus.READY
-    both_reliable_differ = _admission_pair("2022-03-02", "2022-03-07")
-    assert both_reliable_differ.status == OverallStatus.NEEDS_CORRECTION
-    one_unreliable_differ = _admission_pair("2022-03-02", ("2022-03-07", WAITING))
-    assert one_unreliable_differ.status == OverallStatus.REVIEW_REQUIRED
-
-
-def test_equal_admission_dates_are_nothing_to_act_on_even_when_a_read_is_unreliable() -> None:
-    assert _admission_pair("2022-03-02", ("2022-03-02", WAITING)).status == OverallStatus.READY
-    only_one_prints = _verify([_doc(ENROL, **_identity(admission_date="2022-03-02")), _doc(TRANS, **_identity())])
+def test_admission_date_is_compared_only_when_both_reads_are_reliable() -> None:
+    assert _admission_pair("2022-03-02", "2022-03-02").status == OverallStatus.READY
+    differ = _admission_pair("2022-03-02", "2022-03-07")
+    assert differ.status == OverallStatus.NEEDS_CORRECTION  # two reliable reads that differ
+    # an unreliable read is an observation no decision depends on: nothing is acted on
+    assert _admission_pair("2022-03-02", ("2022-03-07", WAITING)).status == OverallStatus.READY
+    only_one_prints = _verify(
+        [_doc(ENROL, **_identity(admission_date="2022-03-02")), _doc(TRANS, **_identity())]
+    )
     assert only_one_prints.status == OverallStatus.READY
