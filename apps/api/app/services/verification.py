@@ -9,6 +9,8 @@ from datetime import UTC, date, datetime
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.checklists.compile import CompiledChecklist, compile_checklist
+from app.checklists.schema import parse_document
 from app.core.domain import (
     DocumentType,
     OverallStatus,
@@ -32,6 +34,7 @@ from app.document_intelligence.validation.submission import (
 )
 from app.models.entities import (
     Checklist,
+    ChecklistVersion,
     Document,
     DocumentRequirement,
     FieldReview,
@@ -98,20 +101,28 @@ class SubmissionVerificationService:
         if project.checklist_id is None or project.checklist is None:
             raise ValueError("project has no workflow")
         try:
-            requirements = self._requirements(project.checklist)
+            compiled = self._compiled(project)
+            requirements = (
+                compiled.requirements if compiled else self._requirements(project.checklist)
+            )
             if not requirements:
                 raise RuleConfigurationError("Workflow has no document requirements")
             documents = self._documents(db, project_id, evaluation_date)
+            context = VerificationContext(
+                evaluation_date=evaluation_date,
+                applicant_name=project.applicant_name,
+                company_name=project.company_name,
+            )
+            if compiled:
+                context = compiled.context(
+                    evaluation_date, project.applicant_name, project.company_name
+                )
             result = self.engine.verify(
                 project_id=project.id,
                 workflow_id=project.checklist_id,
                 requirements=requirements,
                 documents=documents,
-                context=VerificationContext(
-                    evaluation_date=evaluation_date,
-                    applicant_name=project.applicant_name,
-                    company_name=project.company_name,
-                ),
+                context=context,
             )
         except RuleConfigurationError:
             invalidate_submission_verification(db, project.id)
@@ -119,6 +130,7 @@ class SubmissionVerificationService:
             raise
         evaluated_at = datetime.now(UTC)
         snapshot = self._snapshot(project, requirements, documents)
+        project.verified_version_id = project.checklist_version_id
         self._persist(db, project, result, evaluated_at, snapshot, date_source)
         return StoredSubmissionVerification(result, evaluated_at, True)
 
@@ -153,8 +165,11 @@ class SubmissionVerificationService:
                 db.commit()
             return StoredSubmissionVerification(None, None, False)
         try:
+            compiled = self._compiled(project)
             snapshot = self._snapshot(
-                project, self._requirements(project.checklist), self._documents(db, project_id)
+                project,
+                compiled.requirements if compiled else self._requirements(project.checklist),
+                self._documents(db, project_id),
             )
         except RuleConfigurationError:
             if not read_only:
@@ -198,11 +213,24 @@ class SubmissionVerificationService:
             .options(
                 selectinload(Project.checklist)
                 .selectinload(Checklist.requirements)
-                .selectinload(DocumentRequirement.rules)
+                .selectinload(DocumentRequirement.rules),
+                selectinload(Project.checklist_version),
             )
             .where(Project.id == project_id)
             .execution_options(populate_existing=True)
         )
+
+    def _compiled(self, project: Project) -> CompiledChecklist | None:
+        """The rules of the version this submission is pinned to (None: legacy rows)."""
+        version: ChecklistVersion | None = project.checklist_version
+        if version is None:
+            return None
+        document, problems = parse_document(version.document)
+        if document is None or problems:
+            raise RuleConfigurationError(
+                "The pinned checklist version is not a valid rule document"
+            )
+        return compile_checklist(document)
 
     def _requirements(self, checklist: Checklist) -> list[RequirementSnapshot]:
         submission_types = {
@@ -363,6 +391,9 @@ class SubmissionVerificationService:
             "documents": [asdict(item) for item in documents],
             "applicant_name": project.applicant_name,
             "company_name": project.company_name,
+            "checklist_version": (
+                project.checklist_version.document_sha256 if project.checklist_version else None
+            ),
             "engine": self.engine.version,
             "evidence_policy": EVIDENCE_POLICY_VERSION,
         }
@@ -370,6 +401,9 @@ class SubmissionVerificationService:
         return {
             "sha256": hashlib.sha256(encoded.encode()).hexdigest(),
             "workflow_id": str(project.checklist_id),
+            "checklist_version_id": (
+                str(project.checklist_version_id) if project.checklist_version_id else None
+            ),
             "document_versions": {str(item.id): item.processing_version for item in documents},
             "engine_version": self.engine.version,
             "evidence_policy_version": EVIDENCE_POLICY_VERSION,
@@ -390,6 +424,12 @@ class SubmissionVerificationService:
             details = {
                 "evaluation_date": result.evaluation_date.isoformat(),
                 "evaluation_date_source": date_source,
+                "checklist_version_id": (
+                    str(project.checklist_version_id) if project.checklist_version_id else None
+                ),
+                "checklist_version_number": (
+                    project.checklist_version.number if project.checklist_version else None
+                ),
                 "input_snapshot": snapshot,
                 "engine_version": self.engine.version,
                 "rule_id": str(item.rule_id) if item.rule_id else None,

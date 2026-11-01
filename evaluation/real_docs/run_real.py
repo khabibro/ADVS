@@ -67,21 +67,22 @@ def main() -> int:
         checklist_id = db.scalar(select(Checklist).where(Checklist.name == name)).id
     reduced_id = None
     if args.drop_requirement:
-        from app.models.entities import DocumentRequirement, ValidationRule
+        from app.checklists.service import ChecklistService, load_template
 
+        # the same checklist (version 1) without one document, and without the comparisons and
+        # thresholds that need it
+        document = load_template(args.workflow)
+        document["key"] = f"reduced-{args.workflow}"
+        document["name_ko"] = f"{name} (without {args.drop_requirement})"
+        document["documents"] = [d for d in document["documents"] if d["type"] != args.drop_requirement]
+        document["comparisons"] = [
+            c
+            for c in document["comparisons"]
+            if args.drop_requirement not in (c["source"]["document"], c["target"]["document"])
+        ]
+        document["thresholds"] = [t for t in document["thresholds"] if t["document"] != args.drop_requirement]
         with SessionLocal() as db:
-            base = db.scalar(select(Checklist).where(Checklist.name == name))
-            copy_ = Checklist(name=f"{name} (without {args.drop_requirement})", description=base.description, is_active=True)
-            db.add(copy_)
-            db.flush()
-            for req in base.requirements:
-                if req.document_type == args.drop_requirement:
-                    continue
-                new_req = DocumentRequirement(document_type=req.document_type, required=req.required)
-                new_req.rules.extend(ValidationRule(rule_type=r.rule_type, severity=r.severity, params=dict(r.params)) for r in req.rules)
-                copy_.requirements.append(new_req)
-            db.commit()
-            reduced_id = copy_.id
+            reduced_id = ChecklistService().create(db, document, "harness").id
     if args.memo_ocr:
         import copy as _copy
 

@@ -1274,6 +1274,587 @@
         }
       }
     },
+    "/api/v1/admin/catalog": {
+      "get": {
+        "summary": "Catalog",
+        "operationId": "catalog_api_v1_admin_catalog_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Catalog Api V1 Admin Catalog Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows": {
+      "get": {
+        "summary": "List Workflows",
+        "operationId": "list_workflows_api_v1_admin_workflows_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminWorkflowSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Workflows Api V1 Admin Workflows Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows/{workflow_id}": {
+      "get": {
+        "summary": "Get Workflow",
+        "operationId": "get_workflow_api_v1_admin_workflows__workflow_id__get",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminWorkflowRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows/{workflow_id}/versions": {
+      "get": {
+        "summary": "List Versions",
+        "operationId": "list_versions_api_v1_admin_workflows__workflow_id__versions_get",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersionSummary"
+                  },
+                  "title": "Response List Versions Api V1 Admin Workflows  Workflow Id  Versions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows/{workflow_id}/versions/{number}": {
+      "get": {
+        "summary": "Get Version",
+        "operationId": "get_version_api_v1_admin_workflows__workflow_id__versions__number__get",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows/{workflow_id}/draft": {
+      "put": {
+        "summary": "Save Draft",
+        "operationId": "save_draft_api_v1_admin_workflows__workflow_id__draft_put",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftSave"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftSaved"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Discard Draft",
+        "operationId": "discard_draft_api_v1_admin_workflows__workflow_id__draft_delete",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows/{workflow_id}/validate": {
+      "post": {
+        "summary": "Validate",
+        "description": "Stateless check of an unsaved edit: what is wrong, the rule sentences and the warnings.",
+        "operationId": "validate_api_v1_admin_workflows__workflow_id__validate_post",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentCheck"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistCheckRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows/{workflow_id}/draft/preview": {
+      "post": {
+        "summary": "Preview",
+        "operationId": "preview_api_v1_admin_workflows__workflow_id__draft_preview_post",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows/{workflow_id}/publish": {
+      "post": {
+        "summary": "Publish",
+        "operationId": "publish_api_v1_admin_workflows__workflow_id__publish_post",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows/{workflow_id}/rollback": {
+      "post": {
+        "summary": "Rollback",
+        "operationId": "rollback_api_v1_admin_workflows__workflow_id__rollback_post",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RollbackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows/{workflow_id}/diff": {
+      "get": {
+        "summary": "Diff",
+        "description": "Changes from version ``from`` to ``to``; ``to`` omitted means the draft, ``from`` omitted\nmeans the published version.",
+        "operationId": "diff_api_v1_admin_workflows__workflow_id__diff_get",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiffRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit": {
+      "get": {
+        "summary": "Audit",
+        "operationId": "audit_api_v1_admin_audit_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "checklist_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Checklist Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditRead"
+                  },
+                  "title": "Response Audit Api V1 Admin Audit Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Root Health",
@@ -1299,6 +1880,204 @@
   },
   "components": {
     "schemas": {
+      "AdminWorkflowRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "published": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "draft": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "key",
+          "name",
+          "published",
+          "draft"
+        ],
+        "title": "AdminWorkflowRead"
+      },
+      "AdminWorkflowSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "published_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published Number"
+          },
+          "has_draft": {
+            "type": "boolean",
+            "title": "Has Draft"
+          },
+          "projects": {
+            "type": "integer",
+            "title": "Projects"
+          },
+          "last_changed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Changed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "key",
+          "name",
+          "published_number",
+          "has_draft",
+          "projects"
+        ],
+        "title": "AdminWorkflowSummary"
+      },
+      "AuditRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "event": {
+            "type": "string",
+            "title": "Event"
+          },
+          "actor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor"
+          },
+          "checklist_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checklist Id"
+          },
+          "checklist_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checklist Name"
+          },
+          "version_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Number"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "at",
+          "event",
+          "actor",
+          "checklist_id",
+          "checklist_name",
+          "version_number",
+          "detail"
+        ],
+        "title": "AuditRead"
+      },
       "AutoAcceptanceRead": {
         "properties": {
           "accepted": {
@@ -1453,6 +2232,53 @@
         ],
         "title": "BoundingBoxRead"
       },
+      "ChangeRead": {
+        "properties": {
+          "area": {
+            "type": "string",
+            "title": "Area"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "before": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before"
+          },
+          "after": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After"
+          }
+        },
+        "type": "object",
+        "required": [
+          "area",
+          "label",
+          "kind",
+          "before",
+          "after"
+        ],
+        "title": "ChangeRead"
+      },
       "CheckState": {
         "type": "string",
         "enum": [
@@ -1460,6 +2286,34 @@
           "NOT_CURRENT"
         ],
         "title": "CheckState"
+      },
+      "ChecklistCheckRead": {
+        "properties": {
+          "problems": {
+            "items": {
+              "$ref": "#/components/schemas/ProblemRead"
+            },
+            "type": "array",
+            "title": "Problems",
+            "default": []
+          },
+          "sentences": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Sentences",
+            "default": {}
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/WarningRead"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "ChecklistCheckRead"
       },
       "ChecklistCreate": {
         "properties": {
@@ -1525,6 +2379,60 @@
           "created_at"
         ],
         "title": "ChecklistRead"
+      },
+      "DiffRead": {
+        "properties": {
+          "from_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Number"
+          },
+          "to_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Number"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/ChangeRead"
+            },
+            "type": "array",
+            "title": "Changes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from_number",
+          "to_number",
+          "changes"
+        ],
+        "title": "DiffRead"
+      },
+      "DocumentCheck": {
+        "properties": {
+          "document": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Document"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document"
+        ],
+        "title": "DocumentCheck"
       },
       "DocumentDetail": {
         "properties": {
@@ -1772,6 +2680,62 @@
           "UNKNOWN"
         ],
         "title": "DocumentType"
+      },
+      "DraftSave": {
+        "properties": {
+          "document": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Document"
+          },
+          "expected_revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Revision"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document"
+        ],
+        "title": "DraftSave"
+      },
+      "DraftSaved": {
+        "properties": {
+          "saved": {
+            "type": "boolean",
+            "title": "Saved"
+          },
+          "problems": {
+            "items": {
+              "$ref": "#/components/schemas/ProblemRead"
+            },
+            "type": "array",
+            "title": "Problems",
+            "default": []
+          },
+          "draft": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "saved"
+        ],
+        "title": "DraftSaved"
       },
       "EffectiveValueSource": {
         "type": "string",
@@ -2716,6 +3680,163 @@
         ],
         "title": "PageInfoRead"
       },
+      "PreviewCaseRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "current": {
+            "type": "string",
+            "title": "Current"
+          },
+          "draft": {
+            "type": "string",
+            "title": "Draft"
+          },
+          "current_issues": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Current Issues"
+          },
+          "draft_issues": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Draft Issues"
+          },
+          "newly_ready": {
+            "type": "boolean",
+            "title": "Newly Ready"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "current",
+          "draft",
+          "current_issues",
+          "draft_issues",
+          "newly_ready"
+        ],
+        "title": "PreviewCaseRead"
+      },
+      "PreviewRead": {
+        "properties": {
+          "scenarios": {
+            "$ref": "#/components/schemas/PreviewSourceRead"
+          },
+          "submissions": {
+            "$ref": "#/components/schemas/PreviewSourceRead"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scenarios",
+          "submissions"
+        ],
+        "title": "PreviewRead"
+      },
+      "PreviewSourceRead": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "unchanged": {
+            "type": "integer",
+            "title": "Unchanged"
+          },
+          "changed": {
+            "type": "integer",
+            "title": "Changed"
+          },
+          "transitions": {
+            "items": {
+              "$ref": "#/components/schemas/TransitionRead"
+            },
+            "type": "array",
+            "title": "Transitions"
+          },
+          "newly_ready": {
+            "type": "integer",
+            "title": "Newly Ready"
+          },
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewCaseRead"
+            },
+            "type": "array",
+            "title": "Cases"
+          },
+          "listed_cases": {
+            "type": "integer",
+            "title": "Listed Cases"
+          },
+          "errors": {
+            "type": "integer",
+            "title": "Errors"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "title": "Duration Ms"
+          },
+          "note_ko": {
+            "type": "string",
+            "title": "Note Ko"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "total",
+          "unchanged",
+          "changed",
+          "transitions",
+          "newly_ready",
+          "cases",
+          "listed_cases",
+          "errors",
+          "duration_ms",
+          "note_ko"
+        ],
+        "title": "PreviewSourceRead"
+      },
+      "ProblemRead": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message_ko": {
+            "type": "string",
+            "title": "Message Ko"
+          }
+        },
+        "type": "object",
+        "required": [
+          "path",
+          "code",
+          "message_ko"
+        ],
+        "title": "ProblemRead"
+      },
       "ProjectCreate": {
         "properties": {
           "name": {
@@ -3125,6 +4246,40 @@
         "title": "ProjectSummaryRead",
         "description": "One line per submission for the list screen (same source as the overview)."
       },
+      "PublishRequest": {
+        "properties": {
+          "change_note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Change Note"
+          },
+          "acknowledged_warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Acknowledged Warnings",
+            "default": []
+          },
+          "expected_revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Revision"
+          }
+        },
+        "type": "object",
+        "required": [
+          "change_note"
+        ],
+        "title": "PublishRequest"
+      },
       "RecheckRequest": {
         "properties": {
           "reason": {
@@ -3396,6 +4551,27 @@
         ],
         "title": "ReviewItemRead"
       },
+      "RollbackRequest": {
+        "properties": {
+          "to_version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "To Version"
+          },
+          "change_note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Change Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "to_version",
+          "change_note"
+        ],
+        "title": "RollbackRequest"
+      },
       "RuleEvaluationRead": {
         "properties": {
           "rule_id": {
@@ -3610,6 +4786,29 @@
           "disclaimer"
         ],
         "title": "SubmissionVerificationRead"
+      },
+      "TransitionRead": {
+        "properties": {
+          "from": {
+            "type": "string",
+            "title": "From"
+          },
+          "to": {
+            "type": "string",
+            "title": "To"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from",
+          "to",
+          "count"
+        ],
+        "title": "TransitionRead"
       },
       "UploadRulesRead": {
         "properties": {
@@ -3906,6 +5105,242 @@
         },
         "type": "object",
         "title": "VerificationRequest"
+      },
+      "VersionRead": {
+        "properties": {
+          "number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "change_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Note"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "published_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published By"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "rolled_back_to_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rolled Back To Number"
+          },
+          "document_sha256": {
+            "type": "string",
+            "title": "Document Sha256"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "document": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Document"
+          },
+          "sentences": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Sentences"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/WarningRead"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "number",
+          "status",
+          "revision",
+          "document_sha256",
+          "id",
+          "document",
+          "sentences"
+        ],
+        "title": "VersionRead"
+      },
+      "VersionSummary": {
+        "properties": {
+          "number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "change_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Note"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "published_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published By"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "rolled_back_to_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rolled Back To Number"
+          },
+          "document_sha256": {
+            "type": "string",
+            "title": "Document Sha256"
+          }
+        },
+        "type": "object",
+        "required": [
+          "number",
+          "status",
+          "revision",
+          "document_sha256"
+        ],
+        "title": "VersionSummary"
+      },
+      "WarningRead": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "level": {
+            "type": "string",
+            "title": "Level"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "message_ko": {
+            "type": "string",
+            "title": "Message Ko"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "level",
+          "path",
+          "message_ko"
+        ],
+        "title": "WarningRead"
       },
       "WorkflowDocumentRequirementRead": {
         "properties": {

@@ -1,6 +1,17 @@
+"""Demo data: the demo user, the two checklists as published version 1, one demo submission.
+
+The two real checklists live in ``apps/api/app/checklists/templates/*.v1.json``
+(``advs.checklist/1``), not in code, and running this on a database that already has a published
+version changes nothing: a checklist is edited in the admin app, never by re-seeding.
+
+``upsert_workflow`` and the rule helpers below only build scratch, row-based workflows for tests
+and evaluation harnesses (the legacy path, which a checklist without a version still takes).
+"""
+
 from collections.abc import Iterable
 from typing import Any
 
+from app.checklists.service import LEGACY_NAME_TO_KEY, ChecklistService
 from app.core.domain import DocumentType, RuleOperator, RuleType, Severity
 from app.db.session import Base, SessionLocal, engine
 from app.models.entities import (
@@ -109,6 +120,27 @@ def validity_rule(
     )
 
 
+def ensure_checklist(db, key: str) -> Checklist:
+    service = ChecklistService()
+    if service.get_by_key(db, key) is None:
+        # a database seeded before checklists were versioned: adopt the row of the same name
+        legacy = db.query(Checklist).filter(Checklist.key.is_(None)).all()
+        for row in legacy:
+            if LEGACY_NAME_TO_KEY.get(row.name) == key:
+                row.key = key
+                db.flush()
+                break
+    checklist = service.import_template(db, key)
+    published = service.published(db, checklist.id)
+    assert published is not None
+    for project in db.query(Project).filter(
+        Project.checklist_id == checklist.id, Project.checklist_version_id.is_(None)
+    ):
+        project.checklist_version_id = published.id
+    db.commit()
+    return checklist
+
+
 def main() -> None:
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
@@ -119,126 +151,8 @@ def main() -> None:
             db.add(user)
             db.flush()
 
-        business = upsert_workflow(
-            db,
-            BUSINESS_WORKFLOW,
-            "기업 제출에 필요한 문서 종류를 확인하는 사전 점검 업무입니다.",
-            [
-                (DocumentType.BUSINESS_REGISTRATION_CERTIFICATE, True, []),
-                (
-                    DocumentType.SME_CONFIRMATION_CERTIFICATE,
-                    True,
-                    [
-                        comparison_rule(
-                            DocumentType.SME_CONFIRMATION_CERTIFICATE,
-                            "business_registration_number",
-                            "business_registration_number",
-                            value_type="identifier",
-                        ),
-                        comparison_rule(
-                            DocumentType.SME_CONFIRMATION_CERTIFICATE,
-                            "company_name",
-                            "company_name",
-                        ),
-                        validity_rule(DocumentType.SME_CONFIRMATION_CERTIFICATE),
-                    ],
-                ),
-                (
-                    DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE,
-                    True,
-                    [
-                        comparison_rule(
-                            DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE,
-                            "business_registration_number",
-                            "business_registration_number",
-                            value_type="identifier",
-                        ),
-                        comparison_rule(
-                            DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE,
-                            "company_name",
-                            "company_name",
-                        ),
-                        validity_rule(DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE),
-                    ],
-                ),
-                (
-                    DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE,
-                    True,
-                    [
-                        comparison_rule(
-                            DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE,
-                            "business_registration_number",
-                            "business_registration_number",
-                            value_type="identifier",
-                        ),
-                        comparison_rule(
-                            DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE,
-                            "company_name",
-                            "workplace_name",
-                        ),
-                        validity_rule(DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE),
-                    ],
-                ),
-            ],
-        )
-        upsert_workflow(
-            db,
-            STUDENT_WORKFLOW,
-            "학생 제출 문서의 구조화 정보 기반을 확인하는 사전 점검 업무입니다.",
-            [
-                (
-                    DocumentType.ENROLLMENT_CERTIFICATE,
-                    True,
-                    [
-                        (
-                            RuleType.DATE_COMPARISON,
-                            Severity.ERROR,
-                            {
-                                "document_type": DocumentType.ENROLLMENT_CERTIFICATE.value,
-                                "field": "issue_date",
-                                "operator": RuleOperator.ON_OR_BEFORE.value,
-                                "expected_value": "2026-12-31",
-                            },
-                        ),
-                        # 재학증명서 rules (Phase D2 decision D-1): issued within the last
-                        # 90 days (configurable) and the student number must be present.
-                        (RuleType.ISSUE_DATE_MAX_AGE, Severity.ERROR, {"max_age_days": 90}),
-                        (RuleType.REQUIRED_FIELD, Severity.WARNING, {"field": "student_id"}),
-                    ],
-                ),
-                (
-                    DocumentType.TRANSCRIPT,
-                    False,
-                    [
-                        student_identity_rule("student_id", value_type="identifier"),
-                        student_identity_rule("student_name"),
-                        # same school on both documents (generic affixes ignored; a difference of one
-                        # character is routed to review, not failed; see institution_key)
-                        student_identity_rule("university_name", value_type="institution"),
-                        (
-                            RuleType.DATE_COMPARISON,
-                            Severity.ERROR,
-                            {
-                                "document_type": DocumentType.TRANSCRIPT.value,
-                                "field": "issue_date",
-                                "operator": RuleOperator.ON_OR_BEFORE.value,
-                                "expected_value": "2026-12-31",
-                            },
-                        ),
-                        (
-                            RuleType.NUMERIC_COMPARISON,
-                            Severity.ERROR,
-                            {
-                                "document_type": DocumentType.TRANSCRIPT.value,
-                                "field": "gpa",
-                                "operator": RuleOperator.GREATER_THAN_OR_EQUAL.value,
-                                "expected_value": "3.0",
-                            },
-                        ),
-                    ],
-                ),
-            ],
-        )
+        business = ensure_checklist(db, "business")
+        ensure_checklist(db, "student")
 
         for legacy_name in LEGACY_DEMO_WORKFLOWS:
             legacy = db.query(Checklist).filter_by(name=legacy_name).one_or_none()
@@ -246,9 +160,11 @@ def main() -> None:
                 legacy.is_active = False
 
         if not db.query(Project).filter_by(name="Demo verification project").one_or_none():
+            published = ChecklistService().published(db, business.id)
             project = Project(
                 owner_id=user.id,
                 checklist_id=business.id,
+                checklist_version_id=published.id if published else None,
                 name="Demo verification project",
                 applicant_name="홍길동",
                 company_name="한국테크",

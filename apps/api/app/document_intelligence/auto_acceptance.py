@@ -308,6 +308,9 @@ class ProjectContext:
     reference_date: date | None = None
     issue_max_age_days: int | None = None  # the workflow's ISSUE_DATE_MAX_AGE, if configured
     gpa_threshold: float | None = None  # the workflow's GPA threshold, if configured
+    # Every age limit / GPA limit the workflow has (several documents, or one limit per scale).
+    issue_max_age_values: tuple[int, ...] = ()
+    gpa_thresholds: tuple[float, ...] = ()
     rules: tuple[RuleSpec, ...] = ()  # the workflow's active rules on decision-driving fields
 
 
@@ -440,11 +443,18 @@ def _near_decision_boundary(item: FieldInput, context: ProjectContext) -> bool:
     try:
         if item.field_name in ("valid_until", "valid_from") and reference is not None:
             return abs((date.fromisoformat(item.value) - reference).days) <= margin_days
-        if item.field_name == "issue_date" and reference is not None and context.issue_max_age_days:
-            limit = reference - timedelta(days=context.issue_max_age_days)
-            return abs((date.fromisoformat(item.value) - limit).days) <= margin_days
-        if item.field_name == "gpa" and context.gpa_threshold is not None:
-            return abs(float(item.value) - context.gpa_threshold) <= BOUNDARY_MARGINS["gpa"]
+        if item.field_name == "issue_date" and reference is not None:
+            ages = {*context.issue_max_age_values, *filter(None, [context.issue_max_age_days])}
+            value_date = date.fromisoformat(item.value)
+            return any(
+                abs((value_date - (reference - timedelta(days=age))).days) <= margin_days
+                for age in ages
+            )
+        if item.field_name == "gpa":
+            limits = {*context.gpa_thresholds, *filter(None, [context.gpa_threshold])}
+            return any(
+                abs(float(item.value) - limit) <= BOUNDARY_MARGINS["gpa"] for limit in limits
+            )
     except ValueError:
         return False
     return False

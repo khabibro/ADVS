@@ -167,18 +167,29 @@ def _same_name(actual: str, expected: str, rule_type: RuleType) -> bool:
     return key(actual) == key(expected)
 
 
-def _comparison_key(value: str, value_type: str) -> str:
+def _comparison_key(value: str, value_type: str, *, spaces: bool = True) -> str:
     """Comparison-only key.
 
     This never rewrites the stored evidence or extracted normalized value. It
     only removes formatting differences that are safe for equality checks.
+    ``spaces=False`` (a checklist option) keeps word breaks, collapsed to one space.
     """
     normalized = normalize_lexical_text(value)
     if value_type == "identifier":
         return "".join(character for character in normalized if character.isalnum())
     if value_type == "institution":
         return institution_key(normalized)
-    return re.sub(r"\s+", "", normalized)
+    return re.sub(r"\s+", "" if spaces else " ", normalized).strip()
+
+
+#: Per-comparison normalisation switches a checklist may set (``params["normalise"]``). The defaults
+#: are today's behaviour, so a comparison without the key is unchanged.
+NORMALISE_DEFAULTS: dict[str, bool] = {
+    "legal_form": True,  # 주식회사 / (주) / ㈜ on company and workplace names do not matter
+    "spaces": True,  # spacing does not matter
+    "parenthesised_latin": False,  # an added "(Hanguk Tech Co., Ltd.)" does not matter
+}
+_PARENTHESISED_LATIN_RE = re.compile(r"[(（]\s*[A-Za-z0-9][A-Za-z0-9 .,&'\-]*[)）]")
 
 
 # Generic affixes of an institution name that carry no identity (ownership kind, legal form, the title that
@@ -373,6 +384,12 @@ class SubmissionVerificationEngine:
         value_type = rule.params.get("value_type", "string")
         if value_type not in {"string", "identifier", "institution"}:
             raise RuleConfigurationError("Unsupported field-comparison value type")
+        normalise = rule.params.get("normalise", {})
+        if not isinstance(normalise, dict) or any(
+            key not in NORMALISE_DEFAULTS or type(flag) is not bool
+            for key, flag in normalise.items()
+        ):
+            raise RuleConfigurationError("Unsupported field-comparison normalisation option")
 
     def _validate_value_rule(
         self,
@@ -403,15 +420,42 @@ class SubmissionVerificationEngine:
                     date.fromisoformat(str(expected))
                 except ValueError as exc:
                     raise RuleConfigurationError("Invalid configured date") from exc
+        elif (per_scale := rule.params.get("per_scale")) is not None:
+            if expected is not None:
+                raise RuleConfigurationError("A per-scale rule cannot also have expected_value")
+            self._validate_per_scale(rule, per_scale)
         elif expected is None:
             raise RuleConfigurationError("Numeric rule requires an expected value")
         else:
-            try:
-                configured_decimal = Decimal(str(expected))
-            except InvalidOperation as exc:
-                raise RuleConfigurationError("Invalid configured decimal") from exc
-            if not configured_decimal.is_finite():
-                raise RuleConfigurationError("Configured decimal must be finite")
+            self._configured_decimal(expected)
+
+    @staticmethod
+    def _configured_decimal(value: object) -> Decimal:
+        try:
+            configured_decimal = Decimal(str(value))
+        except InvalidOperation as exc:
+            raise RuleConfigurationError("Invalid configured decimal") from exc
+        if not configured_decimal.is_finite():
+            raise RuleConfigurationError("Configured decimal must be finite")
+        return configured_decimal
+
+    def _validate_per_scale(self, rule: SubmissionRule, per_scale: object) -> None:
+        document_type = self._document_type_param(rule, "document_type")
+        if not isinstance(per_scale, dict) or not isinstance(per_scale.get("values"), dict):
+            raise RuleConfigurationError("per_scale needs a scale field and values")
+        self._field_param(
+            SubmissionRule(
+                rule.id, rule.rule_type, rule.severity, {"f": per_scale.get("scale_field")}
+            ),
+            "f",
+            document_type,
+        )
+        if not per_scale["values"]:
+            raise RuleConfigurationError("per_scale needs at least one scale")
+        for scale, threshold in per_scale["values"].items():
+            if format(self._configured_decimal(scale).normalize(), "f") != scale:
+                raise RuleConfigurationError("per_scale keys must be canonical decimals")
+            self._configured_decimal(threshold)
 
     def _document_type_param(self, rule: SubmissionRule, key: str) -> DocumentType:
         try:
@@ -823,11 +867,17 @@ class SubmissionVerificationEngine:
         assert target_field is not None and target_field.normalized_value is not None
         value_type = str(rule.params.get("value_type", "string"))
         source_value, target_value = source_field.normalized_value, target_field.normalized_value
-        if source_name in _COMPANY_NAME_FIELDS or target_name in _COMPANY_NAME_FIELDS:
+        options = {**NORMALISE_DEFAULTS, **(rule.params.get("normalise") or {})}
+        if options["legal_form"] and (
+            source_name in _COMPANY_NAME_FIELDS or target_name in _COMPANY_NAME_FIELDS
+        ):
             source_value = strip_legal_entity_markers(source_value)
             target_value = strip_legal_entity_markers(target_value)
-        source_key = _comparison_key(source_value, value_type)
-        target_key = _comparison_key(target_value, value_type)
+        if options["parenthesised_latin"]:
+            source_value = _PARENTHESISED_LATIN_RE.sub("", source_value)
+            target_value = _PARENTHESISED_LATIN_RE.sub("", target_value)
+        source_key = _comparison_key(source_value, value_type, spaces=options["spaces"])
+        target_key = _comparison_key(target_value, value_type, spaces=options["spaces"])
         passed = source_key == target_key
         if not passed and value_type == "institution" and _one_edit_apart(source_key, target_key):
             # one character apart: most likely a recognition error, so a person decides; never an error
@@ -991,7 +1041,22 @@ class SubmissionVerificationEngine:
         assert snapshot is not None and snapshot.normalized_value is not None
         try:
             actual = Decimal(snapshot.normalized_value)
-            expected = Decimal(str(rule.params["expected_value"]))
+            threshold: object = rule.params.get("expected_value")
+            per_scale = rule.params.get("per_scale")
+            if per_scale is not None:
+                # The limit depends on the scale printed on the document (4.5 / 4.3 / 4.0). An
+                # unread, unconfirmed or unlisted scale is never guessed: a person decides.
+                scale_name = str(per_scale["scale_field"])
+                scale_snapshot = document.fields.get(scale_name)
+                unresolved = self._unresolved_field(rule, document, scale_snapshot, scale_name)
+                if unresolved:
+                    return unresolved
+                assert scale_snapshot is not None and scale_snapshot.normalized_value is not None
+                scale_key = format(Decimal(scale_snapshot.normalized_value).normalize(), "f")
+                if scale_key not in per_scale["values"]:
+                    raise InvalidOperation
+                threshold = per_scale["values"][scale_key]
+            expected = Decimal(str(threshold))
             if not actual.is_finite() or not expected.is_finite():
                 raise InvalidOperation
         except InvalidOperation:

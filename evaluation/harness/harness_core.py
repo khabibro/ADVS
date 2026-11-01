@@ -311,49 +311,19 @@ class Runner:
 
     def _make_partial_checklist(self) -> Any:
         """Default business checklist plus one REQUIRED_FIELD(workplace_name) rule on the
-        social-insurance requirement (the F-001 probe used by the 'run twice' sets)."""
-        from sqlalchemy import select
+        social-insurance requirement (the F-001 probe used by the 'run twice' sets). Built as its
+        own checklist (version 1) from the business template, so the published one is untouched."""
+        from app.checklists.service import ChecklistService, load_template
 
-        from app.core.domain import DocumentType, RuleType, Severity
-        from app.models.entities import Checklist, DocumentRequirement, ValidationRule
-
+        document = load_template("business")
+        document["key"] = "scratch-partial"
+        document["name_ko"] = "scratch: single REQUIRED_FIELD(workplace_name) on social insurance"
+        document["description_ko"] = "Harness probe for F-001, not used in production."
+        for item in document["documents"]:
+            if item["type"] == "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE":
+                item["extra_required_fields"] = ["workplace_name"]
         with self.SessionLocal() as db:
-            base = db.scalar(select(Checklist).where(Checklist.name == "기업 제출서류 점검"))
-            scratch = Checklist(
-                name="scratch: single REQUIRED_FIELD(workplace_name) on social insurance",
-                description="Harness probe for F-001, not used in production.",
-                is_active=True,
-            )
-            db.add(scratch)
-            db.flush()
-            for requirement in base.requirements:
-                new_requirement = DocumentRequirement(
-                    checklist_id=scratch.id,
-                    document_type=requirement.document_type,
-                    required=requirement.required,
-                )
-                db.add(new_requirement)
-                db.flush()
-                for rule in requirement.rules:
-                    db.add(
-                        ValidationRule(
-                            requirement_id=new_requirement.id,
-                            rule_type=rule.rule_type,
-                            severity=rule.severity,
-                            params=dict(rule.params),
-                        )
-                    )
-                if requirement.document_type == DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE.value:
-                    db.add(
-                        ValidationRule(
-                            requirement_id=new_requirement.id,
-                            rule_type=RuleType.REQUIRED_FIELD.value,
-                            severity=Severity.WARNING.value,
-                            params={"field": "workplace_name"},
-                        )
-                    )
-            db.commit()
-            return scratch.id
+            return ChecklistService().create(db, document, "harness").id
 
     def project_payload(self, workflow: str, checklist_id: Any, name: str) -> dict[str, Any]:
         payload: dict[str, Any] = {"name": name, "workflow_id": str(checklist_id)}

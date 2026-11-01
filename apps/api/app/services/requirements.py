@@ -53,16 +53,23 @@ DEFAULT_REQUIRED_FIELDS: dict[DocumentType, tuple[str, ...]] = {
 }
 
 
+def required_field_names(
+    document_type: DocumentType, required: bool, explicit: list[str] | tuple[str, ...]
+) -> tuple[str, ...]:
+    """Default required fields (for a required document) plus the workflow's own additions."""
+    if any(item not in REVIEWABLE_FIELDS[document_type] for item in explicit):
+        raise RuleConfigurationError("Unknown workflow-required canonical field")
+    result: set[str] = set(DEFAULT_REQUIRED_FIELDS[document_type]) if required else set()
+    result.update(explicit)
+    return tuple(sorted(result))
+
+
 def required_fields(requirement: DocumentRequirement) -> tuple[str, ...]:
     document_type = DocumentType(requirement.document_type)
-    explicit = [rule for rule in requirement.rules if rule.rule_type == RuleType.REQUIRED_FIELD]
-    result: set[str] = (
-        set(DEFAULT_REQUIRED_FIELDS[document_type]) if requirement.required else set()
-    )
-    for rule in explicit:
+    explicit: list[str] = []
+    for rule in requirement.rules:
+        if rule.rule_type != RuleType.REQUIRED_FIELD:
+            continue
         name = (rule.params or {}).get("field")
-        names = [name] if name is not None else EXPECTED_FIELDS[document_type]
-        if any(item not in REVIEWABLE_FIELDS[document_type] for item in names):
-            raise RuleConfigurationError("Unknown workflow-required canonical field")
-        result.update(names)
-    return tuple(sorted(result))
+        explicit.extend([name] if name is not None else EXPECTED_FIELDS[document_type])
+    return required_field_names(document_type, requirement.required, explicit)

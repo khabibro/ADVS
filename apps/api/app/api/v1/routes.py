@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, statu
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session, selectinload
 
+from app.checklists.expected import ExpectedDocument, expected_documents
 from app.core.access import (
     SOURCE_ADMIN_RECHECK,
     applicant_access,
@@ -33,8 +34,8 @@ from app.document_intelligence.validation.submission import RuleConfigurationErr
 from app.models.entities import (
     AuditLog,
     Checklist,
+    ChecklistVersion,
     Document,
-    DocumentRequirement,
     ExtractedField,
     FieldReview,
     Project,
@@ -112,7 +113,7 @@ def demo_user(db: Session) -> User:
 
 
 def _document_requirement_read(
-    requirement: DocumentRequirement,
+    requirement: ExpectedDocument,
 ) -> WorkflowDocumentRequirementRead:
     document_type = DocumentType(requirement.document_type)
     return WorkflowDocumentRequirementRead(
@@ -120,6 +121,10 @@ def _document_requirement_read(
         display_name=DOCUMENT_TYPE_DISPLAY_NAMES[document_type],
         required=requirement.required,
     )
+
+
+def _published(checklist: Checklist) -> ChecklistVersion | None:
+    return next((v for v in checklist.versions if v.status == "PUBLISHED"), None)
 
 
 def _workflow_read(checklist: Checklist) -> WorkflowRead:
@@ -130,7 +135,8 @@ def _workflow_read(checklist: Checklist) -> WorkflowRead:
         is_active=checklist.is_active,
         created_at=checklist.created_at,
         document_requirements=[
-            _document_requirement_read(requirement) for requirement in checklist.requirements
+            _document_requirement_read(requirement)
+            for requirement in expected_documents(checklist, _published(checklist))
         ],
     )
 
@@ -148,7 +154,7 @@ def _project_read(project: Project) -> ProjectRead:
         ),
         expected_documents=[
             _document_requirement_read(requirement)
-            for requirement in (checklist.requirements if checklist else [])
+            for requirement in expected_documents(checklist, project.checklist_version)
         ],
         applicant_name=project.applicant_name,
         company_name=project.company_name,
@@ -282,6 +288,7 @@ def create_project(payload: ProjectCreate, db: Session = Depends(get_db)):
     project = Project(
         owner_id=user.id,
         checklist_id=workflow.id,
+        checklist_version_id=(published.id if (published := _published(workflow)) else None),
         name=payload.name,
         applicant_name=payload.applicant_name,
         company_name=payload.company_name,
@@ -709,7 +716,7 @@ def recheck_project(project_id: uuid.UUID, payload: RecheckRequest, db: Session 
     project = lock_project(db, project_id)
     if project is None:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
-    chosen = payload.check_date or resolve_check_date(None).value
+    chosen = payload.check_date or resolve_check_date(None, project).value
     db.add(
         AuditLog(
             project_id=project.id,

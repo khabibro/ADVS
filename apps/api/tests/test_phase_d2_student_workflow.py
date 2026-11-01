@@ -65,11 +65,12 @@ def test_certificate_older_than_ninety_days_needs_correction(client, db_session)
     assert "RULE_CONDITION_NOT_MET" in {issue["code"] for issue in verdict["issues"]}
 
 
-def test_certificate_without_a_student_number_goes_to_review(client, db_session) -> None:
-    verdict = _verify(
-        client, db_session, _enrollment("2026年 09월 20일".replace("年", "년"), None), "2026-10-05"
-    )
-    assert verdict["status"] == "REVIEW_REQUIRED"
+def test_student_number_is_not_required_in_checklist_v1(client, db_session) -> None:
+    """Decided with the owner: v1 no longer requires the 학번 on the 재학증명서 (identity is the
+    name; a student number is compared with the transcript only when both print it). Before v1 this
+    case went to review."""
+    verdict = _verify(client, db_session, _enrollment("2026년 09월 20일", None), "2026-10-05")
+    assert verdict["status"] == "READY"
 
 
 def test_certificate_with_no_issue_date_goes_to_review(client, db_session) -> None:

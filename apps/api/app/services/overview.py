@@ -13,6 +13,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.checklists.expected import expected_documents
 from app.core.access import resolve_check_date
 from app.core.domain import (
     DOCUMENT_TYPE_DISPLAY_NAMES,
@@ -24,7 +25,6 @@ from app.document_intelligence.evidence_sufficiency import FieldReviewDecision
 from app.models.entities import (
     Checklist,
     Document,
-    DocumentRequirement,
     FieldReview,
     Project,
     Submission,
@@ -204,8 +204,7 @@ class ProjectOverviewService:
         project: Project, documents: list[Document], issues: list[Any], checked: bool
     ) -> list[RequirementOverview]:
         out: list[RequirementOverview] = []
-        checklist = project.checklist
-        reqs: list[DocumentRequirement] = list(checklist.requirements) if checklist else []
+        reqs = expected_documents(project.checklist, project.checklist_version)
         for requirement in reqs:
             doc_type = DocumentType(requirement.document_type)
             mine = [d for d in documents if d.document_type == doc_type.value]
@@ -244,8 +243,10 @@ class ProjectOverviewService:
     def _other_documents(
         project: Project, documents: list[Document]
     ) -> list[OtherDocumentOverview]:
-        checklist = project.checklist
-        wanted = {r.document_type for r in (checklist.requirements if checklist else [])}
+        wanted = {
+            r.document_type
+            for r in expected_documents(project.checklist, project.checklist_version)
+        }
         out = []
         for document in reversed(documents):
             if document.document_type in wanted:

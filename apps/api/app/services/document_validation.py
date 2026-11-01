@@ -5,7 +5,7 @@ from datetime import UTC, date
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from app.core.domain import DocumentType, RuleType, Severity
 from app.document_intelligence.evidence_sufficiency import (
@@ -18,8 +18,8 @@ from app.document_intelligence.validation.engine import (
     ValidationEngine,
     ValidationIssue,
 )
-from app.models.entities import Document, DocumentRequirement, Project, Submission
-from app.services.requirements import required_fields
+from app.models.entities import Document, Project, Submission
+from app.services.rule_views import rule_views
 
 _KST = ZoneInfo("Asia/Seoul")
 
@@ -69,19 +69,12 @@ def configured_document_rules(
 ) -> list[ConfiguredRule] | None:
     if project is None or project.checklist_id is None:
         return None
-    requirement = db.scalar(
-        select(DocumentRequirement)
-        .options(selectinload(DocumentRequirement.rules))
-        .where(
-            DocumentRequirement.checklist_id == project.checklist_id,
-            DocumentRequirement.document_type == document_type.value,
-        )
-    )
-    if requirement is None:
+    view = next((v for v in rule_views(project) if v.document_type == document_type), None)
+    if view is None:
         return None
     configured = [
-        ConfiguredRule(RuleType(row.rule_type), Severity(row.severity), row.params or {})
-        for row in requirement.rules
+        ConfiguredRule(RuleType(row.rule_type), Severity(row.severity), row.params)
+        for row in view.rules
     ]
     # Explicit REQUIRED_FIELD rules ADD to this requirement's default
     # fields; they do not replace the check for a default field they don't
@@ -101,7 +94,7 @@ def configured_document_rules(
     if not has_blanket_rule:
         configured.extend(
             ConfiguredRule(RuleType.REQUIRED_FIELD, Severity.WARNING, {"field": name})
-            for name in required_fields(requirement)
+            for name in view.required_fields
             if name not in explicitly_named
         )
     return configured

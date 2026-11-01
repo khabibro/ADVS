@@ -45,7 +45,7 @@ from app.models.entities import (
 )
 from app.services.auto_acceptance import decisions_for_project
 from app.services.consistency import lock_project
-from app.services.requirements import required_fields
+from app.services.rule_views import rule_views
 
 
 class ReviewValidationError(ValueError):
@@ -315,16 +315,10 @@ class FieldReviewService:
 
     def review_dependencies(self, project: Project) -> set[tuple[DocumentType, str]]:
         dependencies: set[tuple[DocumentType, str]] = set()
-        checklist = project.checklist
-        if checklist is None:
-            return dependencies
-        for requirement in checklist.requirements:
-            dependencies.update(
-                (DocumentType(requirement.document_type), name)
-                for name in required_fields(requirement)
-            )
-            for rule in requirement.rules:
-                params: dict[str, Any] = rule.params or {}
+        for view in rule_views(project):
+            dependencies.update((view.document_type, name) for name in view.required_fields)
+            for rule in view.rules:
+                params: dict[str, Any] = rule.params
                 rule_type = RuleType(rule.rule_type)
                 if rule_type == RuleType.FIELD_COMPARISON:
                     dependencies.add(
@@ -335,10 +329,15 @@ class FieldReviewService:
                     )
                 elif rule_type in {RuleType.DATE_COMPARISON, RuleType.NUMERIC_COMPARISON}:
                     dependencies.add((DocumentType(params["document_type"]), str(params["field"])))
+                    per_scale = params.get("per_scale")
+                    if per_scale:
+                        dependencies.add(
+                            (DocumentType(params["document_type"]), str(per_scale["scale_field"]))
+                        )
                 elif rule_type in {RuleType.DATE_NOT_EXPIRED, RuleType.ISSUE_DATE_MAX_AGE}:
                     dependencies.add(
                         (
-                            DocumentType(requirement.document_type),
+                            view.document_type,
                             str(
                                 params.get(
                                     "field",
@@ -357,7 +356,8 @@ class FieldReviewService:
             .options(
                 selectinload(Project.checklist)
                 .selectinload(Checklist.requirements)
-                .selectinload(DocumentRequirement.rules)
+                .selectinload(DocumentRequirement.rules),
+                selectinload(Project.checklist_version),
             )
             .where(Project.id == project_id)
         )

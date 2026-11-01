@@ -1,0 +1,84 @@
+{
+  "schema": "advs.checklist/1",
+  "key": "student",
+  "name_ko": "학생 제출서류 점검",
+  "description_ko": "학생 제출 문서의 구조화 정보 기반을 확인하는 사전 점검 업무입니다.",
+  "check_date": {
+    "policy": "SUBMISSION_DATE",
+    "applicant_can_change": false
+  },
+  "identity_match": {
+    "applicant_name": true,
+    "company_name": false
+  },
+  "documents": [
+    {
+      "type": "ENROLLMENT_CERTIFICATE",
+      "requirement": "REQUIRED",
+      "issue_date": {
+        "field": "issue_date",
+        "max_age_days": 90,
+        "severity": "ERROR"
+      }
+    },
+    {
+      "type": "TRANSCRIPT",
+      "requirement": "OPTIONAL"
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "stu-id",
+      "source": {
+        "document": "ENROLLMENT_CERTIFICATE",
+        "field": "student_id"
+      },
+      "target": {
+        "document": "TRANSCRIPT",
+        "field": "student_id"
+      },
+      "match": "IDENTIFIER",
+      "severity": "ERROR"
+    },
+    {
+      "id": "stu-name",
+      "source": {
+        "document": "ENROLLMENT_CERTIFICATE",
+        "field": "student_name"
+      },
+      "target": {
+        "document": "TRANSCRIPT",
+        "field": "student_name"
+      },
+      "match": "TEXT",
+      "severity": "ERROR"
+    },
+    {
+      "id": "stu-univ",
+      "source": {
+        "document": "ENROLLMENT_CERTIFICATE",
+        "field": "university_name"
+      },
+      "target": {
+        "document": "TRANSCRIPT",
+        "field": "university_name"
+      },
+      "match": "INSTITUTION",
+      "severity": "ERROR"
+    }
+  ],
+  "thresholds": [
+    {
+      "id": "gpa-min",
+      "document": "TRANSCRIPT",
+      "field": "gpa",
+      "operator": "GTE",
+      "value": "3.0",
+      "scale": {
+        "field": "gpa_scale",
+        "mode": "RAW"
+      },
+      "severity": "ERROR"
+    }
+  ]
+}

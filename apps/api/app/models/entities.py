@@ -45,6 +45,15 @@ class Project(Base, TimestampMixin):
     checklist_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("checklists.id"), nullable=True
     )
+    # The checklist version this submission is judged against, pinned when it is created. A later
+    # publish never moves it; only an explicit admin re-check does.
+    checklist_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("checklist_versions.id"), nullable=True, index=True
+    )
+    # The version the latest stored check actually used.
+    verified_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("checklist_versions.id"), nullable=True
+    )
     name: Mapped[str] = mapped_column(String(200), index=True)
     applicant_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     company_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
@@ -60,17 +69,69 @@ class Project(Base, TimestampMixin):
     check_date_source: Mapped[str | None] = mapped_column(String(40), nullable=True)
     finalised_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     checklist = relationship("Checklist")
+    checklist_version = relationship("ChecklistVersion", foreign_keys=[checklist_version_id])
     submissions = relationship("Submission", back_populates="project", cascade="all, delete-orphan")
 
 
 class Checklist(Base, TimestampMixin):
     __tablename__ = "checklists"
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # Stable identifier of the checklist ("business", "student", ...); None for legacy rows.
+    key: Mapped[str | None] = mapped_column(String(40), unique=True, nullable=True)
     name: Mapped[str] = mapped_column(String(200), index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     requirements = relationship(
         "DocumentRequirement", back_populates="checklist", cascade="all, delete-orphan"
+    )
+    versions = relationship(
+        "ChecklistVersion",
+        back_populates="checklist",
+        order_by="ChecklistVersion.created_at",
+        foreign_keys="ChecklistVersion.checklist_id",
+    )
+
+
+class ChecklistVersion(Base, TimestampMixin):
+    """One rule document (``advs.checklist/1``). Published versions are never edited."""
+
+    __tablename__ = "checklist_versions"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    checklist_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("checklists.id"), index=True)
+    # Assigned at publication; a draft has none.
+    number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), index=True)  # DRAFT | PUBLISHED | SUPERSEDED
+    document: Mapped[dict] = mapped_column(JSONType)
+    document_sha256: Mapped[str] = mapped_column(String(64))
+    schema_version: Mapped[str] = mapped_column(String(40))
+    # Bumped on every draft save; the editor sends it back so two admins cannot overwrite each other.
+    revision: Mapped[int] = mapped_column(Integer, default=1)
+    change_note: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    published_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    parent_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("checklist_versions.id"), nullable=True
+    )
+    # Set when this version was published by rolling back to an older one.
+    rolled_back_to_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    checklist = relationship("Checklist", back_populates="versions", foreign_keys=[checklist_id])
+    __table_args__ = (
+        Index("uq_checklist_versions_number", "checklist_id", "number", unique=True),
+        Index(
+            "uq_checklist_versions_one_draft",
+            "checklist_id",
+            unique=True,
+            sqlite_where=text("status = 'DRAFT'"),
+            postgresql_where=text("status = 'DRAFT'"),
+        ),
+        Index(
+            "uq_checklist_versions_one_published",
+            "checklist_id",
+            unique=True,
+            sqlite_where=text("status = 'PUBLISHED'"),
+            postgresql_where=text("status = 'PUBLISHED'"),
+        ),
     )
 
 
@@ -233,6 +294,12 @@ class AuditLog(Base, TimestampMixin):
     )
     document_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("documents.id"), nullable=True, index=True
+    )
+    checklist_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("checklists.id"), nullable=True, index=True
+    )
+    version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("checklist_versions.id"), nullable=True
     )
     event_name: Mapped[str] = mapped_column(String(120), index=True)
     actor_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)

@@ -1,0 +1,128 @@
+{
+  "schema": "advs.checklist/1",
+  "key": "business",
+  "name_ko": "기업 제출서류 점검",
+  "description_ko": "기업 제출에 필요한 문서 종류를 확인하는 사전 점검 업무입니다.",
+  "check_date": {
+    "policy": "SUBMISSION_DATE",
+    "applicant_can_change": false
+  },
+  "identity_match": {
+    "applicant_name": true,
+    "company_name": true
+  },
+  "documents": [
+    {
+      "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+      "requirement": "REQUIRED"
+    },
+    {
+      "type": "SME_CONFIRMATION_CERTIFICATE",
+      "requirement": "REQUIRED",
+      "validity": {
+        "field": "valid_until",
+        "mode": "PRINTED_VALID_UNTIL",
+        "severity": "ERROR"
+      }
+    },
+    {
+      "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+      "requirement": "REQUIRED",
+      "validity": {
+        "field": "valid_until",
+        "mode": "PRINTED_VALID_UNTIL",
+        "severity": "ERROR"
+      }
+    },
+    {
+      "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+      "requirement": "REQUIRED",
+      "validity": {
+        "field": "valid_until",
+        "mode": "PRINTED_VALID_UNTIL",
+        "severity": "ERROR"
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "sme-brn",
+      "source": {
+        "document": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "field": "business_registration_number"
+      },
+      "target": {
+        "document": "SME_CONFIRMATION_CERTIFICATE",
+        "field": "business_registration_number"
+      },
+      "match": "IDENTIFIER",
+      "severity": "ERROR"
+    },
+    {
+      "id": "sme-name",
+      "source": {
+        "document": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "field": "company_name"
+      },
+      "target": {
+        "document": "SME_CONFIRMATION_CERTIFICATE",
+        "field": "company_name"
+      },
+      "match": "TEXT",
+      "severity": "ERROR"
+    },
+    {
+      "id": "tax-brn",
+      "source": {
+        "document": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "field": "business_registration_number"
+      },
+      "target": {
+        "document": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+        "field": "business_registration_number"
+      },
+      "match": "IDENTIFIER",
+      "severity": "ERROR"
+    },
+    {
+      "id": "tax-name",
+      "source": {
+        "document": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "field": "company_name"
+      },
+      "target": {
+        "document": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+        "field": "company_name"
+      },
+      "match": "TEXT",
+      "severity": "ERROR"
+    },
+    {
+      "id": "ins-brn",
+      "source": {
+        "document": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "field": "business_registration_number"
+      },
+      "target": {
+        "document": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+        "field": "business_registration_number"
+      },
+      "match": "IDENTIFIER",
+      "severity": "ERROR"
+    },
+    {
+      "id": "ins-name",
+      "source": {
+        "document": "BUSINESS_REGISTRATION_CERTIFICATE",
+        "field": "company_name"
+      },
+      "target": {
+        "document": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+        "field": "workplace_name"
+      },
+      "match": "TEXT",
+      "severity": "ERROR"
+    }
+  ],
+  "thresholds": []
+}

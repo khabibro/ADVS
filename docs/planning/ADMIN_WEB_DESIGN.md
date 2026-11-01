@@ -379,3 +379,26 @@ Calendar: today 2026-10-31; second midterm **11/19**; final **12/10**. Gates mar
 Cut line if time is short: P4 preview UI and audit screens move to December; the midterm demo shows editing → publishing → the pinned-version behaviour and the guardrails. P5's applicant-declared values are optional and need a separate evidence-policy approval and a new real-document test; they are never bundled with the editor release.
 
 Per-phase review by Munira: any change under `apps/web`, `apps/admin`, `packages/ui`, `packages/copy`, `packages/api-client`; Korean strings in `copy.ts`; accessibility fixes found by axe. Commits: backend and docs as KHABIBILLO via `github-khabibro`; frontend as Munira via `github-munira`.
+
+---
+
+## 11. Implementation notes (P1 versioned checklists, P2 editor), 2026-11-01
+
+Built on `feature/admin-checklists` (backend `apps/api/app/checklists/`, API `/api/v1/admin/*`, screens `apps/admin`). Where the build differs from sections 2-6:
+
+| Design | As built | Why |
+|---|---|---|
+| `checklists.published_version_id` | none; the published version is the one with status `PUBLISHED` (partial unique index, same for `DRAFT`) | avoids a circular foreign key |
+| `submission_wide_fields` in the document | not in the document | the engine fixes it (`SUBMISSION_WIDE_FIELDS`); an editable field that did nothing would mislead |
+| `issue_date.inclusive` | not in the document | always inclusive; the sentence says "당일 포함" |
+| normalisation is code | `normalise {legal_form, spaces, parenthesised_latin}` per comparison, engine defaults = previous behaviour; only `parenthesised_latin` is new (off by default) | mentor request; the `workplace_name` switch was dropped because it could not change any outcome |
+| `PER_SCALE` thresholds in P3+ | built: `params.per_scale {scale_field, values}` on `NUMERIC_COMPARISON`; an unread, unconfirmed or unlisted scale goes to review | mentor request; auto-acceptance treats every scale limit as a boundary |
+| impact preview on the fictional corpus | scenarios generated from the documents and rules (about 30-100 made-up cases) plus the stored submissions of the checklist; no OCR | no OCR cache in the repo; the corpus replay is still to do (`PreviewSource` is generic) |
+| versions of unknown checklists | only the two seeded checklists are converted by the migration; other row-based checklists keep running on their rows | no generic rows-to-document converter yet |
+| staff accounts | none; the actor is recorded as `admin (no login yet)`, endpoints stay behind `ADMIN_ENABLED` | auth is P1 of the original plan, not part of this work |
+
+Version 1 equals the old seeded rules except two decided changes: no `issue_date <= 2026-12-31` rows, and no 학번 requirement on the 재학증명서 (`tests/test_checklist_v1_equivalence.py` lists them). 생년월일 is not an extracted field, so identity on the 재학증명서 is currently the name only (plus the 학번 comparison with the transcript when both print it).
+
+Everything that needs the rules of a submission (verification, auto-acceptance boundaries, review dependencies, per-document validation, expected-document lists) reads the pinned version through `services/rule_views.py` or the compiler; row-based workflows still work through the same views.
+
+Publishing needs acknowledgement of every loosening (`guardrails.py`) and, separately, of any case that was not 제출 가능 and becomes 제출 가능 in the preview (`PREVIEW_NEWLY_READY:preview`).

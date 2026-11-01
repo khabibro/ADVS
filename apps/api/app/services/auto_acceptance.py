@@ -26,14 +26,12 @@ from app.document_intelligence.decision_robust import RuleSpec
 from app.document_intelligence.internal_evidence import extract_facts
 from app.models.entities import (
     Document,
-    DocumentRequirement,
     FieldReview,
     Project,
     Submission,
     ValidationResult,
-    ValidationRule,
 )
-from app.services.requirements import required_fields
+from app.services.rule_views import rule_views
 
 Decisions = dict[tuple[uuid.UUID, str], AutoDecision]
 
@@ -88,28 +86,34 @@ def second_pass_by_field(document: Document) -> dict[str, SecondPassInput]:
     return found
 
 
+def _numbers(params: dict) -> list[float]:
+    """The limits of a numeric rule: one value, or one per scale (all of them, to stay careful)."""
+    raw = (
+        list(params["per_scale"]["values"].values())
+        if params.get("per_scale")
+        else [params.get("expected_value")]
+    )
+    out = []
+    for item in raw:
+        try:
+            out.append(float(str(item)))
+        except ValueError:
+            continue
+    return out
+
+
 def _rule_specs(db: Session, project: Project) -> tuple[RuleSpec, ...]:
     """The workflow's active rules on decision-driving fields, as outcome specifications (used to
     decide whether a misreading could change any verification outcome)."""
-    if project.checklist_id is None:
-        return ()
-    requirements = db.scalars(
-        select(DocumentRequirement)
-        .options(selectinload(DocumentRequirement.rules))
-        .where(DocumentRequirement.checklist_id == project.checklist_id)
-    ).all()
     specs: list[RuleSpec] = []
-    for requirement in requirements:
-        try:
-            document_type = DocumentType(requirement.document_type)
-        except ValueError:
-            continue
-        if requirement.required and "valid_until" in required_fields(requirement):
+    for view in rule_views(project):
+        document_type = view.document_type
+        if view.required and "valid_until" in view.required_fields:
             specs.append(RuleSpec(document_type, "valid_until", "on_or_after_ref"))
-        for rule in requirement.rules:
-            params = rule.params or {}
+        for rule in view.rules:
+            rule_type, params = rule.rule_type, rule.params
             field = str(params.get("field", ""))
-            if rule.rule_type == RuleType.ISSUE_DATE_MAX_AGE.value:
+            if rule_type == RuleType.ISSUE_DATE_MAX_AGE.value:
                 specs.append(
                     RuleSpec(
                         document_type,
@@ -118,13 +122,9 @@ def _rule_specs(db: Session, project: Project) -> tuple[RuleSpec, ...]:
                         days=int(params.get("max_age_days", 90)),
                     )
                 )
-            elif rule.rule_type == RuleType.DATE_NOT_EXPIRED.value:
-                specs.append(
-                    RuleSpec(
-                        document_type, str(params.get("field", "valid_until")), "on_or_after_ref"
-                    )
-                )
-            elif rule.rule_type == RuleType.DATE_COMPARISON.value and field:
+            elif rule_type == RuleType.DATE_NOT_EXPIRED.value:
+                specs.append(RuleSpec(document_type, field or "valid_until", "on_or_after_ref"))
+            elif rule_type == RuleType.DATE_COMPARISON.value and field:
                 operator = params.get("operator")
                 bound = params.get("expected_value")
                 if (
@@ -145,45 +145,35 @@ def _rule_specs(db: Session, project: Project) -> tuple[RuleSpec, ...]:
                             bound_date=parsed,
                         )
                     )
-            elif rule.rule_type == RuleType.NUMERIC_COMPARISON.value and field:
+            elif rule_type == RuleType.NUMERIC_COMPARISON.value and field:
                 operator = params.get("operator")
-                try:
-                    number = float(str(params.get("expected_value")))
-                except ValueError:
-                    continue
-                specs.append(
-                    RuleSpec(
-                        document_type,
-                        field,
-                        "at_least" if operator == "GREATER_THAN_OR_EQUAL" else "at_most",
-                        bound_number=number,
+                for number in _numbers(params):
+                    specs.append(
+                        RuleSpec(
+                            document_type,
+                            field,
+                            "at_least" if operator == "GREATER_THAN_OR_EQUAL" else "at_most",
+                            bound_number=number,
+                        )
                     )
-                )
     return tuple(specs)
 
 
-def _workflow_boundaries(db: Session, project: Project) -> tuple[int | None, float | None]:
-    """The workflow's issue-date age limit and GPA threshold (the decision boundaries a
+def _workflow_boundaries(
+    db: Session, project: Project
+) -> tuple[tuple[int, ...], tuple[float, ...]]:
+    """Every issue-date age limit and GPA limit of the workflow (the decision boundaries a
     second-pass-only value must stay clear of)."""
-    if project.checklist_id is None:
-        return None, None
-    rules = db.scalars(
-        select(ValidationRule)
-        .join(DocumentRequirement, ValidationRule.requirement_id == DocumentRequirement.id)
-        .where(DocumentRequirement.checklist_id == project.checklist_id)
-    ).all()
-    max_age: int | None = None
-    threshold: float | None = None
-    for rule in rules:
-        params = rule.params or {}
-        if rule.rule_type == RuleType.ISSUE_DATE_MAX_AGE.value:
-            max_age = int(params.get("max_age_days", 90))
-        elif rule.rule_type == RuleType.NUMERIC_COMPARISON.value and params.get("field") == "gpa":
-            try:
-                threshold = float(str(params.get("expected_value")))
-            except (TypeError, ValueError):
-                continue
-    return max_age, threshold
+    ages: list[int] = []
+    limits: list[float] = []
+    for view in rule_views(project):
+        for rule in view.rules:
+            rule_type, params = rule.rule_type, rule.params
+            if rule_type == RuleType.ISSUE_DATE_MAX_AGE.value:
+                ages.append(int(params.get("max_age_days", 90)))
+            elif rule_type == RuleType.NUMERIC_COMPARISON.value and params.get("field") == "gpa":
+                limits.extend(_numbers(params))
+    return tuple(ages), tuple(limits)
 
 
 def decisions_for_project(
@@ -273,13 +263,13 @@ def decisions_for_project(
                     facts=facts,
                 )
             )
-    max_age, gpa_threshold = _workflow_boundaries(db, project)
+    ages, gpa_limits = _workflow_boundaries(db, project)
     context = ProjectContext(
         company_name=project.company_name,
         applicant_name=project.applicant_name,
         reference_date=reference_date,
-        issue_max_age_days=max_age,
-        gpa_threshold=gpa_threshold,
+        issue_max_age_values=ages,
+        gpa_thresholds=gpa_limits,
         rules=_rule_specs(db, project),
     )
     return decide(inputs, context, strategy)
