@@ -435,6 +435,18 @@ def _valid_format(item: FieldInput, index: _Index, context: ProjectContext) -> s
     return None  # names / university: no format validator (corroboration only)
 
 
+def _printed_bare_dates(item: FieldInput) -> tuple[date, ...]:
+    """Bare dates printed elsewhere on the page (not the box that holds the value itself)."""
+    if item.facts is None:
+        return ()
+    found = []
+    for box in item.facts.dates:
+        parsed = parse_iso(box.iso)
+        if box.bare and parsed is not None and box.iso != item.value:
+            found.append(parsed)
+    return tuple(sorted(set(found)))
+
+
 def _near_decision_boundary(item: FieldInput, context: ProjectContext) -> bool:
     """True when `item` lies within the policy margin of a decision boundary of the workflow."""
     margin_days = BOUNDARY_MARGINS["date_days"]
@@ -755,6 +767,7 @@ def _decide_corroborated(
             item.value,
             scale=float(scale_item.value) if scale_item and scale_item.value else None,
             siblings=siblings,
+            window_dates=_printed_bare_dates(item),
         ):
             return AutoDecision(
                 True,
