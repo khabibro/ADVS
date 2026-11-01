@@ -1,6 +1,7 @@
 import logging
 import re
 import time
+import unicodedata
 import uuid
 from dataclasses import asdict, replace
 
@@ -29,6 +30,7 @@ from app.document_intelligence.normalization.field_normalizer import (
     canonicalize_numeric_text,
 )
 from app.document_intelligence.ocr.models import (
+    BoundingBox,
     OCRDocumentResult,
     OCRPage,
     OCRProviderError,
@@ -86,7 +88,52 @@ def _value_evidence(item: ExtractedValue):  # type: ignore[no-untyped-def]
         source_digits = re.sub(r"\D", "", entry.source_text)
         if value in entry.source_text or (digits and digits in source_digits):
             return entry
+    joined = _joined_row_evidence(boxed, value)
+    if joined is not None:
+        return joined
     return boxed[-1] if boxed else None
+
+
+#: Boxes of one printed row may be at most this far from each other, in units of the tallest box, to count as one
+#: line.
+_ROW_BAND = 0.5
+#: A letter-spaced line comes out of the recogniser as several boxes of one to three characters; a label box
+#: ("학교명:") or a whole word is not one of its pieces.
+_MIN_LETTER_BOXES = 3
+_MAX_LETTER_BOX_CHARS = 3
+
+
+def _squashed(text: str) -> str:
+    return "".join(unicodedata.normalize("NFKC", text).split())
+
+
+def _joined_row_evidence(boxed, value: str):  # type: ignore[no-untyped-def]
+    """A value read from several boxes of one letter-spaced line ("X X 대 학 교", or a name and its title in two
+    boxes) is not held by any single box. Its region for the second reading is the union of the boxes, so the
+    re-read sees the whole line, not one piece. Joined only when the boxes, read left to right, spell the value
+    (so a label box beside a value box is never merged in) or are at least three pieces of one to three characters
+    (the recogniser may change a character), lie on one page and on one row."""
+    if len(boxed) < 2 or len({entry.page_number for entry in boxed}) != 1:
+        return None
+    ordered = sorted(boxed, key=lambda entry: entry.bounding_box.x)
+    spells_value = _squashed(value) in _squashed("".join(entry.source_text for entry in ordered))
+    letter_spaced = len(ordered) >= _MIN_LETTER_BOXES and all(
+        len(_squashed(entry.source_text)) <= _MAX_LETTER_BOX_CHARS for entry in ordered
+    )
+    if not (spells_value or letter_spaced):
+        return None
+    tallest = max(entry.bounding_box.height for entry in ordered)
+    top = min(entry.bounding_box.y for entry in ordered)
+    bottom = max(entry.bounding_box.y + entry.bounding_box.height for entry in ordered)
+    if bottom - top > (1 + _ROW_BAND) * tallest:
+        return None
+    left = min(entry.bounding_box.x for entry in ordered)
+    right = max(entry.bounding_box.x + entry.bounding_box.width for entry in ordered)
+    return replace(
+        ordered[0],
+        source_text="".join(entry.source_text for entry in ordered),
+        bounding_box=BoundingBox(left, top, right - left, bottom - top),
+    )
 
 
 def _neighbour_boxes(source_result, item, evidence):  # type: ignore[no-untyped-def]
