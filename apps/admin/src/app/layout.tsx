@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { copy } from "@/lib/copy";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ADVS Admin",
-  description: "Administrative configuration shell for ADVS",
+  title: "ADVS 관리",
+  description: "점검 기준 관리",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="ko">
       <body>
@@ -16,11 +21,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link className="font-semibold" href="/">
               ADVS Admin
             </Link>
-            <Link href="/document-types">문서 유형</Link>
-            <Link href="/checklists">체크리스트</Link>
-            <Link href="/rules">검증 규칙</Link>
-            <Link href="/projects">프로젝트</Link>
-            <Link href="/history">이력</Link>
+            <Link href="/reviews">{copy.nav.reviews}</Link>
+            <Link href="/reviews/log">{copy.nav.reviewLog}</Link>
+            <Link href="/workflows">{copy.nav.workflows}</Link>
+            <Link href="/audit">{copy.nav.audit}</Link>
           </nav>
         </header>
         <main className="mx-auto max-w-6xl px-5 py-8">{children}</main>
@@ -28,4 +32,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-

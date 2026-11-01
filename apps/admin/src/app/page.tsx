@@ -1,6 +1,5 @@
-import { AdminDashboardPage } from "@/features/dashboard/AdminDashboardPage";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <AdminDashboardPage />;
+  redirect("/workflows");
 }
-
