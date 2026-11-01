@@ -39,6 +39,7 @@ def main() -> int:
     ap.add_argument("--each", action="store_true", help="also run every file as its own submission")
     ap.add_argument("--memo-ocr", action="store_true", help="read each distinct file with OCR once per run (the output is deterministic); the same bytes in another submission reuse it")
     ap.add_argument("--ocr-cache", type=Path, default=None, help="persistent OCR cache (sha256 -> pages, plus second-pass regions): a miss reads with OCR and stores, a hit replays, so a later run on the same files needs no OCR")
+    ap.add_argument("--applicant-from-gold", type=Path, default=None, help="WHAT-IF only: give every project the applicant name (student) / company name (business) of this gold file, as if the application form had been filled in. Never a default; the report must say so")
     ap.add_argument("--drop-requirement", default=None, help="also create a copy of the workflow without this document type; a submission selects it with \"workflow\": \"reduced\"")
     args = ap.parse_args()
 
@@ -111,6 +112,17 @@ def main() -> int:
         _processing.get_ocr_provider = lambda settings: _MemoProvider(_real_provider(settings))
     from harness_core import Runner
 
+    application: dict[str, str] = {}
+    if args.applicant_from_gold is not None:
+        gold_docs = json.loads(args.applicant_from_gold.read_text(encoding="utf-8"))["documents"]
+        wanted = "student_name" if args.workflow == "student" else "company_name"
+        for document in gold_docs.values():
+            entry = (document.get("fields") or document).get(wanted)
+            value = entry.get("value") if isinstance(entry, dict) else entry
+            if value:
+                application = {"applicant_name" if args.workflow == "student" else "company_name": str(value)}
+                break
+
     if args.submissions is None and args.files is None:
         raise SystemExit("--files or --submissions is required")
     files = [] if args.files is None else [args.files] if args.files.is_file() else sorted(p for p in args.files.iterdir() if p.suffix.lower().lstrip(".") in MIME)
@@ -123,7 +135,7 @@ def main() -> int:
 
     def run(client, group: list[Path] | None, tag: str, eval_date: str | None = None, extra_dates: list[str] | None = None, workflow: str | None = None) -> dict:
         wid = reduced_id if workflow == "reduced" and reduced_id is not None else checklist_id
-        project = client.post("/api/v1/projects", json={"name": f"{args.label}-{tag}", "workflow_id": str(wid)})
+        project = client.post("/api/v1/projects", json={"name": f"{args.label}-{tag}", "workflow_id": str(wid), **application})
         project.raise_for_status()
         pid = project.json()["id"]
         records = []
