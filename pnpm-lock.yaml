@@ -14,6 +14,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@advs/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@advs/ui':
         specifier: workspace:*
         version: link:../../packages/ui
