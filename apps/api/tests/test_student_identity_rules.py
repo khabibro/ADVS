@@ -203,3 +203,22 @@ def test_both_documents_printing_a_student_number_are_compared() -> None:
     )
     assert "INFORMATION_MISMATCH" in _issues(different, "student_id")
     assert different.status == OverallStatus.NEEDS_CORRECTION
+
+
+def test_two_different_certificates_of_one_type_go_to_review_and_none_is_picked() -> None:
+    # same type, same person, different issue dates (so different documents): never silently chosen
+    first = _doc(TRANS, **_identity(issue_date="2026-08-01"))
+    second = _doc(TRANS, **_identity(issue_date="2026-09-02"))
+    result = _verify([_doc(ENROL, **_identity()), first, second])
+    assert "MULTIPLE_DOCUMENTS_REQUIRE_REVIEW" in {i.code for i in result.issues}
+    assert result.status == OverallStatus.REVIEW_REQUIRED
+
+
+def test_an_identical_upload_twice_is_ignored_with_a_notice() -> None:
+    document = _doc(TRANS, **_identity())
+    copy = DocumentSnapshot(
+        uuid.uuid4(), TRANS, ProcessingStatus.COMPLETED, document.checksum_sha256, document.fields
+    )
+    result = _verify([_doc(ENROL, **_identity()), document, copy])
+    assert result.status == OverallStatus.READY
+    assert "DUPLICATE_UPLOAD_IGNORED" in {n.code for n in result.notices}
