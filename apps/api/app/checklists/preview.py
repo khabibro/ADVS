@@ -4,7 +4,8 @@ Two sources, neither of which runs OCR: the stored submissions of this checklist
 effective field values) and a built-in set of made-up scenarios derived from the documents and
 rules themselves (ages around each limit, expiry edges, GPA by scale, each comparison broken in
 turn). Both are evaluated under the published rules and under the draft with the same engine; only
-the rules differ. The fictional corpora are not replayed here (they need OCR output).
+the rules differ. Field-value snapshots of the fictional corpora (and, when present locally, of real documents)
+are replayed too; see snapshots.py.
 """
 
 from __future__ import annotations
@@ -64,6 +65,7 @@ class PreviewResult:
     errors: int = 0
     duration_ms: int = 0
     note_ko: str = ""
+    title_ko: str = ""
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -81,6 +83,7 @@ class PreviewResult:
             "errors": self.errors,
             "duration_ms": self.duration_ms,
             "note_ko": self.note_ko,
+            "title_ko": self.title_ko,
         }
 
 
@@ -298,13 +301,14 @@ def run_preview(
     cases: list[Case],
     source: str,
     note_ko: str = "",
+    title_ko: str = "",
 ) -> PreviewResult:
     started = time.perf_counter()
     old_doc, _ = parse_document(published)
     new_doc, _ = parse_document(draft)
     assert old_doc is not None and new_doc is not None
     old, new = compile_checklist(old_doc), compile_checklist(new_doc)
-    result = PreviewResult(source=source, note_ko=note_ko)
+    result = PreviewResult(source=source, note_ko=note_ko, title_ko=title_ko)
     for case in cases:
         result.total += 1
         try:

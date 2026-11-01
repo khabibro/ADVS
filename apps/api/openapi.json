@@ -3731,6 +3731,14 @@
       },
       "PreviewRead": {
         "properties": {
+          "corpora": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewSourceRead"
+            },
+            "type": "array",
+            "title": "Corpora",
+            "default": []
+          },
           "scenarios": {
             "$ref": "#/components/schemas/PreviewSourceRead"
           },
@@ -3796,6 +3804,11 @@
           "note_ko": {
             "type": "string",
             "title": "Note Ko"
+          },
+          "title_ko": {
+            "type": "string",
+            "title": "Title Ko",
+            "default": ""
           }
         },
         "type": "object",

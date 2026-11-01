@@ -201,7 +201,11 @@ def preview(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
         results = service.preview(db, checklist)
     except ChecklistError as error:
         raise _raise(error) from error
-    return PreviewRead(**{name: result.to_json() for name, result in results.items()})
+    return PreviewRead(
+        corpora=[r.to_json() for r in results["corpora"]],
+        scenarios=results["scenarios"].to_json(),
+        submissions=results["submissions"].to_json(),
+    )
 
 
 @router.delete("/workflows/{workflow_id}/draft", status_code=status.HTTP_204_NO_CONTENT)

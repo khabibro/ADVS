@@ -133,9 +133,11 @@ class PreviewSourceRead(BaseModel):
     errors: int
     duration_ms: int
     note_ko: str
+    title_ko: str = ""
 
 
 class PreviewRead(BaseModel):
+    corpora: list[PreviewSourceRead] = []
     scenarios: PreviewSourceRead
     submissions: PreviewSourceRead
 

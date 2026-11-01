@@ -17,7 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.checklists.guardrails import Warning_, guardrails
-from app.checklists.preview import PreviewResult, run_preview, scenarios, stored_cases
+from app.checklists.preview import run_preview, scenarios, stored_cases
 from app.checklists.schema import (
     SCHEMA_ID,
     ChecklistDocument,
@@ -25,6 +25,7 @@ from app.checklists.schema import (
     document_sha256,
     parse_document,
 )
+from app.checklists.snapshots import load_snapshots
 from app.models.entities import AuditLog, Checklist, ChecklistVersion
 
 DRAFT, PUBLISHED, SUPERSEDED = "DRAFT", "PUBLISHED", "SUPERSEDED"
@@ -230,7 +231,7 @@ class ChecklistService:
         )
 
     # -- impact preview --------------------------------------------------------------------
-    def preview(self, db: Session, checklist: Checklist) -> dict[str, PreviewResult]:
+    def preview(self, db: Session, checklist: Checklist) -> dict[str, Any]:
         """The draft against the published rules, on made-up scenarios and on stored submissions."""
         draft, published = self.draft(db, checklist.id), self.published(db, checklist.id)
         if draft is None or published is None:
@@ -242,13 +243,29 @@ class ChecklistService:
             )
         cases = scenarios(published.document, draft.document)
         stored = stored_cases(db, checklist.id)
+        corpora = [
+            run_preview(
+                published.document,
+                draft.document,
+                snap_cases,
+                f"corpus:{snapshot.kind}:{snapshot.corpus}",
+                (
+                    "실제 서류에서 읽은 값의 로컬 사본입니다. 이 컴퓨터에만 있고 저장소에 올라가지 않습니다."
+                    if snapshot.kind == "private"
+                    else "가상 서류 모음에서 읽은 값을 다시 계산한 결과입니다."
+                ),
+                snapshot.title_ko,
+            )
+            for snapshot, snap_cases in load_snapshots(checklist.key)
+        ]
         return {
+            "corpora": corpora,
             "scenarios": run_preview(
                 published.document,
                 draft.document,
                 cases,
                 "scenarios",
-                "이 업무의 서류·규칙에서 만든 가상 사례입니다. 실제 서류 모음은 이 서버에서 사용할 수 없습니다.",
+                "이 업무의 서류·규칙에서 만든 가상 사례입니다. 위의 서류 모음 결과를 보충합니다.",
             ),
             "submissions": run_preview(
                 published.document,
@@ -290,7 +307,14 @@ class ChecklistService:
             w for w in guardrails(content, base.document if base else None) if w.level == "ACK"
         ]
         if base is not None:
-            newly = sum(r.newly_ready for r in self.preview(db, checklist).values())
+            previews = self.preview(db, checklist)
+            newly = sum(
+                r.newly_ready
+                for r in (
+                    *previews["corpora"],
+                    *(previews[k] for k in ("scenarios", "submissions")),
+                )
+            )
             if newly:
                 needs_ack.append(
                     Warning_(
