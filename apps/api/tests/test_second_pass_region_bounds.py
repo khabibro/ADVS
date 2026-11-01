@@ -27,10 +27,10 @@ def test_a_neighbour_beside_the_crop_is_ignored() -> None:
     assert region_bounds(VALUE, (beside,), W, H) == region_bounds(VALUE, (), W, H)
 
 
-def test_a_neighbour_overlapping_the_value_cuts_at_most_a_quarter_of_it() -> None:
+def test_a_neighbour_overlapping_the_value_never_cuts_into_it() -> None:
     overlapping = BoundingBox(x=250, y=960, width=500, height=70)  # reaches y=1030, into the value
-    _, top, _, _ = region_bounds(VALUE, (overlapping,), W, H)
-    assert top == 1010  # value top + 25% of its height; the value itself is never cut away
+    _, top, _, bottom = region_bounds(VALUE, (overlapping,), W, H)
+    assert top == 1000 and bottom == 1052  # the margin above is gone, the value box is whole
 
 
 def test_the_crop_stays_inside_the_page() -> None:

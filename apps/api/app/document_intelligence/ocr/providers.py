@@ -101,16 +101,13 @@ class OCRProvider(ABC):
         return []
 
 
-#: A neighbouring row may cut at most this share of the value's own height from the crop.
-_MAX_NEIGHBOUR_CUT = 0.25
-
-
 def region_bounds(
     box: BoundingBox, avoid: tuple[BoundingBox, ...], width: int, height: int
 ) -> tuple[int, int, int, int]:
     """(left, top, right, bottom) of the crop around a value box: the value plus a margin, cut so that
-    the crop does not take in the rows above and below it (only vertically overlapping neighbours that
-    share horizontal extent with the crop are considered)."""
+    the crop does not take in the rows above and below it. Only the margin is cut, never the value box itself:
+    on a tilted photograph the boxes of neighbouring rows overlap the value box, and cutting into it loses
+    glyph tops. Only neighbours that share horizontal extent with the crop are considered."""
     margin_x = max(6.0, box.height * 0.4)
     margin_y = max(4.0, box.height * 0.3)
     left = max(0, int(box.x - margin_x))
@@ -122,11 +119,9 @@ def region_bounds(
         if min(right, other.x + other.width) - max(left, other.x) <= 0:
             continue  # beside the crop, not above or below it
         if other.y + other.height / 2 < middle:  # a row above
-            top = max(top, min(int(other.y + other.height), int(box.y + _MAX_NEIGHBOUR_CUT * box.height)))
+            top = max(top, min(int(other.y + other.height), int(box.y)))
         elif other.y + other.height / 2 > middle:  # a row below
-            bottom = min(
-                bottom, max(int(other.y), int(box.y + (1 - _MAX_NEIGHBOUR_CUT) * box.height))
-            )
+            bottom = min(bottom, max(int(other.y), int(box.y + box.height)))
     return left, top, right, bottom
 
 

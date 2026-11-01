@@ -24,6 +24,10 @@ from app.document_intelligence.classification.classifier import (
 from app.document_intelligence.classification.title_gate import assess_title
 from app.document_intelligence.extraction.base import ExtractedValue
 from app.document_intelligence.extraction.registry import ExtractorRegistry
+from app.document_intelligence.normalization.field_normalizer import (
+    DATE_RE,
+    canonicalize_numeric_text,
+)
 from app.document_intelligence.ocr.models import (
     OCRDocumentResult,
     OCRPage,
@@ -86,8 +90,9 @@ def _value_evidence(item: ExtractedValue):  # type: ignore[no-untyped-def]
 
 
 def _neighbour_boxes(source_result, item, evidence):  # type: ignore[no-untyped-def]
-    """Boxes of the other first-pass lines of the value's page (a name's re-read must not take in the row
-    above or below it). The value's own boxes are left out."""
+    """Boxes of the first-pass lines of the value's page that hold a date (a name's re-read must not take in
+    the date row above or below it, as on an issuer line printed under the issue date). The value's own
+    boxes are left out."""
     own = [entry.bounding_box for entry in (item.evidence or []) if entry.bounding_box]
     page = next((p for p in source_result.pages if p.page_number == evidence.page_number), None)
     if page is None:
@@ -96,6 +101,7 @@ def _neighbour_boxes(source_result, item, evidence):  # type: ignore[no-untyped-
         line.bounding_box
         for line in page.lines
         if line.bounding_box is not None
+        and DATE_RE.search(canonicalize_numeric_text(line.text))
         and line.bounding_box not in own
     )
 

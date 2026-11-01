@@ -50,6 +50,19 @@ Negatives: N1, N2, N3, N4, N6 never READY (N3 and N4 also at realistic dates); s
 
 Issues per valid student submission 8.5 to 6.45; no student submission is complete. Remaining, by size: (1) 재학증명서 issue date (378): the 90-day rule flips under every digit-confusion reading (0 of 130 robust) and it has no second source: needs your decision (proposal 8). (2) 재학증명서 university name (209) and student name (102): second-pass veto on the stamped issuer line and the small header. (3) Transcript GPA (74): no evaluable arithmetic on the page, near the threshold (26), or arithmetic mismatch (22). (4) Transcript student name (32), classification (26 need review).
 
+## Scoreboard additions (head after round 3)
+
+| | start | head |
+|---|---|---|
+| business valid READY (realistic dates) | 0 / 76 | 46 / 76 (47 before the issuer-line crop, see log) |
+| business READY after at most one staff confirmation | n/a | 53 / 78 |
+| student valid READY | 0 | 0 |
+| student READY after at most two / any number of staff confirmations | 0 | 6 / 7 of 108 |
+| issues per valid student submission | 8.5 | 6.11 |
+| wrong 제출 가능, wrong values confirmed | 0, 0 | 0, 0 |
+
+Owner decisions round 3: one-click confirmation is the only path for the enrolment issue date and for a GPA with a non-evaluable arithmetic (requirement for the admin reviewer queue in `docs/planning/REVIEWER_ONE_CLICK_CONFIRMATION.md`); fictional S10 stays REVIEW; the issuer-line crop is done (above).
+
 ## Merge readiness (head cbb5047 + tests + docs)
 
 - Backend 755 tests, ruff, mypy `--explicit-package-bases` clean.
