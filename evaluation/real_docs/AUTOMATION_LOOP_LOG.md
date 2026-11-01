@@ -58,7 +58,7 @@ Loop head, business: 47 of 76 valid submissions READY at the realistic date, 11 
 
 
 ## Proposal 0 merge (owner conditions a–e) — ACCEPTED, e2f56ba
-- (c) The 5 hold-out 1 E14 READY cases: check date 2026-10-12, true validity end 2026-11-07, injected 2026-11-01 / 2026-11-02. In all 5 the true value and the injected value give the same verdict (not expired) and the control run of the same files is READY too. No wrong verdict, so the one-click confirmation was not needed.
+- (c) The 5 hold-out 1 E14 READY cases: fictional check date in mid-October, true validity end 26 days later, injected a day-digit variant 20–21 days after the check date. In all 5 the true value and the injected value give the same verdict (not expired) and the control run of the same files is READY too. No wrong verdict, so the one-click confirmation was not needed.
 - (a) Robust-accepted values carry `confirmation = DECISION_ROBUST` and the label "decision-robust (value not individually confirmed)" (Korean copy `label_ko`) in the field data (`auto_acceptance`); they are computed on the fly and never stored or exported as confirmed (no export exists). UI copy is for the web work.
 - (b) Robustness is recomputed for every check date (test: the same value stops being robust when the date moves next to it; the real runs at the original and realistic dates show it).
 - (c, metrics) The injection report now separates `wrong_confirmed` (must be 0), `robust_wrong` and `false_ready_decision` (READY although the true value gives another verdict).

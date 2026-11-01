@@ -32,7 +32,7 @@ Negatives: N1, N2, N3, N4, N6 never READY (N3 and N4 also at realistic dates); s
    - the other bare dates printed on the page bound the plausible readings of a validity end; default strategy S9;
    - (a) robust-accepted values carry `confirmation = DECISION_ROBUST` and the label "decision-robust (value not individually confirmed)" (+ Korean copy) in the data, never stored or exported as confirmed (UI copy is for the web work);
    - (b) robustness is recomputed for every check date (test and real runs);
-   - (c) the 5 hold-out 1 E14 READY cases: check date 2026-10-12, true end 2026-11-07, injected 2026-11-01/02; true and injected values give the same verdict (valid), and the control run is READY too, so no wrong verdict; metrics now separate `wrong_confirmed`, `robust_wrong` and `false_ready_decision`;
+   - (c) the 5 hold-out 1 E14 READY cases: fictional check date in mid-October, true validity end 26 days later, injected variant 20–21 days after the check date; true and injected values give the same verdict (valid), and the control run is READY too, so no wrong verdict; metrics now separate `wrong_confirmed`, `robust_wrong` and `false_ready_decision`;
    - (d) new E19 cases (digit errors that cross the validity end, both directions, both passes agreeing): 876 cases, 0 READY, 0 `robust_wrong`, 0 `false_ready_decision`;
    - (e) backend 731 tests, ruff, mypy; demo rehearsal ×3 ALL PASS; manipulated PDFs 0 hidden tokens read; real negatives as above.
    - Injection before / after (four fictional corpora, 6,803 cases): `wrong_confirmed` 1 (the known owner-accepted E3c-both case on hold-out 2), `robust_wrong` 41 (30 on hold-out 1, 11 on hold-out 3, all with the correct verdict), `false_ready_decision` 1 (the same known case).
