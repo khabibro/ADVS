@@ -675,6 +675,31 @@ def _group_values(
     return agreeing, disagreeing
 
 
+_HANGUL_RUN_RE = re.compile(r"[가-힣]+")
+NAME_VARIANT_MIN_SIMILARITY = 0.6
+
+
+def _second_pass_contradicts_name(key: str, reading: str) -> bool:
+    """The re-read does not contain the name AND reads like a different version of it.
+
+    A re-read of a stamped issuer line, or of a region that also holds the row above, is a jumble of other
+    words and digits: it says nothing about the name and is not a contradiction. A contradiction is a stretch
+    of Hangul of about the name's length that agrees with the name at 60% of its positions or more but is not
+    the name (the shape of a misread: one or two characters different)."""
+    if not key or key in reading:
+        return False
+    for run in _HANGUL_RUN_RE.findall(reading):
+        for width in {len(key) - 1, len(key), len(key) + 1}:
+            if width < 2 or len(run) < width:
+                continue
+            for start in range(len(run) - width + 1):
+                window = run[start : start + width]
+                same = sum(a == b for a, b in zip(window, key, strict=False))
+                if same / len(key) >= NAME_VARIANT_MIN_SIMILARITY:
+                    return True
+    return False
+
+
 def _decide_corroborated(
     item: FieldInput,
     rule: FieldRule,
@@ -710,7 +735,7 @@ def _decide_corroborated(
         return _no(strategy, "SECOND_PASS_DISAGREES", rule.rule_id)
 
     if features.name_veto and rule.name_veto and rule.group and second and second.normalized:
-        if canonical_key(rule.group, item.value) not in second.normalized:
+        if _second_pass_contradicts_name(canonical_key(rule.group, item.value), second.normalized):
             return _no(strategy, "SECOND_PASS_CONTRADICTS_NAME", rule.rule_id)
 
     sources: list[str] = []
