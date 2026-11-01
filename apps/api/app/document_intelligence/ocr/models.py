@@ -74,6 +74,9 @@ class RegionRequest:
     field_name: str
     page_number: int
     bbox: BoundingBox
+    #: Boxes of the other first-pass lines near the value. The crop is cut so that it does not take in a
+    #: neighbouring row (the date row above an issuer line, a footer below).
+    avoid: tuple[BoundingBox, ...] = ()
 
 
 @dataclass

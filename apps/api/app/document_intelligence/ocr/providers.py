@@ -101,6 +101,35 @@ class OCRProvider(ABC):
         return []
 
 
+#: A neighbouring row may cut at most this share of the value's own height from the crop.
+_MAX_NEIGHBOUR_CUT = 0.25
+
+
+def region_bounds(
+    box: BoundingBox, avoid: tuple[BoundingBox, ...], width: int, height: int
+) -> tuple[int, int, int, int]:
+    """(left, top, right, bottom) of the crop around a value box: the value plus a margin, cut so that
+    the crop does not take in the rows above and below it (only vertically overlapping neighbours that
+    share horizontal extent with the crop are considered)."""
+    margin_x = max(6.0, box.height * 0.4)
+    margin_y = max(4.0, box.height * 0.3)
+    left = max(0, int(box.x - margin_x))
+    right = min(width, int(box.x + box.width + margin_x))
+    top = max(0, int(box.y - margin_y))
+    bottom = min(height, int(box.y + box.height + margin_y))
+    middle = box.y + box.height / 2
+    for other in avoid:
+        if min(right, other.x + other.width) - max(left, other.x) <= 0:
+            continue  # beside the crop, not above or below it
+        if other.y + other.height / 2 < middle:  # a row above
+            top = max(top, min(int(other.y + other.height), int(box.y + _MAX_NEIGHBOUR_CUT * box.height)))
+        elif other.y + other.height / 2 > middle:  # a row below
+            bottom = min(
+                bottom, max(int(other.y), int(box.y + (1 - _MAX_NEIGHBOUR_CUT) * box.height))
+            )
+    return left, top, right, bottom
+
+
 class MockOCRProvider(OCRProvider):
     """Deterministic double exercising the same OCRProvider interface used
     by real OCR. Fixture text is chosen from `original_filename` (falling back to
@@ -405,13 +434,9 @@ class PaddleOCRProvider(OCRProvider):
     async def _read_region(self, page_image: Image.Image, request: RegionRequest) -> RegionReading:
         from PIL import ImageOps
 
-        box = request.bbox
-        margin_x = max(6.0, box.height * 0.4)
-        margin_y = max(4.0, box.height * 0.3)
-        left = max(0, int(box.x - margin_x))
-        top = max(0, int(box.y - margin_y))
-        right = min(page_image.width, int(box.x + box.width + margin_x))
-        bottom = min(page_image.height, int(box.y + box.height + margin_y))
+        left, top, right, bottom = region_bounds(
+            request.bbox, request.avoid, page_image.width, page_image.height
+        )
         empty = RegionReading(
             request.field_name, request.page_number, None, None, self._SECOND_PASS_PREPROCESS
         )

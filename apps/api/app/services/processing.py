@@ -11,6 +11,7 @@ from app.core.config import get_settings
 from app.core.domain import DocumentType, ProcessingStatus, RuleType, Severity
 from app.core.errors import PROCESSING_ERROR_MESSAGES, ProcessingErrorCode
 from app.document_intelligence.auto_acceptance import (
+    FIELD_RULES,
     SECOND_PASS_FIELDS,
     STRATEGY_FEATURES,
     parse_second_pass,
@@ -82,6 +83,21 @@ def _value_evidence(item: ExtractedValue):  # type: ignore[no-untyped-def]
         if value in entry.source_text or (digits and digits in source_digits):
             return entry
     return boxed[-1] if boxed else None
+
+
+def _neighbour_boxes(source_result, item, evidence):  # type: ignore[no-untyped-def]
+    """Boxes of the other first-pass lines of the value's page (a name's re-read must not take in the row
+    above or below it). The value's own boxes are left out."""
+    own = [entry.bounding_box for entry in (item.evidence or []) if entry.bounding_box]
+    page = next((p for p in source_result.pages if p.page_number == evidence.page_number), None)
+    if page is None:
+        return ()
+    return tuple(
+        line.bounding_box
+        for line in page.lines
+        if line.bounding_box is not None
+        and line.bounding_box not in own
+    )
 
 
 class DocumentProcessingService:
@@ -262,7 +278,14 @@ class DocumentProcessingService:
             evidence = _value_evidence(item)
             if evidence is not None and evidence.bounding_box is not None:
                 requests.append(
-                    RegionRequest(item.field_name, evidence.page_number, evidence.bounding_box)
+                    RegionRequest(
+                        item.field_name,
+                        evidence.page_number,
+                        evidence.bounding_box,
+                        avoid=_neighbour_boxes(source_result, item, evidence)
+                        if FIELD_RULES[item.field_name].name_veto
+                        else (),
+                    )
                 )
         if not requests:
             return

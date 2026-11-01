@@ -200,10 +200,11 @@ class OCRCacheProvider:
         from app.document_intelligence.ocr.models import RegionReading
 
         digest = sha256_file(path)
-        folder = self.cache_dir / "second_pass_v2"  # v2: stamp-aware reading (D3-7)
-        folder.mkdir(parents=True, exist_ok=True)
         readings = []
         for request in requests:
+            # v2: stamp-aware reading (D3-7); v3: neighbour-aware crop (requests that carry `avoid`)
+            folder = self.cache_dir / ("second_pass_v3" if getattr(request, "avoid", ()) else "second_pass_v2")
+            folder.mkdir(parents=True, exist_ok=True)
             box = request.bbox
             token = f"{digest}|{request.field_name}|{request.page_number}|{round(box.x)},{round(box.y)},{round(box.width)},{round(box.height)}"
             file = folder / (hashlib.sha256(token.encode()).hexdigest() + ".json")
