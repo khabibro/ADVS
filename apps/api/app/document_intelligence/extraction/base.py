@@ -705,6 +705,27 @@ def candidate_after_label(
     return strongest[0] if len(tied_top) == 1 else None
 
 
+_HYPHENATED_BUSINESS_NUMBER_RE = re.compile(r"(?<!\d)\d{3}-\d{2}-\d{5}(?!\d)")
+
+
+def unique_business_number_candidate(source: ExtractionInput) -> ExtractionCandidate | None:
+    """The only hyphenated number of the document that passes the business-number check digit.
+
+    Two different valid numbers (an issuer's and an applicant's) make the page ambiguous: None.
+    The same number printed twice is one number."""
+    found: dict[str, tuple[str, list[EvidenceRef]]] = {}
+    for observation in _source_observations(source):
+        for segment, evidence in zip(observation.row.segments, observation.evidence, strict=False):
+            for match in _HYPHENATED_BUSINESS_NUMBER_RE.finditer(segment.text):
+                digits = normalize_business_number(match.group())
+                if digits is not None and is_valid_business_number(digits):
+                    found.setdefault(digits, (match.group(), [evidence] if evidence else []))
+    if len(found) != 1:
+        return None
+    raw, evidence_list = next(iter(found.values()))
+    return ExtractionCandidate(value=raw, evidence=evidence_list, relation="unique_number")
+
+
 def candidate_right_of_label(
     source: ExtractionInput, labels: list[str]
 ) -> ExtractionCandidate | None:
@@ -1443,6 +1464,13 @@ class BaseDocumentExtractor(ABC):
                 )
                 or candidate
             )
+        unique = False
+        if candidate is None or normalize_business_number(candidate.value) is None:
+            # The label is split, parenthesised or far from its value: fall back to the one
+            # hyphenated number on the page that passes the check digit.
+            found = unique_business_number_candidate(text)
+            if found is not None:
+                candidate, unique = found, True
         raw_context = candidate.value if candidate else None
         match = (
             BUSINESS_NUMBER_RE.search(canonicalize_numeric_text(raw_context))
@@ -1456,7 +1484,8 @@ class BaseDocumentExtractor(ABC):
         if candidate is None or normalized is None:
             return self.missing(field_name)
         assert raw_value is not None
-        value = self._value(field_name, raw_value, normalized, "regex_business_number", candidate)
+        method = "regex_business_number_unique" if unique else "regex_business_number"
+        value = self._value(field_name, raw_value, normalized, method, candidate)
         if not is_valid_business_number(normalized):
             return replace(value, needs_review=True, extraction_method=BRN_CHECKSUM_FAILED_METHOD)
         return value
