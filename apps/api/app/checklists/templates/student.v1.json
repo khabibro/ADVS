@@ -54,6 +54,19 @@
       "severity": "ERROR"
     },
     {
+      "id": "stu-birth",
+      "source": {
+        "document": "ENROLLMENT_CERTIFICATE",
+        "field": "birth_date"
+      },
+      "target": {
+        "document": "TRANSCRIPT",
+        "field": "birth_date"
+      },
+      "match": "IDENTIFIER",
+      "severity": "ERROR"
+    },
+    {
       "id": "stu-univ",
       "source": {
         "document": "ENROLLMENT_CERTIFICATE",

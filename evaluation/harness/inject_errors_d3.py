@@ -206,6 +206,15 @@ class Planner3:
                             break
                     if done:
                         break
+        # ---- E19: a digit error that crosses the validity end (valid read as expired, expired read as valid) ----
+        if valid_until and valid_until.get("state") == "KNOWN_VALUE":
+            vu = valid_until["value"]
+            reference = date.fromisoformat(self.manifest["submission_date"])
+            truth_valid = date.fromisoformat(vu) >= reference
+            crossing = [n for n in _alt_digit_values(vu, rng, _valid_date) if (date.fromisoformat(n) >= reference) != truth_valid]
+            for new in crossing[:3]:
+                for both in (False, True):
+                    add(self._case(scenario, version, rel, f"E19-vu-{new}", "E19", "one", both, [ie.date_edit(vu, new, "valid_until digit error crossing the validity end", "valid_until")], ["valid_until"]))
         if issue and issue.get("state") == "KNOWN_VALUE":
             iss = issue["value"]
             lines = self.lines(rel)
@@ -330,6 +339,41 @@ def run_control_cases(cases: list[dict[str, Any]], runner: Runner, injector: ie.
     return results
 
 
+def annotate(results: list[dict[str, Any]], runner: Any, injector: Any, manifest: dict[str, Any]) -> None:
+    """Separate the leaks. `wrong_confirmed`: a wrong value accepted and not labelled decision-robust (must be 0).
+    `robust_wrong`: a wrong digit accepted only because every plausible reading gives the same verdict.
+    `false_ready_decision`: READY although the true value gives another verdict (the control run of the same files,
+    or a date on the other side of the check date)."""
+    scenarios = {s["set_id"]: s for s in manifest["business_sets"] + manifest["student_sets"]}
+    reference = date.fromisoformat(manifest["submission_date"])
+    controls: dict[tuple[str, str], str] = {}
+
+    def control_status(item: dict[str, Any]) -> str:
+        key = (item["set"], item["version"])
+        if key not in controls:
+            scenario = scenarios[item["set"]]
+            checklist = runner.business_id if scenario["workflow"] == "business" else runner.student_id
+            injector.set_case(None)
+            rels = scenario["files"][item["version"]]
+            run = runner.run_submission(scenario["workflow"], checklist, f"annot-{item['set']}-{item['version']}", [(r, runner.root / r) for r in rels])
+            controls[key] = run["actual_submission_status"]
+        return controls[key]
+
+    for r in results:
+        wrong = [t for t in r.get("targets", []) if t.get("wrong")]
+        robust = [t for t in wrong if (t.get("auto_acceptance") or {}).get("robust")]
+        r["robust_wrong"] = bool(robust)
+        r["wrong_confirmed"] = bool(r.get("false_auto_accept")) and (not wrong or len(robust) < len(wrong))
+        crosses = False
+        for t in wrong:
+            if t["field"] == "valid_until":
+                try:
+                    crosses = crosses or (date.fromisoformat(t["expected"]) >= reference) != (date.fromisoformat(str(t["effective_value"])) >= reference)
+                except (TypeError, ValueError):
+                    pass
+        r["false_ready_decision"] = bool(r["status"] == "READY" and (crosses or (r.get("false_ready") and control_status(r) != "READY")))
+
+
 def summarise(results: list[dict[str, Any]]) -> dict[str, Any]:
     table: dict[str, Counter] = defaultdict(Counter)
     for r in results:
@@ -341,6 +385,9 @@ def summarise(results: list[dict[str, Any]]) -> dict[str, Any]:
         t["cases"] += 1
         t["false_auto_accept"] += int(r["false_auto_accept"])
         t["false_ready"] += int(r["false_ready"])
+        t["wrong_confirmed"] += int(r.get("wrong_confirmed", r["false_auto_accept"]))
+        t["robust_wrong"] += int(r.get("robust_wrong", False))
+        t["false_ready_decision"] += int(r.get("false_ready_decision", r["false_ready"]))
         t["decision_changed"] += int(bool(r.get("decision_changed")))
         for status in ("READY", "NEEDS_CORRECTION", "REVIEW_REQUIRED"):
             t[status] += int(r["status"] == status)
@@ -397,6 +444,11 @@ def main() -> int:
         if wanted is None or wanted & {"E16", "E17"}:
             ctrl = [c for c in plan_control_cases(manifest, root, args.ocr_cache) if wanted is None or c["error"] in wanted]
             results += run_control_cases(ctrl, runner, injector, manifest)
+    except Exception:
+        runner.close()
+        raise
+    try:
+        annotate(results, runner, injector, scoring_manifest)
     finally:
         runner.close()
     summary = summarise(results)

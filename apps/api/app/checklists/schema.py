@@ -92,7 +92,8 @@ class Normalise(_Strict):
 
     legal_form: bool = True
     spaces: bool = True
-    parenthesised_latin: bool = False
+    parenthesised_latin: bool = True
+    workplace_name: bool = True
 
     def is_default(self) -> bool:
         return self == Normalise()

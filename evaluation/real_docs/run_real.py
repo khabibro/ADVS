@@ -38,6 +38,7 @@ def main() -> int:
     ap.add_argument("--repeat", type=int, default=1, help="run the file set N times in this process (determinism check)")
     ap.add_argument("--each", action="store_true", help="also run every file as its own submission")
     ap.add_argument("--memo-ocr", action="store_true", help="read each distinct file with OCR once per run (the output is deterministic); the same bytes in another submission reuse it")
+    ap.add_argument("--ocr-cache", type=Path, default=None, help="persistent OCR cache (sha256 -> pages, plus second-pass regions): a miss reads with OCR and stores, a hit replays, so a later run on the same files needs no OCR")
     ap.add_argument("--drop-requirement", default=None, help="also create a copy of the workflow without this document type; a submission selects it with \"workflow\": \"reduced\"")
     args = ap.parse_args()
 
@@ -83,7 +84,14 @@ def main() -> int:
         document["thresholds"] = [t for t in document["thresholds"] if t["document"] != args.drop_requirement]
         with SessionLocal() as db:
             reduced_id = ChecklistService().create(db, document, "harness").id
-    if args.memo_ocr:
+    if args.ocr_cache is not None:
+        import app.services.processing as _processing
+        from harness_core import OCRCacheProvider
+
+        _real_factory = _processing.get_ocr_provider
+        _cache = OCRCacheProvider(lambda settings: _real_factory(_processing.get_settings()), args.ocr_cache, "record")
+        _processing.get_ocr_provider = lambda settings: _cache
+    elif args.memo_ocr:
         import copy as _copy
 
         import app.services.processing as _processing

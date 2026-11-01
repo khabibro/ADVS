@@ -82,14 +82,6 @@ def guardrails(
                     f"{label}는 유효기간 확인을 끌 수 없습니다. 만료된 서류는 항상 보완 필요로 처리됩니다.",
                 )
     for position, item in enumerate(document.get("comparisons", [])):
-        normalise = item.get("normalise", {})
-        if normalise.get("parenthesised_latin"):
-            add(
-                "LOOSE_NORMALISE",
-                "INFO",
-                f"comparisons.{position}.normalise",
-                "괄호 안 영문 표기를 무시하면 서로 다른 영문 상호도 같게 볼 수 있습니다.",
-            )
         if item["severity"] == "WARNING":
             add(
                 "SOFT_COMPARISON",

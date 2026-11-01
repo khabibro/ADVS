@@ -39,9 +39,10 @@ def doc(kind: DocumentType, **values: str) -> DocumentSnapshot:
 
 
 def comparison_status(
-    left: str, right: str, normalise=None, kind="company_name", target_kind=None, target=SME
+    left: str, right: str, normalise=None, kind="company_name", target_kind=None, target=SME, number=None
 ) -> OverallStatus:
     target_kind = target_kind or kind
+    extra = {"business_registration_number": number} if number else {}
     params = {
         "source_document_type": BR.value,
         "source_field": kind,
@@ -65,7 +66,10 @@ def comparison_status(
         project_id=uuid.uuid4(),
         workflow_id=uuid.uuid4(),
         requirements=requirements,
-        documents=[doc(BR, **{kind: left}), doc(target, **{target_kind: right})],
+        documents=[
+            doc(BR, **{kind: left}, **extra),
+            doc(target, **{target_kind: right}, **extra),
+        ],
         context=VerificationContext(evaluation_date=date(2026, 10, 5)),
     )
     return result.status
@@ -92,22 +96,29 @@ def test_spaces_can_be_made_significant():
     assert comparison_status("한국  테크", "한국 테크", {"spaces": False}) == OverallStatus.READY
 
 
-def test_parenthesised_latin_can_be_ignored():
+def test_parenthesised_latin_is_ignored_by_default_and_can_be_made_significant():
+    latin = "한국테크(Hanguk Tech Co., Ltd.)"
+    assert comparison_status(latin, "한국테크") == OverallStatus.READY
     assert (
-        comparison_status("한국테크(Hanguk Tech Co., Ltd.)", "한국테크")
+        comparison_status(latin, "한국테크", {"parenthesised_latin": False})
         == OverallStatus.NEEDS_CORRECTION
     )
+    # a parenthesised Korean word is not Latin and is always compared
+    assert comparison_status("한국테크(서울)", "한국테크") == OverallStatus.NEEDS_CORRECTION
+
+
+def test_shorter_workplace_name_needs_the_same_valid_business_number():
+    ins = DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE
+    args = {"kind": "company_name", "target_kind": "workplace_name", "target": ins}
+    full, short = "한국샘플테크놀로지", "한국샘플"
     assert (
-        comparison_status(
-            "한국테크(Hanguk Tech Co., Ltd.)", "한국테크", {"parenthesised_latin": True}
-        )
-        == OverallStatus.READY
+        comparison_status(full, short, number="1048127386", **args) == OverallStatus.READY
     )
-    # a parenthesised Korean word is not Latin and is still compared
     assert (
-        comparison_status("한국테크(서울)", "한국테크", {"parenthesised_latin": True})
+        comparison_status(full, short, {"workplace_name": False}, number="1048127386", **args)
         == OverallStatus.NEEDS_CORRECTION
     )
+    assert comparison_status(full, short, **args) == OverallStatus.NEEDS_CORRECTION
 
 
 def test_legal_form_handling_covers_company_against_workplace_name():

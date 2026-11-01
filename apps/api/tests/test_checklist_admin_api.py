@@ -42,7 +42,7 @@ def test_workflow_read_has_a_sentence_for_every_rule(client, workflow):
     assert "90일 이내" in " ".join(
         s["text"] for s in sentences["documents"]["ENROLLMENT_CERTIFICATE"]
     )
-    assert set(sentences["comparisons"]) == {"stu-id", "stu-name", "stu-univ"}
+    assert set(sentences["comparisons"]) == {"stu-id", "stu-name", "stu-birth", "stu-univ"}
     assert "3.0" in sentences["thresholds"]["gpa-min"]
     assert "바꿀 수 없습니다" in sentences["check_date"]
 

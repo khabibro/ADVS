@@ -18,6 +18,7 @@ from app.core.domain import (
     RuleType,
     Severity,
 )
+from app.document_intelligence.company_names import company_key, company_names_agree
 from app.document_intelligence.evidence_sufficiency import (
     EffectiveValueSource,
     EvidenceAssessmentReason,
@@ -183,13 +184,14 @@ def _comparison_key(value: str, value_type: str, *, spaces: bool = True) -> str:
 
 
 #: Per-comparison normalisation switches a checklist may set (``params["normalise"]``). The defaults
-#: are today's behaviour, so a comparison without the key is unchanged.
+#: are the engine's behaviour for a comparison without the key. The last three only apply to
+#: company and workplace names.
 NORMALISE_DEFAULTS: dict[str, bool] = {
-    "legal_form": True,  # 주식회사 / (주) / ㈜ on company and workplace names do not matter
+    "legal_form": True,  # 주식회사 / (주) / ㈜ do not matter
     "spaces": True,  # spacing does not matter
-    "parenthesised_latin": False,  # an added "(Hanguk Tech Co., Ltd.)" does not matter
+    "parenthesised_latin": True,  # an added "(Hanguk Tech Co., Ltd.)" does not matter
+    "workplace_name": True,  # a shorter workplace name agrees under the same valid business number
 }
-_PARENTHESISED_LATIN_RE = re.compile(r"[(（]\s*[A-Za-z0-9][A-Za-z0-9 .,&'\-]*[)）]")
 
 
 # Generic affixes of an institution name that carry no identity (ownership kind, legal form, the title that
@@ -231,6 +233,11 @@ def _one_edit_apart(left: str, right: str) -> bool:
 #: documents print them, and a value on a single document stays unconfirmed unless other evidence exists
 #: (the acceptance policy already requires that for OCR-read identifiers).
 SUBMISSION_WIDE_FIELDS = frozenset({"student_id"})
+
+
+def _business_number_value(document: DocumentSnapshot) -> str | None:
+    number = document.fields.get("business_registration_number")
+    return number.normalized_value if number is not None else None
 
 
 def value_exists(snapshot: FieldSnapshot | None) -> bool:
@@ -829,23 +836,18 @@ class SubmissionVerificationEngine:
         source_field = source.fields.get(source_name)
         target_field = target.fields.get(target_name)
         if source_name == target_name and source_name in SUBMISSION_WIDE_FIELDS:
-            # Compared only when both documents print it. When one does not, the other's value is still
-            # checked on its own (a value on a single document stays unconfirmed), but nothing is compared.
-            for printed, doc, name, other_field in (
-                (source_field, source, source_name, target_field),
-                (target_field, target, target_name, source_field),
-            ):
-                if value_exists(printed) and field_absent(other_field):
-                    unresolved_single = self._unresolved_field(rule, doc, printed, name)
-                    return unresolved_single or RuleEvaluationResult(
-                        rule.id,
-                        rule.rule_type,
-                        RuleOutcome.NOT_APPLICABLE,
-                        document_type=source_type,
-                        field_name=source_name,
-                        related_document_type=target_type,
-                        related_field_name=target_name,
-                    )
+            # An observation, not a requirement: compared only when both documents print it. A value
+            # printed on one document alone is nothing to check or confirm.
+            if field_absent(source_field) or field_absent(target_field):
+                return RuleEvaluationResult(
+                    rule.id,
+                    rule.rule_type,
+                    RuleOutcome.NOT_APPLICABLE,
+                    document_type=source_type,
+                    field_name=source_name,
+                    related_document_type=target_type,
+                    related_field_name=target_name,
+                )
         unresolved = self._unresolved_field(
             rule,
             source,
@@ -868,17 +870,23 @@ class SubmissionVerificationEngine:
         value_type = str(rule.params.get("value_type", "string"))
         source_value, target_value = source_field.normalized_value, target_field.normalized_value
         options = {**NORMALISE_DEFAULTS, **(rule.params.get("normalise") or {})}
-        if options["legal_form"] and (
-            source_name in _COMPANY_NAME_FIELDS or target_name in _COMPANY_NAME_FIELDS
-        ):
+        company_fields = source_name in _COMPANY_NAME_FIELDS or target_name in _COMPANY_NAME_FIELDS
+        if options["legal_form"] and company_fields:
             source_value = strip_legal_entity_markers(source_value)
             target_value = strip_legal_entity_markers(target_value)
-        if options["parenthesised_latin"]:
-            source_value = _PARENTHESISED_LATIN_RE.sub("", source_value)
-            target_value = _PARENTHESISED_LATIN_RE.sub("", target_value)
         source_key = _comparison_key(source_value, value_type, spaces=options["spaces"])
         target_key = _comparison_key(target_value, value_type, spaces=options["spaces"])
         passed = source_key == target_key
+        if not passed and company_fields:
+            # Notation only (parenthesised Latin text, a shorter workplace name under the same business number).
+            latin, legal = options["parenthesised_latin"], options["legal_form"]
+            passed = company_names_agree(
+                company_key(source_value, latin=latin, legal_form=legal, spaces=options["spaces"]),
+                company_key(target_value, latin=latin, legal_form=legal, spaces=options["spaces"]),
+                _business_number_value(source),
+                _business_number_value(target),
+                prefix=options["workplace_name"],
+            )
         if not passed and value_type == "institution" and _one_edit_apart(source_key, target_key):
             # one character apart: most likely a recognition error, so a person decides; never an error
             return RuleEvaluationResult(

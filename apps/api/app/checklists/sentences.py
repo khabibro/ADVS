@@ -117,11 +117,9 @@ def comparison_sentence(item: dict[str, Any]) -> str:
     right = f"{document_label(target['document'])}의 {field_label(target['field'])}"
     options = {**NORMALISE_DEFAULTS, **item.get("normalise", {})}
     names = {source["field"], target["field"]}
-    applicable = ["parenthesised_latin"] if item["match"] != "IDENTIFIER" else []
-    if item["match"] != "IDENTIFIER":
-        applicable.insert(0, "spaces")
+    applicable = ["spaces"] if item["match"] != "IDENTIFIER" else []
     if names & {"company_name", "workplace_name"}:
-        applicable.insert(0, "legal_form")
+        applicable = ["legal_form", *applicable, "parenthesised_latin", "workplace_name"]
     ignored = [NORMALISE_KO[key] for key in applicable if options[key]]
     kind = MATCH_KINDS_KO[item["match"]].split(" (")[0]
     sentence = (

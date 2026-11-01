@@ -8,6 +8,7 @@ from app.services.requirements import DEFAULT_REQUIRED_FIELDS
 FIELD_LABELS_KO: dict[str, str] = {
     "applicant_name": "신청인 이름",
     "student_name": "이름",
+    "birth_date": "생년월일",
     "student_id": "학번",
     "university_name": "대학",
     "department": "학과",
@@ -48,6 +49,7 @@ NORMALISE_KO = {
     "legal_form": "주식회사·(주)·㈜ 표기",
     "spaces": "띄어쓰기",
     "parenthesised_latin": "괄호 안 영문 표기",
+    "workplace_name": "같은 사업자번호일 때 더 짧은 사업장명",
 }
 FIXED_POLICIES_KO = [
     "유사 서류(휴학증명서·지방세납세증명서 등)는 다른 서류로 보고 담당자 확인을 요청합니다.",

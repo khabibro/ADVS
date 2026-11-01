@@ -2,6 +2,7 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, replace
+from datetime import date
 
 from app.core.domain import DocumentType
 from app.document_intelligence.evidence import CoordinateSpace, EvidenceRef, EvidenceSourceKind
@@ -223,6 +224,8 @@ def _merge_separator_boxes(row: TextRow) -> TextRow:
 
 
 _STAMP_LIKE_MAX_CHARS = 6
+# A digit fragment must start at least this many date-box heights right of the date box.
+_STAMP_FRAGMENT_MIN_GAP = 0.5
 
 
 def _date_row_text(row: TextRow) -> str:
@@ -237,8 +240,23 @@ def _date_row_text(row: TextRow) -> str:
     date_box = dates[0].bounding_box
     others = [item for item in segments if item is not dates[0]]
 
+    def stamp_fragment(item: OCRLine, compact: str) -> bool:
+        """One or two digits printed clear of the date box: a seal read as characters.
+
+        The date is already a complete value in its own box, so a fragment that neither
+        touches nor continues it cannot change it. A fragment close to the box could be the
+        end of a date split in two and stays a blocker."""
+        if date_box is None or item.bounding_box is None or len(compact) > 2:
+            return False
+        if not compact.isdigit():
+            return False
+        gap = item.bounding_box.x - (date_box.x + date_box.width)
+        return gap >= date_box.height * _STAMP_FRAGMENT_MIN_GAP
+
     def mark_like(item: OCRLine) -> bool:
         compact = _compact(item.text)
+        if stamp_fragment(item, compact):
+            return True
         if compact.endswith((":", "：")) or any(ch.isdigit() for ch in compact):
             return False  # a label or another value, not a stamp
         if date_box is not None and item.bounding_box is not None:
@@ -686,6 +704,112 @@ def candidate_after_label(
     top_score = strongest[0].score
     tied_top = [candidate for candidate in strongest if abs(candidate.score - top_score) < 0.000001]
     return strongest[0] if len(tied_top) == 1 else None
+
+
+_HYPHENATED_BUSINESS_NUMBER_RE = re.compile(r"(?<!\d)\d{3}-\d{2}-\d{5}(?!\d)")
+
+
+def unique_business_number_candidate(source: ExtractionInput) -> ExtractionCandidate | None:
+    """The only hyphenated number of the document that passes the business-number check digit.
+
+    Two different valid numbers (an issuer's and an applicant's) make the page ambiguous: None.
+    The same number printed twice is one number."""
+    found: dict[str, tuple[str, list[EvidenceRef]]] = {}
+    for observation in _source_observations(source):
+        for segment, evidence in zip(observation.row.segments, observation.evidence, strict=False):
+            for match in _HYPHENATED_BUSINESS_NUMBER_RE.finditer(segment.text):
+                digits = normalize_business_number(match.group())
+                if digits is not None and is_valid_business_number(digits):
+                    found.setdefault(digits, (match.group(), [evidence] if evidence else []))
+    if len(found) != 1:
+        return None
+    raw, evidence_list = next(iter(found.values()))
+    return ExtractionCandidate(value=raw, evidence=evidence_list, relation="unique_number")
+
+
+_STACKED_ID_RE = re.compile(r"^(?:번)?[:：](\d{8,10})$|^(\d{9,10})$")
+_STACKED_LABEL_LOOKBACK = 4
+_STACKED_LABEL_MAX_CHARS = 4
+_TABLE_HEADER_MARKERS = ("구분", "이수", "과목")
+
+
+def stacked_label_identifier_candidate(source: ExtractionInput) -> ExtractionCandidate | None:
+    """A student number whose label was split into stacked fragments (e.g. "학" / "번" on separate
+    boxes), so the value stands alone after a colon.
+
+    Accepted only when exactly one number of 8-10 digits that starts with a plausible year stands in
+    the header block (before the first table header), a label fragment containing 학 or 번 is within
+    the few boxes above it, and the number is not a calendar date. Anything else: None."""
+    lines = _source_lines(source)
+    found: dict[str, tuple[str, list[EvidenceRef]]] = {}
+    for index, (text, evidence) in enumerate(lines):
+        compact = _compact(text)
+        if any(marker in compact for marker in _TABLE_HEADER_MARKERS):
+            break
+        match = _STACKED_ID_RE.match(compact)
+        if match is None:
+            continue
+        digits = match.group(1) or match.group(2)
+        if not digits.startswith(("19", "20")) or _looks_like_compact_date(digits):
+            continue
+        above = [
+            _compact(item_text)
+            for item_text, item_evidence in lines[max(0, index - _STACKED_LABEL_LOOKBACK) : index]
+            if _same_page(item_evidence, evidence)
+        ]
+        labelled = compact.startswith("번") or any(
+            0 < len(item) <= _STACKED_LABEL_MAX_CHARS and ("학" in item or "번" in item)
+            for item in above
+        )
+        if labelled:
+            found.setdefault(digits, (text, [evidence] if evidence else []))
+    if len(found) != 1:
+        return None
+    raw, evidence_list = next(iter(found.values()))
+    return ExtractionCandidate(value=raw, evidence=evidence_list, relation="stacked_label_number")
+
+
+def _same_page(left: EvidenceRef | None, right: EvidenceRef | None) -> bool:
+    return left is None or right is None or left.page_number == right.page_number
+
+
+def _looks_like_compact_date(digits: str) -> bool:
+    if len(digits) != 8:
+        return False
+    return normalize_date(f"{digits[:4]}-{digits[4:6]}-{digits[6:]}") is not None
+
+
+_BIRTH_LABELS = ("생년월일", "생일")
+_BIRTH_LOOKAHEAD = 6
+_BARE_DATE_RE = re.compile(r"(?<!\d)(?:19|20)\d{2}\s*[.\-/년]\s*\d{1,2}\s*[.\-/월]\s*\d{1,2}\s*일?")
+_MIN_BIRTH_AGE_YEARS = 14
+_MAX_BIRTH_AGE_YEARS = 80
+
+
+def separated_birth_date_candidate(source: ExtractionInput) -> ExtractionCandidate | None:
+    """A birth date whose label ("생년월일") is not on the value's row: the one date within the few boxes
+    after the label that is a plausible birth date (14-80 years old), before the first table header.
+    Two different plausible dates make it ambiguous: None."""
+    lines = _source_lines(source)
+    today = date.today()
+    found: dict[str, tuple[str, list[EvidenceRef]]] = {}
+    for index, (text, _) in enumerate(lines):
+        if not any(label in _compact(text) for label in _BIRTH_LABELS):
+            continue
+        for follow, evidence in lines[index : index + 1 + _BIRTH_LOOKAHEAD]:
+            if any(marker in _compact(follow) for marker in _TABLE_HEADER_MARKERS):
+                break
+            for match in _BARE_DATE_RE.finditer(follow):
+                iso = normalize_date(match.group())
+                if iso is None:
+                    continue
+                age = (today - date.fromisoformat(iso)).days / 365.25
+                if _MIN_BIRTH_AGE_YEARS <= age <= _MAX_BIRTH_AGE_YEARS:
+                    found.setdefault(iso, (match.group(), [evidence] if evidence else []))
+    if len(found) != 1:
+        return None
+    raw, evidence_list = next(iter(found.values()))
+    return ExtractionCandidate(value=raw, evidence=evidence_list, relation="separated_label_date")
 
 
 def candidate_right_of_label(
@@ -1188,9 +1312,24 @@ def standalone_date_candidate(source: ExtractionInput) -> ExtractionCandidate | 
             if not _DOCUMENT_TITLE_RE.search(_compact(label))
         ):
             continue
-        if _followed_by_issuer(observations, index):
+        if _followed_by_issuer(observations, index) or _preceded_by_certification(
+            observations, index
+        ):
             return candidate
     return None
+
+
+def _preceded_by_certification(observations: list[_RowObservation], index: int) -> bool:
+    """True when a certification sentence ("위의 사실을 증명합니다.") sits just above the date on
+    the same page. The issuance block is anchored from above, so a stamp or signature that the
+    OCR shreds below the date cannot make the date disappear."""
+    page_number = observations[index].row.page_number
+    above = observations[max(0, index - _CERTIFICATION_LOOKBACK) : index]
+    return any(
+        item.row.page_number == page_number
+        and _CERTIFICATION_SENTENCE_RE.search(_compact(item.row.text))
+        for item in above
+    )
 
 
 def _followed_by_issuer(observations: list[_RowObservation], index: int) -> bool:
@@ -1352,6 +1491,29 @@ class BaseDocumentExtractor(ABC):
         method = "spatial_right_of_label" if used_spatial_candidate else candidate.relation
         return self._value(field_name, raw, normalized, method, candidate)
 
+    def birth_date_field(self, text: ExtractionInput) -> ExtractedValue:
+        """생년월일 beside its value; otherwise the one plausible birth date after a separated label."""
+        labelled = self.date_field(text, "birth_date", list(_BIRTH_LABELS))
+        if labelled.normalized_value is not None:
+            return labelled
+        candidate = separated_birth_date_candidate(text)
+        normalized = normalize_date(candidate.value) if candidate else None
+        if candidate is None or normalized is None:
+            return labelled
+        return self._value("birth_date", candidate.value, normalized, "separated_label_date", candidate)
+
+    def student_id_field(self, text: ExtractionInput) -> ExtractedValue:
+        """Labelled student number; otherwise the number beside a split-up label (positional, so it
+        is never confirmed without independent evidence)."""
+        labelled = self.text_field(text, "student_id", ["학번"])
+        if labelled.normalized_value is not None:
+            return labelled
+        candidate = stacked_label_identifier_candidate(text)
+        digits = re.sub(r"\D", "", candidate.value) if candidate else None
+        if candidate is None or not digits:
+            return labelled
+        return self._value("student_id", candidate.value, digits, "stacked_label_number", candidate)
+
     def issuer_university_field(self, text: ExtractionInput) -> ExtractedValue:
         candidate = issuer_university_candidate(text)
         normalized = normalize_text_field(candidate.value if candidate else None)
@@ -1411,6 +1573,13 @@ class BaseDocumentExtractor(ABC):
                 )
                 or candidate
             )
+        unique = False
+        if candidate is None or normalize_business_number(candidate.value) is None:
+            # The label is split, parenthesised or far from its value: fall back to the one
+            # hyphenated number on the page that passes the check digit.
+            found = unique_business_number_candidate(text)
+            if found is not None:
+                candidate, unique = found, True
         raw_context = candidate.value if candidate else None
         match = (
             BUSINESS_NUMBER_RE.search(canonicalize_numeric_text(raw_context))
@@ -1424,7 +1593,8 @@ class BaseDocumentExtractor(ABC):
         if candidate is None or normalized is None:
             return self.missing(field_name)
         assert raw_value is not None
-        value = self._value(field_name, raw_value, normalized, "regex_business_number", candidate)
+        method = "regex_business_number_unique" if unique else "regex_business_number"
+        value = self._value(field_name, raw_value, normalized, method, candidate)
         if not is_valid_business_number(normalized):
             return replace(value, needs_review=True, extraction_method=BRN_CHECKSUM_FAILED_METHOD)
         return value

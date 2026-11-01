@@ -165,6 +165,12 @@ UNSUPPORTED_LOOK_ALIKE_TITLES: tuple[str, ...] = (
     "졸업예정증명서",  # looks like 졸업증명서 (GRADUATION_CERTIFICATE)
 )
 
+# Issuer words that tell the two tax certificates apart when the title alone does not (a local-tax
+# certificate shares "납세증명서" and the labels with the national one). A local marker anywhere in
+# the text makes the file a look-alike; a national certificate must show a national marker.
+LOCAL_TAX_MARKERS: tuple[str, ...] = ("지방세", "위택스")
+NATIONAL_TAX_MARKERS: tuple[str, ...] = ("국세", "세무서")
+
 
 @dataclass
 class ClassificationAlternative:
@@ -247,6 +253,12 @@ class DocumentClassifier:
         if winner_score < MIN_SCORE_FOR_CONFIDENT_TYPE or not has_strong_signal[winner_type]:
             return _unknown(scores, evidence)
 
+        issuer_unconfirmed = False
+        if winner_type == DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE:
+            if any(marker in haystack for marker in LOCAL_TAX_MARKERS):
+                return _unknown(scores, evidence)
+            issuer_unconfirmed = not any(marker in haystack for marker in NATIONAL_TAX_MARKERS)
+
         denom = winner_score + runner_score
         confidence = min(winner_score / denom, 0.99) if denom > 0 else 0.0
         ambiguous = runner_score > 0 and (winner_score - runner_score) <= AMBIGUITY_MARGIN
@@ -258,6 +270,6 @@ class DocumentClassifier:
             confidence_score=confidence,
             score=winner_score,
             evidence=evidence[winner_type],
-            needs_review=ambiguous,
+            needs_review=ambiguous or issuer_unconfirmed,
             alternatives=_alternatives(scores),
         )

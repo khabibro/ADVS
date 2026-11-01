@@ -140,6 +140,7 @@ def legacy_student() -> Checklist:
                 [
                     _student_identity("student_id", "identifier"),
                     _student_identity("student_name"),
+                    _student_identity("birth_date", "identifier"),
                     _student_identity("university_name", "institution"),
                     _issue_before_year_end(transcript),
                     (
