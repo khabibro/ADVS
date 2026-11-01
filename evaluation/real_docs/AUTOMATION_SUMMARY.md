@@ -3,6 +3,56 @@
 Branch `auto/real-automation` (local, not pushed, not merged). Counts and categories only; no document values.
 Development data: student fresh G0–G5 + G0b, seed A, real pair; business company F21. Validation (aggregate numbers only): student seed B; business company RS. Validation is a check against overfitting, not an independent test.
 
+## Final state on main (tag `real-docs-v2`, plus the log and harness option)
+
+All numbers from `main`, the same code that passed the full gates. Labels: **dev** = data the fixes were developed on; **validation** = held back from development and read in aggregate only (not an untouched test: it was looked at as a check against overfitting); **test** = fictional hold-out sets of earlier phases, not used to design these fixes. There is **no untouched real test set**; a fresh real test would need new documents.
+
+**Denominators.** Business: 76 single-file valid submissions + 2 multi-page files = 78 (the multi-page files hold several valid certificates in one file and are never READY). Student: 108 valid submissions (fresh 54, seed A 27, seed B 27), 14 negatives. Business check date: the realistic date (20 days before the earliest printed validity end). At the harness date (the last valid day of the 국세 certificate, a boundary case by construction) the same code gives 11 READY and 48 with at most one click (of 78), against 0 and 8 at the start; the start was not measured at the realistic date.
+
+### Business (fully automatic and with at most one click)
+
+| | start | final | dev (company F21, 38) | validation (company RS, 38) |
+|---|---|---|---|---|
+| valid READY, fully automatic | 0 / 76 | **46 / 76** (46 / 78 with the multi-page files) | 23 / 38 | 23 / 38 |
+| valid READY after at most one staff click | 8 / 78 (measured at the harness date only) | **53 / 78** (all 53 within the 76; the 2 multi-page files are never READY) | 25 / 38 | 28 / 38 |
+| verification issues per valid submission | 6.90 | 1.28 | | |
+| wrong 제출 가능 / wrong values confirmed | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| negatives READY (114) | 0 | 12 (the N5 duplicate uploads: the copy is ignored with a notice, status of the valid counterpart) | | |
+
+N1 (expired digital 국세 certificate) detected: 16 of 20 NEEDS_CORRECTION, was 0. Auto-accepted fields all correct against gold: 553 (realistic dates), 0 wrong.
+
+### Student
+
+| | start | final | dev (fresh 54 + seed A 27) | validation (seed B, 27) |
+|---|---|---|---|---|
+| verification issues per valid submission | **8.19** | **6.11** | fresh 8.50 to 6.04; seed A 8.11 to 6.37 | 7.67 to 6.00 |
+| valid READY, fully automatic | 0 / 108 | 0 / 108 | 0 / 81 | 0 / 27 |
+| valid READY after at most two staff clicks (enrolment issue date + GPA) | 0 / 108 (the metric was defined after the loop; 0 at the start) | **6 / 108** | 6 / 81 (all 6 in the fresh photo set, 0 of 27 in seed A) | **0 / 27** |
+| valid READY after at most one click | 0 | 0 | 0 | 0 |
+| auto-accepted fields all correct | | fresh 120, seed A 55, pair 2 | | seed B 51 |
+| wrong values auto-accepted / wrong 제출 가능 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| student negatives READY | 0 / 14 | 0 / 14 | | |
+
+Read the two-click figure with care: all 6 are in the fresh development set and none in the validation set, so it is not evidence of generalisation. The remaining student blockers (GPA arithmetic evaluable on about 17 of 118 transcript pages; university and names below the confidence floor, without a second source or vetoed) are documented in the log, round 4. Owner decisions: the confidence floor and the veto stay unchanged; the student target is two clicks; an applicant-entered GPA is a later phase; capture guidance goes to the UI (`docs/planning/CAPTURE_GUIDANCE_AND_APPLICANT_GPA.md`).
+
+### Safety (fictional injection suites, replayed from the frozen OCR caches)
+
+| corpus | label | cases | wrong values confirmed | robust-accepted with a wrong digit (verdict unchanged) | READY with a wrong verdict |
+|---|---|---|---|---|---|
+| dev | development | 1,554 | 0 | 0 | 0 |
+| hold-out 1 | test | 1,758 | 0 | 30 | 0 |
+| hold-out 2 | test | 1,738 | 1 (known case E3c-both, owner-accepted) | 0 | 1 (the same case) |
+| hold-out 3 | development since Phase G | 1,763 | 0 | 11 | 0 |
+| **total** | | **6,813** | **1** | **41** | **1** |
+
+The new digit-errors-across-the-validity-end cases (E19): 876 cases, 0 READY. Other gates on main: backend 761 tests, ruff, mypy; demo rehearsal x3 ALL PASS; Playwright/axe 22 passed; manipulated PDFs 0 hidden tokens read (4 manipulations x 237 copies; 95% upper bound for a miss 1.27%). Real sets: 0 wrong values auto-accepted, 0 wrong 제출 가능 in every family above. Robust-accepted values are labelled "decision-robust (value not individually confirmed)" and are never stored or shown as confirmed.
+
+### 최종 상태 (멘토용)
+
+- **사업자 서류**: 현실적인 점검일 기준 유효 제출 76건 중 46건이 사람 없이 제출 가능(개발 업체 23/38, 검증 업체 23/38), 사람 확인 1회 이내로는 78건 중 53건(25/38, 28/38). 잘못된 값 확정 0, 잘못된 제출 가능 0.
+- **학생 서류**: 제출 서류당 확인 항목 수 8.19 → 6.11. 재학증명서 발급일과 GPA 두 번의 확인으로 제출 가능한 건수는 108건 중 6건(모두 개발용 사진 세트, 검증 세트 0건)이며, 완전 자동 제출 가능은 아직 0건입니다.
+- **안전**: 가상 서류 주입 시험 6,813건에서 잘못된 값 확정 1건(알려진 사례), 잘못된 제출 가능 1건(같은 사례), 실제 서류 0건.
+
 ## Result in one paragraph
 
 Business: 47 of 76 valid submissions are 제출 가능 at the realistic check date, all correct (unchanged since the validity-end merge); 0 wrong 제출 가능, 0 wrong values confirmed. Student: still 0, but the work behind it is now concrete. Your corrections are in: 학번 is not required on the 재학증명서 (the student is identified by name and date of birth, 학번 is an observation), the certificate-number year anchors the transcript's issue date, and the leak mechanism of the name veto is understood. What is left for the first student 제출 가능 is **not code any more**: the 재학증명서 issue date (90-day rule, cannot be made digit-robust), the university and student name on the 재학증명서 (stamped-line re-read), and GPA (edited-GPA negatives block any robust shortcut). The head is **gate-complete and ready to merge to main** on your word (section "Merge readiness").
