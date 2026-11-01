@@ -91,6 +91,7 @@ class Strategy(StrEnum):
     S9 = "S9"
     S10 = "S10"  # S9 + the student pair: cross-document confirmation, both reads above the floor
     S11 = "S11"  # S10 + a below-floor read confirmed by an exact match with the other document
+    S12 = "S12"  # S11 + the same-person verdict is decision-robust when both names read the same
 
 
 @dataclass(frozen=True)
@@ -108,6 +109,10 @@ class Features:
     # are compared by their name part.
     student_pair: bool = False
     pair_below_floor: bool = False  # a below-floor read is confirmed by an exact match of a reliable one
+    # Both student documents read the same name exactly (any confidence) and the date of birth is confirmed on
+    # both: the same-person verdict does not depend on which characters the name really has. The name value
+    # stays unconfirmed.
+    name_pair_robust: bool = False
 
 
 STRATEGY_FEATURES: dict[Strategy, Features] = {
@@ -173,6 +178,19 @@ STRATEGY_FEATURES: dict[Strategy, Features] = {
         robust=True,
         student_pair=True,
         pair_below_floor=True,
+    ),
+    Strategy.S12: Features(
+        validators=True,
+        corroboration=True,
+        second_pass=True,
+        application=True,
+        second_pass_veto=True,
+        name_veto=True,
+        internal=True,
+        robust=True,
+        student_pair=True,
+        pair_below_floor=True,
+        name_pair_robust=True,
     ),
 }
 
@@ -758,6 +776,8 @@ def decide(
         decisions[key] = _decide_corroborated(
             item, rule, fields, index, context, strategy, features
         )
+    if features.name_pair_robust:
+        _name_pair_robust_pass(fields, decisions, strategy, features)
     return decisions
 
 
@@ -826,6 +846,74 @@ def _group_values(
 BELOW_FLOOR_PAIR_FIELDS = frozenset(
     {"student_name", "university_name", "birth_date", "admission_date", "issue_date"}
 )
+
+
+#: Reasons for which a name stays open although nothing contradicts it; only these may be settled for the decision.
+_NAME_OPEN_REASONS = frozenset({"CONFIDENCE_BELOW_FLOOR", "NO_INDEPENDENT_CONFIRMATION"})
+
+
+def _name_pair_robust_pass(
+    fields: Sequence[FieldInput],
+    decisions: dict[tuple[uuid.UUID, str], AutoDecision],
+    strategy: Strategy,
+    features: Features,
+) -> None:
+    """Both student documents read the same name exactly (whatever the confidence) and the date of birth is
+    accepted and equal on both: the same-person verdict is then decision-robust. The name value is not
+    confirmed and is labelled so. A differing, missing or vetoed name, or a birth date that is not accepted on
+    both documents, settles nothing."""
+    names = [
+        item
+        for item in fields
+        if item.field_name == "student_name"
+        and item.document_type in STUDENT_PAIR_TYPES
+        and item.ocr
+        and item.value is not None
+        and not item.has_current_review
+    ]
+    births = {
+        item.document_id: item
+        for item in fields
+        if item.field_name == "birth_date" and item.document_type in STUDENT_PAIR_TYPES
+    }
+    for item in names:
+        key = (item.document_id, "student_name")
+        current = decisions.get(key)
+        if current is None or current.accepted or current.reason not in _NAME_OPEN_REASONS:
+            continue
+        partners = [
+            other
+            for other in names
+            if other.document_id != item.document_id
+            and other.document_type != item.document_type
+            and other.checksum != item.checksum
+        ]
+        if len(partners) != 1 or _squash(partners[0].value or "") != _squash(item.value or ""):
+            continue
+        partner = partners[0]
+        mine, theirs = births.get(item.document_id), births.get(partner.document_id)
+        if (
+            mine is None
+            or theirs is None
+            or mine.value is None
+            or mine.value != theirs.value
+            or not _accepted(decisions, mine)
+            or not _accepted(decisions, theirs)
+        ):
+            continue
+        decisions[key] = AutoDecision(
+            True,
+            strategy.value,
+            rule_id="PERSON:DECISION_ROBUST_PAIR",
+            sources=("decision_robust", "pair_name"),
+            corroborating_document_ids=(partner.document_id,),
+            robust=True,
+        )
+
+
+def _accepted(decisions: dict[tuple[uuid.UUID, str], AutoDecision], item: FieldInput) -> bool:
+    decision = decisions.get((item.document_id, item.field_name))
+    return bool(decision and decision.accepted)
 
 
 def _below_floor_pair_allowed(item: FieldInput, features: Features) -> bool:
