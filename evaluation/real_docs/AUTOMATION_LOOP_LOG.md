@@ -107,6 +107,13 @@ Loop head, business: 47 of 76 valid submissions READY at the realistic date, 11 
 - **What-if (harness only, off by default; `run_real.py --applicant-from-gold`):** project created with the applicant name filled in, as the optional field of the new-project form would. Enrolment student-name issues 46 to 16, transcript student-name issues 22 to 59 (a transcript read that differs from the typed name is rejected as in conflict), READY after at most one confirmation still 0, at most two still 6. The application source therefore does not unlock the student goal by itself.
 - **Stop condition reached:** the remaining clusters (GPA second source, university second source / confidence floor, veto policy) need owner decisions; no accepted change this round. Harness option committed; no application code changed.
 
+## Round 5 (student pair confirmation): see the summary section of the same name
+
+- Prototype findings before coding: the real transcript's cumulative GPA differs from the credit-weighted mean of its semester GPAs by 0.03 on every page where the columns can be paired (credits sum to the printed total), so the specified arithmetic check cannot confirm it; the semester columns are three, 49 of 118 pages have equal credit and GPA line counts, and tolerant credit labels made it worse (17 to 3 evaluable pages: more semesters found, sums then differ from the total).
+- Rejected inside the round: a rule making a visible admission-date difference review: the rule engine does not see the value of an unreliable read, so 44 valid pairs got a review item for a date nobody could compare (one-click count 9 to 6); reverted (4aa7d05). The comparison stays: both reads reliable and different gives correction; an unreliable read is not acted on.
+- Process notes: one test-harness slip (zsh did not split a tag/strategy pair, so a run wrote empty folders; removed); wrong at no point: every real-set cell 0 wrong, 0 false READY.
+- Decisions taken: variant (b) adopted as the default (S11) on the evidence in the summary table.
+
 ## Safety gate status (superseded by the merge section above; 5c4fb75 was the earlier head)
 - Backend 723 tests, ruff, mypy clean. Real sets: 0 wrong accepted, 0 false READY, all real negatives non-READY (student 14 + business 114).
 - Fictional replay (injections dev, hold-outs 1–3): running; result below when finished.
