@@ -54,6 +54,8 @@ class SnapshotCase(_Strict):
     check_date: date
     applicant_name: str | None = None
     company_name: str | None = None
+    # What the check said when the snapshot was taken; the replay must reproduce it.
+    observed_status: str | None = None
     documents: list[SnapshotDocument]
 
 

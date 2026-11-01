@@ -1,0 +1,6255 @@
+{
+ "schema": "advs.field-snapshot/1",
+ "kind": "fictional",
+ "corpus": "holdout",
+ "title_ko": "보류 말뭉치 1",
+ "created": "2026-11-02",
+ "cases": [
+  {
+   "id": "B01-digital",
+   "label": "B01 All consistent, all valid (digital)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "READY",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": "부산광역시 가상구 샘플로 77, 3층 (견본동)",
+       "state": "SUFFICIENT"
+      },
+      "business_item": {
+       "value": "응용 소프트웨어 개발 및 공급업",
+       "state": "SUFFICIENT"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": "정보통신업",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": "TEST-0010-2026-00001",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-04-16",
+       "state": "SUFFICIENT"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B01-images",
+   "label": "B01 All consistent, all valid (images)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "READY",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_item": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B01-scanned",
+   "label": "B01 All consistent, all valid (scanned)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_item": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B02-digital",
+   "label": "B02 Company name written four different ways (digital)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "READY",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": "부산광역시 가상구 샘플로 77, 3층 (견본동)",
+       "state": "SUFFICIENT"
+      },
+      "business_item": {
+       "value": "응용 소프트웨어 개발 및 공급업",
+       "state": "SUFFICIENT"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": "정보통신업",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": "TEST-0010-2026-00003",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "(주)한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-04-16",
+       "state": "SUFFICIENT"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "(주)한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "한빛테스트(주)",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B02-images",
+   "label": "B02 Company name written four different ways (images)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "READY",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_item": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "(주)한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "(주)한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "한빛테스트(주)",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B02-scanned",
+   "label": "B02 Company name written four different ways (scanned)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "READY",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_item": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "(주)한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "(주)한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "한빛테스트(주)",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B03-digital",
+   "label": "B03 Tax certificate belongs to another company (digital)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "NEEDS_CORRECTION",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": "부산광역시 가상구 샘플로 77, 3층 (견본동)",
+       "state": "SUFFICIENT"
+      },
+      "business_item": {
+       "value": "응용 소프트웨어 개발 및 공급업",
+       "state": "SUFFICIENT"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": "정보통신업",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": "TEST-0010-2026-00005",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-04-16",
+       "state": "SUFFICIENT"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 미래샘플",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B03-images",
+   "label": "B03 Tax certificate belongs to another company (images)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_item": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B03-scanned",
+   "label": "B03 Tax certificate belongs to another company (scanned)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_item": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B04-digital",
+   "label": "B04 SME certificate business number differs (last two digits) (digital)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "NEEDS_CORRECTION",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": "부산광역시 가상구 샘플로 77, 3층 (견본동)",
+       "state": "SUFFICIENT"
+      },
+      "business_item": {
+       "value": "응용 소프트웨어 개발 및 공급업",
+       "state": "SUFFICIENT"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": "정보통신업",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135704",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": "TEST-0010-2026-00007",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-04-16",
+       "state": "SUFFICIENT"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B04-images",
+   "label": "B04 SME certificate business number differs (last two digits) (images)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_item": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B04-scanned",
+   "label": "B04 SME certificate business number differs (last two digits) (scanned)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_item": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B05-digital",
+   "label": "B05 Tax certificate expired before submission (digital)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "NEEDS_CORRECTION",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": "부산광역시 가상구 샘플로 77, 3층 (견본동)",
+       "state": "SUFFICIENT"
+      },
+      "business_item": {
+       "value": "응용 소프트웨어 개발 및 공급업",
+       "state": "SUFFICIENT"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": "정보통신업",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": "TEST-0010-2026-00009",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-04-16",
+       "state": "SUFFICIENT"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-09-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B05-images",
+   "label": "B05 Tax certificate expired before submission (images)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_item": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B05-scanned",
+   "label": "B05 Tax certificate expired before submission (scanned)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "NEEDS_CORRECTION",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_item": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-09-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B06-digital",
+   "label": "B06 Tax certificate validity ends on the submission date (digital)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "READY",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": "부산광역시 가상구 샘플로 77, 3층 (견본동)",
+       "state": "SUFFICIENT"
+      },
+      "business_item": {
+       "value": "응용 소프트웨어 개발 및 공급업",
+       "state": "SUFFICIENT"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": "정보통신업",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": "TEST-0010-2026-00011",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-04-16",
+       "state": "SUFFICIENT"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-10-12",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B06-images",
+   "label": "B06 Tax certificate validity ends on the submission date (images)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_item": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B06-scanned",
+   "label": "B06 Tax certificate validity ends on the submission date (scanned)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_item": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B07-digital",
+   "label": "B07 Social-insurance certificate has no validity date (original sample structure) (digital)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": "부산광역시 가상구 샘플로 77, 3층 (견본동)",
+       "state": "SUFFICIENT"
+      },
+      "business_item": {
+       "value": "응용 소프트웨어 개발 및 공급업",
+       "state": "SUFFICIENT"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": "정보통신업",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": "TEST-0010-2026-00013",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-04-16",
+       "state": "SUFFICIENT"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B07-digital_partial_checklist",
+   "label": "B07 Social-insurance certificate has no validity date (original sample structure) (digital_partial_checklist)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": "부산광역시 가상구 샘플로 77, 3층 (견본동)",
+       "state": "SUFFICIENT"
+      },
+      "business_item": {
+       "value": "응용 소프트웨어 개발 및 공급업",
+       "state": "SUFFICIENT"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": "정보통신업",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": "TEST-0010-2026-00013",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-04-16",
+       "state": "SUFFICIENT"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B07-images",
+   "label": "B07 Social-insurance certificate has no validity date (original sample structure) (images)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_item": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B07-scanned",
+   "label": "B07 Social-insurance certificate has no validity date (original sample structure) (scanned)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_item": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B08-digital",
+   "label": "B08 No 사업자등록증 in the submission (digital)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "NEEDS_CORRECTION",
+   "documents": [
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": "TEST-0010-2026-00015",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-04-16",
+       "state": "SUFFICIENT"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B08-images",
+   "label": "B08 No 사업자등록증 in the submission (images)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "NEEDS_CORRECTION",
+   "documents": [
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B08-scanned",
+   "label": "B08 No 사업자등록증 in the submission (scanned)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "NEEDS_CORRECTION",
+   "documents": [
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B09-digital",
+   "label": "B09 The same tax certificate uploaded twice (plus a renamed copy) (digital)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "READY",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": "부산광역시 가상구 샘플로 77, 3층 (견본동)",
+       "state": "SUFFICIENT"
+      },
+      "business_item": {
+       "value": "응용 소프트웨어 개발 및 공급업",
+       "state": "SUFFICIENT"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": "정보통신업",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": "TEST-0010-2026-00017",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-04-16",
+       "state": "SUFFICIENT"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B09-images",
+   "label": "B09 The same tax certificate uploaded twice (plus a renamed copy) (images)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "READY",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_item": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B09-scanned",
+   "label": "B09 The same tax certificate uploaded twice (plus a renamed copy) (scanned)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_item": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B10-digital",
+   "label": "B10 Business number fails the check digit (consistent on all documents) (digital)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": "부산광역시 가상구 샘플로 77, 3층 (견본동)",
+       "state": "SUFFICIENT"
+      },
+      "business_item": {
+       "value": "응용 소프트웨어 개발 및 공급업",
+       "state": "SUFFICIENT"
+      },
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_type": {
+       "value": "정보통신업",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "certificate_number": {
+       "value": "TEST-0010-2026-00019",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-04-16",
+       "state": "SUFFICIENT"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B10-images",
+   "label": "B10 Business number fails the check digit (consistent on all documents) (images)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_item": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B10-scanned",
+   "label": "B10 Business number fails the check digit (consistent on all documents) (scanned)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_item": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B11-digital",
+   "label": "B11 지방세 납세증명서 submitted instead of the national-tax certificate (digital)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": "부산광역시 가상구 샘플로 77, 3층 (견본동)",
+       "state": "SUFFICIENT"
+      },
+      "business_item": {
+       "value": "응용 소프트웨어 개발 및 공급업",
+       "state": "SUFFICIENT"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": "정보통신업",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": "TEST-0010-2026-00021",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-04-16",
+       "state": "SUFFICIENT"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "UNKNOWN",
+     "fields": {}
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B11-images",
+   "label": "B11 지방세 납세증명서 submitted instead of the national-tax certificate (images)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_item": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "UNKNOWN",
+     "fields": {}
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B11-scanned",
+   "label": "B11 지방세 납세증명서 submitted instead of the national-tax certificate (scanned)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_item": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "UNKNOWN",
+     "fields": {}
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B12-digital",
+   "label": "B12 Two 사업자등록증 with different business numbers (digital)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": "부산광역시 가상구 샘플로 77, 3층 (견본동)",
+       "state": "SUFFICIENT"
+      },
+      "business_item": {
+       "value": "응용 소프트웨어 개발 및 공급업",
+       "state": "SUFFICIENT"
+      },
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": "정보통신업",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": "부산광역시 가상구 샘플로 77, 3층 (견본동)",
+       "state": "SUFFICIENT"
+      },
+      "business_item": {
+       "value": "응용 소프트웨어 개발 및 공급업",
+       "state": "SUFFICIENT"
+      },
+      "business_registration_number": {
+       "value": "6178197530",
+       "state": "SUFFICIENT"
+      },
+      "business_type": {
+       "value": "정보통신업",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "certificate_number": {
+       "value": "TEST-0010-2026-00023",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-04-16",
+       "state": "SUFFICIENT"
+      },
+      "representative_name": {
+       "value": "정가상",
+       "state": "SUFFICIENT"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": "6178135795",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B12-images",
+   "label": "B12 Two 사업자등록증 with different business numbers (images)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_item": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_item": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "B12-scanned",
+   "label": "B12 Two 사업자등록증 with different business numbers (scanned)",
+   "workflow": "business",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_item": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "BUSINESS_REGISTRATION_CERTIFICATE",
+     "fields": {
+      "business_address": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_item": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "business_type": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      }
+     }
+    },
+    {
+     "type": "SME_CONFIRMATION_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "certificate_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "representative_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "valid_from": {
+       "value": "2026-04-08",
+       "state": "SUFFICIENT"
+      },
+      "valid_until": {
+       "value": "2027-04-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "NATIONAL_TAX_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "company_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "SOCIAL_INSURANCE_PAYMENT_CERTIFICATE",
+     "fields": {
+      "business_registration_number": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "valid_until": {
+       "value": "2026-11-07",
+       "state": "SUFFICIENT"
+      },
+      "workplace_name": {
+       "value": "주식회사 한빛테스트",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S01-digital",
+   "label": "S01 Enrollment + transcript, consistent and recent (digital)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "READY",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": "통계학과",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S01-images",
+   "label": "S01 Enrollment + transcript, consistent and recent (images)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S01-scanned",
+   "label": "S01 Enrollment + transcript, consistent and recent (scanned)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "university_name": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S02-digital",
+   "label": "S02 Enrollment certificate issued 120 days before submission (digital)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "NEEDS_CORRECTION",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": "통계학과",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-06-14",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S02-images",
+   "label": "S02 Enrollment certificate issued 120 days before submission (images)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S02-scanned",
+   "label": "S02 Enrollment certificate issued 120 days before submission (scanned)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S03-digital",
+   "label": "S03 GPA 2.70/4.5 against a 3.0 threshold (digital)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "NEEDS_CORRECTION",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": "통계학과",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "2.7",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S03-images",
+   "label": "S03 GPA 2.70/4.5 against a 3.0 threshold (images)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S03-scanned",
+   "label": "S03 GPA 2.70/4.5 against a 3.0 threshold (scanned)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "student_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S04-digital",
+   "label": "S04 GPA 3.10 on a 4.3 scale (digital)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "READY",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": "통계학과",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.1",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.3",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S04-images",
+   "label": "S04 GPA 3.10 on a 4.3 scale (images)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "gpa_scale": {
+       "value": "4.3",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S04-scanned",
+   "label": "S04 GPA 3.10 on a 4.3 scale (scanned)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "gpa": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "gpa_scale": {
+       "value": "4.3",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S05-digital",
+   "label": "S05 Transcript shows a different student name (digital)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "NEEDS_CORRECTION",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": "통계학과",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "정테스트",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S05-images",
+   "label": "S05 Transcript shows a different student name (images)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S05-scanned",
+   "label": "S05 Transcript shows a different student name (scanned)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S06-digital",
+   "label": "S06 Enrollment and transcript show different departments (digital)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "READY",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": "통계학과",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S06-images",
+   "label": "S06 Enrollment and transcript show different departments (images)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S06-scanned",
+   "label": "S06 Enrollment and transcript show different departments (scanned)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S07-digital",
+   "label": "S07 휴학증명서 and 졸업예정증명서 built on the enrollment layout (digital)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "UNKNOWN",
+     "fields": {}
+    },
+    {
+     "type": "UNKNOWN",
+     "fields": {}
+    }
+   ]
+  },
+  {
+   "id": "S07-images",
+   "label": "S07 휴학증명서 and 졸업예정증명서 built on the enrollment layout (images)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "UNKNOWN",
+     "fields": {}
+    },
+    {
+     "type": "UNKNOWN",
+     "fields": {}
+    }
+   ]
+  },
+  {
+   "id": "S07-scanned",
+   "label": "S07 휴학증명서 and 졸업예정증명서 built on the enrollment layout (scanned)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "UNKNOWN",
+     "fields": {}
+    },
+    {
+     "type": "UNKNOWN",
+     "fields": {}
+    }
+   ]
+  },
+  {
+   "id": "S08-digital",
+   "label": "S08 Enrollment certificate with the issue-date line blank (digital)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": "통계학과",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S08-images",
+   "label": "S08 Enrollment certificate with the issue-date line blank (images)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S08-scanned",
+   "label": "S08 Enrollment certificate with the issue-date line blank (scanned)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S09-digital",
+   "label": "S09 Bordered enrollment layout that prints no student number (digital)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "READY",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": "통계학과",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S09-images",
+   "label": "S09 Bordered enrollment layout that prints no student number (images)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S09-scanned",
+   "label": "S09 Bordered enrollment layout that prints no student number (scanned)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S10-digital",
+   "label": "S10 Older table-style transcript (GPA inside a header table cell) (digital)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": "2002-11-03",
+       "state": "SUFFICIENT"
+      },
+      "department": {
+       "value": "통계학과",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": "2026-10-07",
+       "state": "SUFFICIENT"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S10-images",
+   "label": "S10 Older table-style transcript (GPA inside a header table cell) (images)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": "가상과학기술대학교",
+       "state": "SUFFICIENT"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "S10-scanned",
+   "label": "S10 Older table-style transcript (GPA inside a header table cell) (scanned)",
+   "workflow": "student",
+   "check_date": "2026-10-12",
+   "observed_status": "REVIEW_REQUIRED",
+   "documents": [
+    {
+     "type": "ENROLLMENT_CERTIFICATE",
+     "fields": {
+      "birth_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "department": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      }
+     }
+    },
+    {
+     "type": "TRANSCRIPT",
+     "fields": {
+      "birth_date": {
+       "value": null,
+       "state": "UNAVAILABLE"
+      },
+      "gpa": {
+       "value": "3.8",
+       "state": "SUFFICIENT"
+      },
+      "gpa_scale": {
+       "value": "4.5",
+       "state": "SUFFICIENT"
+      },
+      "issue_date": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      },
+      "student_id": {
+       "value": "2022087654",
+       "state": "SUFFICIENT"
+      },
+      "student_name": {
+       "value": "박샘플",
+       "state": "SUFFICIENT"
+      },
+      "university_name": {
+       "value": null,
+       "state": "REVIEW_REQUIRED"
+      }
+     }
+    }
+   ]
+  }
+ ]
+}

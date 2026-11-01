@@ -89,7 +89,8 @@ def build_catalog() -> dict:
         "match_kinds": [{"value": k, "label_ko": v} for k, v in MATCH_KINDS_KO.items()],
         "severities": [{"value": k, "label_ko": v} for k, v in SEVERITIES_KO.items()],
         "normalise": [{"name": k, "label_ko": v} for k, v in NORMALISE_KO.items()],
-        # the legal-form switch only matters when one side is a company / workplace name
+        # the legal-form, Latin-in-parentheses and workplace-name switches only matter when one side is a
+        # company / workplace name
         "company_name_fields": ["company_name", "workplace_name"],
         "gpa_scales": list(GPA_SCALES),
         "check_date_policies": [

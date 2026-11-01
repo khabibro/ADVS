@@ -178,3 +178,21 @@ def test_private_snapshot_folder_is_git_ignored():
         check=False,
     )
     assert done.returncode == 0
+
+
+def test_committed_snapshots_replay_to_the_recorded_statuses():
+    """The fictional dev / hold-out snapshots, run under v1, give the status the real check gave."""
+    from app.checklists.compile import compile_checklist
+    from app.checklists.preview import _evaluate
+    from app.checklists.schema import parse_document
+
+    checked = 0
+    for key in ("business", "student"):
+        compiled = compile_checklist(parse_document(load_template(key))[0])
+        for snapshot, cases in snapshots.load_snapshots(key):
+            recorded = {c.id: c.observed_status for c in snapshot.cases}
+            for case in cases:
+                status, _ = _evaluate(case, compiled)
+                assert status.value == recorded[case.id.split(":", 1)[1]], case.id
+                checked += 1
+    assert checked >= 150  # three corpora; skipped silently only if the folder is missing
