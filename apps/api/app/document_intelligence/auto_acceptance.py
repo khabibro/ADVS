@@ -700,7 +700,11 @@ def _decide_corroborated(
         return _no(strategy, "SECOND_PASS_DISAGREES", rule.rule_id)
 
     if features.name_veto and rule.name_veto and rule.group and second and second.normalized:
-        if canonical_key(rule.group, item.value) not in second.normalized:
+        key = canonical_key(rule.group, item.value)
+        # A re-read that is only a piece of the name (a letter-spaced header read box by box) says nothing
+        # for or against it; any other reading must contain the name.
+        fragment = len(second.normalized) < len(key) and second.normalized in key
+        if key not in second.normalized and not fragment:
             return _no(strategy, "SECOND_PASS_CONTRADICTS_NAME", rule.rule_id)
 
     sources: list[str] = []
