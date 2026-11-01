@@ -24,6 +24,7 @@ from app.document_intelligence.classification.title_gate import assess_title
 from app.document_intelligence.extraction.base import ExtractedValue
 from app.document_intelligence.extraction.registry import ExtractorRegistry
 from app.document_intelligence.ocr.models import (
+    BoundingBox,
     OCRDocumentResult,
     OCRPage,
     OCRProviderError,
@@ -82,6 +83,39 @@ def _value_evidence(item: ExtractedValue):  # type: ignore[no-untyped-def]
         if value in entry.source_text or (digits and digits in source_digits):
             return entry
     return boxed[-1] if boxed else None
+
+
+def value_region(item: ExtractedValue) -> tuple[int, BoundingBox] | None:
+    """Page and box to re-read for `item`.
+
+    When one evidence box holds the value, that box. When the value is assembled from several boxes (a
+    letter-spaced header read box by box), the union of the shortest run of consecutive boxes whose text
+    contains it, so the re-read sees the whole name and not its last box."""
+    value = "".join((item.normalized_value or "").split())
+    boxed = [entry for entry in (item.evidence or []) if entry.bounding_box is not None]
+    single = _value_evidence(item)
+    if single is not None and value and value in "".join(single.source_text.split()):
+        return single.page_number, single.bounding_box
+    best: list = []
+    for start in range(len(boxed)):
+        text = ""
+        for end in range(start, len(boxed)):
+            if boxed[end].page_number != boxed[start].page_number:
+                break
+            text += "".join(boxed[end].source_text.split())
+            if value and value in text:
+                if not best or end - start + 1 < len(best):
+                    best = boxed[start : end + 1]
+                break
+    if len(best) > 1:
+        left = min(e.bounding_box.x for e in best)
+        top = min(e.bounding_box.y for e in best)
+        right = max(e.bounding_box.x + e.bounding_box.width for e in best)
+        bottom = max(e.bounding_box.y + e.bounding_box.height for e in best)
+        return best[0].page_number, BoundingBox(left, top, right - left, bottom - top)
+    if single is not None and single.bounding_box is not None:
+        return single.page_number, single.bounding_box
+    return None
 
 
 class DocumentProcessingService:
@@ -259,11 +293,9 @@ class DocumentProcessingService:
                 or not any(entry.source_kind == "ocr" for entry in item.evidence)
             ):
                 continue
-            evidence = _value_evidence(item)
-            if evidence is not None and evidence.bounding_box is not None:
-                requests.append(
-                    RegionRequest(item.field_name, evidence.page_number, evidence.bounding_box)
-                )
+            region = value_region(item)
+            if region is not None:
+                requests.append(RegionRequest(item.field_name, region[0], region[1]))
         if not requests:
             return
         try:
