@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1.admin import router as admin_router
+from app.api.v1.admin_reviews import router as admin_reviews_router
 from app.api.v1.routes import router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
@@ -43,6 +44,7 @@ app.add_middleware(
 )
 app.include_router(router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
+app.include_router(admin_reviews_router, prefix="/api/v1")
 
 
 @app.middleware("http")

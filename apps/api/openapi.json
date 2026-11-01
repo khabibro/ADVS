@@ -1855,6 +1855,300 @@
         }
       }
     },
+    "/api/v1/admin/review-queue": {
+      "get": {
+        "summary": "Review Queue",
+        "operationId": "review_queue_api_v1_admin_review_queue_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "OPEN",
+              "title": "Status"
+            }
+          },
+          {
+            "name": "workflow",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workflow"
+            }
+          },
+          {
+            "name": "document_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Document Type"
+            }
+          },
+          {
+            "name": "field_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Field Name"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "OLDEST",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "include_drafts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Drafts"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/review-queue/{project_id}/{document_id}/{field_name}": {
+      "get": {
+        "summary": "Review Detail",
+        "operationId": "review_detail_api_v1_admin_review_queue__project_id___document_id___field_name__get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Document Id"
+            }
+          },
+          {
+            "name": "field_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Field Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewDetailRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/review-log": {
+      "get": {
+        "summary": "Review Log",
+        "operationId": "review_log_api_v1_admin_review_log_get",
+        "parameters": [
+          {
+            "name": "decision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(CONFIRMED|CORRECTED|REJECTED|CANNOT_DETERMINE)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Decision"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewLogRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Root Health",
@@ -2877,6 +3171,29 @@
           "coordinate_space"
         ],
         "title": "EvidenceRead"
+      },
+      "FacetValue": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "label",
+          "count"
+        ],
+        "title": "FacetValue"
       },
       "FieldRead": {
         "properties": {
@@ -4293,6 +4610,221 @@
         ],
         "title": "PublishRequest"
       },
+      "QueueFacets": {
+        "properties": {
+          "workflows": {
+            "items": {
+              "$ref": "#/components/schemas/FacetValue"
+            },
+            "type": "array",
+            "title": "Workflows"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/FacetValue"
+            },
+            "type": "array",
+            "title": "Documents"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/FacetValue"
+            },
+            "type": "array",
+            "title": "Fields"
+          },
+          "status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "workflows",
+          "documents",
+          "fields",
+          "status"
+        ],
+        "title": "QueueFacets"
+      },
+      "QueueItemRead": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "project_name": {
+            "type": "string",
+            "title": "Project Name"
+          },
+          "applicant_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applicant Name"
+          },
+          "company_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name"
+          },
+          "workflow_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Key"
+          },
+          "workflow_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Name"
+          },
+          "version_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Number"
+          },
+          "document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Id"
+          },
+          "document_type": {
+            "type": "string",
+            "title": "Document Type"
+          },
+          "document_label": {
+            "type": "string",
+            "title": "Document Label"
+          },
+          "field_name": {
+            "type": "string",
+            "title": "Field Name"
+          },
+          "field_label": {
+            "type": "string",
+            "title": "Field Label"
+          },
+          "machine_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Machine Value"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "queue_status": {
+            "type": "string",
+            "title": "Queue Status"
+          },
+          "issue_code": {
+            "type": "string",
+            "title": "Issue Code"
+          },
+          "waiting_since": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Waiting Since"
+          },
+          "finalised": {
+            "type": "boolean",
+            "title": "Finalised"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "project_name",
+          "applicant_name",
+          "company_name",
+          "workflow_key",
+          "workflow_name",
+          "version_number",
+          "document_id",
+          "document_type",
+          "document_label",
+          "field_name",
+          "field_label",
+          "machine_value",
+          "confidence",
+          "queue_status",
+          "issue_code",
+          "waiting_since",
+          "finalised"
+        ],
+        "title": "QueueItemRead"
+      },
+      "QueueRead": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/QueueItemRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "facets": {
+            "$ref": "#/components/schemas/QueueFacets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "items",
+          "facets"
+        ],
+        "title": "QueueRead"
+      },
       "RecheckRequest": {
         "properties": {
           "reason": {
@@ -4389,6 +4921,110 @@
           "NEEDS_CORRECTION"
         ],
         "title": "RequirementState"
+      },
+      "ReviewDetailRead": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "project_name": {
+            "type": "string",
+            "title": "Project Name"
+          },
+          "applicant_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applicant Name"
+          },
+          "company_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name"
+          },
+          "document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Id"
+          },
+          "document_label": {
+            "type": "string",
+            "title": "Document Label"
+          },
+          "field_name": {
+            "type": "string",
+            "title": "Field Name"
+          },
+          "field_label": {
+            "type": "string",
+            "title": "Field Label"
+          },
+          "open": {
+            "type": "boolean",
+            "title": "Open"
+          },
+          "item": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewItemRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pages": {
+            "items": {
+              "$ref": "#/components/schemas/PageInfoRead"
+            },
+            "type": "array",
+            "title": "Pages"
+          },
+          "siblings": {
+            "items": {
+              "$ref": "#/components/schemas/SiblingRead"
+            },
+            "type": "array",
+            "title": "Siblings"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/FieldReviewRead"
+            },
+            "type": "array",
+            "title": "History"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "project_name",
+          "applicant_name",
+          "company_name",
+          "document_id",
+          "document_label",
+          "field_name",
+          "field_label",
+          "open",
+          "item",
+          "pages",
+          "siblings",
+          "history"
+        ],
+        "title": "ReviewDetailRead"
       },
       "ReviewItemRead": {
         "properties": {
@@ -4564,6 +5200,154 @@
         ],
         "title": "ReviewItemRead"
       },
+      "ReviewLogItemRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "project_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Name"
+          },
+          "document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Id"
+          },
+          "document_label": {
+            "type": "string",
+            "title": "Document Label"
+          },
+          "field_name": {
+            "type": "string",
+            "title": "Field Name"
+          },
+          "field_label": {
+            "type": "string",
+            "title": "Field Label"
+          },
+          "decision": {
+            "type": "string",
+            "title": "Decision"
+          },
+          "machine_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Machine Value"
+          },
+          "reviewed_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed Value"
+          },
+          "reviewer_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer Label"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "reviewed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Reviewed At"
+          },
+          "is_current": {
+            "type": "boolean",
+            "title": "Is Current"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          },
+          "superseded": {
+            "type": "boolean",
+            "title": "Superseded"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "project_id",
+          "project_name",
+          "document_id",
+          "document_label",
+          "field_name",
+          "field_label",
+          "decision",
+          "machine_value",
+          "reviewed_value",
+          "reviewer_label",
+          "note",
+          "reviewed_at",
+          "is_current",
+          "stale",
+          "superseded"
+        ],
+        "title": "ReviewLogItemRead"
+      },
+      "ReviewLogRead": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewLogItemRead"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "items"
+        ],
+        "title": "ReviewLogRead"
+      },
       "RollbackRequest": {
         "properties": {
           "to_version": {
@@ -4708,6 +5492,40 @@
           "NUMERIC_COMPARISON"
         ],
         "title": "RuleType"
+      },
+      "SiblingRead": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Id"
+          },
+          "document_label": {
+            "type": "string",
+            "title": "Document Label"
+          },
+          "field_name": {
+            "type": "string",
+            "title": "Field Name"
+          },
+          "field_label": {
+            "type": "string",
+            "title": "Field Label"
+          },
+          "queue_status": {
+            "type": "string",
+            "title": "Queue Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_id",
+          "document_label",
+          "field_name",
+          "field_label",
+          "queue_status"
+        ],
+        "title": "SiblingRead"
       },
       "SubmissionVerificationRead": {
         "properties": {
