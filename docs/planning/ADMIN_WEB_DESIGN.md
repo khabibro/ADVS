@@ -404,3 +404,13 @@ Check after the merge (`scripts/compare_harness_runs.py`, fictional dev, hold-ou
 Everything that needs the rules of a submission (verification, auto-acceptance boundaries, review dependencies, per-document validation, expected-document lists) reads the pinned version through `services/rule_views.py` or the compiler; row-based workflows still work through the same views.
 
 Publishing needs acknowledgement of every loosening (`guardrails.py`) and, separately, of any case that was not 제출 가능 and becomes 제출 가능 in the preview (`PREVIEW_NEWLY_READY:preview`).
+
+## 12. Implementation notes (P3 reviewer queue), 2026-11-02
+
+Admin API (behind `ADMIN_ENABLED`, read-only; decisions still use `POST /projects/{p}/documents/{d}/fields/{f}/review`): `GET /admin/review-queue` (filters: status, workflow, document, field, name/company search, one-click only; sorts: oldest, newest, workflow, document; facet counts), `GET /admin/review-queue/{project}/{document}/{field}` (item with evidence boxes, the submission's other open values, the decision history of the value), `GET /admin/review-log`. Built on `FieldReviewService.review_items`, so the queue is exactly what keeps a submission out of 제출 가능. Only finalised submissions are listed unless `include_drafts`.
+
+Screens (`apps/admin`, for Munira's review): `/reviews` (list, filters, sort, crop from the page image and the evidence box, decision buttons, history) and `/reviews/log`. Keys: `Enter` confirms a one-click value, `C` confirms any value, `E` focuses the correction field (Enter there confirms the typed value), `X` cannot determine, `R` reject, `J`/`K` next/previous; keys are ignored while typing.
+
+One-click fields (`ONE_CLICK_FIELDS` in `services/review_queue.py`, the same set as `evaluation/real_docs/loop_score.py`): issue date, GPA, valid-from, valid-until. Rows carry a "한 번에 확인" mark, can be filtered, and the item shows "이 제출 건은 N건만 확인하면 됩니다" when every open value of the submission is one-click (based on the open review values, not on document-level issues).
+
+Values accepted as `DECISION_ROBUST` are not blockers and are not in the review list. They appear under status "자동 확정 (값 미확정)" with the label **판정상 안전 (값 미확정)** and a short explanation, and a person can still confirm them (a normal `CONFIRMED` review). The backend `label_ko` of the auto-acceptance record is unchanged (the applicant app may use it); the admin app uses its own copy.
