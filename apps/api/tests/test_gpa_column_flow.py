@@ -61,11 +61,12 @@ def test_the_scale_is_confirmed_when_every_line_and_the_legend_agree() -> None:
 
 
 def test_the_tolerance_is_the_rounding_bound_and_not_wider() -> None:
-    # the credit-weighted mean of the invented table is 3.5109; the printed total may differ by 0.010 at most
-    assert gpa_arithmetic(facts_for(total=3.51), 3.51).state == "CONFIRMED"  # 0.0009
-    assert gpa_arithmetic(facts_for(total=3.52), 3.52).state == "CONFIRMED"  # 0.0091
-    assert gpa_arithmetic(facts_for(total=3.50), 3.50).state == "MISMATCH"  # 0.0109: over the bound
-    assert gpa_arithmetic(facts_for(total=3.53), 3.53).state == "MISMATCH"  # 0.0191
+    # the credit-weighted mean of the invented table is 3.5109, which rounds to 3.51; the printed total may be
+    # one last-place unit away from that and no more
+    for total in (3.50, 3.51, 3.52):
+        assert gpa_arithmetic(facts_for(total=total), total).state == "CONFIRMED", total
+    for total in (3.49, 3.53, 3.62):
+        assert gpa_arithmetic(facts_for(total=total), total).state == "MISMATCH", total
 
 
 def test_a_sound_table_that_disagrees_is_a_mismatch_a_broken_table_is_not() -> None:

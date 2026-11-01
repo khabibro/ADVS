@@ -35,10 +35,16 @@ NONE = Verdict("NONE")
 
 
 MIN_SEMESTERS = 3
-#: The rounding bound only, never widened: each semester value is printed rounded to 2 decimals (error up to
-#: 0.005, and so is the error of their credit-weighted mean) and the printed total is rounded as well (0.005).
+#: The rounding bound only, never widened: the credit-weighted mean of values printed to 2 decimals is itself
+#: rounded to 2 decimals and compared with the printed total, which may differ by one unit in the last place
+#: (a mean of 87.4985 rounds to 87.50 against a printed 87.51).
 ROUNDING_BOUND = 0.010
 _EPSILON = 1e-9
+
+
+def _agrees(mean: float, printed: float) -> bool:
+    """The mean, rounded to 2 decimals, equals the printed 2-decimal value within one last-place unit."""
+    return abs(round(mean, 2) - printed) <= ROUNDING_BOUND + _EPSILON
 POINTS_TOLERANCE = 0.006  # total points / total credits, printed exactly
 
 
@@ -67,11 +73,11 @@ def gpa_arithmetic(facts: DocFacts | None, gpa: float) -> Verdict:
     ):
         if g.percent_pairs and g.total_percent is not None and len(g.percent_pairs) == len(g.pairs):
             percent = sum(c * x for c, x in g.percent_pairs) / sum(c for c, _ in g.percent_pairs)
-            if abs(percent - g.total_percent) > ROUNDING_BOUND + _EPSILON:
+            if not _agrees(percent, g.total_percent):
                 return NONE  # the table does not reproduce the printed 백분율: not a table to judge by
             results.append(("weighted_percent", True))
         average = sum(c * x for c, x in g.pairs) / credits
-        results.append(("weighted_average", abs(average - gpa) <= ROUNDING_BOUND + _EPSILON))
+        results.append(("weighted_average", _agrees(average, gpa)))
     if g.total_points is not None and g.total_credits:
         results.append(
             ("total_points", abs(g.total_points / g.total_credits - gpa) <= POINTS_TOLERANCE)
