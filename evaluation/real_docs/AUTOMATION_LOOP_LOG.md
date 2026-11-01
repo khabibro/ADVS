@@ -114,6 +114,12 @@ Loop head, business: 47 of 76 valid submissions READY at the realistic date, 11 
 - Process notes: one test-harness slip (zsh did not split a tag/strategy pair, so a run wrote empty folders; removed); wrong at no point: every real-set cell 0 wrong, 0 false READY.
 - Decisions taken: variant (b) adopted as the default (S11) on the evidence in the summary table.
 
+## Round 6: see the summary section of the same name
+
+- D9 fixture search: S01 scanned left one item after the pair confirmations, S03 is the GPA-below-threshold set (ends in correction by design), S04 scanned leaves an issue date and a GPA and reaches READY after confirmation: chosen. A zsh slip (an unsplit path list) made four commits fail once; redone.
+- Mistakes caught by the gates and corrected in the round: (1) a stricter-than-requested GPA tolerance turned the fictional S09 transcript and the real one into "could not check" and added 30 robust-accepted GPAs; corrected to the owner's rule. (2) the joined-line region first spelled-value only, which left 40 enrolment vetoes; combined with the three-short-boxes criterion (vetoes 0). (3) lanes run against a mistyped tree name once, rerun. (4) a draft of the GPA paragraph contained values of the real transcript; the privacy classifier refused the write, and the paragraph was rewritten with counts and differences only (nothing was written or committed with values).
+- The letter-spaced issuer line is several one-character boxes plus a stamp box; the stamp lowers the minimum confidence of the joined value below the floor, which is where variant (b) (a below-floor read confirmed by an exact match with a reliable one) takes over.
+
 ## Safety gate status (superseded by the merge section above; 5c4fb75 was the earlier head)
 - Backend 723 tests, ruff, mypy clean. Real sets: 0 wrong accepted, 0 false READY, all real negatives non-READY (student 14 + business 114).
 - Fictional replay (injections dev, hold-outs 1–3): running; result below when finished.
