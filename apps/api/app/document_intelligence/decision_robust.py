@@ -98,6 +98,15 @@ def _alternative_values(field: str, value: str, scale: float | None) -> list[str
     return sorted(set(valid) - {value})
 
 
+#: A validity end lies at most this many days after the date the certificate was issued. A reading of
+#: the end that falls outside every such window of the page's other printed dates is not plausible.
+VALIDITY_WINDOW_DAYS = 400
+
+
+def _in_window(candidate: date, readings: list[date]) -> bool:
+    return any(0 <= (candidate - printed).days <= VALIDITY_WINDOW_DAYS for printed in readings)
+
+
 def is_decision_robust(
     specs: list[RuleSpec],
     reference: date | None,
@@ -107,11 +116,24 @@ def is_decision_robust(
     *,
     scale: float | None = None,
     siblings: dict[str, date | None] | None = None,
+    window_dates: tuple[date, ...] = (),
 ) -> bool:
-    """True when the read value and every valid alternative reading give identical rule outcomes."""
+    """True when the read value and every valid alternative reading give identical rule outcomes.
+
+    `window_dates` are the other bare dates printed on the page (not the box that holds the value), taken as
+    read: the safety argument is one misread box at a time, so a misread value is checked against the
+    other boxes as they stand. For a validity end they bound the plausible readings: an alternative that is
+    not within VALIDITY_WINDOW_DAYS after one of those dates is dropped, and the read value itself must lie
+    in such a window."""
     base = outcomes(specs, reference, field, document_type, value)
     if not base:  # no rule uses the value, or it cannot be evaluated: nothing to be robust about
         return False
+    readings: list[date] = []
+    if field == "valid_until" and window_dates:
+        readings = list(window_dates)
+        read_value = parse_iso(value)
+        if read_value is None or not _in_window(read_value, readings):
+            return False
     profile_applies = False
     if (
         siblings
@@ -129,6 +151,10 @@ def is_decision_robust(
             == "CONFIRMED"
         )
     for alternative in _alternative_values(field, value, scale):
+        if readings:
+            parsed_alternative = parse_iso(alternative)
+            if parsed_alternative is None or not _in_window(parsed_alternative, readings):
+                continue  # no printed date makes this reading plausible
         if profile_applies:
             merged = {**(siblings or {}), field: parse_iso(alternative)}
             pair = date_pair(
