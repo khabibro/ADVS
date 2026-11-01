@@ -24,9 +24,10 @@ therefore never collapsed, and reading order is still decided by
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, replace
 
-from app.document_intelligence.ocr.models import OCRLine, OCRPage
+from app.document_intelligence.ocr.models import BoundingBox, OCRLine, OCRPage
 
 # Two boxes belong to the same visual row when their vertical spans overlap
 # by at least this fraction of the shorter box's height. 0.5 tolerates the
@@ -86,6 +87,12 @@ def _vertical_overlap(left: OCRLine, right: OCRLine) -> float:
     )
 
 
+def _cannot_bridge(line: OCRLine) -> bool:
+    """A box the OCR provider flagged as a seal or stamp read as text (red ink under an unsure
+    reading). It stays in the text but must not link two visual rows."""
+    return line.bridge_exempt
+
+
 def build_rows(page: OCRPage, overlap_ratio: float = DEFAULT_OVERLAP_RATIO) -> list[TextRow]:
     """Group a page's lines into visual rows.
 
@@ -105,7 +112,16 @@ def build_rows(page: OCRPage, overlap_ratio: float = DEFAULT_OVERLAP_RATIO) -> l
     rows: list[tuple[int, TextRow]] = []
 
     with_geometry = [
-        line for line in page.lines if line.bounding_box is not None and line.text.strip()
+        line
+        for line in page.lines
+        if line.bounding_box is not None and line.text.strip() and not _cannot_bridge(line)
+    ]
+    # Boxes that must not chain two rows together (a red seal read as text, confidence far below
+    # anything a value can be taken from) stay in the text as rows of their own.
+    isolated = [
+        line
+        for line in page.lines
+        if line.bounding_box is not None and line.text.strip() and _cannot_bridge(line)
     ]
     without_geometry = [
         line for line in page.lines if line.bounding_box is None and line.text.strip()
@@ -146,7 +162,8 @@ def build_rows(page: OCRPage, overlap_ratio: float = DEFAULT_OVERLAP_RATIO) -> l
         )
 
     rows.extend(
-        (position[id(line)], TextRow(page.page_number, (line,))) for line in without_geometry
+        (position[id(line)], TextRow(page.page_number, (line,)))
+        for line in [*without_geometry, *isolated]
     )
     rows.sort(key=lambda item: item[0])
     return [row for _, row in rows]
@@ -154,3 +171,112 @@ def build_rows(page: OCRPage, overlap_ratio: float = DEFAULT_OVERLAP_RATIO) -> l
 
 def _left_to_right(lines: list[OCRLine]) -> list[OCRLine]:
     return sorted(lines, key=lambda line: line.bounding_box.x)  # type: ignore[union-attr]
+
+
+# ---------------------------------------------------------------------------
+# Stacked label glyphs fused into one tall box
+# ---------------------------------------------------------------------------
+
+_HANGUL_ONLY_RE = re.compile(r"[가-힣]{2,4}")
+_LABEL_TAIL_RE = re.compile(r"[가-힣]{1,3}\s*[:：]")
+# A glyph column: each character of the fused box occupies a roughly square cell.
+_CELL_ASPECT = (0.6, 1.7)
+_TAIL_REACH_HEIGHTS = (
+    14.0  # how far right of the fused box the label tails may start (cell heights)
+)
+
+
+def split_stacked_label_boxes(lines: list[OCRLine]) -> list[OCRLine]:
+    """Undo a detector fusing the first syllables of labels printed one above the other.
+
+    In a two-column header such as ``학   번 : ...`` over ``성   명 : ...`` the label syllables are
+    far apart horizontally, so the first syllables of the rows above and below can be detected as
+    ONE tall narrow box and read top to bottom ("학성"), while the rest of each label stays with its
+    value ("번:...", "명:..."). A box is split into one box per character only when all of these hold:
+    it is Hangul only, one glyph wide (every character gets a roughly square cell of the box), and
+    each of its n cells has, to its right on the same row, a box that begins with the remainder of
+    a label (a few syllables then a colon). Anything else is left untouched.
+    """
+    boxed = [item for item in lines if item.bounding_box is not None and item.text.strip()]
+    if len(boxed) < 3:
+        return lines
+    boxed = [*boxed, *_detached_colon_tails(boxed)]
+    out: list[OCRLine] = []
+    for item in lines:
+        pieces = _split_one(item, boxed)
+        out.extend(pieces if pieces is not None else [item])
+    return out
+
+
+_LABEL_SYLLABLES_RE = re.compile(r"[가-힣]{1,3}")
+
+
+def _detached_colon_tails(boxed: list[OCRLine]) -> list[OCRLine]:
+    """Label tails whose colon was detected as the start of the next box: "번" followed on the same
+    row by ":<value>". They are joined into a virtual tail used only to decide whether a fused box is
+    a stack of labels; the lines themselves are not changed."""
+    tails: list[OCRLine] = []
+    for label in boxed:
+        label_box = label.bounding_box
+        if label_box is None or not _LABEL_SYLLABLES_RE.fullmatch("".join(label.text.split())):
+            continue
+        for other in boxed:
+            other_box = other.bounding_box
+            if other is label or other_box is None or other.text.strip()[:1] not in (":", "："):
+                continue
+            gap = other_box.x - (label_box.x + label_box.width)
+            overlap = min(label_box.y + label_box.height, other_box.y + other_box.height) - max(
+                label_box.y, other_box.y
+            )
+            if -0.5 * label_box.height <= gap <= 1.5 * label_box.height and overlap >= 0.5 * min(
+                label_box.height, other_box.height
+            ):
+                top = min(label_box.y, other_box.y)
+                bottom = max(label_box.y + label_box.height, other_box.y + other_box.height)
+                tails.append(
+                    replace(
+                        label,
+                        text="".join(label.text.split()) + ":",
+                        bounding_box=BoundingBox(
+                            label_box.x,
+                            top,
+                            other_box.x + other_box.width - label_box.x,
+                            bottom - top,
+                        ),
+                        polygon=None,
+                    )
+                )
+    return tails
+
+
+def _split_one(item: OCRLine, boxed: list[OCRLine]) -> list[OCRLine] | None:
+    box = item.bounding_box
+    text = "".join(item.text.split())
+    if box is None or not _HANGUL_ONLY_RE.fullmatch(text):
+        return None
+    n = len(text)
+    cell_height = box.height / n
+    if not _CELL_ASPECT[0] <= box.width / cell_height <= _CELL_ASPECT[1]:
+        return None
+    slices: list[BoundingBox] = []
+    for index in range(n):
+        top = box.y + index * cell_height
+        slice_box = BoundingBox(box.x, top, box.width, cell_height)
+        centre = top + cell_height / 2
+        tails = [
+            other
+            for other in boxed
+            if other is not item
+            and other.bounding_box is not None
+            and other.bounding_box.x >= box.x + box.width - 0.5 * box.width
+            and other.bounding_box.x - (box.x + box.width) <= _TAIL_REACH_HEIGHTS * cell_height
+            and other.bounding_box.y <= centre <= other.bounding_box.y + other.bounding_box.height
+            and _LABEL_TAIL_RE.match(other.text.strip())
+        ]
+        if not tails:
+            return None
+        slices.append(slice_box)
+    return [
+        replace(item, text=char, bounding_box=slice_box, polygon=None)
+        for char, slice_box in zip(text, slices, strict=True)
+    ]

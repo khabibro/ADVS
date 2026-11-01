@@ -48,6 +48,7 @@ from typing import Any
 
 from app.core.domain import DocumentType
 from app.document_intelligence.candidate_repair import PROVENANCE, propose_repair
+from app.document_intelligence.company_names import company_key, company_names_agree
 from app.document_intelligence.confirmations import (
     business_number_type_plausible,
     date_pair,
@@ -65,11 +66,15 @@ from app.document_intelligence.normalization.field_normalizer import (
     is_valid_business_number,
     normalize_business_number,
     normalize_date,
-    strip_legal_entity_markers,
 )
 from app.document_intelligence.ocr_confusions import CONFUSION_TABLE_VERSION
 
 AUTO_ACCEPT_POLICY_VERSION = "auto-accept-v1"
+
+#: A value accepted only because every plausible misreading gives the same verdict is never presented as
+#: confirmed. Staff-facing copy, English and Korean; the UI shows it next to the value.
+DECISION_ROBUST_LABEL = "decision-robust (value not individually confirmed)"
+DECISION_ROBUST_LABEL_KO = "결정 기준으로만 확인됨 (값은 개별 확인되지 않음)"
 
 
 class Strategy(StrEnum):
@@ -182,6 +187,7 @@ FIELD_RULES: dict[str, FieldRule] = {
     "student_id": FieldRule("STUDENT_ID", "student_id", True, confirm_by_second_pass=False),
     "university_name": FieldRule("UNIVERSITY", "university", False, name_veto=True),
     "issue_date": FieldRule("DATE", None, True, confirm_by_second_pass=False),
+    "birth_date": FieldRule("DATE", "birth_date", True, confirm_by_second_pass=False),
     "valid_from": FieldRule("DATE", None, True, confirm_by_second_pass=False),
     "valid_until": FieldRule("DATE", None, True, confirm_by_second_pass=False),
     "gpa": FieldRule("GPA", None, True, confirm_by_second_pass=False),
@@ -226,9 +232,13 @@ def canonical_key(group: str, value: str) -> str:
     if group in ("business_number", "student_id"):
         return "".join(ch for ch in value if ch.isdigit())
     if group == "company":
-        core = strip_legal_entity_markers(unicodedata.normalize("NFKC", value))
-        return _squash(core)
+        return company_key(value)
     return _squash(value)
+
+
+def _business_number_of(item: FieldInput, index: _Index) -> str | None:
+    number = index.sibling(item.document_id, "business_registration_number")
+    return number.value if number is not None else None
 
 
 def parse_second_pass(field_name: str, text: str | None) -> str | None:
@@ -244,7 +254,7 @@ def parse_second_pass(field_name: str, text: str | None) -> str | None:
     if field_name == "student_id":
         runs = re.findall(r"(?<!\d)\d{8,10}(?!\d)", folded)
         return runs[0] if len(set(runs)) == 1 else None
-    if field_name in ("issue_date", "valid_from", "valid_until"):
+    if field_name in ("issue_date", "valid_from", "valid_until", "birth_date"):
         found = [normalize_date(match.group(0)) for match in DATE_RE.finditer(folded)]
         if not found or any(item is None for item in found):
             return None
@@ -342,6 +352,11 @@ class AutoDecision:
             "confusion_table_version": CONFUSION_TABLE_VERSION
             if self.robust or self.repair_candidate
             else None,
+            "confirmation": (
+                "DECISION_ROBUST" if self.robust else "INDEPENDENT_SOURCE" if self.accepted else None
+            ),
+            "label": DECISION_ROBUST_LABEL if self.robust else None,
+            "label_ko": DECISION_ROBUST_LABEL_KO if self.robust else None,
         }
 
 
@@ -370,6 +385,15 @@ def _valid_format(item: FieldInput, index: _Index, context: ProjectContext) -> s
             and business_number_type_plausible(value, item.facts.entity_type) is False
         ):
             return "BRN_TYPE_CODE_IMPLAUSIBLE"
+        return None
+    if name == "birth_date":
+        try:
+            born = date.fromisoformat(value)
+        except ValueError:
+            return "FORMAT_DATE_INVALID"
+        today = context.reference_date or date.today()
+        if not (MIN_STUDENT_AGE_YEARS <= (today - born).days / 365.25 <= MAX_STUDENT_AGE_YEARS):
+            return "FORMAT_BIRTH_DATE_IMPLAUSIBLE"
         return None
     if name in ("issue_date", "valid_from", "valid_until"):
         try:
@@ -431,6 +455,64 @@ def _valid_format(item: FieldInput, index: _Index, context: ProjectContext) -> s
     return None  # names / university: no format validator (corroboration only)
 
 
+MIN_STUDENT_AGE_YEARS = 14
+MAX_STUDENT_AGE_YEARS = 80
+
+
+def _printed_bare_dates(item: FieldInput) -> tuple[date, ...]:
+    """Bare dates printed elsewhere on the page (not the box that holds the value itself)."""
+    if item.facts is None:
+        return ()
+    found = []
+    for box in item.facts.dates:
+        parsed = parse_iso(box.iso)
+        if box.bare and parsed is not None and box.iso != item.value:
+            found.append(parsed)
+    return tuple(sorted(set(found)))
+
+
+#: Marks a decision that rests on the certificate-number year (an inferred issue date was accepted).
+YEAR_ANCHOR_SOURCE = "year_anchor"
+
+#: Another bare date this close (in box heights) to the issue date shares its block.
+ISSUANCE_BLOCK_BOXES = 4
+
+
+def _anchored_issue_date_robust(item: FieldInput, index: _Index, context: ProjectContext) -> bool:
+    """An inferred (unlabelled) issue date, decision-robust with the certificate number as year anchor.
+
+    All must hold: the page prints exactly one document-number year and the date carries it; the date
+    stands alone in its box and is the only date box of its block (no other bare date within a few
+    box heights, so a birth or admission date nearby keeps it in review); it is not near the age
+    limit; and every OCR digit-confusion reading with that year gives the same rule outcomes."""
+    facts = item.facts
+    if (
+        item.field_name != "issue_date"
+        or facts is None
+        or len(facts.number_years) != 1
+        or item.value is None
+        or _near_decision_boundary(item, context)
+    ):
+        return False
+    boxes = [box for box in facts.dates if box.iso == item.value and box.bare]
+    if len(boxes) != 1:
+        return False
+    own = boxes[0]
+    for other in facts.dates:
+        if other is own or not other.bare or other.page != own.page:
+            continue
+        if abs(other.y - own.y) <= ISSUANCE_BLOCK_BOXES * max(own.height, other.height):
+            return False
+    return is_decision_robust(
+        list(context.rules),
+        context.reference_date,
+        item.field_name,
+        item.document_type,
+        item.value,
+        year_anchor=facts.number_years[0],
+    )
+
+
 def _near_decision_boundary(item: FieldInput, context: ProjectContext) -> bool:
     """True when `item` lies within the policy margin of a decision boundary of the workflow."""
     margin_days = BOUNDARY_MARGINS["date_days"]
@@ -488,6 +570,7 @@ HAS_VALIDATOR = frozenset(
         "gpa",
         "gpa_scale",
         "student_id",
+        "birth_date",
     }
 )
 
@@ -588,6 +671,15 @@ def decide(
                 decisions[key] = _no(strategy, f"{verdict.source.upper()}_MISMATCH", rule.rule_id)
                 continue
             if internal_only:
+                if features.robust and _anchored_issue_date_robust(item, index, context):
+                    decisions[key] = AutoDecision(
+                        True,
+                        strategy.value,
+                        rule_id=f"{rule.rule_id}:DECISION_ROBUST",
+                        sources=("decision_robust", YEAR_ANCHOR_SOURCE),
+                        robust=True,
+                    )
+                    continue
                 decisions[key] = _no(strategy, "SEMANTIC_INFERENCE", rule.rule_id)
                 continue
 
@@ -636,7 +728,13 @@ def _group_values(
             and _valid_format(other, index, context)
         ):
             continue  # an unreadable/invalid value from another document is noise, not evidence
-        if canonical_key(rule.group, other.value) == mine:
+        theirs = canonical_key(rule.group, other.value)
+        if theirs == mine or (
+            rule.group == "company"
+            and company_names_agree(
+                mine, theirs, _business_number_of(item, index), _business_number_of(other, index)
+            )
+        ):
             agreeing.append(other)
         else:
             disagreeing.append(other)
@@ -745,6 +843,7 @@ def _decide_corroborated(
             item.value,
             scale=float(scale_item.value) if scale_item and scale_item.value else None,
             siblings=siblings,
+            window_dates=_printed_bare_dates(item),
         ):
             return AutoDecision(
                 True,

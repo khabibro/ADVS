@@ -200,10 +200,10 @@ def main() -> None:
                                 "expected_value": "2026-12-31",
                             },
                         ),
-                        # 재학증명서 rules (Phase D2 decision D-1): issued within the last
-                        # 90 days (configurable) and the student number must be present.
+                        # 재학증명서 rule: issued within the last 90 days (configurable). The
+                        # certificate does not print a student number, so none is required; the
+                        # student is identified by name and date of birth (see below).
                         (RuleType.ISSUE_DATE_MAX_AGE, Severity.ERROR, {"max_age_days": 90}),
-                        (RuleType.REQUIRED_FIELD, Severity.WARNING, {"field": "student_id"}),
                     ],
                 ),
                 (
@@ -212,6 +212,10 @@ def main() -> None:
                     [
                         student_identity_rule("student_id", value_type="identifier"),
                         student_identity_rule("student_name"),
+                        student_identity_rule("birth_date", value_type="identifier"),
+                        # same school on both documents (generic affixes ignored; a difference of one
+                        # character is routed to review, not failed; see institution_key)
+                        student_identity_rule("university_name", value_type="institution"),
                         (
                             RuleType.DATE_COMPARISON,
                             Severity.ERROR,

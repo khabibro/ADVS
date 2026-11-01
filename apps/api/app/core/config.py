@@ -43,12 +43,14 @@ class Settings(BaseSettings):
     # orientation handling of any kind. Disabled by default only if the model
     # cannot be fetched; costs ~3 ms/page on CPU.
     paddle_ocr_doc_orientation: bool = True
+    # Read a page that looks unread in all four rotations and keep the best-reading one.
+    paddle_ocr_rotation_search: bool = True
     log_level: str = "INFO"
     # Load the OCR model at API start (demo / production) instead of on the first upload.
     ocr_warmup: bool = False
     # Auto-acceptance of OCR values (see document_intelligence/auto_acceptance.py).
     # S0 = off (every OCR field to a human) ... S7. Default S7 (chosen in Phase D).
-    auto_accept_strategy: str = "S8"
+    auto_accept_strategy: str = "S9"
     # Comma-separated workflow (checklist) ids for which auto-acceptance is switched off.
     auto_accept_disabled_workflows: str = ""
 

@@ -436,3 +436,20 @@ def test_human_corrected_missing_row_appears_in_document_detail(client, ready_ca
         ]
         == "20260000"
     )
+
+
+def test_a_busy_ocr_worker_fails_the_document_and_never_yields_ready(ready_case):
+    project_id, document_id, _, _ = ready_case
+    review(project_id, document_id)
+    assert verify(project_id).result.status == OverallStatus.READY
+    service = DocumentProcessingService()
+
+    async def wedged(db, document):
+        raise OCRProviderError(ProcessingErrorCode.OCR_BUSY)
+
+    service._obtain_source = wedged
+    with SessionLocal() as db:
+        document = asyncio.run(service.process(db, document_id))
+        assert document.processing_status == "FAILED"
+        assert document.error_code == ProcessingErrorCode.OCR_BUSY.value
+    assert verify(project_id).result.status == OverallStatus.REVIEW_REQUIRED

@@ -174,3 +174,39 @@ async def test_provider_cache_respects_render_configuration():
     first = get_ocr_provider(Settings(ocr_provider="paddle", paddle_ocr_render_dpi=180))
     second = get_ocr_provider(Settings(ocr_provider="paddle", paddle_ocr_render_dpi=288))
     assert first.render_scale != second.render_scale
+
+
+@pytest.mark.asyncio
+async def test_hung_inference_does_not_block_the_next_call_forever():
+    from app.document_intelligence.ocr import worker
+
+    entered, release = threading.Event(), threading.Event()
+    dropped: list[int] = []
+
+    class Owner:
+        def drop(self) -> None:
+            dropped.append(1)
+
+    owner = Owner()
+    worker.on_recycle(owner.drop)
+
+    def hung():
+        entered.set()
+        release.wait(5)
+
+    first = asyncio.create_task(worker.run_ocr(hung, 0.05))
+    try:
+        assert await asyncio.to_thread(entered.wait, 1)
+        with pytest.raises(OCRProviderError) as timeout:
+            await first
+        assert timeout.value.code == ProcessingErrorCode.OCR_TIMEOUT
+        # The slot is still held by the hung job: the next call gives up after a bounded wait ...
+        with pytest.raises(OCRProviderError) as busy:
+            await worker.run_ocr(lambda: "never", 1, slot_wait=0.05)
+        assert busy.value.code == ProcessingErrorCode.OCR_BUSY  # a processing error, not a verdict
+        assert dropped == [1]  # the engines tied to the wedged worker were dropped
+        # ... and the one after that runs on the recycled worker, while the old job is still hung.
+        assert not release.is_set()
+        assert await worker.run_ocr(lambda: "fresh", 1) == "fresh"
+    finally:
+        release.set()

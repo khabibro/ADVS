@@ -16,7 +16,7 @@ from app.core.domain import (
     ProcessingStatus,
     RuleType,
 )
-from app.document_intelligence.auto_acceptance import AutoDecision
+from app.document_intelligence.auto_acceptance import YEAR_ANCHOR_SOURCE, AutoDecision
 from app.document_intelligence.evidence_sufficiency import (
     EVIDENCE_POLICY_VERSION,
     EffectiveValueSource,
@@ -33,6 +33,7 @@ from app.document_intelligence.normalization.field_normalizer import (
     normalize_gpa_scale,
     normalize_text_field,
 )
+from app.document_intelligence.validation.submission import SUBMISSION_WIDE_FIELDS
 from app.models.entities import (
     Checklist,
     Document,
@@ -60,6 +61,12 @@ def _evidence_fingerprint(evidence: list[dict[str, Any]] | None) -> str | None:
         return None
     encoded = json.dumps(evidence, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+INFERRED_DATE_REASONS = {
+    EvidenceAssessmentReason.EXTRACTION_MARKED_FOR_REVIEW,
+    EvidenceAssessmentReason.SEMANTIC_INFERENCE,
+}
 
 
 @dataclass(frozen=True)
@@ -121,7 +128,17 @@ class EffectiveFieldResolver:
             and field is not None
             and field.normalized_value is not None
             and machine.state == EvidenceAssessmentState.REVIEW_REQUIRED
-            and set(machine.reasons) <= {EvidenceAssessmentReason.OCR_REQUIRES_CONFIRMATION}
+            and set(machine.reasons)
+            <= (
+                {EvidenceAssessmentReason.OCR_REQUIRES_CONFIRMATION}
+                | (
+                    # an inferred issue date accepted on the certificate-number year: the
+                    # inference is what the decision-robust check covers
+                    INFERRED_DATE_REASONS
+                    if YEAR_ANCHOR_SOURCE in auto.sources
+                    else set()
+                )
+            )
         ):
             # An independent source confirmed the OCR value (see auto_acceptance.py).
             # Machine evidence is untouched; only "does a human still need to look" changes.
@@ -402,6 +419,27 @@ class FieldReviewService:
                 if dependency_type != document_type:
                     continue
                 field = fields.get(field_name)
+                if (
+                    field_name in SUBMISSION_WIDE_FIELDS
+                    and (field is None or field.normalized_value is None)
+                    and any(
+                        other.id != document.id
+                        and (
+                            any(
+                                item.field_name == field_name and item.normalized_value is not None
+                                for item in other.extracted_fields
+                            )
+                            or getattr(
+                                current.get((other.id, field_name)),
+                                "reviewed_normalized_value",
+                                None,
+                            )
+                            is not None
+                        )
+                        for other in documents
+                    )
+                ):
+                    continue  # the submission-wide field is read on another document
                 review = current.get((document.id, field_name))
                 effective = self.resolver.resolve(
                     field,

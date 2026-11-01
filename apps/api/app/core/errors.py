@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 
 class ApiErrorCode:
     INVALID_FILE_TYPE = "INVALID_FILE_TYPE"
+    HEIC_NOT_SUPPORTED = "HEIC_NOT_SUPPORTED"
     FILE_TOO_LARGE = "FILE_TOO_LARGE"
     EMPTY_FILE = "EMPTY_FILE"
     CORRUPT_DOCUMENT = "CORRUPT_DOCUMENT"
@@ -54,7 +55,7 @@ PROCESSING_ERROR_MESSAGES: dict[ProcessingErrorCode, str] = {
     ProcessingErrorCode.CORRUPT_DOCUMENT: "File could not be opened; it may be corrupt.",
     ProcessingErrorCode.PROCESSING_FAILED: "Document processing failed unexpectedly.",
     ProcessingErrorCode.RESOURCE_LIMIT: "Document exceeds the configured processing resource budget.",
-    ProcessingErrorCode.OCR_BUSY: "The local OCR worker is busy; retry after the current job completes.",
+    ProcessingErrorCode.OCR_BUSY: "The local OCR worker was stuck and has been restarted; reprocess the document.",
 }
 
 

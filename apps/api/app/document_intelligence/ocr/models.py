@@ -34,6 +34,8 @@ class OCRLine:
     polygon: tuple[tuple[float, float], ...] | None = None
     detection_confidence: float | None = None
     orientation_degrees: float | None = None
+    #: A box that must not link two visual rows (a seal or stamp read as text). It stays in the text.
+    bridge_exempt: bool = False
 
 
 @dataclass
@@ -72,6 +74,9 @@ class RegionRequest:
     field_name: str
     page_number: int
     bbox: BoundingBox
+    #: Boxes of the other first-pass lines near the value. The crop is cut so that it does not take in a
+    #: neighbouring row (the date row above an issuer line, a footer below).
+    avoid: tuple[BoundingBox, ...] = ()
 
 
 @dataclass

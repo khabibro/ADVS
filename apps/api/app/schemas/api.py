@@ -131,6 +131,11 @@ class AutoAcceptanceRead(BaseModel):
     repair_candidate: str | None = None
     repair_provenance: str | None = None
     confusion_table_version: str | None = None
+    # INDEPENDENT_SOURCE: confirmed by another document / the application / the page itself.
+    # DECISION_ROBUST: accepted for the decision only; the value is not individually confirmed.
+    confirmation: str | None = None
+    label: str | None = None
+    label_ko: str | None = None
 
 
 class FieldRead(BaseModel):

@@ -4,6 +4,7 @@ import tempfile
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
+from contextlib import ExitStack
 from functools import cached_property, partial
 from importlib.metadata import version
 from pathlib import Path
@@ -14,6 +15,7 @@ from PIL import Image
 
 from app.core.config import Settings
 from app.core.errors import ProcessingErrorCode
+from app.document_intelligence.ocr import orientation as rotation_scoring
 from app.document_intelligence.ocr.models import (
     BoundingBox,
     OCRLine,
@@ -23,7 +25,7 @@ from app.document_intelligence.ocr.models import (
     RegionRequest,
 )
 from app.document_intelligence.ocr.text_assembly import assemble_page_text
-from app.document_intelligence.ocr.worker import run_ocr
+from app.document_intelligence.ocr.worker import on_recycle, run_ocr
 from app.document_intelligence.preprocessing.processor import ImagePreprocessor
 
 # Deterministic synthetic fixtures for mock/dev/test use. Selected by a
@@ -99,6 +101,30 @@ class OCRProvider(ABC):
         return []
 
 
+def region_bounds(
+    box: BoundingBox, avoid: tuple[BoundingBox, ...], width: int, height: int
+) -> tuple[int, int, int, int]:
+    """(left, top, right, bottom) of the crop around a value box: the value plus a margin, cut so that
+    the crop does not take in the rows above and below it. Only the margin is cut, never the value box itself:
+    on a tilted photograph the boxes of neighbouring rows overlap the value box, and cutting into it loses
+    glyph tops. Only neighbours that share horizontal extent with the crop are considered."""
+    margin_x = max(6.0, box.height * 0.4)
+    margin_y = max(4.0, box.height * 0.3)
+    left = max(0, int(box.x - margin_x))
+    right = min(width, int(box.x + box.width + margin_x))
+    top = max(0, int(box.y - margin_y))
+    bottom = min(height, int(box.y + box.height + margin_y))
+    middle = box.y + box.height / 2
+    for other in avoid:
+        if min(right, other.x + other.width) - max(left, other.x) <= 0:
+            continue  # beside the crop, not above or below it
+        if other.y + other.height / 2 < middle:  # a row above
+            top = max(top, min(int(other.y + other.height), int(box.y)))
+        elif other.y + other.height / 2 > middle:  # a row below
+            bottom = min(bottom, max(int(other.y), int(box.y + box.height)))
+    return left, top, right, bottom
+
+
 class MockOCRProvider(OCRProvider):
     """Deterministic double exercising the same OCRProvider interface used
     by real OCR. Fixture text is chosen from `original_filename` (falling back to
@@ -153,6 +179,8 @@ class PaddleOCRProvider(OCRProvider):
         self.cache_dir = settings.paddle_ocr_cache_dir or None
         self.render_scale = self._render_scale(settings.paddle_ocr_render_dpi)
         self.doc_orientation = settings.paddle_ocr_doc_orientation
+        self.rotation_search = settings.paddle_ocr_rotation_search
+        on_recycle(self._drop_engines)
 
     @staticmethod
     def _render_scale(render_dpi: int) -> float:
@@ -161,6 +189,10 @@ class PaddleOCRProvider(OCRProvider):
         glyphs and business-number digits degrade badly, and beyond ~400 DPI
         the cost grows quadratically for no measured gain."""
         return max(1.5, min(float(render_dpi) / 72.0, 6.0))
+
+    def _drop_engines(self) -> None:
+        for name in ("_engine", "_orientation_engine"):
+            self.__dict__.pop(name, None)
 
     @cached_property
     def _engine(self) -> Any:
@@ -310,8 +342,11 @@ class PaddleOCRProvider(OCRProvider):
                     self.settings.ocr_timeout_seconds,
                 )
                 page = self._normalize_page(raw=raw, page_number=idx, duration_ms=0)
-                page = await self._retry_page_with_orientation(page, image_path)
-                page.page_number = idx
+                with ExitStack() as scratch:
+                    page, image_path = await self._search_rotation(page, image_path, scratch)
+                    page = await self._retry_page_with_orientation(page, image_path)
+                    page.page_number = idx
+                    self._mark_red_ink_boxes(page, image_path)
                 page.duration_ms = int((time.perf_counter() - page_start) * 1000)
                 page.metadata["transform"] = {**transform, **page.metadata.get("transform", {})}
                 # A page can render below the configured DPI (budget fit to the
@@ -329,6 +364,37 @@ class PaddleOCRProvider(OCRProvider):
         if not pages or not any(page.text.strip() for page in pages):
             raise OCRProviderError(ProcessingErrorCode.OCR_EMPTY_RESULT)
         return pages
+
+    #: A box on red ink (seal or stamp) whose reading is this unsure must not chain rows together.
+    _SEAL_BOX_MAX_CONFIDENCE = 0.5
+
+    def _mark_red_ink_boxes(self, page: OCRPage, image_path: Path) -> None:
+        candidates = [
+            line
+            for line in page.lines
+            if line.bounding_box is not None
+            and (line.confidence or 0.0) < self._SEAL_BOX_MAX_CONFIDENCE
+        ]
+        if not candidates:
+            return
+        try:
+            with Image.open(image_path) as image:
+                rgb = image.convert("RGB")
+                for line in candidates:
+                    box = line.bounding_box
+                    assert box is not None
+                    crop = rgb.crop(
+                        (
+                            max(0, int(box.x)),
+                            max(0, int(box.y)),
+                            min(rgb.width, int(box.x + box.width)),
+                            min(rgb.height, int(box.y + box.height)),
+                        )
+                    )
+                    if crop.width >= 4 and crop.height >= 4 and has_red_ink(crop):
+                        line.bridge_exempt = True
+        except Exception:
+            return  # a mask is an aid; reading never depends on it
 
     # Second pass: crop the field's region, normalise contrast and upscale -- a different
     # input to the recogniser than the first pass, so a reading error caused by the page
@@ -363,13 +429,9 @@ class PaddleOCRProvider(OCRProvider):
     async def _read_region(self, page_image: Image.Image, request: RegionRequest) -> RegionReading:
         from PIL import ImageOps
 
-        box = request.bbox
-        margin_x = max(6.0, box.height * 0.4)
-        margin_y = max(4.0, box.height * 0.3)
-        left = max(0, int(box.x - margin_x))
-        top = max(0, int(box.y - margin_y))
-        right = min(page_image.width, int(box.x + box.width + margin_x))
-        bottom = min(page_image.height, int(box.y + box.height + margin_y))
+        left, top, right, bottom = region_bounds(
+            request.bbox, request.avoid, page_image.width, page_image.height
+        )
         empty = RegionReading(
             request.field_name, request.page_number, None, None, self._SECOND_PASS_PREPROCESS
         )
@@ -412,6 +474,63 @@ class PaddleOCRProvider(OCRProvider):
             min(confidences) if confidences else None,
             preprocess,
         )
+
+    async def _search_rotation(
+        self, page: OCRPage, image_path: Path, scratch: ExitStack
+    ) -> tuple[OCRPage, Path]:
+        """Read a suspect page in all four rotations and keep the one that reads best.
+
+        Only a first pass that looks unread (no certificate word, little Hangul, low
+        confidence) is searched, so an upright page keeps its single pass. A rotation has
+        to beat upright on the OCR's own evidence; a tie keeps the page and lets the
+        built-in angle classifier try as before.
+        """
+        if not self.rotation_search:
+            return page, image_path
+        first = rotation_scoring.evidence_for(page.lines)
+        if not (rotation_scoring.looks_unread(first) or self._looks_orientation_broken([page])):
+            return page, image_path
+        candidates = {0: first}
+        pages = {0: page}
+        paths = {0: image_path}
+        try:
+            for degrees in rotation_scoring.ROTATIONS[1:]:
+                handle, name = tempfile.mkstemp(prefix="advs_rotation_", suffix=".png")
+                os.close(handle)
+                scratch.callback(Path(name).unlink, missing_ok=True)
+                rotated = rotation_scoring.rotate_image(image_path, Path(name), degrees)
+                raw = await run_ocr(
+                    partial(self._predict, rotated), self.settings.ocr_timeout_seconds
+                )
+                read = self._normalize_page(raw=raw, page_number=page.page_number, duration_ms=0)
+                candidates[degrees] = rotation_scoring.evidence_for(read.lines)
+                pages[degrees], paths[degrees] = read, rotated
+        except Exception:
+            # A search must never turn a usable result into a failure.
+            return page, image_path
+        chosen = rotation_scoring.pick_rotation(candidates)
+        summary = {
+            str(degrees): {
+                "label_hits": evidence.label_hits,
+                "hangul_chars": evidence.hangul_chars,
+                "mean_confidence": round(evidence.mean_confidence, 3),
+            }
+            for degrees, evidence in candidates.items()
+        }
+        page.metadata.setdefault("transform", {})["rotation_search"] = {
+            "chosen": chosen,
+            "evidence": summary,
+        }
+        if chosen is None or chosen == 0:
+            return page, image_path
+        best = pages[chosen]
+        best.metadata["transform"] = {
+            **best.metadata.get("transform", {}),
+            "rotation_search": {"chosen": chosen, "evidence": summary},
+            "orientation_degrees": chosen,
+            "coordinate_reference": "rotated_image",
+        }
+        return best, paths[chosen]
 
     async def _retry_page_with_orientation(self, page: OCRPage, image_path: Path) -> OCRPage:
         if not self.doc_orientation or not self._looks_orientation_broken([page]):

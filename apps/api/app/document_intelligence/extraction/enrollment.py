@@ -35,7 +35,8 @@ class EnrollmentCertificateExtractor(BaseDocumentExtractor):
             self.text_field(text, "student_name", ["학생명", "성명", "이름"]),
             self._university_name(text),
             self._department(text),
-            self.text_field(text, "student_id", ["학번"]),
+            self.student_id_field(text),
+            self.birth_date_field(text),
             self.issue_date_field(text, ["발급일", "발급일자", "발행일자"]),
         ]
 

@@ -54,6 +54,7 @@ class DocFacts:
     gpa: GpaFacts | None = None
     corporate_numbers: tuple[str, ...] = ()
     entity_type: str | None = None  # "corporate" / "individual" when the form states it
+    number_years: tuple[int, ...] = ()  # years that start a printed document number ("제 YYYY-…호")
 
 
 _BARE_TAIL = re.compile(r"^\s*(재학\s*중)?\s*$")
@@ -63,6 +64,8 @@ _GPA = re.compile(r"평점평균\s*[:：]?\s*(\d\.\d{1,3})\s*/\s*(\d(?:\.\d{1,3}
 _LEGEND_MAX = re.compile(r"A\s*\+\s*=\s*(\d(?:\.\d{1,3})?)")
 _CORP_NUMBER = re.compile(r"(?<!\d)(\d{6})\s*-\s*(\d{7})(?!\d)")
 _NUMBER = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*$")
+_DOCUMENT_NUMBER = re.compile(r"제((?:19|20)\d{2})[-‐‑–−－]\d{1,12}호")
+_NUMBER_HEAD_SEGMENTS = 8  # the document number is printed at the top of the page
 
 
 def _squash(text: str) -> str:
@@ -140,7 +143,20 @@ def extract_facts(pages: list[dict]) -> DocFacts:
             entity = "corporate"
         elif "개인사업자" in squashed:
             entity = "individual"
-    return DocFacts(tuple(dates), _gpa_facts(segments), tuple(corporate), entity)
+    return DocFacts(
+        tuple(dates), _gpa_facts(segments), tuple(corporate), entity, _number_years(segments)
+    )
+
+
+def _number_years(segments: list[tuple[int, OCRLine]]) -> tuple[int, ...]:
+    """Years that start a document number printed in the first boxes of a page. The number may be
+    split over neighbouring boxes, so the head of each page is searched as one string."""
+    years: set[int] = set()
+    for page in sorted({page for page, _ in segments}):
+        heads = [_squash(segment.text) for p, segment in segments if p == page]
+        joined = "".join(heads[:_NUMBER_HEAD_SEGMENTS])
+        years.update(int(m.group(1)) for m in _DOCUMENT_NUMBER.finditer(joined))
+    return tuple(sorted(years))
 
 
 def _gpa_facts(segments: list[tuple[int, OCRLine]]) -> GpaFacts | None:
