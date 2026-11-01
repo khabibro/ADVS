@@ -55,7 +55,7 @@ def test_facts_pair_each_semester_gpa_with_the_credits_above_it_and_skip_the_cum
         box("취득학점: 12", 100, 340, 120),
         box("평점평균: 3.50/4.5 백분율: 87.00/100", 80, 380, 400),
         box("총 취득학점: 45", 100, 460, 120),
-        box("평점평균: 3.53/4.5 백분율: 88.00/100", 80, 500, 400),
+        box("평점평균: 3.53/4.5 백분율: 87.07/100", 80, 500, 400),
         box("A+=4.5(95-100), A0=4.0(90-94)", 40, 900, 500),
     ]
     facts = extract_facts(page(*lines))

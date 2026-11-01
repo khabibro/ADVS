@@ -16,7 +16,11 @@ from app.core.domain import (
     ProcessingStatus,
     RuleType,
 )
-from app.document_intelligence.auto_acceptance import YEAR_ANCHOR_SOURCE, AutoDecision
+from app.document_intelligence.auto_acceptance import (
+    CROSS_DOCUMENT_SOURCE,
+    YEAR_ANCHOR_SOURCE,
+    AutoDecision,
+)
 from app.document_intelligence.evidence_sufficiency import (
     EVIDENCE_POLICY_VERSION,
     EffectiveValueSource,
@@ -135,7 +139,7 @@ class EffectiveFieldResolver:
                     # an inferred issue date accepted on the certificate-number year: the
                     # inference is what the decision-robust check covers
                     INFERRED_DATE_REASONS
-                    if YEAR_ANCHOR_SOURCE in auto.sources
+                    if {YEAR_ANCHOR_SOURCE, CROSS_DOCUMENT_SOURCE} & set(auto.sources)
                     else set()
                 )
             )

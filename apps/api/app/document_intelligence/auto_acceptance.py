@@ -68,6 +68,7 @@ from app.document_intelligence.normalization.field_normalizer import (
     normalize_date,
 )
 from app.document_intelligence.ocr_confusions import CONFUSION_TABLE_VERSION
+from app.document_intelligence.validation.submission import institution_key
 
 AUTO_ACCEPT_POLICY_VERSION = "auto-accept-v1"
 
@@ -88,6 +89,8 @@ class Strategy(StrEnum):
     S7 = "S7"
     S8 = "S8"
     S9 = "S9"
+    S10 = "S10"  # S9 + the student pair: cross-document confirmation, both reads above the floor
+    S11 = "S11"  # S10 + a below-floor read confirmed by an exact match with the other document
 
 
 @dataclass(frozen=True)
@@ -100,6 +103,11 @@ class Features:
     name_veto: bool = False
     internal: bool = False  # D3-1..D3-4: confirmation from the document's own content
     robust: bool = False  # D3-5: acceptance for the decision when every plausible misreading agrees
+    # Student pair (enrolment certificate primary, transcript confirming): the other document counts only
+    # with a read above the floor, issue dates are confirmed across the two documents, institution names
+    # are compared by their name part.
+    student_pair: bool = False
+    pair_below_floor: bool = False  # a below-floor read is confirmed by an exact match of a reliable one
 
 
 STRATEGY_FEATURES: dict[Strategy, Features] = {
@@ -143,7 +151,35 @@ STRATEGY_FEATURES: dict[Strategy, Features] = {
         internal=True,
         robust=True,
     ),
+    Strategy.S10: Features(
+        validators=True,
+        corroboration=True,
+        second_pass=True,
+        application=True,
+        second_pass_veto=True,
+        name_veto=True,
+        internal=True,
+        robust=True,
+        student_pair=True,
+    ),
+    Strategy.S11: Features(
+        validators=True,
+        corroboration=True,
+        second_pass=True,
+        application=True,
+        second_pass_veto=True,
+        name_veto=True,
+        internal=True,
+        robust=True,
+        student_pair=True,
+        pair_below_floor=True,
+    ),
 }
+
+STUDENT_PAIR_TYPES = frozenset({DocumentType.ENROLLMENT_CERTIFICATE, DocumentType.TRANSCRIPT})
+#: Marks a decision that rests on the same value on the other student document (an inferred issue date was
+#: accepted).
+CROSS_DOCUMENT_SOURCE = "cross_document"
 
 
 def parse_strategy(value: str | None) -> Strategy:
@@ -188,6 +224,7 @@ FIELD_RULES: dict[str, FieldRule] = {
     "university_name": FieldRule("UNIVERSITY", "university", False, name_veto=True),
     "issue_date": FieldRule("DATE", None, True, confirm_by_second_pass=False),
     "birth_date": FieldRule("DATE", "birth_date", True, confirm_by_second_pass=False),
+    "admission_date": FieldRule("DATE", "admission_date", True, confirm_by_second_pass=False),
     "valid_from": FieldRule("DATE", None, True, confirm_by_second_pass=False),
     "valid_until": FieldRule("DATE", None, True, confirm_by_second_pass=False),
     "gpa": FieldRule("GPA", None, True, confirm_by_second_pass=False),
@@ -228,11 +265,16 @@ def _squash(text: str) -> str:
     return "".join(unicodedata.normalize("NFKC", text).split())
 
 
-def canonical_key(group: str, value: str) -> str:
+def canonical_key(group: str, value: str, *, tolerant: bool = False) -> str:
+    """Comparison key of a value within its group. `tolerant` compares an institution by its name part
+    (generic affixes and the issuer title dropped), because a stamp may cover the last characters of the
+    issuer line."""
     if group in ("business_number", "student_id"):
         return "".join(ch for ch in value if ch.isdigit())
     if group == "company":
         return company_key(value)
+    if group == "university" and tolerant:
+        return institution_key(value)
     return _squash(value)
 
 
@@ -254,7 +296,7 @@ def parse_second_pass(field_name: str, text: str | None) -> str | None:
     if field_name == "student_id":
         runs = re.findall(r"(?<!\d)\d{8,10}(?!\d)", folded)
         return runs[0] if len(set(runs)) == 1 else None
-    if field_name in ("issue_date", "valid_from", "valid_until", "birth_date"):
+    if field_name in ("issue_date", "valid_from", "valid_until", "birth_date", "admission_date"):
         found = [normalize_date(match.group(0)) for match in DATE_RE.finditer(folded)]
         if not found or any(item is None for item in found):
             return None
@@ -385,6 +427,16 @@ def _valid_format(item: FieldInput, index: _Index, context: ProjectContext) -> s
             and business_number_type_plausible(value, item.facts.entity_type) is False
         ):
             return "BRN_TYPE_CODE_IMPLAUSIBLE"
+        return None
+    if name == "admission_date":
+        try:
+            admitted = date.fromisoformat(value)
+        except ValueError:
+            return "FORMAT_DATE_INVALID"
+        if not (1990 <= admitted.year <= 2100) or (
+            context.reference_date and admitted > context.reference_date
+        ):
+            return "FORMAT_ADMISSION_DATE_IMPLAUSIBLE"
         return None
     if name == "birth_date":
         try:
@@ -571,6 +623,7 @@ HAS_VALIDATOR = frozenset(
         "gpa_scale",
         "student_id",
         "birth_date",
+        "admission_date",
     }
 )
 
@@ -617,7 +670,12 @@ def decide(
             decisions[key] = _no(strategy, "SEMANTIC_INFERENCE", rule.rule_id)
             continue
         if item.confidence is None or item.confidence < rule.floor:
-            decisions[key] = _no(strategy, "CONFIDENCE_BELOW_FLOOR", rule.rule_id)
+            if _below_floor_pair_allowed(item, features):
+                decisions[key] = _decide_below_floor(
+                    item, rule, fields, index, context, strategy, features
+                )
+            else:
+                decisions[key] = _no(strategy, "CONFIDENCE_BELOW_FLOOR", rule.rule_id)
             continue
 
         # S1: confidence only (shown to be unsafe by the injection suite)
@@ -671,6 +729,10 @@ def decide(
                 decisions[key] = _no(strategy, f"{verdict.source.upper()}_MISMATCH", rule.rule_id)
                 continue
             if internal_only:
+                pair = _issue_date_pair(item, fields, index, context, features)
+                if pair:
+                    decisions[key] = _pair_decision(strategy, rule, pair)
+                    continue
                 if features.robust and _anchored_issue_date_robust(item, index, context):
                     decisions[key] = AutoDecision(
                         True,
@@ -699,6 +761,18 @@ def decide(
     return decisions
 
 
+def _unreliable_partner(
+    item: FieldInput, other: FieldInput, other_rule: FieldRule, features: Features
+) -> bool:
+    """Student pair: a read of the other student document below its confidence floor says nothing."""
+    return (
+        features.student_pair
+        and item.document_type in STUDENT_PAIR_TYPES
+        and other.document_type in STUDENT_PAIR_TYPES
+        and (other.confidence is None or other.confidence < other_rule.floor)
+    )
+
+
 def _group_values(
     item: FieldInput,
     rule: FieldRule,
@@ -709,7 +783,8 @@ def _group_values(
 ) -> tuple[list[FieldInput], list[FieldInput]]:
     """(agreeing, disagreeing) valid values of the same attribute on *other* documents."""
     assert rule.group is not None and item.value is not None
-    mine = canonical_key(rule.group, item.value)
+    tolerant = features.student_pair
+    mine = canonical_key(rule.group, item.value, tolerant=tolerant)
     agreeing: list[FieldInput] = []
     disagreeing: list[FieldInput] = []
     for other in fields:
@@ -722,13 +797,18 @@ def _group_values(
             or other.value is None
         ):
             continue
+        weak_partner = _unreliable_partner(item, other, other_rule, features)
+        if weak_partner and not features.pair_below_floor:
+            continue  # student pair: the other document counts only with a read above its floor
         if (
             other.field_name in HAS_VALIDATOR
             and features.validators
             and _valid_format(other, index, context)
         ):
             continue  # an unreadable/invalid value from another document is noise, not evidence
-        theirs = canonical_key(rule.group, other.value)
+        theirs = canonical_key(rule.group, other.value, tolerant=tolerant)
+        if weak_partner and (theirs != mine or item.confidence is None or item.confidence < rule.floor):
+            continue  # a below-floor partner supports a reliable read only by an exact match
         if theirs == mine or (
             rule.group == "company"
             and company_names_agree(
@@ -741,6 +821,105 @@ def _group_values(
     return agreeing, disagreeing
 
 
+#: Student fields a below-floor read may be confirmed for, by an exact match with a reliable read of the other
+#: student document.
+BELOW_FLOOR_PAIR_FIELDS = frozenset(
+    {"student_name", "university_name", "birth_date", "admission_date", "issue_date"}
+)
+
+
+def _below_floor_pair_allowed(item: FieldInput, features: Features) -> bool:
+    return (
+        features.pair_below_floor
+        and item.document_type in STUDENT_PAIR_TYPES
+        and item.field_name in BELOW_FLOOR_PAIR_FIELDS
+        and item.confidence is not None
+    )
+
+
+def _issue_date_pair(
+    item: FieldInput,
+    fields: Sequence[FieldInput],
+    index: _Index,
+    context: ProjectContext,
+    features: Features,
+) -> list[FieldInput]:
+    """The same issue date on the other student document (both read above the floor, both of a valid
+    format). Issued on different days, or any disagreeing reading: nothing is confirmed."""
+    if (
+        not features.student_pair
+        or item.field_name != "issue_date"
+        or item.document_type not in STUDENT_PAIR_TYPES
+        or item.value is None
+    ):
+        return []
+    floor = FIELD_RULES["issue_date"].floor
+    equal: list[FieldInput] = []
+    for other in fields:
+        if (
+            other.field_name != "issue_date"
+            or other.document_id == item.document_id
+            or other.checksum == item.checksum
+            or other.document_type not in STUDENT_PAIR_TYPES
+            or other.document_type == item.document_type
+            or other.value is None
+        ):
+            continue
+        if other.confidence is None or other.confidence < floor:
+            # a below-floor partner supports a reliable read by an exact match only (variant b)
+            if not (
+                features.pair_below_floor
+                and other.value == item.value
+                and item.confidence is not None
+                and item.confidence >= floor
+            ):
+                continue
+        elif other.value != item.value:
+            return []
+        if features.validators and _valid_format(other, index, context):
+            continue
+        equal.append(other)
+    return equal
+
+
+def _pair_decision(strategy: Strategy, rule: FieldRule, partners: list[FieldInput]) -> AutoDecision:
+    return AutoDecision(
+        True,
+        strategy.value,
+        rule_id=f"{rule.rule_id}:CROSS_DOCUMENT",
+        sources=("documents", CROSS_DOCUMENT_SOURCE),
+        corroborating_document_ids=tuple(sorted({other.document_id for other in partners}, key=str)),
+    )
+
+
+def _decide_below_floor(
+    item: FieldInput,
+    rule: FieldRule,
+    fields: Sequence[FieldInput],
+    index: _Index,
+    context: ProjectContext,
+    strategy: Strategy,
+    features: Features,
+) -> AutoDecision:
+    """A read below the floor is confirmed only by an exact match with a reliable read of the other student
+    document; no other evidence (second pass, internal, decision-robust) can lift it."""
+    assert item.value is not None
+    if features.validators and item.field_name in HAS_VALIDATOR:
+        problem = _valid_format(item, index, context)
+        if problem:
+            return _no(strategy, problem, rule.rule_id)
+    if item.field_name == "issue_date":
+        pair = _issue_date_pair(item, fields, index, context, features)
+        return (
+            _pair_decision(strategy, rule, pair)
+            if pair
+            else _no(strategy, "CONFIDENCE_BELOW_FLOOR", rule.rule_id)
+        )
+    return _decide_corroborated(
+        item, rule, fields, index, context, strategy, features, below_floor=True
+    )
+
+
 def _decide_corroborated(
     item: FieldInput,
     rule: FieldRule,
@@ -749,6 +928,8 @@ def _decide_corroborated(
     context: ProjectContext,
     strategy: Strategy,
     features: Features,
+    *,
+    below_floor: bool = False,
 ) -> AutoDecision:
     assert item.value is not None
     # ---- application value (independent source, S5+) ---------------------------------------
@@ -781,6 +962,22 @@ def _decide_corroborated(
 
     sources: list[str] = []
     corroborators: list[uuid.UUID] = []
+    if below_floor:
+        # only the other document can confirm a read below the floor
+        agreeing, disagreeing = (
+            _group_values(item, rule, fields, index, context, features) if rule.group else ([], [])
+        )
+        if agreeing and not disagreeing:
+            return AutoDecision(
+                True,
+                strategy.value,
+                rule_id=f"{rule.rule_id}:DOCUMENTS_BELOW_FLOOR",
+                sources=("documents",),
+                corroborating_document_ids=tuple(
+                    sorted({other.document_id for other in agreeing}, key=str)
+                ),
+            )
+        return _no(strategy, "CONFIDENCE_BELOW_FLOOR", rule.rule_id)
     if rule.group:
         agreeing, disagreeing = _group_values(item, rule, fields, index, context, features)
         if reference:
@@ -796,6 +993,10 @@ def _decide_corroborated(
             if agreeing:
                 sources.append("documents")
                 corroborators = sorted({other.document_id for other in agreeing}, key=str)
+    if not sources:
+        pair = _issue_date_pair(item, fields, index, context, features)
+        if pair:
+            return _pair_decision(strategy, rule, pair)
     if sources:
         return AutoDecision(
             True,

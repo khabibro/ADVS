@@ -32,11 +32,12 @@ class EnrollmentCertificateExtractor(BaseDocumentExtractor):
 
     def extract(self, text: ExtractionInput) -> list[ExtractedValue]:
         return [
-            self.text_field(text, "student_name", ["학생명", "성명", "이름"]),
+            self.student_name_field(text),
             self._university_name(text),
             self._department(text),
             self.student_id_field(text),
             self.birth_date_field(text),
+            self.admission_date_field(text),
             self.issue_date_field(text, ["발급일", "발급일자", "발행일자"]),
         ]
 

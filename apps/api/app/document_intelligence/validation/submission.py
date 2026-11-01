@@ -220,12 +220,24 @@ def _one_edit_apart(left: str, right: str) -> bool:
 #: are required on at least one document (not on each), are compared across documents only when both
 #: documents print them, and a value on a single document stays unconfirmed unless other evidence exists
 #: (the acceptance policy already requires that for OCR-read identifiers).
-SUBMISSION_WIDE_FIELDS = frozenset({"student_id"})
+SUBMISSION_WIDE_FIELDS = frozenset({"student_id", "admission_date"})
+
+#: Observations that are compared only when both documents print them AND both reads are reliable; an unreliable
+#: side is not a blocker for a field no decision depends on.
+SOFT_OBSERVATION_FIELDS = frozenset({"admission_date"})
 
 
 def _business_number_value(document: DocumentSnapshot) -> str | None:
     number = document.fields.get("business_registration_number")
     return number.normalized_value if number is not None else None
+
+
+def _reliable(snapshot: FieldSnapshot | None) -> bool:
+    return (
+        snapshot is not None
+        and snapshot.normalized_value is not None
+        and snapshot.assessment_state == EvidenceAssessmentState.SUFFICIENT
+    )
 
 
 def value_exists(snapshot: FieldSnapshot | None) -> bool:
@@ -793,7 +805,10 @@ class SubmissionVerificationEngine:
         if source_name == target_name and source_name in SUBMISSION_WIDE_FIELDS:
             # An observation, not a requirement: compared only when both documents print it. A value
             # printed on one document alone is nothing to check or confirm.
-            if field_absent(source_field) or field_absent(target_field):
+            soft_unreliable = source_name in SOFT_OBSERVATION_FIELDS and not (
+                _reliable(source_field) and _reliable(target_field)
+            )
+            if field_absent(source_field) or field_absent(target_field) or soft_unreliable:
                 return RuleEvaluationResult(
                     rule.id,
                     rule.rule_type,

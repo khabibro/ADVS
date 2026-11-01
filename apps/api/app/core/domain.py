@@ -115,6 +115,7 @@ EXPECTED_FIELDS: dict[DocumentType, list[str]] = {
         "department",
         "student_id",
         "birth_date",
+        "admission_date",
         "issue_date",
     ],
     DocumentType.TRANSCRIPT: [
@@ -122,6 +123,7 @@ EXPECTED_FIELDS: dict[DocumentType, list[str]] = {
         "university_name",
         "student_id",
         "birth_date",
+        "admission_date",
         "issue_date",
         "gpa",
         "gpa_scale",
