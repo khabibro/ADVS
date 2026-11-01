@@ -48,6 +48,7 @@ from typing import Any
 
 from app.core.domain import DocumentType
 from app.document_intelligence.candidate_repair import PROVENANCE, propose_repair
+from app.document_intelligence.company_names import company_key, company_names_agree
 from app.document_intelligence.confirmations import (
     business_number_type_plausible,
     date_pair,
@@ -65,7 +66,6 @@ from app.document_intelligence.normalization.field_normalizer import (
     is_valid_business_number,
     normalize_business_number,
     normalize_date,
-    strip_legal_entity_markers,
 )
 from app.document_intelligence.ocr_confusions import CONFUSION_TABLE_VERSION
 
@@ -222,42 +222,17 @@ def _squash(text: str) -> str:
     return "".join(unicodedata.normalize("NFKC", text).split())
 
 
-# A parenthesised text with Latin letters and no Hangul is a translation or an abbreviation printed
-# beside a company name; one certificate prints it and another leaves it out.
-_LATIN_PAREN_RE = re.compile(r"\([^()가-힣]*[A-Za-z][^()가-힣]*\)")
-MIN_PREFIX_NAME_CHARS = 3
-
-
 def canonical_key(group: str, value: str) -> str:
     if group in ("business_number", "student_id"):
         return "".join(ch for ch in value if ch.isdigit())
     if group == "company":
-        text = _LATIN_PAREN_RE.sub("", unicodedata.normalize("NFKC", value))
-        return _squash(strip_legal_entity_markers(text))
+        return company_key(value)
     return _squash(value)
 
 
-def _same_registered_business(left: FieldInput, right: FieldInput, index: _Index) -> bool:
-    """Both documents carry the same business number, and it passes the check digit."""
-    a = index.sibling(left.document_id, "business_registration_number")
-    b = index.sibling(right.document_id, "business_registration_number")
-    if a is None or b is None or a.value is None or b.value is None:
-        return False
-    digits = canonical_key("business_number", a.value)
-    return digits == canonical_key("business_number", b.value) and is_valid_business_number(digits)
-
-
-def _company_names_agree(mine: str, theirs: str, left: FieldInput, right: FieldInput, index: _Index) -> bool:
-    """Equal canonical names, or the shorter one (a workplace name on the insurance certificate) is the
-    start of the longer one while both documents carry the same valid business number."""
-    if mine == theirs:
-        return True
-    short, long_ = sorted((mine, theirs), key=len)
-    return (
-        len(short) >= MIN_PREFIX_NAME_CHARS
-        and long_.startswith(short)
-        and _same_registered_business(left, right, index)
-    )
+def _business_number_of(item: FieldInput, index: _Index) -> str | None:
+    number = index.sibling(item.document_id, "business_registration_number")
+    return number.value if number is not None else None
 
 
 def parse_second_pass(field_name: str, text: str | None) -> str | None:
@@ -679,7 +654,10 @@ def _group_values(
             continue  # an unreadable/invalid value from another document is noise, not evidence
         theirs = canonical_key(rule.group, other.value)
         if theirs == mine or (
-            rule.group == "company" and _company_names_agree(mine, theirs, item, other, index)
+            rule.group == "company"
+            and company_names_agree(
+                mine, theirs, _business_number_of(item, index), _business_number_of(other, index)
+            )
         ):
             agreeing.append(other)
         else:

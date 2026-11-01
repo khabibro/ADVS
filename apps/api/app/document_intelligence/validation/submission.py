@@ -18,6 +18,7 @@ from app.core.domain import (
     RuleType,
     Severity,
 )
+from app.document_intelligence.company_names import company_key, company_names_agree
 from app.document_intelligence.evidence_sufficiency import (
     EffectiveValueSource,
     EvidenceAssessmentReason,
@@ -220,6 +221,11 @@ def _one_edit_apart(left: str, right: str) -> bool:
 #: documents print them, and a value on a single document stays unconfirmed unless other evidence exists
 #: (the acceptance policy already requires that for OCR-read identifiers).
 SUBMISSION_WIDE_FIELDS = frozenset({"student_id"})
+
+
+def _business_number_value(document: DocumentSnapshot) -> str | None:
+    number = document.fields.get("business_registration_number")
+    return number.normalized_value if number is not None else None
 
 
 def value_exists(snapshot: FieldSnapshot | None) -> bool:
@@ -823,12 +829,21 @@ class SubmissionVerificationEngine:
         assert target_field is not None and target_field.normalized_value is not None
         value_type = str(rule.params.get("value_type", "string"))
         source_value, target_value = source_field.normalized_value, target_field.normalized_value
-        if source_name in _COMPANY_NAME_FIELDS or target_name in _COMPANY_NAME_FIELDS:
+        company_fields = source_name in _COMPANY_NAME_FIELDS or target_name in _COMPANY_NAME_FIELDS
+        if company_fields:
             source_value = strip_legal_entity_markers(source_value)
             target_value = strip_legal_entity_markers(target_value)
         source_key = _comparison_key(source_value, value_type)
         target_key = _comparison_key(target_value, value_type)
         passed = source_key == target_key
+        if not passed and company_fields:
+            # Notation only (parenthesised Latin text, a shorter workplace name under the same business number).
+            passed = company_names_agree(
+                company_key(source_value),
+                company_key(target_value),
+                _business_number_value(source),
+                _business_number_value(target),
+            )
         if not passed and value_type == "institution" and _one_edit_apart(source_key, target_key):
             # one character apart: most likely a recognition error, so a person decides; never an error
             return RuleEvaluationResult(

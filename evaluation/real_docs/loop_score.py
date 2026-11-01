@@ -43,6 +43,7 @@ def main() -> int:
             if s["kind"] == "valid":
                 r["valid"] += 1
                 r["ready"] += s["status"] == "READY"
+                r["valid_needs_correction"] += s["status"] == "NEEDS_CORRECTION"
                 r["correct_ready"] += s["status"] == "READY" and not s["wrong_effective"]
                 r["wrong_ready"] += s["status"] == "READY" and s["wrong_effective"]
                 r["blockers"] += s["issues"]
@@ -58,7 +59,7 @@ def main() -> int:
     for key, r in rows.items():
         out[key] = dict(r) | {"mean_blockers": round(r["blockers"] / r["valid"], 2) if r["valid"] else None}
         v = out[key]
-        print(f"{key:9s} valid {v.get('valid',0):3d} READY {v.get('ready',0):3d} correctREADY {v.get('correct_ready',0):3d} wrongREADY {v.get('wrong_ready',0)}"
+        print(f"{key:9s} valid {v.get('valid',0):3d} READY {v.get('ready',0):3d} correctREADY {v.get('correct_ready',0):3d} wrongREADY {v.get('wrong_ready',0)} validNEEDS_CORRECTION {v.get('valid_needs_correction',0)}"
               f" | negatives {v.get('negatives',0):3d} READY {v.get('negatives_ready',0)} | verification issues per valid submission {v['mean_blockers']}")
     if args.out_json:
         Path(args.out_json).write_text(json.dumps(out, indent=1), encoding="utf-8")
