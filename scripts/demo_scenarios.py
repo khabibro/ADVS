@@ -62,9 +62,10 @@ SCENARIOS: tuple[Scenario, ...] = (
     Scenario("D7", "D7 정상 제출 (학생)", "S01", "digital", "student", "READY"),
     Scenario("D8", "D8 필수 서류 누락", "B08", "digital", "business", "NEEDS_CORRECTION",
              ("MISSING_REQUIRED_DOCUMENT",)),
-    # A scanned student file keeps values with no independent confirmation (dates, student number):
-    # a person confirms them against the original, then it becomes 제출 가능.
-    Scenario("D9", "D9 스캔본 제출 + 사람 확인 (학생)", "S01", "scanned", "student", "REVIEW_REQUIRED",
+    # A scanned student file whose issue date and GPA have no independent confirmation: a person confirms
+    # them against the original, then it becomes 제출 가능. (S01 scanned used to be the example, but the
+    # student-pair confirmation now settles most of its values; S04 scanned still leaves two items.)
+    Scenario("D9", "D9 스캔본 제출 + 사람 확인 (학생)", "S04", "scanned", "student", "REVIEW_REQUIRED",
              review=True),
 )
 
