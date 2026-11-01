@@ -16,7 +16,7 @@ from app.core.domain import (
     ProcessingStatus,
     RuleType,
 )
-from app.document_intelligence.auto_acceptance import AutoDecision
+from app.document_intelligence.auto_acceptance import YEAR_ANCHOR_SOURCE, AutoDecision
 from app.document_intelligence.evidence_sufficiency import (
     EVIDENCE_POLICY_VERSION,
     EffectiveValueSource,
@@ -61,6 +61,12 @@ def _evidence_fingerprint(evidence: list[dict[str, Any]] | None) -> str | None:
         return None
     encoded = json.dumps(evidence, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+INFERRED_DATE_REASONS = {
+    EvidenceAssessmentReason.EXTRACTION_MARKED_FOR_REVIEW,
+    EvidenceAssessmentReason.SEMANTIC_INFERENCE,
+}
 
 
 @dataclass(frozen=True)
@@ -122,7 +128,17 @@ class EffectiveFieldResolver:
             and field is not None
             and field.normalized_value is not None
             and machine.state == EvidenceAssessmentState.REVIEW_REQUIRED
-            and set(machine.reasons) <= {EvidenceAssessmentReason.OCR_REQUIRES_CONFIRMATION}
+            and set(machine.reasons)
+            <= (
+                {EvidenceAssessmentReason.OCR_REQUIRES_CONFIRMATION}
+                | (
+                    # an inferred issue date accepted on the certificate-number year: the
+                    # inference is what the decision-robust check covers
+                    INFERRED_DATE_REASONS
+                    if YEAR_ANCHOR_SOURCE in auto.sources
+                    else set()
+                )
+            )
         ):
             # An independent source confirmed the OCR value (see auto_acceptance.py).
             # Machine evidence is untouched; only "does a human still need to look" changes.

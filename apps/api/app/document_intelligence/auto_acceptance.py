@@ -471,6 +471,48 @@ def _printed_bare_dates(item: FieldInput) -> tuple[date, ...]:
     return tuple(sorted(set(found)))
 
 
+#: Marks a decision that rests on the certificate-number year (an inferred issue date was accepted).
+YEAR_ANCHOR_SOURCE = "year_anchor"
+
+#: Another bare date this close (in box heights) to the issue date shares its block.
+ISSUANCE_BLOCK_BOXES = 4
+
+
+def _anchored_issue_date_robust(item: FieldInput, index: _Index, context: ProjectContext) -> bool:
+    """An inferred (unlabelled) issue date, decision-robust with the certificate number as year anchor.
+
+    All must hold: the page prints exactly one document-number year and the date carries it; the date
+    stands alone in its box and is the only date box of its block (no other bare date within a few
+    box heights, so a birth or admission date nearby keeps it in review); it is not near the age
+    limit; and every OCR digit-confusion reading with that year gives the same rule outcomes."""
+    facts = item.facts
+    if (
+        item.field_name != "issue_date"
+        or facts is None
+        or len(facts.number_years) != 1
+        or item.value is None
+        or _near_decision_boundary(item, context)
+    ):
+        return False
+    boxes = [box for box in facts.dates if box.iso == item.value and box.bare]
+    if len(boxes) != 1:
+        return False
+    own = boxes[0]
+    for other in facts.dates:
+        if other is own or not other.bare or other.page != own.page:
+            continue
+        if abs(other.y - own.y) <= ISSUANCE_BLOCK_BOXES * max(own.height, other.height):
+            return False
+    return is_decision_robust(
+        list(context.rules),
+        context.reference_date,
+        item.field_name,
+        item.document_type,
+        item.value,
+        year_anchor=facts.number_years[0],
+    )
+
+
 def _near_decision_boundary(item: FieldInput, context: ProjectContext) -> bool:
     """True when `item` lies within the policy margin of a decision boundary of the workflow."""
     margin_days = BOUNDARY_MARGINS["date_days"]
@@ -629,6 +671,15 @@ def decide(
                 decisions[key] = _no(strategy, f"{verdict.source.upper()}_MISMATCH", rule.rule_id)
                 continue
             if internal_only:
+                if features.robust and _anchored_issue_date_robust(item, index, context):
+                    decisions[key] = AutoDecision(
+                        True,
+                        strategy.value,
+                        rule_id=f"{rule.rule_id}:DECISION_ROBUST",
+                        sources=("decision_robust", YEAR_ANCHOR_SOURCE),
+                        robust=True,
+                    )
+                    continue
                 decisions[key] = _no(strategy, "SEMANTIC_INFERENCE", rule.rule_id)
                 continue
 

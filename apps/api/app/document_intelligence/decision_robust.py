@@ -117,6 +117,7 @@ def is_decision_robust(
     scale: float | None = None,
     siblings: dict[str, date | None] | None = None,
     window_dates: tuple[date, ...] = (),
+    year_anchor: int | None = None,
 ) -> bool:
     """True when the read value and every valid alternative reading give identical rule outcomes.
 
@@ -124,7 +125,10 @@ def is_decision_robust(
     read: the safety argument is one misread box at a time, so a misread value is checked against the
     other boxes as they stand. For a validity end they bound the plausible readings: an alternative that is
     not within VALIDITY_WINDOW_DAYS after one of those dates is dropped, and the read value itself must lie
-    in such a window."""
+    in such a window.
+
+    `year_anchor` is a year the page itself fixes (the year that starts the certificate number): for an
+    issue date, the read value must carry it and every alternative that does not is dropped."""
     base = outcomes(specs, reference, field, document_type, value)
     if not base:  # no rule uses the value, or it cannot be evaluated: nothing to be robust about
         return False
@@ -150,7 +154,13 @@ def is_decision_robust(
             ).state
             == "CONFIRMED"
         )
+    if year_anchor is not None and field == "issue_date":
+        read_date = parse_iso(value)
+        if read_date is None or read_date.year != year_anchor:
+            return False
     for alternative in _alternative_values(field, value, scale):
+        if year_anchor is not None and field == "issue_date" and int(alternative[:4]) != year_anchor:
+            continue  # the certificate number fixes the year
         if readings:
             parsed_alternative = parse_iso(alternative)
             if parsed_alternative is None or not _in_window(parsed_alternative, readings):
