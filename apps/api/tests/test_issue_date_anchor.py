@@ -19,7 +19,7 @@ _HEAD = [
 ]
 _SENTENCE = ("위의 사실을 증명합니다.", 390, 1000, 380)
 _DATE = ("2026년 10월 30일", 470, 1070, 330)  # right edge at x=800
-_ISSUER = ("경 북 대 학 교 총 장", 250, 1125, 400)
+_ISSUER = ("가 나 다 대 학 교 총 장", 250, 1125, 400)
 
 
 def test_date_with_clear_seal_digit_fragment_is_found() -> None:
