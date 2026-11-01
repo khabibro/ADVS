@@ -38,7 +38,7 @@ def main() -> int:
             s["issues"] = len(json.loads(path.read_text(encoding="utf-8"))["verification"]["issues"])
         except (OSError, KeyError, ValueError):
             s["issues"] = len(s["blockers"])
-        for key in (s["family"], "student" if s["family"] != "business" else "business", "ALL"):
+        for key in dict.fromkeys((s["family"], "student" if s["family"] != "business" else "business", "ALL")):
             r = rows[key]
             if s["kind"] == "valid":
                 r["valid"] += 1
@@ -51,7 +51,7 @@ def main() -> int:
                 r["negatives"] += 1
                 r["negatives_ready"] += s["status"] == "READY"
     for it in items:
-        for key in (it["family"], "student" if it["family"] != "business" else "business", "ALL"):
+        for key in dict.fromkeys((it["family"], "student" if it["family"] != "business" else "business", "ALL")):
             rows[key]["fields"] += 1
             rows[key]["auto_correct"] += it["outcome"] == "CORRECT_ACCEPTED"
             rows[key]["auto_wrong"] += it["outcome"] == "WRONG_ACCEPTED"
