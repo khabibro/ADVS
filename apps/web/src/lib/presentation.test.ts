@@ -159,6 +159,8 @@ describe("field labels and formatting", () => {
     expect(fieldLabel("business_registration_number")).toBe("사업자등록번호");
     expect(fieldLabel("gpa_scale")).toBe("평점 만점");
     expect(fieldLabel("student_id")).toBe("학번");
+    expect(fieldLabel("birth_date")).toBe("생년월일");
+    expect(fieldLabel("admission_date")).toBe("입학일자");
     expect(fieldLabel(null)).toBe("");
   });
 

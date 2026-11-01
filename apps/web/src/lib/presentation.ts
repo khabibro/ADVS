@@ -309,6 +309,8 @@ const FIELD_LABELS: Record<string, string> = {
   department: "학과",
   degree: "학위",
   student_id: "학번",
+  birth_date: "생년월일",
+  admission_date: "입학일자",
   issue_date: "발급일",
   graduation_date: "졸업일",
   employment_start_date: "근무 시작일",
