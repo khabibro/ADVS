@@ -6,19 +6,15 @@ Development: student fresh G0–G5, G0b, seed A, real pair; business F21. Valida
 
 ## Scoreboard (valid submissions on the reduced checklist that are READY and correct)
 
-Two business check dates: "original" = the harness date (last valid day of the 국세 납세증명서, a boundary case by construction) and "realistic" (20 days before the earliest printed validity end; see cycle 0). Student rows are unchanged so far.
+Business is reported at two check dates: "original" = the harness date (last valid day of the 국세 납세증명서, a boundary case by construction) and "realistic" (20 days before the earliest printed validity end; see cycle 0). Student numbers did not change in any accepted cycle.
 
-| cycle | commit | student dev (fresh+A+pair) | student validation (seed B) | business dev F21 original / realistic | business validation RS original / realistic | wrong READY | negatives READY |
-|---|---|---|---|---|---|---|---|
-| 0 (gated tip) | d9c6c2b | 0/81 | 0/27 | 0 / 0 of 38 | 0 / 0 of 38 | 0 | 0 of 114 + 128 |
-| 1 classification | a2bb587 | 0/81 | 0/27 | 0 / 0 | 0 / 0 | 0 | 0 |
-| 2 company notation | 7515f50 | 0/81 | 0/27 | 0 / 0 (30 became NEEDS_CORRECTION: defect, see cycle 2) | 0 / 0 | 0 | 0 |
-| 3 unique business number | (c3) | 0/81 | 0/27 | 0 / 0 | 0 / 0 | 0 | 0 |
-| 4 validity window + S9 | (c4) | 0/81 | 0/27 | 0 / 0 (30 NEEDS_CORRECTION) | 11 / 23 | 0 | 0 |
-| 5 verification notation | (c5) | 0/81 | 0/27 | 0 / 24 | 11 / 23 | 0 | 0 |
+| state | commit | student dev (fresh+A+pair) | student validation (seed B) | business dev F21 orig / realistic | business validation RS orig / realistic | wrong READY | negatives READY | issues per valid business submission |
+|---|---|---|---|---|---|---|---|---|
+| start (gated tip) | d9c6c2b | 0 / 81 | 0 / 27 | 0 / 0 of 38 | 0 / 0 of 38 | 0 | 0 of 114 + 14 | 6.90 |
+| after cycles 1, 2, 3, 5 (**loop head**) | 5c4fb75 | 0 / 81 | 0 / 27 | 0 / 0 | 0 / 0 | 0 | 0 | 4.33 |
+| *proposal branch*: + validity window + S9 | `proposal/robust-validity-window` | 0 / 81 | 0 / 27 | 0 / 24 | 11 / 23 | 0 | 0 | 1.26 |
 
-Hard numbers behind the last row (cycle 5): 47 of 76 valid business submissions READY at the realistic check date, all correct against gold, 0 valid NEEDS_CORRECTION, 0 of 114 negatives READY. At the original (boundary) date 11 of 76 (all validation company), 0 F21: those dates sit on the expiry day by construction, and a refusal there is correct.
-
+The proposal row is **not** on the loop branch: its safety gate failed (cycle 4). The loop head gains +115 correct auto-accepted business fields (319 to 434), no READY yet.
 
 ## Cycle 0: baseline and how the loop is measured
 
@@ -46,24 +42,30 @@ Hard numbers behind the last row (cycle 5): 47 of 76 valid business submissions 
 - Fix: if no label links, take the only hyphenated number on the page that passes the check digit (two different valid numbers or a failing digit stay unresolved); it is accepted only through corroboration.
 - Result: +27 correct auto-accepted fields, verification issues per valid business submission 5.49 to 4.79, 0 wrong.
 
-## Cycle 4: validity end bounded by the page's other printed dates; default strategy S9 — ACCEPTED (pending the safety gate)
+## Cycle 4: validity end bounded by the page's other printed dates; default strategy S9 — REJECTED by the safety gate (kept on `proposal/robust-validity-window`)
 - Mechanism: a lone scanned validity end can only be accepted for the decision when every plausible misreading gives the same outcome. The year and month digits made that impossible without an issue date, and the issue date is not extracted for these certificates.
 - Fix: the other bare dates printed on the page bound the plausible readings (a reading must lie 0–400 days after one of them); the read value must lie in such a window; printed dates are taken as read (one misread box at a time, the module's existing safety argument). The default strategy becomes S9 (decision-robust acceptance, implemented and injection-tested in D3).
 - Result: validation company 11 READY at the original date and 23 at the realistic date; N1 (one day after expiry, check date 2026-11-03) now 16 of 20 NEEDS_CORRECTION (was 19 of 19 REVIEW_REQUIRED without an expiry code): the expired digital 국세 certificate is detected.
-- Side effect fixed in cycle 5 (see cycle 2).
+- **Safety gate: hold-out 1 injection E14 (validity end misread by one digit, both passes agree): 30 false auto-accepts and 5 false READY; the previous commit had 0 and 0** (dev: 0). Examples: a true day digit 7 read as 1 or 2, accepted because the verdict (not expired) is the same. This is the robust path working as designed: the value can be wrong while the decision is right, and the harness counts a wrong accepted value as a leak. Rule: a fix that adds even one is reverted. Reverted (5c4fb75); the change stays on a proposal branch for the owner (proposal 1 below).
+- Side effect that is now moot on the loop branch: the verification notation fix (cycle 5) stays, because it removes a false NEEDS_CORRECTION that cycle 2 would otherwise cause.
 
-## Cycle 5: verification uses the same notation logic (shared `company_names.py`)
-- Result: dev company 24 READY (realistic), 0 valid NEEDS_CORRECTION; 47 of 76 READY overall; all correct; 0 of 114 negatives READY; N1 detected.
+## Cycle 5: verification uses the same notation logic (shared `company_names.py`) — ACCEPTED
+- Result on the loop head: 0 valid submissions with a stricter status (the 2 NEEDS_CORRECTION among "valid" are the two multi-page files, unchanged from the baseline), issues per valid business submission 4.33. On the proposal branch the same commit shows 47 of 76 READY.
 
-## Safety gate status
-- Backend 724 tests, ruff, mypy clean. Real sets: 0 wrong accepted, 0 false READY, all real negatives non-READY (student 14 + business 114 in the main run, N1 re-run 20).
-- Fictional replay (injections dev, hold-outs 1–3) on the cycle 5 tree: running.
+## Cycle 6: fragment-aware name veto — REVERTED (cedf6d6)
+- Hypothesis: the second-pass university re-read is a one-character fragment of a letter-spaced header, so the veto fires without information (127 dev fields).
+- Result: +1 auto-accepted field, 8.50 to 8.48 issues per student submission. The vetoed regions mostly contain other text (digits, Latin), not fragments, so the mechanism covered about 1 of 127 cases. No gain, reverted.
+
+## Safety gate status (loop head 5c4fb75)
+- Backend 723 tests, ruff, mypy clean. Real sets: 0 wrong accepted, 0 false READY, all real negatives non-READY (student 14 + business 114).
+- Fictional replay (injections dev, hold-outs 1–3): running; result below when finished.
 
 ## Observations for the next cycles
 - Student: 0 READY. Per valid submission about 8 issues: issue_date and university name on the enrolment certificate, student number unresolved, GPA. The lone scanned issue date is a semantic inference (needs_review) and is excluded from decision-robust acceptance by design (owner decision, see proposal 1).
 
 ## Owner-decision proposals
 
+0. **Decision-robust acceptance of a validity end bounded by the page's printed dates (business) — the big one.** Branch `proposal/robust-validity-window` (2 commits + the shared notation fix). Effect: 47 of 76 valid business submissions READY at the realistic check date (24 of 38 on the development company, 23 of 38 on the validation company), all correct, 0 of 114 negatives READY, and the expired digital 국세 certificate is detected (N1 at the correct date: 16 of 20 NEEDS_CORRECTION instead of 0). Cost: the harness counts 30 false auto-accepts and 5 false READY on hold-out 1 (E14: a digit of the validity end is wrong, the verdict is right). The question for you: is "wrong digit, correct verdict, marked decision-robust" a leak? If yes, drop it; if no, the injection metric needs a verdict-based definition for robust acceptances (a wrong value must flip a verdict to count). A cheap middle path is to show those fields as "decision-robust, please confirm" and let READY require a one-click confirmation of the date, which keeps 0 wrong values accepted.
 1. **Decision-robust acceptance for an anchored scanned issue date (student).** The issue date on student scans is found from the certification sentence above and the issuer line below (committed earlier) but stays `needs_review` as an inference, so it can never be accepted, and it is a blocker on every student submission (about 2 per submission). Proposal: allow the decision-robust path for it when the date lies far from the age limit (the policy margin). Expected gain: removes 2 of about 8 blockers per student submission; alone it makes no student submission READY. Risk: a misread date far from the limit leaves the verdict unchanged; a date near the limit still goes to review.
-2. **Default strategy S9** (done in this branch; the code was already in the repository and injection-tested). Please review that you want it as the default.
+2. **Default strategy S9** is part of proposal 0 only; the loop branch keeps S8.
 3. **Applicant company name as an independent source (S5+).** The harness does not supply the project's company name, so this source is never used in the measurements. If real projects always carry it, company fields would be corroborated by the application. Expected gain: unmeasured here.
