@@ -805,8 +805,13 @@ class SubmissionVerificationEngine:
         if source_name == target_name and source_name in SUBMISSION_WIDE_FIELDS:
             # An observation, not a requirement: compared only when both documents print it. A value
             # printed on one document alone is nothing to check or confirm.
-            soft_unreliable = source_name in SOFT_OBSERVATION_FIELDS and not (
-                _reliable(source_field) and _reliable(target_field)
+            # an unreliable pair of equal reads is nothing to act on; two reads that differ always are
+            soft_unreliable = (
+                source_name in SOFT_OBSERVATION_FIELDS
+                and not (_reliable(source_field) and _reliable(target_field))
+                and source_field is not None
+                and target_field is not None
+                and source_field.normalized_value == target_field.normalized_value
             )
             if field_absent(source_field) or field_absent(target_field) or soft_unreliable:
                 return RuleEvaluationResult(

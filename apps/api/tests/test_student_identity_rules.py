@@ -84,6 +84,7 @@ def _requirements() -> list[RequirementSnapshot]:
         _comparison("student_id", "identifier"),
         _comparison("student_name"),
         _comparison("birth_date", "identifier"),
+        _comparison("admission_date", "identifier"),
     )
     return [
         RequirementSnapshot(uuid.uuid4(), ENROL, True, (), ()),
@@ -222,3 +223,27 @@ def test_an_identical_upload_twice_is_ignored_with_a_notice() -> None:
     result = _verify([_doc(ENROL, **_identity()), document, copy])
     assert result.status == OverallStatus.READY
     assert "DUPLICATE_UPLOAD_IGNORED" in {n.code for n in result.notices}
+
+
+def _admission_pair(left, right):
+    return _verify(
+        [
+            _doc(ENROL, **_identity(admission_date=left)),
+            _doc(TRANS, **_identity(admission_date=right)),
+        ]
+    )
+
+
+def test_admission_date_differences_are_never_silent() -> None:
+    reliable_equal = _admission_pair("2022-03-02", "2022-03-02")
+    assert reliable_equal.status == OverallStatus.READY
+    both_reliable_differ = _admission_pair("2022-03-02", "2022-03-07")
+    assert both_reliable_differ.status == OverallStatus.NEEDS_CORRECTION
+    one_unreliable_differ = _admission_pair("2022-03-02", ("2022-03-07", WAITING))
+    assert one_unreliable_differ.status == OverallStatus.REVIEW_REQUIRED
+
+
+def test_equal_admission_dates_are_nothing_to_act_on_even_when_a_read_is_unreliable() -> None:
+    assert _admission_pair("2022-03-02", ("2022-03-02", WAITING)).status == OverallStatus.READY
+    only_one_prints = _verify([_doc(ENROL, **_identity(admission_date="2022-03-02")), _doc(TRANS, **_identity())])
+    assert only_one_prints.status == OverallStatus.READY
