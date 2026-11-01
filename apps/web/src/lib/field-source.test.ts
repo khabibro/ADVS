@@ -28,7 +28,7 @@ describe("fieldSource", () => {
       field({
         effective_normalized_value: "a",
         evidence: evidence("ocr"),
-        auto_acceptance: { accepted: true, strategy: "S7", policy_version: "p", sources: ["documents"], corroborating_document_ids: [] },
+        auto_acceptance: { accepted: true, strategy: "S7", policy_version: "p", sources: ["documents"], corroborating_document_ids: [], robust: false },
       }),
     );
     expect(s.label).toBe("자동 확인 — 다른 서류와 일치");
@@ -46,7 +46,7 @@ describe("fieldSource", () => {
     const s = fieldSource(
       field({
         evidence_assessment: "REVIEW_REQUIRED",
-        auto_acceptance: { accepted: false, strategy: "S7", policy_version: "p", sources: [], corroborating_document_ids: [], reason: "NO_INDEPENDENT_CONFIRMATION" },
+        auto_acceptance: { accepted: false, strategy: "S7", policy_version: "p", sources: [], corroborating_document_ids: [], robust: false, reason: "NO_INDEPENDENT_CONFIRMATION" },
       }),
     );
     expect(s.label).toBe("확인 필요");
