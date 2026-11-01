@@ -133,6 +133,7 @@ def page_from_dict(data: dict[str, Any]) -> Any:
                 polygon=tuple(tuple(point) for point in polygon) if polygon else None,
                 detection_confidence=item.get("detection_confidence"),
                 orientation_degrees=item.get("orientation_degrees"),
+                bridge_exempt=bool(item.get("bridge_exempt", False)),
             )
         )
     return OCRPage(
