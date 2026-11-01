@@ -85,7 +85,10 @@ def test_certificate_with_no_issue_date_goes_to_review(client, db_session) -> No
 
 
 def _transcript(
-    student_id: str, name: str = "류하늘", birth: str = "2002년 05월 17일"
+    student_id: str,
+    name: str = "류하늘",
+    birth: str = "2002년 05월 17일",
+    issue: str = "2026년 09월 20일",
 ) -> list[str]:
     return [
         "성 적 증 명 서",
@@ -95,19 +98,21 @@ def _transcript(
         "총 취득학점: 17",
         "평점평균: 3.40/4.5 백분율: 88.00/100",
         "위의 사실을 증명합니다.",
-        "2026년 09월 20일",
+        issue,
         "한국샘플대학교 총장",
     ]
 
 
-def _verify_two(client: TestClient, db_session, transcript: list[str]) -> dict:
+def _verify_two(
+    client: TestClient, db_session, transcript: list[str], enrollment_issue: str = "2026년 09월 20일"
+) -> dict:
     runpy.run_path(str(SEED))["main"]()
     workflow = db_session.scalar(select(Checklist).where(Checklist.name == "학생 제출서류 점검"))
     project = client.post(
         "/api/v1/projects", json={"name": "s2", "workflow_id": str(workflow.id)}
     ).json()
     for name, lines in (
-        ("e.pdf", _enrollment("2026년 09월 20일", "2025123456")),
+        ("e.pdf", _enrollment(enrollment_issue, "2025123456")),
         ("t.pdf", transcript),
     ):
         up = client.post(
@@ -146,3 +151,28 @@ def test_a_different_birth_date_between_the_two_documents_is_never_ready(client,
     verdict = _verify_two(client, db_session, _transcript("2025123456", birth="2002년 05월 18일"))
     assert verdict["status"] != "READY"
     assert "INFORMATION_MISMATCH" in {issue["code"] for issue in verdict["issues"]}
+
+
+def test_an_expired_pair_issued_on_the_same_day_needs_correction(client, db_session) -> None:
+    # both documents carry the same issue date, which is more than 90 days before the check date
+    verdict = _verify_two(
+        client,
+        db_session,
+        _transcript("2025123456", issue="2026년 06월 01일"),
+        enrollment_issue="2026년 06월 01일",
+    )
+    assert verdict["status"] == "NEEDS_CORRECTION"
+    assert "RULE_CONDITION_NOT_MET" in {issue["code"] for issue in verdict["issues"]}
+
+
+def test_documents_issued_on_different_days_are_judged_each_on_its_own_date(client, db_session) -> None:
+    # the enrolment certificate is current, the transcript was issued a day earlier: nothing is merged
+    verdict = _verify_two(client, db_session, _transcript("2025123456", issue="2026년 09월 19일"))
+    assert verdict["status"] == "READY"
+    old = _verify_two(
+        client,
+        db_session,
+        _transcript("2025123456", issue="2026년 09월 19일"),
+        enrollment_issue="2026년 06월 01일",
+    )
+    assert old["status"] == "NEEDS_CORRECTION"

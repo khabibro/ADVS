@@ -46,6 +46,10 @@ class GpaFacts:
     total_points: float | None = None
     semester_scales: tuple[str, ...] = ()
     legend_max: str | None = None  # the top grade value of the printed grading legend
+    # (credits, semester 백분율) in the same order as `pairs`, when every semester line prints one
+    percent_pairs: tuple[tuple[int, float], ...] = ()
+    total_percent: float | None = None  # 백분율 of the cumulative line
+    ordered_pairing: bool = False  # the semesters were paired by reading order (columns left to right)
 
 
 @dataclass(frozen=True)
@@ -61,6 +65,8 @@ _BARE_TAIL = re.compile(r"^\s*(재학\s*중)?\s*$")
 _CREDITS = re.compile(r"(?<!총)취득학점\s*[:：]?\s*(\d{1,3})(?!\d)")
 _TOTAL_CREDITS = re.compile(r"총\s*취득학점\s*[:：]?\s*(\d{1,4})(?!\d)")
 _GPA = re.compile(r"평점평균\s*[:：]?\s*(\d\.\d{1,3})\s*/\s*(\d(?:\.\d{1,3})?)")
+_PERCENT = re.compile(r"백분[율을]\s*[:：]?\s*(\d{1,3}(?:\.\d{1,3})?)\s*/\s*(\d{2,3})")
+_COLUMN_GAP = 0.5  # a new column starts where the box centres are further apart than this share of a line's width
 _LEGEND_MAX = re.compile(r"A\s*\+\s*=\s*(\d(?:\.\d{1,3})?)")
 _CORP_NUMBER = re.compile(r"(?<!\d)(\d{6})\s*-\s*(\d{7})(?!\d)")
 _NUMBER = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*$")
@@ -163,6 +169,7 @@ def _gpa_facts(segments: list[tuple[int, OCRLine]]) -> GpaFacts | None:
     credits: list[tuple[int, BoundingBox, int]] = []
     totals: list[tuple[int, BoundingBox, int]] = []
     gpas: list[tuple[int, BoundingBox, float, str]] = []
+    percents: dict[int, float] = {}  # id(box) of a GPA line -> its 백분율
     legend: str | None = None
     headers: dict[str, list[tuple[int, BoundingBox]]] = {"credits": [], "points": []}
     cells: list[tuple[int, BoundingBox, float]] = []
@@ -176,6 +183,8 @@ def _gpa_facts(segments: list[tuple[int, OCRLine]]) -> GpaFacts | None:
             credits.append((page, box, int(m.group(1))))
         if (m := _GPA.search(text)) is not None:
             gpas.append((page, box, float(m.group(1)), m.group(2)))
+            if (pm := _PERCENT.search(text)) is not None and pm.group(2) in ("100", "100.0"):
+                percents[id(box)] = float(pm.group(1))
         if (m := _LEGEND_MAX.search(text)) is not None:
             legend = m.group(1)
         if text == "총취득학점":
@@ -208,16 +217,24 @@ def _gpa_facts(segments: list[tuple[int, OCRLine]]) -> GpaFacts | None:
     if total_credits is None and totals:
         total_credits = totals[0][2]
 
-    pairs: list[tuple[int, float]] = []
-    for page, box, gpa, _scale in gpas:
+    def under_total(page: int, box: BoundingBox) -> bool:
         # the cumulative GPA is the one printed right under the "총 취득학점" line
-        if any(
+        return any(
             t_page == page
             and 0 < box.y - t_box.y <= 3 * max(box.height, t_box.height)
             and _overlap_x(box, t_box)
             for t_page, t_box, _ in totals
-        ):
+        )
+
+    pairs: list[tuple[int, float]] = []
+    percent_pairs: list[tuple[int, float]] = []
+    semester_lines: list[tuple[int, BoundingBox, float]] = []
+    total_percent: float | None = None
+    for page, box, gpa, _scale in gpas:
+        if under_total(page, box):
+            total_percent = percents.get(id(box))
             continue
+        semester_lines.append((page, box, gpa))
         above = [
             (box.y - c_box.y, c_value)
             for c_page, c_box, c_value in credits
@@ -225,13 +242,52 @@ def _gpa_facts(segments: list[tuple[int, OCRLine]]) -> GpaFacts | None:
         ]
         if above:
             pairs.append((min(above)[1], gpa))
+            if id(box) in percents:
+                percent_pairs.append((min(above)[1], percents[id(box)]))
+    ordered = False
+    if semester_lines and len(credits) == len(semester_lines):
+        # Semesters are printed in columns and a semester may continue at the top of the next column
+        # (its credits at the bottom of one, its GPA at the top of the next): pair by reading order.
+        order = _reading_order([(p, b) for p, b, _ in semester_lines] + [(p, b) for p, b, _ in credits])
+        ranked_gpa = sorted(semester_lines, key=lambda item: order[id(item[1])])
+        ranked_credits = sorted(credits, key=lambda item: order[id(item[1])])
+        pairs = [(c[2], g[2]) for c, g in zip(ranked_credits, ranked_gpa, strict=True)]
+        percent_pairs = [
+            (c[2], percents[id(g[1])])
+            for c, g in zip(ranked_credits, ranked_gpa, strict=True)
+            if id(g[1]) in percents
+        ]
+        ordered = True
+    if len(percent_pairs) != len(pairs):
+        percent_pairs = []  # every semester must print one for the average to mean anything
     return GpaFacts(
         pairs=tuple(pairs),
         total_credits=total_credits,
         total_points=total_points,
         semester_scales=tuple(scale for _, _, _, scale in gpas),
         legend_max=legend,
+        percent_pairs=tuple(percent_pairs),
+        total_percent=total_percent,
+        ordered_pairing=ordered,
     )
+
+
+def _reading_order(items: list[tuple[int, BoundingBox]]) -> dict[int, tuple[int, int, float]]:
+    """(page, column, y) of every box, keyed by id(box). Columns are found from the horizontal centres of the
+    boxes of one page: a new column starts where consecutive centres are further apart than half a line."""
+    order: dict[int, tuple[int, int, float]] = {}
+    for page in sorted({page for page, _ in items}):
+        boxes = [box for p, box in items if p == page]
+        widest = max(box.width for box in boxes)
+        columns: list[float] = []
+        for centre in sorted(box.x + box.width / 2 for box in boxes):
+            if not columns or centre - columns[-1] > _COLUMN_GAP * widest:
+                columns.append(centre)
+        for box in boxes:
+            centre = box.x + box.width / 2
+            column = min(range(len(columns)), key=lambda index: abs(columns[index] - centre))
+            order[id(box)] = (page, column, box.y)
+    return order
 
 
 def corporate_number_valid(number: str) -> bool:

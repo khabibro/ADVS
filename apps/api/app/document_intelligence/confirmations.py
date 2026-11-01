@@ -36,6 +36,7 @@ NONE = Verdict("NONE")
 
 MIN_SEMESTERS = 3
 WEIGHTED_AVERAGE_TOLERANCE = 0.015  # semester GPAs are printed to 2 decimals
+PERCENT_TOLERANCE = 0.015  # 백분율 is printed to 2 decimals as well
 POINTS_TOLERANCE = 0.006  # total points / total credits, printed exactly
 
 
@@ -58,6 +59,16 @@ def gpa_arithmetic(facts: DocFacts | None, gpa: float) -> Verdict:
     ):
         average = sum(c * x for c, x in g.pairs) / credits
         results.append(("weighted_average", abs(average - gpa) <= WEIGHTED_AVERAGE_TOLERANCE))
+    if (
+        results
+        and g.percent_pairs
+        and g.total_percent is not None
+        and len(g.percent_pairs) == len(g.pairs)
+    ):
+        percent = sum(c * x for c, x in g.percent_pairs) / sum(c for c, _ in g.percent_pairs)
+        results.append(
+            ("weighted_percent", abs(percent - g.total_percent) <= PERCENT_TOLERANCE)
+        )
     if g.total_points is not None and g.total_credits:
         results.append(
             ("total_points", abs(g.total_points / g.total_credits - gpa) <= POINTS_TOLERANCE)

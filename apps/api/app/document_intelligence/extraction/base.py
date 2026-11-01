@@ -14,6 +14,7 @@ from app.document_intelligence.extraction.fields import (
 from app.document_intelligence.label_tolerance import find_label, starts_with_label
 from app.document_intelligence.normalization.field_normalizer import (
     BUSINESS_NUMBER_RE,
+    DATE_RE,
     canonicalize_numeric_text,
     is_valid_business_number,
     normalize_business_number,
@@ -769,6 +770,41 @@ def stacked_label_identifier_candidate(source: ExtractionInput) -> ExtractionCan
     return ExtractionCandidate(value=raw, evidence=evidence_list, relation="stacked_label_number")
 
 
+_STACKED_NAME_RE = re.compile(r"^(?:명)?[:：]([가-힣]{2,10})$")
+_NOT_A_NAME_PARTS = ("대학", "학과", "학부", "전공", "학년", "과정", "증명", "대학원", "학교")
+
+
+def stacked_label_name_candidate(source: ExtractionInput) -> ExtractionCandidate | None:
+    """A person's name whose label ("성" / "명") was split into stacked fragments, so the value stands alone
+    after a colon (the last fragment may share its box: "명:이름"). One 2-10 syllable Hangul value in the header block (before the first table header), a
+    fragment containing 성 or 명 within the few boxes above it on the same page, and no word that names an
+    institution, department or document. Two different candidates: None."""
+    lines = _source_lines(source)
+    found: dict[str, tuple[str, list[EvidenceRef]]] = {}
+    for index, (text, evidence) in enumerate(lines):
+        compact = _compact(text)
+        if any(marker in compact for marker in _TABLE_HEADER_MARKERS):
+            break
+        match = _STACKED_NAME_RE.match(compact)
+        if match is None or any(part in match.group(1) for part in _NOT_A_NAME_PARTS):
+            continue
+        above = [
+            _compact(item_text)
+            for item_text, item_evidence in lines[max(0, index - _STACKED_LABEL_LOOKBACK) : index]
+            if _same_page(item_evidence, evidence)
+        ]
+        shares_label = compact.startswith("명")
+        if shares_label or any(
+            0 < len(item) <= _STACKED_LABEL_MAX_CHARS and ("성" in item or "명" in item)
+            for item in above
+        ):
+            found.setdefault(match.group(1), (text, [evidence] if evidence else []))
+    if len(found) != 1:
+        return None
+    raw, evidence_list = next(iter(found.values()))
+    return ExtractionCandidate(value=raw, evidence=evidence_list, relation="stacked_label_name")
+
+
 def _same_page(left: EvidenceRef | None, right: EvidenceRef | None) -> bool:
     return left is None or right is None or left.page_number == right.page_number
 
@@ -779,6 +815,7 @@ def _looks_like_compact_date(digits: str) -> bool:
     return normalize_date(f"{digits[:4]}-{digits[4:6]}-{digits[6:]}") is not None
 
 
+_ADMISSION_LABELS = ["입학일자", "입학일", "입학년월일"]
 _BIRTH_LABELS = ("생년월일", "생일")
 _BIRTH_LOOKAHEAD = 6
 _BARE_DATE_RE = re.compile(r"(?<!\d)(?:19|20)\d{2}\s*[.\-/년]\s*\d{1,2}\s*[.\-/월]\s*\d{1,2}\s*일?")
@@ -810,6 +847,23 @@ def separated_birth_date_candidate(source: ExtractionInput) -> ExtractionCandida
         return None
     raw, evidence_list = next(iter(found.values()))
     return ExtractionCandidate(value=raw, evidence=evidence_list, relation="separated_label_date")
+
+
+def date_before_word_candidate(source: ExtractionInput, word: str) -> ExtractionCandidate | None:
+    """A date printed before a word in one box ("2022년 03월 02일 입학"): the one such date of the page.
+    Two different dates before the word make it ambiguous: None."""
+    found: dict[str, tuple[str, list[EvidenceRef]]] = {}
+    for text, evidence in _source_lines(source):
+        folded = canonicalize_numeric_text(text)
+        for match in DATE_RE.finditer(folded):
+            iso = normalize_date(match.group(0))
+            tail = re.sub(r"^\s*일", "", folded[match.end() :]).strip()
+            if iso is not None and tail.startswith(word) and not tail[len(word) :].startswith("일"):
+                found.setdefault(iso, (match.group(0), [evidence] if evidence else []))
+    if len(found) != 1:
+        return None
+    raw, evidence_list = next(iter(found.values()))
+    return ExtractionCandidate(value=raw, evidence=evidence_list, relation="date_before_word")
 
 
 def candidate_right_of_label(
@@ -1491,6 +1545,17 @@ class BaseDocumentExtractor(ABC):
         method = "spatial_right_of_label" if used_spatial_candidate else candidate.relation
         return self._value(field_name, raw, normalized, method, candidate)
 
+    def admission_date_field(self, text: ExtractionInput) -> ExtractedValue:
+        """입학일자 beside or under its label; otherwise the date printed before the word 입학."""
+        labelled = self.date_field(text, "admission_date", _ADMISSION_LABELS)
+        if labelled.normalized_value is not None:
+            return labelled
+        candidate = date_before_word_candidate(text, "입학")
+        normalized = normalize_date(candidate.value) if candidate else None
+        if candidate is None or normalized is None:
+            return labelled
+        return self._value("admission_date", candidate.value, normalized, "date_before_word", candidate)
+
     def birth_date_field(self, text: ExtractionInput) -> ExtractedValue:
         """생년월일 beside its value; otherwise the one plausible birth date after a separated label."""
         labelled = self.date_field(text, "birth_date", list(_BIRTH_LABELS))
@@ -1501,6 +1566,21 @@ class BaseDocumentExtractor(ABC):
         if candidate is None or normalized is None:
             return labelled
         return self._value("birth_date", candidate.value, normalized, "separated_label_date", candidate)
+
+    def student_name_field(self, text: ExtractionInput) -> ExtractedValue:
+        """Labelled name; otherwise the name beside a split-up 성명 label (positional)."""
+        labelled = self.text_field(
+            text, "student_name", ["학생명", "성명", "이름"], allow_spatial_right=True
+        )
+        if labelled.normalized_value is not None:
+            return labelled
+        candidate = stacked_label_name_candidate(text)
+        normalized = (
+            normalize_text_field(re.sub(r"^명?[:：]", "", _compact(candidate.value))) if candidate else None
+        )
+        if candidate is None or normalized is None:
+            return labelled
+        return self._value("student_name", candidate.value, normalized, "stacked_label_name", candidate)
 
     def student_id_field(self, text: ExtractionInput) -> ExtractedValue:
         """Labelled student number; otherwise the number beside a split-up label (positional, so it

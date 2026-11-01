@@ -213,6 +213,9 @@ def main() -> None:
                         student_identity_rule("student_id", value_type="identifier"),
                         student_identity_rule("student_name"),
                         student_identity_rule("birth_date", value_type="identifier"),
+                        # an observation: compared only when both documents print it and both reads are
+                        # reliable (a difference then sends the pair to correction)
+                        student_identity_rule("admission_date", value_type="identifier"),
                         # same school on both documents (generic affixes ignored; a difference of one
                         # character is routed to review, not failed; see institution_key)
                         student_identity_rule("university_name", value_type="institution"),

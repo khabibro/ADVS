@@ -17,7 +17,7 @@ const SCENARIOS: Record<Code, { set: string; version: "digital" | "scanned"; wor
   D6: { set: "B01", version: "scanned", workflow: "기업 제출서류 점검" },
   D7: { set: "S01", version: "digital", workflow: "학생 제출서류 점검" },
   D8: { set: "B08", version: "digital", workflow: "기업 제출서류 점검" },
-  D9: { set: "S01", version: "scanned", workflow: "학생 제출서류 점검" },
+  D9: { set: "S04", version: "scanned", workflow: "학생 제출서류 점검" },
 };
 
 export function scenarioFiles(code: Code): string[] {

@@ -143,7 +143,7 @@ test.describe("reviewer flow", () => {
       const total = await pendingReviewCount(request, id);
       await open(page, id);
       await page.getByRole("button", { name: "값 수정" }).first().click();
-      // D9 leaves the two issue dates for a person; a plausible earlier date is a valid correction.
+      // D9 leaves an issue date (first) and a GPA for a person; a plausible earlier date is a valid correction.
       await page.getByLabel(/올바른 값을 입력/).fill("2026-09-29");
       await page.keyboard.press("Enter");
       await expect(page.getByRole("heading", { name: `확인할 항목 ${total - 1}개` })).toBeVisible();

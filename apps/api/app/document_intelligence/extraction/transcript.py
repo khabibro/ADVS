@@ -12,15 +12,11 @@ class TranscriptExtractor(BaseDocumentExtractor):
     def extract(self, text: ExtractionInput) -> list[ExtractedValue]:
         gpa_labels = ["GPA", "총평점", "평점평균", "평점"]
         return [
-            self.text_field(
-                text,
-                "student_name",
-                ["학생명", "성명", "이름"],
-                allow_spatial_right=True,
-            ),
+            self.student_name_field(text),
             self._university_name(text),
             self.student_id_field(text),
             self.birth_date_field(text),
+            self.admission_date_field(text),
             self.issue_date_field(text, ["발급일", "발급일자", "발행일자"]),
             self.gpa_field(text, "gpa", gpa_labels),
             self.gpa_scale_field(text, "gpa_scale", gpa_labels),

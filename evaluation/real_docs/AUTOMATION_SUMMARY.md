@@ -3,6 +3,37 @@
 Branch `auto/real-automation` (local, not pushed, not merged). Counts and categories only; no document values.
 Development data: student fresh G0–G5 + G0b, seed A, real pair; business company F21. Validation (aggregate numbers only): student seed B; business company RS. Validation is a check against overfitting, not an independent test.
 
+## Round 5: student pair confirmation (enrolment certificate primary, transcript confirming)
+
+Code on `auto/real-automation` (not merged to main; one frontend e2e expectation to settle first, see the end). Default strategy now **S11**. Labels: dev = fresh photos + seed A (81 valid submissions); validation = seed B (27), aggregate only; both are variants of one real pair (same student), so what generalises to other students is untested.
+
+**What was built** (all with synthetic tests, invented values, no institution names):
+- Cross-document confirmation for name (exact after removing spaces), birth date, admission date (new field `admission_date`, read beside its label or as "date + 입학"), university (compared by its name part, so a stamp over the last characters does not matter), issue date (the same date on both documents confirms it for the 90-day rule; different days confirm nothing; marked as a cross-document decision).
+- Two variants measured: **(a) S10** both reads above the confidence floor; **(b) S11** a below-floor read is confirmed by an exact match with a reliable read of the other document (never two below-floor reads, never a mismatch).
+- The transcript name is read when its 성명 label is split into stacked fragments (it was missing in 70 transcripts), like the 학번 before.
+- GPA arithmetic: semesters paired by reading order across columns (a semester continuing at the top of the next column works), 백분율 weighted mean added, scale from legend and every average line.
+- Safety tests: a different value on one document (name, birth date, admission date, university) confirms nothing; a missing side confirms nothing; issued on different days gives no date confirmation; an expired pair (same issue date, check date > 90 days later) needs correction; mismatched person never READY (existing tests); misread semester GPA, total, 백분율, credits or a dropped credits line never confirm the total GPA; injection cases E20 (birth date) and E21 (admission date) misread on one document.
+
+**Measured (real student sets, OCR replayed, same checklist and code; 0 wrong values and 0 false READY in every cell):**
+
+| | previous main | S9 now (names, checklist) | S10 (a) | **S11 (b), default** |
+|---|---|---|---|---|
+| issues per valid submission, all 108 | 6.11 | 5.85 | 4.19 | **3.95** |
+| dev fresh / dev seed A / validation seed B | 6.04 / 6.37 / 6.00 | 5.70 / 6.15 / 5.85 | 4.07 / 4.41 / 4.22 | **3.96 / 4.04 / 3.85** |
+| READY, fully automatic | 0 | 0 | 0 | **0** (the GPA still needs a click) |
+| READY after at most one click: dev / validation | 0 / 0 | 0 / 0 | 9 / 0 | **9 / 0** |
+| READY after at most two clicks | 6 (dev 6) | 8 (dev) | 9 | **9 (dev), validation 0** |
+| any one-click set | 7 | 11 | 11 | **11** |
+| auto-accepted correct fields fresh / seed A / seed B / pair | 120/55/51/2 | 140/62/56/2 | 168/70/63/2 | **174/89/82/3** |
+
+Fields newly confirmed, previous main to S11 (dev | validation): enrolment issue date 0 to 54 | 0 to 23; admission date (new) enrolment 54 | 23, transcript 54 | 23; transcript name 21 to 56 | 4 to 23; enrolment name 39 to 51 | 20 to 22; birth date 59 to 62 | 21 to 22; university 23 to 24 | 0 to 1; transcript issue date 88 to 94 | 24 to 26. Variant (a) is worse than today for names and admission dates (enrolment name 39 to 33 in dev, 20 to 6 in validation) because it discards a partner read below the floor; (b) restores and extends them. **(b) is adopted: wrong = 0 on the real sets and no new wrong confirmation in the four injection suites.**
+
+**GPA, honest result:** the semester columns are now paired correctly on the pages where every line is read, but the printed cumulative GPA of the real transcript differs from the credit-weighted mean of its semester GPAs by 0.03 (more than the rounding the check allows), so no real GPA is confirmed (2 of 172 accepted, unchanged) and 45 correct GPAs now show ARITHMETIC_MISMATCH where they showed "no independent confirmation" before (the check can evaluate more pages; the document's own arithmetic is the limit). The mismatch label on a correct value is misleading for a reviewer; the GPA stays a one-click confirmation as decided. Not implemented, no rule uses them: 소속/전공/복수전공 confirmation, document-number serial adjacency (supporting evidence only), course-level grade points.
+
+**Gates on the final code:** backend 784 tests, ruff, mypy; injection (dev, hold-outs 1-3, 6,815 cases incl. E20/E21): wrong_confirmed 1 (the known case), robust-accepted with a wrong digit 41, READY with a wrong verdict 1 (the same case), E19 876 cases 0 READY; fictional v3 diff against the previous head: one status change, S09 scanned dev REVIEW_REQUIRED to READY (correct), auto-decided correct 4 to 5 of 5; business under S11 identical to S9 (46 of 76 READY, 53 with one click, 0 wrong); demo rehearsal x3 ALL PASS; manipulated PDFs 0 hidden tokens read.
+
+**Needs your decision / Munira (not merged):** the Playwright reviewer-flow tests "D9: confirm the values one by one" and "D9: a value can be corrected instead of confirmed" fail (2 of 22): they expect the demo scan D9 to leave more than one item for a reviewer, and with the pair confirmations it leaves at most one. That is the product doing better, but the e2e fixture belongs to the web work: either pick a demo submission that still needs several items, or relax the assertion. The new fields `birth_date` and `admission_date` also need labels in `presentation.ts`. **Remaining student blockers (final):** transcript GPA 89 of 108 (a click), 재학증명서 university 70 (below floor / vetoed / no second source), enrolment name 32, transcript name 22, classification 30. With GPA, university and enrolment name solved, 34 of 108 would be one click away; applicant-entered GPA only for what remains.
+
 ## Final state on main (tag `real-docs-v2`, plus the log and harness option)
 
 All numbers from `main`, the same code that passed the full gates. Labels: **dev** = data the fixes were developed on; **validation** = held back from development and read in aggregate only (not an untouched test: it was looked at as a check against overfitting); **test** = fictional hold-out sets of earlier phases, not used to design these fixes. There is **no untouched real test set**; a fresh real test would need new documents.

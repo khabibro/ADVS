@@ -47,3 +47,26 @@ def test_birth_date_ambiguous_or_implausible_stays_missing() -> None:
     assert birth(two) is None
     assert birth("생년월일\n소속\n2024년 5월 17일\n구분") is None  # a child, not a student
     assert birth("성 적 증 명 서\n입학일자:2002년 5월 17일\n구분") is None  # no label
+
+
+def name(text: str) -> str | None:
+    values = {v.field_name: v for v in TranscriptExtractor().extract(text)}
+    return values["student_name"].normalized_value
+
+
+def test_split_label_name_is_read() -> None:
+    text = "성 적 증 명 서\n생년월일\n학성\n번\n명\n:류하늘\n:2020123456\n입학일자:2020년3월2일\n구분\n이 수 과 목"
+    assert name(text) == "류하늘"
+
+
+def test_split_label_name_refuses_ambiguous_or_unlabelled_values() -> None:
+    assert name("학성\n번\n명\n:류하늘\n:박다라\n구분") is None  # two candidates
+    assert name("성 적 증 명 서\n:류하늘\n구분") is None  # no label fragment above
+    assert name("학성\n번\n명\n:자연과학대학\n구분") is None  # an institution word is not a name
+    assert name("학성\n번\n구분\n명\n:류하늘") is None  # after the table header
+    assert name("성명 : 류하늘\n구분") == "류하늘"  # the labelled form is unchanged
+
+
+def test_split_label_name_longer_names_and_the_last_fragment_sharing_its_box() -> None:
+    assert name("학성\n번\n명:라마드리안마리아\n:2020123456\n구분") == "라마드리안마리아"
+    assert name("학성\n번\n명\n:라마드리안마리아\n구분") == "라마드리안마리아"

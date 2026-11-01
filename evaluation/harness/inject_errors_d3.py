@@ -5,6 +5,10 @@ Frozen at Phase D3 step 0 (hash recorded in every report) BEFORE any D3 fix.
 Every type has a *single-error* and a *correlated* version; "-both" repeats a version with the same
 error also injected into the second OCR pass of that field (common-mode).
 
+E20  birth date of a student document misread on ONE document (the other document keeps the true date).
+E21  admission date of a student document misread on ONE document.
+E20  birth date of a student document misread on ONE document (the other keeps the true date).
+E21  admission date of a student document misread on ONE document.
 E13  cumulative GPA misread (digit confusion) with the semester GPAs and credits untouched.
      Correlated: the cumulative GPA and one semester GPA are misread by the same amount.
 E14  issue_date and valid_until misread (digit confusion). Single: one of the two. Correlated: the
@@ -228,7 +232,25 @@ class Planner3:
             if self._near_seal(rel):
                 for new in _alt_digit_values(iss, rng, _valid_date)[:2]:
                     add(self._case(scenario, version, rel, f"E18-{new}", "E18", "one", False, [ie.date_edit(iss, new, "issue date near a seal misread", "issue_date")], ["issue_date"]))
+        # ---- E20 / E21: a student document's birth / admission date misread on ONE document ---------------------
+        if fields.get("student_name"):
+            for field_name, error in (("birth_date", "E20"), ("admission_date", "E21")):
+                value = self._student_date(rel, field_name)
+                if value is None:
+                    continue
+                for both in (False, True):
+                    for new in _alt_digit_values(value, rng, _valid_date)[:2]:
+                        add(self._case(scenario, version, rel, f"{error}-{new}", error, "one", both, [ie.date_edit(value, new, f"{field_name} misread", field_name)], [field_name]))
         return out
+
+    def _student_date(self, rel: str, field_name: str) -> str | None:
+        """The birth / admission date printed on a student document, read from the cached OCR text with the
+        production extractor; None when the document prints none or the reading is not unique."""
+        from app.document_intelligence.extraction.transcript import TranscriptExtractor
+
+        values = {item.field_name: item for item in TranscriptExtractor().extract("\n".join(self.lines(rel)))}
+        found = values.get(field_name)
+        return found.normalized_value if found is not None else None
 
     def _semester_value(self, rel: str, cumulative: str) -> str | None:
         for line in self.lines(rel):
