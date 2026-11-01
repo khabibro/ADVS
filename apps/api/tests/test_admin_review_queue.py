@@ -94,3 +94,51 @@ def test_detail_has_item_siblings_and_history(client: TestClient, db_session):
     assert [h["decision"] for h in after["history"]] == ["CONFIRMED"]
     missing = client.get(f"/api/v1/admin/review-queue/{project.id}/{project.id}/gpa")
     assert missing.status_code == 404
+
+
+def test_one_click_fields_are_marked_and_filterable(client: TestClient, db_session):
+    project, document = make(db_session, 2, "큐원클릭")
+    body = client.get("/api/v1/admin/review-queue", params={"q": "큐원클릭"}).json()
+    assert [(i["field_name"], i["one_click"]) for i in body["items"]] == [("gpa", True)]
+    only = client.get(
+        "/api/v1/admin/review-queue", params={"q": "큐원클릭", "one_click": True}
+    ).json()
+    assert only["total"] == 1
+    detail = client.get(f"/api/v1/admin/review-queue/{project.id}/{document.id}/gpa").json()
+    assert detail["one_click"] is True
+    assert detail["project_open_items"] == 1 and detail["project_only_one_click"] is True
+
+
+def test_decision_robust_values_are_listed_apart_and_can_be_confirmed(
+    client: TestClient, db_session, monkeypatch
+):
+    from app.document_intelligence.auto_acceptance import AutoDecision
+    from app.services import review_queue
+
+    project, submission = _project(db_session, transcript=True)
+    project.name = project.applicant_name = "큐로버스트"
+    document, _ = _document(
+        db_session, submission, DocumentType.TRANSCRIPT, {"gpa": ("3.61", 0.99)}
+    )
+    finalised(db_session, project, 1)
+    robust = AutoDecision(accepted=True, strategy="S5", robust=True, rule_id="gpa:DECISION_ROBUST")
+    monkeypatch.setattr(
+        review_queue, "decisions_for_project", lambda db, p: {(document.id, "gpa"): robust}
+    )
+    params = {"q": "큐로버스트"}
+    assert client.get("/api/v1/admin/review-queue", params=params).json()["total"] == 0
+    listed = client.get("/api/v1/admin/review-queue", params={**params, "status": "ROBUST"}).json()
+    (row,) = listed["items"]
+    assert (row["queue_status"], row["confirmation"], row["one_click"]) == (
+        "AUTO_ROBUST",
+        "DECISION_ROBUST",
+        True,
+    )
+    url = f"/api/v1/admin/review-queue/{project.id}/{document.id}/gpa"
+    detail = client.get(url).json()
+    assert detail["open"] is True and detail["item"]["auto_acceptance"]["confirmation"] == (
+        "DECISION_ROBUST"
+    )
+    assert _review(client, project.id, document.id, "gpa", "CONFIRMED").status_code == 201
+    after = client.get("/api/v1/admin/review-queue", params={**params, "status": "ROBUST"}).json()
+    assert after["total"] == 0  # a person confirmed it: no longer "value not confirmed"

@@ -25,6 +25,8 @@ class QueueItemRead(BaseModel):
     confidence: float | None
     queue_status: str
     issue_code: str
+    one_click: bool
+    confirmation: str | None = None
     waiting_since: datetime
     finalised: bool
 
@@ -67,6 +69,11 @@ class ReviewDetailRead(BaseModel):
     field_label: str
     # False when the value was decided or is now sufficient: only the history remains.
     open: bool
+    one_click: bool = False
+    # Other values of this submission still waiting for a person, and whether every one of them
+    # (this one included) can be settled with one keystroke.
+    project_open_items: int = 0
+    project_only_one_click: bool = False
     item: ReviewItemRead | None
     pages: list[PageInfoRead]
     siblings: list[SiblingRead]

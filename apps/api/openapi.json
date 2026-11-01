@@ -1946,6 +1946,16 @@
             }
           },
           {
+            "name": "one_click",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "One Click"
+            }
+          },
+          {
             "name": "include_drafts",
             "in": "query",
             "required": false,
@@ -4800,6 +4810,21 @@
             "type": "string",
             "title": "Issue Code"
           },
+          "one_click": {
+            "type": "boolean",
+            "title": "One Click"
+          },
+          "confirmation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmation"
+          },
           "waiting_since": {
             "type": "string",
             "format": "date-time",
@@ -4828,6 +4853,7 @@
           "confidence",
           "queue_status",
           "issue_code",
+          "one_click",
           "waiting_since",
           "finalised"
         ],
@@ -5008,6 +5034,21 @@
           "open": {
             "type": "boolean",
             "title": "Open"
+          },
+          "one_click": {
+            "type": "boolean",
+            "title": "One Click",
+            "default": false
+          },
+          "project_open_items": {
+            "type": "integer",
+            "title": "Project Open Items",
+            "default": 0
+          },
+          "project_only_one_click": {
+            "type": "boolean",
+            "title": "Project Only One Click",
+            "default": false
           },
           "item": {
             "anyOf": [

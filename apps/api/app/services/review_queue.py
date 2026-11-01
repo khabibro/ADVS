@@ -17,13 +17,25 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from app.checklists.catalog import document_label, field_label
-from app.models.entities import Checklist, FieldReview, Project
+from app.core.domain import DocumentType
+from app.models.entities import Checklist, Document, FieldReview, Project
+from app.services.auto_acceptance import decisions_for_project
 from app.services.reviews import FieldReviewService
 
 MAX_PROJECTS = 400
 OPEN = ("PENDING", "STALE")
 DECIDED = ("REJECTED", "CANNOT_DETERMINE")
-STATUS_FILTERS = {"OPEN": OPEN, "DECIDED": DECIDED, "ALL": OPEN + DECIDED}
+ROBUST = "AUTO_ROBUST"  # accepted for the decision only: the value is not individually confirmed
+STATUS_FILTERS = {
+    "OPEN": OPEN,
+    "DECIDED": DECIDED,
+    "ROBUST": (ROBUST,),
+    "ALL": OPEN + DECIDED + (ROBUST,),
+}
+#: Fields a person settles with one keystroke (crop + value, Enter): every plausible OCR misreading
+#: of an issue date or a GPA flips a verdict, so only a person's confirmation makes them safe.
+#: Mirrors evaluation/real_docs/loop_score.py (the "READY after N confirmations" metric).
+ONE_CLICK_FIELDS = frozenset({"issue_date", "gpa", "valid_until", "valid_from"})
 SORTS = ("OLDEST", "NEWEST", "WORKFLOW", "DOCUMENT")
 
 
@@ -34,6 +46,7 @@ class QueueFilter:
     document_type: str | None = None
     field_name: str | None = None
     query: str | None = None
+    one_click: bool = False
     sort: str = "OLDEST"
     include_drafts: bool = False
 
@@ -62,6 +75,8 @@ def _row(project: Project, item: dict[str, Any]) -> dict[str, Any]:
         "confidence": item["confidence"],
         "queue_status": item["queue_status"],
         "issue_code": item["issue_code"],
+        "one_click": item["field_name"] in ONE_CLICK_FIELDS,
+        "confirmation": (item.get("auto_acceptance") or {}).get("confirmation"),
         "waiting_since": _waiting_since(project),
         "finalised": project.finalised_at is not None,
     }
@@ -100,11 +115,15 @@ class ReviewQueueService:
         for project in self._projects(db, flt.include_drafts):
             for item in self.reviews.review_items(db, project.id) or []:
                 everything.append(_row(project, item))
+            for item in self.robust_items(db, project.id):
+                everything.append(_row(project, item))
         wanted = STATUS_FILTERS.get(flt.status, OPEN)
         needle = (flt.query or "").strip().lower()
 
         def match(row: dict[str, Any], skip: str | None = None) -> bool:
             if row["queue_status"] not in wanted:
+                return False
+            if flt.one_click and not row["one_click"]:
                 return False
             checks = (
                 ("workflow", flt.workflow, row["workflow_key"]),
@@ -141,6 +160,59 @@ class ReviewQueueService:
             "status": dict(Counter(r["queue_status"] for r in everything)),
         }
         return selected, facets
+
+    def robust_items(self, db: Session, project_id: uuid.UUID) -> list[dict[str, Any]]:
+        """Values accepted for the decision only (DECISION_ROBUST) that no person has confirmed.
+
+        They are not blockers, so they are not in the review list; a reviewer may still confirm one.
+        """
+        project = self.reviews.project_with_rules(db, project_id)
+        if project is None:
+            return []
+        decisions = decisions_for_project(db, project)
+        robust = {key: d for key, d in decisions.items() if d.accepted and d.robust}
+        if not robust:
+            return []
+        reviews = self.reviews.list_reviews(db, project_id, include_history=False)
+        decided = {(r.document_id, r.field_name) for r in reviews}
+        out = []
+        for (document_id, field_name), decision in sorted(
+            robust.items(), key=lambda kv: (str(kv[0][0]), kv[0][1])
+        ):
+            document = db.get(Document, document_id)
+            if document is None or (document_id, field_name) in decided:
+                continue
+            field = next((f for f in document.extracted_fields if f.field_name == field_name), None)
+            if field is None or field.normalized_value is None:
+                continue
+            effective = self.reviews.resolver.resolve(
+                field, None, document.processing_version, decision
+            )
+            out.append(
+                {
+                    "document_id": document.id,
+                    "processing_version": document.processing_version,
+                    "document_type": DocumentType(document.document_type),
+                    "field_id": field.id,
+                    "field_name": field_name,
+                    "machine_raw_value": field.raw_value,
+                    "machine_normalized_value": field.normalized_value,
+                    "confidence": field.confidence,
+                    "evidence": field.evidence,
+                    "assessment_state": effective.assessment.state,
+                    "assessment_reasons": list(effective.assessment.reasons),
+                    "policy_version": effective.assessment.policy_version,
+                    "issue_code": "DECISION_ROBUST_ACCEPTED",
+                    "affects_verification": True,
+                    "queue_status": ROBUST,
+                    "current_review_id": None,
+                    "current_review_decision": None,
+                    "effective_value": effective.normalized_value,
+                    "effective_source": effective.source,
+                    "auto_acceptance": decision.to_dict(),
+                }
+            )
+        return out
 
     def log(
         self,

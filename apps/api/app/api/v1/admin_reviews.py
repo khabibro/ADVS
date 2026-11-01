@@ -22,7 +22,13 @@ from app.schemas.admin_reviews import (
     ReviewLogRead,
 )
 from app.services.pages import EvidenceBoxNormalizer, page_infos
-from app.services.review_queue import SORTS, STATUS_FILTERS, QueueFilter, ReviewQueueService
+from app.services.review_queue import (
+    ONE_CLICK_FIELDS,
+    SORTS,
+    STATUS_FILTERS,
+    QueueFilter,
+    ReviewQueueService,
+)
 from app.services.reviews import FieldReviewService
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin)])
@@ -38,6 +44,7 @@ def review_queue(
     field_name: str | None = None,
     q: str | None = Query(default=None, max_length=100),
     sort: str = Query(default="OLDEST"),
+    one_click: bool = False,
     include_drafts: bool = False,
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
@@ -46,7 +53,10 @@ def review_queue(
     if status not in STATUS_FILTERS or sort not in SORTS:
         raise api_error(ApiErrorCode.VALIDATION_FAILED, "Unknown status or sort", 400)
     rows, facets = queue.rows(
-        db, QueueFilter(status, workflow, document_type, field_name, q, sort, include_drafts)
+        db,
+        QueueFilter(
+            status, workflow, document_type, field_name, q, one_click, sort, include_drafts
+        ),
     )
     return QueueRead(total=len(rows), items=rows[offset : offset + limit], facets=facets)
 
@@ -68,6 +78,19 @@ def review_detail(
     item = next(
         (i for i in items if i["document_id"] == document_id and i["field_name"] == field_name),
         None,
+    )
+    if item is None:
+        item = next(
+            (
+                i
+                for i in queue.robust_items(db, project_id)
+                if i["document_id"] == document_id and i["field_name"] == field_name
+            ),
+            None,
+        )
+    open_items = [i for i in items if i["queue_status"] in ("PENDING", "STALE")]
+    only_one_click = bool(open_items) and all(
+        i["field_name"] in ONE_CLICK_FIELDS for i in open_items
     )
     if item is None:
         # Already decided and now sufficient, or never needed review: say so instead of 404.
@@ -115,6 +138,9 @@ def review_detail(
         field_name=field_name,
         field_label=field_label(field_name),
         open=True,
+        one_click=field_name in ONE_CLICK_FIELDS,
+        project_open_items=len(open_items),
+        project_only_one_click=only_one_click,
         item=item,
         pages=pages,
         siblings=siblings,
