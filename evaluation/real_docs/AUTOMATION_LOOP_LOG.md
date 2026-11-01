@@ -8,13 +8,13 @@ Development: student fresh G0–G5, G0b, seed A, real pair; business F21. Valida
 
 Business is reported at two check dates: "original" = the harness date (last valid day of the 국세 납세증명서, a boundary case by construction) and "realistic" (20 days before the earliest printed validity end; see cycle 0). Student numbers did not change in any accepted cycle.
 
-| state | commit | student dev (fresh+A+pair) | student validation (seed B) | business dev F21 orig / realistic | business validation RS orig / realistic | wrong READY | negatives READY | issues per valid business submission |
+| state | commit | student dev | student validation | business dev F21 orig / realistic | business validation RS orig / realistic | wrong READY | negatives READY (see N5 note) | issues per valid business submission |
 |---|---|---|---|---|---|---|---|---|
 | start (gated tip) | d9c6c2b | 0 / 81 | 0 / 27 | 0 / 0 of 38 | 0 / 0 of 38 | 0 | 0 of 114 + 14 | 6.90 |
-| after cycles 1, 2, 3, 5 (**loop head**) | 5c4fb75 | 0 / 81 | 0 / 27 | 0 / 0 | 0 / 0 | 0 | 0 | 4.33 |
-| *proposal branch*: + validity window + S9 | `proposal/robust-validity-window` | 0 / 81 | 0 / 27 | 0 / 24 | 11 / 23 | 0 | 0 | 1.26 |
+| cycles 1, 2, 3, 5 | 5c4fb75 | 0 / 81 | 0 / 27 | 0 / 0 | 0 / 0 | 0 | 0 | 4.33 |
+| **+ proposal 0 merged (loop head)** | e2f56ba | 0 / 81 | 0 / 27 | 0 / 24 | 11 / 23 | 0 | 0 of 102 + N5 duplicates with a notice | 1.26 (realistic) |
 
-The proposal row is **not** on the loop branch: its safety gate failed (cycle 4). The loop head gains +115 correct auto-accepted business fields (319 to 434), no READY yet.
+Loop head, business: 47 of 76 valid submissions READY at the realistic date, 11 at the original date. N5 (duplicate upload): the system ignores the second copy and says so (`DUPLICATE_UPLOAD_IGNORED`), so an N5 submission has the same status as its valid counterpart; 12 of 19 N5 submissions are READY at realistic dates, each with that notice and each with a READY valid counterpart. N3 (company mismatch) and N4 (지방세 instead of 국세) stay non-READY at realistic dates. This is the designed duplicate handling; whether a duplicate should block READY is an owner decision (proposal 5).
 
 ## Cycle 0: baseline and how the loop is measured
 
@@ -42,7 +42,7 @@ The proposal row is **not** on the loop branch: its safety gate failed (cycle 4)
 - Fix: if no label links, take the only hyphenated number on the page that passes the check digit (two different valid numbers or a failing digit stay unresolved); it is accepted only through corroboration.
 - Result: +27 correct auto-accepted fields, verification issues per valid business submission 5.49 to 4.79, 0 wrong.
 
-## Cycle 4: validity end bounded by the page's other printed dates; default strategy S9 — REJECTED by the safety gate (kept on `proposal/robust-validity-window`)
+## Cycle 4: validity end bounded by the page's other printed dates; default strategy S9 — rejected first, then MERGED under the owner's conditions (see "Proposal 0 merge")
 - Mechanism: a lone scanned validity end can only be accepted for the decision when every plausible misreading gives the same outcome. The year and month digits made that impossible without an issue date, and the issue date is not extracted for these certificates.
 - Fix: the other bare dates printed on the page bound the plausible readings (a reading must lie 0–400 days after one of them); the read value must lie in such a window; printed dates are taken as read (one misread box at a time, the module's existing safety argument). The default strategy becomes S9 (decision-robust acceptance, implemented and injection-tested in D3).
 - Result: validation company 11 READY at the original date and 23 at the realistic date; N1 (one day after expiry, check date 2026-11-03) now 16 of 20 NEEDS_CORRECTION (was 19 of 19 REVIEW_REQUIRED without an expiry code): the expired digital 국세 certificate is detected.
@@ -56,7 +56,24 @@ The proposal row is **not** on the loop branch: its safety gate failed (cycle 4)
 - Hypothesis: the second-pass university re-read is a one-character fragment of a letter-spaced header, so the veto fires without information (127 dev fields).
 - Result: +1 auto-accepted field, 8.50 to 8.48 issues per student submission. The vetoed regions mostly contain other text (digits, Latin), not fragments, so the mechanism covered about 1 of 127 cases. No gain, reverted.
 
-## Safety gate status (loop head 5c4fb75)
+
+## Proposal 0 merge (owner conditions a–e) — ACCEPTED, e2f56ba
+- (c) The 5 hold-out 1 E14 READY cases: check date 2026-10-12, true validity end 2026-11-07, injected 2026-11-01 / 2026-11-02. In all 5 the true value and the injected value give the same verdict (not expired) and the control run of the same files is READY too. No wrong verdict, so the one-click confirmation was not needed.
+- (a) Robust-accepted values carry `confirmation = DECISION_ROBUST` and the label "decision-robust (value not individually confirmed)" (Korean copy `label_ko`) in the field data (`auto_acceptance`); they are computed on the fly and never stored or exported as confirmed (no export exists). UI copy is for the web work.
+- (b) Robustness is recomputed for every check date (test: the same value stops being robust when the date moves next to it; the real runs at the original and realistic dates show it).
+- (c, metrics) The injection report now separates `wrong_confirmed` (must be 0), `robust_wrong` and `false_ready_decision` (READY although the true value gives another verdict).
+- (d) New injection cases E19: a digit error that crosses the validity end, valid read as expired and the reverse, both passes agreeing: 876 cases on the four fictional corpora, 0 READY, 0 `robust_wrong`, 0 `false_ready_decision`.
+- (e) Gates on e2f56ba: backend 731 tests, ruff, mypy; demo rehearsal x3 ALL PASS; manipulated PDFs 0 hidden tokens read; real sets 0 wrong accepted, 0 false READY; real negatives non-READY (N5 note above).
+- Before / after on the injection suites (four fictional corpora, 6,803 cases with E19): `wrong_confirmed` 1 (the known owner-accepted E3c-both case on hold-out 2), `robust_wrong` 41 (30 on hold-out 1, 11 on hold-out 3, all with the correct verdict), `false_ready_decision` 1 (the same known case).
+
+## Student cycles after the merge
+- Finding: the real 재학증명서 does not print the student number (gold: verified absent), but the student checklist requires it (REQUIRED_FIELD on the enrolment certificate, Phase D2 decision D-1). 93 of 162 development student submissions carry this blocker and it cannot be satisfied by those documents (proposal 4).
+- Finding: simulation of the minimal sets: no student submission is complete unless issue date, GPA, university name, student name, enrolment student number and transcript student number are all solved (about 100 of 189 then complete). One fix cannot produce the first student READY.
+- Proposal 1 (anchored issue date, decision-robust): measured on the 214 development dates that are anchored inferences, only 3 are decision-robust, because a year or month digit confusion always flips the 90-day verdict and a lone date has no other printed date to bound the year. Not implemented: the gain would be about 1% of the dates for new risk. It needs an anchor for the year first (proposal 1 below).
+- Cycle 7, second-pass region = union of the boxes that make up a value: +2 auto-accepted fields. Mechanism found: the university name is read from the stamped issuer line at the bottom of the page; the region re-read there mixes the date row above and the seal, so the re-read says nothing about the name.
+- Cycle 8, name veto only on a misread-shaped contradiction (a stretch of Hangul about the name's length agreeing at 60% of positions): student auto-accepted correct fields +49 (fresh), +9 (seed A), +8 (seed B), business +20, issues per student submission 8.5 to 7.6; injection dev, hold-out 1, hold-out 2 unchanged, **hold-out 3: one new wrong value confirmed** (0 before). Reverted (7dccff3, 290e4fc); kept on `proposal/name-veto-variants`. It is the right direction (the veto is the largest single student blocker that is not policy) but needs a tighter rule or the owner's view on the new leak before it can merge.
+
+## Safety gate status (superseded by the merge section above; 5c4fb75 was the earlier head)
 - Backend 723 tests, ruff, mypy clean. Real sets: 0 wrong accepted, 0 false READY, all real negatives non-READY (student 14 + business 114).
 - Fictional replay (injections dev, hold-outs 1–3): running; result below when finished.
 
@@ -65,7 +82,11 @@ The proposal row is **not** on the loop branch: its safety gate failed (cycle 4)
 
 ## Owner-decision proposals
 
-0. **Decision-robust acceptance of a validity end bounded by the page's printed dates (business) — the big one.** Branch `proposal/robust-validity-window` (2 commits + the shared notation fix). Effect: 47 of 76 valid business submissions READY at the realistic check date (24 of 38 on the development company, 23 of 38 on the validation company), all correct, 0 of 114 negatives READY, and the expired digital 국세 certificate is detected (N1 at the correct date: 16 of 20 NEEDS_CORRECTION instead of 0). Cost: the harness counts 30 false auto-accepts and 5 false READY on hold-out 1 (E14: a digit of the validity end is wrong, the verdict is right). The question for you: is "wrong digit, correct verdict, marked decision-robust" a leak? If yes, drop it; if no, the injection metric needs a verdict-based definition for robust acceptances (a wrong value must flip a verdict to count). A cheap middle path is to show those fields as "decision-robust, please confirm" and let READY require a one-click confirmation of the date, which keeps 0 wrong values accepted.
+0. **[DECIDED: accepted with conditions a–e, merged, see above]** Decision-robust acceptance of a validity end bounded by the page's printed dates (business). Branch `proposal/robust-validity-window` (2 commits + the shared notation fix). Effect: 47 of 76 valid business submissions READY at the realistic check date (24 of 38 on the development company, 23 of 38 on the validation company), all correct, 0 of 114 negatives READY, and the expired digital 국세 certificate is detected (N1 at the correct date: 16 of 20 NEEDS_CORRECTION instead of 0). Cost: the harness counts 30 false auto-accepts and 5 false READY on hold-out 1 (E14: a digit of the validity end is wrong, the verdict is right). The question for you: is "wrong digit, correct verdict, marked decision-robust" a leak? If yes, drop it; if no, the injection metric needs a verdict-based definition for robust acceptances (a wrong value must flip a verdict to count). A cheap middle path is to show those fields as "decision-robust, please confirm" and let READY require a one-click confirmation of the date, which keeps 0 wrong values accepted.
 1. **Decision-robust acceptance for an anchored scanned issue date (student).** The issue date on student scans is found from the certification sentence above and the issuer line below (committed earlier) but stays `needs_review` as an inference, so it can never be accepted, and it is a blocker on every student submission (about 2 per submission). Proposal: allow the decision-robust path for it when the date lies far from the age limit (the policy margin). Expected gain: removes 2 of about 8 blockers per student submission; alone it makes no student submission READY. Risk: a misread date far from the limit leaves the verdict unchanged; a date near the limit still goes to review.
-2. **Default strategy S9** is part of proposal 0 only; the loop branch keeps S8.
+2. **Default strategy S9** is now the default on the loop branch (part of the merged proposal 0).
 3. **Applicant company name as an independent source (S5+).** The harness does not supply the project's company name, so this source is never used in the measurements. If real projects always carry it, company fields would be corroborated by the application. Expected gain: unmeasured here.
+4. **Student number on the 재학증명서 (checklist).** The seeded student checklist requires 학번 on the enrolment certificate; the real certificate does not print it. Option: require it on at least one document of the submission (the transcript prints it), as the cross-document comparison already does. Expected gain: removes one blocker from 93 of 162 development student submissions; necessary for any student READY. Risk: none for wrong values (a lone transcript number still needs independent confirmation).
+5. **Duplicate upload (N5).** A duplicate is ignored with the notice `DUPLICATE_UPLOAD_IGNORED` and the submission keeps the status of its valid counterpart (READY when that is READY). Your plan expected "detected": should a duplicate lower the status to REVIEW_REQUIRED?
+6. **Name veto variants** (`proposal/name-veto-variants`): +49 auto-accepted student fields on the fresh set, one new wrong value confirmed on hold-out 3. Needs a tighter rule or your decision on the leak.
+7. Applicant company name (S5+): logged for the admin/web work (needs the applicant input form), not now.
