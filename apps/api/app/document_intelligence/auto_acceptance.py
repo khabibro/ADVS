@@ -71,6 +71,11 @@ from app.document_intelligence.ocr_confusions import CONFUSION_TABLE_VERSION
 
 AUTO_ACCEPT_POLICY_VERSION = "auto-accept-v1"
 
+#: A value accepted only because every plausible misreading gives the same verdict is never presented as
+#: confirmed. Staff-facing copy, English and Korean; the UI shows it next to the value.
+DECISION_ROBUST_LABEL = "decision-robust (value not individually confirmed)"
+DECISION_ROBUST_LABEL_KO = "결정 기준으로만 확인됨 (값은 개별 확인되지 않음)"
+
 
 class Strategy(StrEnum):
     S0 = "S0"
@@ -346,6 +351,11 @@ class AutoDecision:
             "confusion_table_version": CONFUSION_TABLE_VERSION
             if self.robust or self.repair_candidate
             else None,
+            "confirmation": (
+                "DECISION_ROBUST" if self.robust else "INDEPENDENT_SOURCE" if self.accepted else None
+            ),
+            "label": DECISION_ROBUST_LABEL if self.robust else None,
+            "label_ko": DECISION_ROBUST_LABEL_KO if self.robust else None,
         }
 
 
