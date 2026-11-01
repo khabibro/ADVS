@@ -187,6 +187,7 @@ FIELD_RULES: dict[str, FieldRule] = {
     "student_id": FieldRule("STUDENT_ID", "student_id", True, confirm_by_second_pass=False),
     "university_name": FieldRule("UNIVERSITY", "university", False, name_veto=True),
     "issue_date": FieldRule("DATE", None, True, confirm_by_second_pass=False),
+    "birth_date": FieldRule("DATE", "birth_date", True, confirm_by_second_pass=False),
     "valid_from": FieldRule("DATE", None, True, confirm_by_second_pass=False),
     "valid_until": FieldRule("DATE", None, True, confirm_by_second_pass=False),
     "gpa": FieldRule("GPA", None, True, confirm_by_second_pass=False),
@@ -253,7 +254,7 @@ def parse_second_pass(field_name: str, text: str | None) -> str | None:
     if field_name == "student_id":
         runs = re.findall(r"(?<!\d)\d{8,10}(?!\d)", folded)
         return runs[0] if len(set(runs)) == 1 else None
-    if field_name in ("issue_date", "valid_from", "valid_until"):
+    if field_name in ("issue_date", "valid_from", "valid_until", "birth_date"):
         found = [normalize_date(match.group(0)) for match in DATE_RE.finditer(folded)]
         if not found or any(item is None for item in found):
             return None
@@ -385,6 +386,15 @@ def _valid_format(item: FieldInput, index: _Index, context: ProjectContext) -> s
         ):
             return "BRN_TYPE_CODE_IMPLAUSIBLE"
         return None
+    if name == "birth_date":
+        try:
+            born = date.fromisoformat(value)
+        except ValueError:
+            return "FORMAT_DATE_INVALID"
+        today = context.reference_date or date.today()
+        if not (MIN_STUDENT_AGE_YEARS <= (today - born).days / 365.25 <= MAX_STUDENT_AGE_YEARS):
+            return "FORMAT_BIRTH_DATE_IMPLAUSIBLE"
+        return None
     if name in ("issue_date", "valid_from", "valid_until"):
         try:
             parsed = date.fromisoformat(value)
@@ -443,6 +453,10 @@ def _valid_format(item: FieldInput, index: _Index, context: ProjectContext) -> s
     if name == "student_id":
         return None if STUDENT_ID_RE.match(value) else "FORMAT_STUDENT_ID"
     return None  # names / university: no format validator (corroboration only)
+
+
+MIN_STUDENT_AGE_YEARS = 14
+MAX_STUDENT_AGE_YEARS = 80
 
 
 def _printed_bare_dates(item: FieldInput) -> tuple[date, ...]:
@@ -514,6 +528,7 @@ HAS_VALIDATOR = frozenset(
         "gpa",
         "gpa_scale",
         "student_id",
+        "birth_date",
     }
 )
 

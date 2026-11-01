@@ -26,7 +26,12 @@ def _pdf(lines: list[str]) -> bytes:
 
 
 def _enrollment(issue: str, student_id: str | None) -> list[str]:
-    lines = ["재 학 증 명 서", "성          명 : 류하늘", "소          속 : 공과대학 기계공학과"]
+    lines = [
+        "재 학 증 명 서",
+        "성          명 : 류하늘",
+        "생 년 월 일 : 2002년 05월 17일",
+        "소          속 : 공과대학 기계공학과",
+    ]
     if student_id:
         lines.append(f"학          번 : {student_id}")
     return [*lines, "위의 사실을 증명합니다.", issue, "한국샘플대학교 총장"]
@@ -65,11 +70,10 @@ def test_certificate_older_than_ninety_days_needs_correction(client, db_session)
     assert "RULE_CONDITION_NOT_MET" in {issue["code"] for issue in verdict["issues"]}
 
 
-def test_certificate_without_a_student_number_goes_to_review(client, db_session) -> None:
-    verdict = _verify(
-        client, db_session, _enrollment("2026年 09월 20일".replace("年", "년"), None), "2026-10-05"
-    )
-    assert verdict["status"] == "REVIEW_REQUIRED"
+def test_certificate_without_a_student_number_is_not_blocked(client, db_session) -> None:
+    # the certificate does not print a student number; none is required (owner decision)
+    verdict = _verify(client, db_session, _enrollment("2026년 09월 20일", None), "2026-10-05")
+    assert verdict["status"] == "READY"
 
 
 def test_certificate_with_no_issue_date_goes_to_review(client, db_session) -> None:
@@ -80,10 +84,13 @@ def test_certificate_with_no_issue_date_goes_to_review(client, db_session) -> No
     assert verdict["status"] == "REVIEW_REQUIRED"
 
 
-def _transcript(student_id: str, name: str = "류하늘") -> list[str]:
+def _transcript(
+    student_id: str, name: str = "류하늘", birth: str = "2002년 05월 17일"
+) -> list[str]:
     return [
         "성 적 증 명 서",
         f"성          명 : {name}",
+        f"생 년 월 일 : {birth}",
         f"학          번 : {student_id}",
         "총 취득학점: 17",
         "평점평균: 3.40/4.5 백분율: 88.00/100",
@@ -133,3 +140,9 @@ def test_a_different_student_name_between_the_two_documents_is_never_ready(
 ) -> None:
     verdict = _verify_two(client, db_session, _transcript("2025123456", name="류하눌"))
     assert verdict["status"] != "READY"
+
+
+def test_a_different_birth_date_between_the_two_documents_is_never_ready(client, db_session) -> None:
+    verdict = _verify_two(client, db_session, _transcript("2025123456", birth="2002년 05월 18일"))
+    assert verdict["status"] != "READY"
+    assert "INFORMATION_MISMATCH" in {issue["code"] for issue in verdict["issues"]}

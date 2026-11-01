@@ -791,23 +791,18 @@ class SubmissionVerificationEngine:
         source_field = source.fields.get(source_name)
         target_field = target.fields.get(target_name)
         if source_name == target_name and source_name in SUBMISSION_WIDE_FIELDS:
-            # Compared only when both documents print it. When one does not, the other's value is still
-            # checked on its own (a value on a single document stays unconfirmed), but nothing is compared.
-            for printed, doc, name, other_field in (
-                (source_field, source, source_name, target_field),
-                (target_field, target, target_name, source_field),
-            ):
-                if value_exists(printed) and field_absent(other_field):
-                    unresolved_single = self._unresolved_field(rule, doc, printed, name)
-                    return unresolved_single or RuleEvaluationResult(
-                        rule.id,
-                        rule.rule_type,
-                        RuleOutcome.NOT_APPLICABLE,
-                        document_type=source_type,
-                        field_name=source_name,
-                        related_document_type=target_type,
-                        related_field_name=target_name,
-                    )
+            # An observation, not a requirement: compared only when both documents print it. A value
+            # printed on one document alone is nothing to check or confirm.
+            if field_absent(source_field) or field_absent(target_field):
+                return RuleEvaluationResult(
+                    rule.id,
+                    rule.rule_type,
+                    RuleOutcome.NOT_APPLICABLE,
+                    document_type=source_type,
+                    field_name=source_name,
+                    related_document_type=target_type,
+                    related_field_name=target_name,
+                )
         unresolved = self._unresolved_field(
             rule,
             source,
