@@ -49,8 +49,9 @@ class Settings(BaseSettings):
     # Load the OCR model at API start (demo / production) instead of on the first upload.
     ocr_warmup: bool = False
     # Auto-acceptance of OCR values (see document_intelligence/auto_acceptance.py).
-    # S0 = off (every OCR field to a human) ... S7. Default S7 (chosen in Phase D).
-    auto_accept_strategy: str = "S11"
+    # S0 = off (every OCR field to a human) ... S18. Default S14 (v5): S11 + company identity by numbers
+    # + veto lift for values another document reads back.
+    auto_accept_strategy: str = "S14"
     # Comma-separated workflow (checklist) ids for which auto-acceptance is switched off.
     auto_accept_disabled_workflows: str = ""
 
