@@ -42,6 +42,13 @@ ROUNDING_BOUND = 0.010
 _EPSILON = 1e-9
 
 
+def _gpa_within_truncation(mean: float, printed: float) -> bool:
+    """The university truncates (floors) GPAs to 2 decimals. With M the credit-weighted mean of the printed
+    semester GPAs, each of which is floored, the true mean lies in [M, M + 0.01) and the floored total P in
+    (M - 0.01, M + 0.01): the exact bound, open at both ends."""
+    return mean - 0.01 < printed < mean + 0.01
+
+
 def _agrees(mean: float, printed: float) -> bool:
     """The mean, rounded to 2 decimals, equals the printed 2-decimal value within one last-place unit."""
     return abs(round(mean, 2) - printed) <= ROUNDING_BOUND + _EPSILON
@@ -77,7 +84,7 @@ def gpa_arithmetic(facts: DocFacts | None, gpa: float) -> Verdict:
                 return NONE  # the table does not reproduce the printed 백분율: not a table to judge by
             results.append(("weighted_percent", True))
         average = sum(c * x for c, x in g.pairs) / credits
-        results.append(("weighted_average", _agrees(average, gpa)))
+        results.append(("weighted_average", _gpa_within_truncation(average, gpa)))
     if g.total_points is not None and g.total_credits:
         results.append(
             ("total_points", abs(g.total_points / g.total_credits - gpa) <= POINTS_TOLERANCE)

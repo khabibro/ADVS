@@ -60,12 +60,12 @@ def test_the_scale_is_confirmed_when_every_line_and_the_legend_agree() -> None:
     assert scale_confirmation(facts_for(legend="4.0"), "4.5").state == "MISMATCH"
 
 
-def test_the_tolerance_is_the_rounding_bound_and_not_wider() -> None:
-    # the credit-weighted mean of the invented table is 3.5109, which rounds to 3.51; the printed total may be
-    # one last-place unit away from that and no more
-    for total in (3.50, 3.51, 3.52):
+def test_the_total_must_lie_strictly_within_one_hundredth_of_the_mean_of_the_printed_semesters() -> None:
+    # the credit-weighted mean of the invented table is 3.5109 (GPAs are floored to 2 decimals): P must satisfy
+    # M - 0.01 < P < M + 0.01, i.e. 3.5009 < P < 3.5209
+    for total in (3.51, 3.52):
         assert gpa_arithmetic(facts_for(total=total), total).state == "CONFIRMED", total
-    for total in (3.49, 3.53, 3.62):
+    for total in (3.50, 3.53, 3.62):
         assert gpa_arithmetic(facts_for(total=total), total).state == "MISMATCH", total
 
 
