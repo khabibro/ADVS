@@ -46,7 +46,7 @@ def test_robust_acceptance_is_labelled_not_confirmed() -> None:
     data = decision.to_dict()
     assert data["confirmation"] == "DECISION_ROBUST"
     assert data["label"] == DECISION_ROBUST_LABEL
-    assert "개별 확인되지" in data["label_ko"]
+    assert "값 미확정" in data["label_ko"]
 
 
 def test_the_same_value_is_not_robust_once_the_check_date_moves_next_to_it() -> None:

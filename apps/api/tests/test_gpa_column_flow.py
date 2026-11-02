@@ -78,3 +78,23 @@ def test_a_sound_table_that_disagrees_is_a_mismatch_a_broken_table_is_not() -> N
     assert gpa_arithmetic(facts_for(swapped), 3.51).state == "NONE"
     # a dropped credits line: the credits cannot add up to the total -> NONE
     assert gpa_arithmetic(facts_for(drop_credit=1), 3.51).state == "NONE"
+
+
+def test_a_partial_table_without_the_total_credits_is_could_not_check_not_a_mismatch() -> None:
+    # only three of six semesters were read and the total credits line was not: the table is not known to be complete
+    from app.document_intelligence.internal_evidence import DocFacts, GpaFacts
+
+    partial = DocFacts(gpa=GpaFacts(pairs=((18, 3.54), (21, 3.81), (18, 3.05)), total_credits=None))
+    assert gpa_arithmetic(partial, 3.40).state == "NONE"
+    # the same table with its credits read and adding up is judged
+    complete = DocFacts(gpa=GpaFacts(pairs=((18, 3.54), (21, 3.81), (18, 3.05)), total_credits=57))
+    assert gpa_arithmetic(complete, 3.40).state == "MISMATCH"
+    assert gpa_arithmetic(complete, 3.48).state == "CONFIRMED"
+
+
+def test_the_mismatch_says_why() -> None:
+    from app.document_intelligence.internal_evidence import DocFacts, GpaFacts
+
+    complete = DocFacts(gpa=GpaFacts(pairs=((18, 3.54), (21, 3.81), (18, 3.05)), total_credits=57))
+    detail = gpa_arithmetic(complete, 3.40).detail or ""
+    assert "retake" in detail and "floor bound" in detail

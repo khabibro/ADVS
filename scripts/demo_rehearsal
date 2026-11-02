@@ -86,9 +86,15 @@ def check(scn: Scenario, out: Outcome, client: DemoClient) -> list[str]:
         decided = [f for d in out.documents for f in d["extracted_fields"]
                    if (f.get("auto_acceptance") or {}).get("accepted")]
         if not decided:
-            fails.append("D6: no field was auto-accepted (the scan should be decided without a person)")
-        if out.review_items and any(i["queue_status"] == "PENDING" for i in out.review_items):
-            fails.append("D6: a reviewer item is still open on a READY scan")
+            fails.append("D6: no field was auto-accepted (most of the scan is decided by the documents)")
+        pending = [i for i in out.review_items if i["queue_status"] == "PENDING"]
+        got = sorted((i["document_type"], i["field_name"]) for i in pending)
+        want = [
+            ("SME_CONFIRMATION_CERTIFICATE", "valid_from"),
+            ("SOCIAL_INSURANCE_PAYMENT_CERTIFICATE", "valid_until"),
+        ]
+        if got != want:
+            fails.append(f"D6: expected the two printed validity dates no rule can confirm open (중소기업확인서 start, 4대보험 end), got {got}")
     if scn.review:
         accepted = [f for d in out.documents for f in d["extracted_fields"]
                     if (f.get("auto_acceptance") or {}).get("accepted")]

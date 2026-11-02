@@ -21,6 +21,10 @@ import unicodedata
 from dataclasses import dataclass
 
 from app.core.domain import DocumentType
+from app.document_intelligence.classification.body_labels import (
+    BODY_LABELS_EVIDENCE,
+    enrolment_body_labels,
+)
 from app.document_intelligence.classification.classifier import (
     IDENTIFIER,
     SIGNALS,
@@ -186,6 +190,12 @@ def assess_title(
 ) -> TitleAssessment:
     """`evidence` = the classifier's matched signal texts for `document_type`."""
     titles = _titles(document_type)
+    if (
+        document_type == DocumentType.ENROLLMENT_CERTIFICATE
+        and tuple(evidence) == BODY_LABELS_EVIDENCE
+        and enrolment_body_labels(_squash("".join(page.text for page in pages)))
+    ):
+        return TitleAssessment(True)  # typed by its body labels, with the other-status guard re-checked
     for page in pages:
         for row in build_rows(page):
             segments = [item for item in row.segments if item.text.strip()]

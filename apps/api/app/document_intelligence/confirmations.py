@@ -76,7 +76,8 @@ def gpa_arithmetic(facts: DocFacts | None, gpa: float) -> Verdict:
     if (
         len(g.pairs) >= MIN_SEMESTERS
         and credits > 0
-        and (g.total_credits is None or credits == g.total_credits)
+        and g.total_credits is not None  # a table is known to be complete only if its credits add up
+        and credits == g.total_credits
     ):
         if g.percent_pairs and g.total_percent is not None and len(g.percent_pairs) == len(g.pairs):
             percent = sum(c * x for c, x in g.percent_pairs) / sum(c for c, _ in g.percent_pairs)
@@ -93,7 +94,29 @@ def gpa_arithmetic(facts: DocFacts | None, gpa: float) -> Verdict:
         return NONE
     if all(ok for _, ok in results):
         return Verdict("CONFIRMED", "arithmetic", "+".join(name for name, _ in results))
-    return Verdict("MISMATCH", "arithmetic", "cumulative GPA does not match the recomputation")
+    return Verdict(
+        "MISMATCH",
+        "arithmetic",
+        "the printed semesters reproduce their credits (and 백분율) but their credit-weighted GPA mean "
+        "differs from the printed total by more than the floor bound; a retake, a pass/fail course or "
+        "transfer credits can do this on a genuine certificate, a misread digit can too",
+    )
+
+
+def business_number_copy(facts: DocFacts | None, digits: str, floor: float) -> Verdict:
+    """The business number printed a second time on the same page (the 11-digit management number, whose first
+    ten digits are the business number). Two reads of separate boxes that agree, with a valid check digit,
+    confirm it; the copy must itself be read above the floor. A differing copy confirms nothing."""
+    from app.document_intelligence.normalization.field_normalizer import is_valid_business_number
+
+    if facts is None or not is_valid_business_number(digits):
+        return NONE
+    agreeing = [
+        confidence
+        for prefix, confidence in facts.management_numbers
+        if prefix == digits and confidence is not None and confidence >= floor
+    ]
+    return Verdict("CONFIRMED", "second_copy") if agreeing else NONE
 
 
 def scale_confirmation(facts: DocFacts | None, scale: str) -> Verdict:
@@ -128,16 +151,28 @@ class ValidityProfile:
     span_days: tuple[int, int] | None = None  # valid_until - valid_from
     issue_after_start_days: tuple[int, int] | None = None  # issue_date - valid_from
     tolerance_days: int = 1
+    # a validity shorter than the period (down to the issue date) is lawful but never a confirmation
+    shorter_is_consistent: bool = False
+    # False: the profile is a consistency check only. A range that does not fit is flagged; one that fits
+    # confirms nothing (the printed validity end is never taken from, or confirmed by, an assumed period).
+    confirms: bool = True
 
 
+#: Only relations that rest on a legal period or on measured real certificates may confirm a date.
+#: * 국세 납세증명서: 국세징수법 시행령 제96조 제1항: valid for 30 days from issue; shortened (to a payment
+#:   deadline, with the reason and period printed) only when a tax is due sooner. Exactly +30 confirms; a shorter
+#:   validity is consistent, not confirmed; a longer one or one before the issue date is inconsistent.
+#: * 4대보험 완납증명서: no legal period; real certificates are valid 7-28 days after their issue (measured), so
+#:   there is no profile: its validity end is the printed one, confirmed by other evidence or by a person.
+#: * 중소기업확인서: no real sample; the one-year validity is set by the fiscal year, not by the issue date, and a
+#:   certificate may be issued at any time during it (the "issue within a month of the start" relation was a property
+#:   of the fictional data and is out). The one-year span is a consistency check only: its validity end is the printed
+#:   one, never confirmed or taken from the profile.
 VALIDITY_PROFILES: dict[DocumentType, ValidityProfile] = {
-    DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE: ValidityProfile(until_after_issue_days=(30, 30)),
-    DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE: ValidityProfile(
-        until_after_issue_days=(30, 30)
+    DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE: ValidityProfile(
+        until_after_issue_days=(30, 30), tolerance_days=0, shorter_is_consistent=True
     ),
-    DocumentType.SME_CONFIRMATION_CERTIFICATE: ValidityProfile(
-        span_days=(364, 365), issue_after_start_days=(0, 31)
-    ),
+    DocumentType.SME_CONFIRMATION_CERTIFICATE: ValidityProfile(span_days=(364, 365), confirms=False),
 }
 
 
@@ -165,19 +200,20 @@ def date_pair(
     if profile.until_after_issue_days is not None:
         if issue is None or valid_until is None:
             return NONE
-        checks.append(
-            _within(
-                (valid_until - issue).days, profile.until_after_issue_days, profile.tolerance_days
-            )
-        )
+        days = (valid_until - issue).days
+        if profile.shorter_is_consistent and 0 <= days < profile.until_after_issue_days[0]:
+            return NONE  # shortened by law (reason printed): consistent, not confirmed
+        checks.append(_within(days, profile.until_after_issue_days, profile.tolerance_days))
     if profile.span_days is not None or profile.issue_after_start_days is not None:
-        if issue is None or valid_from is None or valid_until is None:
+        if valid_from is None or valid_until is None:
+            return NONE
+        if profile.issue_after_start_days is not None and issue is None:
             return NONE
         if profile.span_days is not None:
             checks.append(
                 _within((valid_until - valid_from).days, profile.span_days, profile.tolerance_days)
             )
-        if profile.issue_after_start_days is not None:
+        if profile.issue_after_start_days is not None and issue is not None:
             checks.append(
                 _within(
                     (issue - valid_from).days,
@@ -187,11 +223,9 @@ def date_pair(
             )
     if not checks:
         return NONE
-    return (
-        Verdict("CONFIRMED", "date_pair")
-        if all(checks)
-        else Verdict("MISMATCH", "date_pair", "dates do not fit the validity profile")
-    )
+    if not all(checks):
+        return Verdict("MISMATCH", "date_pair", "dates do not fit the validity profile")
+    return Verdict("CONFIRMED", "date_pair") if profile.confirms else NONE
 
 
 def issue_date_box_for(

@@ -97,24 +97,35 @@ def test_scale_is_confirmed_by_the_legend_and_the_semester_scales() -> None:
 # ----------------------------------------------------------------- dates
 
 
-def test_tax_and_social_certificates_confirm_issue_date_and_validity_end_by_their_profile() -> None:
+def test_the_national_tax_certificate_confirms_issue_date_and_validity_end_by_its_legal_period() -> None:
+    # 국세징수법 시행령 제96조: 30 days from issue, shortened (reason printed) only when a tax is due sooner
     issue = date(2027, 3, 1)
-    assert date_pair(TAX, issue, None, date(2027, 3, 31)).state == "CONFIRMED"
-    assert date_pair(SOC, issue, None, date(2027, 4, 1)).state == "CONFIRMED"  # tolerance 1 day
+    assert date_pair(TAX, issue, None, date(2027, 3, 31)).state == "CONFIRMED"  # exactly +30
+    assert date_pair(TAX, issue, None, date(2027, 3, 20)).state == "NONE"  # shortened: consistent, not confirmed
+    assert date_pair(TAX, issue, None, date(2027, 4, 1)).state == "MISMATCH"  # +31: longer than the law allows
+    assert date_pair(TAX, issue, None, date(2027, 2, 28)).state == "MISMATCH"  # before the issue date
     assert date_pair(TAX, issue, None, date(2027, 5, 30)).state == "MISMATCH"
     assert date_pair(TAX, None, None, date(2027, 3, 31)).state == "NONE"  # never inferred
     assert date_pair(TAX, issue, None, None).state == "NONE"
 
 
-def test_sme_range_is_confirmed_only_together_with_the_separately_printed_issue_date() -> None:
-    assert (
-        date_pair(SME, date(2027, 1, 9), date(2027, 1, 1), date(2027, 12, 31)).state == "CONFIRMED"
-    )
+def test_the_social_insurance_certificate_has_no_profile_its_validity_end_is_only_the_printed_one() -> None:
+    from app.document_intelligence.confirmations import VALIDITY_PROFILES
+
+    assert SOC not in VALIDITY_PROFILES
+    issue = date(2027, 3, 1)
+    for end in (date(2027, 3, 31), date(2027, 3, 20), date(2027, 4, 1)):  # +30, +19 and +31 all say nothing
+        assert date_pair(SOC, issue, None, end).state == "NONE"
+
+
+def test_the_sme_range_is_a_consistency_check_only_never_a_confirmation() -> None:
+    # the one-year validity is set by the fiscal year, not by the issue date: a range of about a year fits and
+    # confirms nothing; a range that is not a year is flagged; the issue date plays no part
+    assert date_pair(SME, date(2027, 1, 9), date(2027, 1, 1), date(2027, 12, 31)).state == "NONE"
     assert date_pair(SME, None, date(2027, 1, 1), date(2027, 12, 31)).state == "NONE"
-    assert (
-        date_pair(SME, date(2027, 6, 9), date(2027, 1, 1), date(2027, 12, 31)).state == "MISMATCH"
-    )
+    assert date_pair(SME, date(2027, 6, 9), date(2027, 1, 1), date(2027, 12, 31)).state == "NONE"
     assert date_pair(SME, date(2027, 1, 9), date(2027, 1, 1), date(2028, 6, 30)).state == "MISMATCH"
+    assert date_pair(SME, None, date(2027, 1, 1), date(2027, 3, 1)).state == "MISMATCH"
 
 
 def test_a_date_printed_twice_is_confirmed_only_with_two_separate_bare_boxes() -> None:
@@ -343,14 +354,20 @@ def test_a_confirmed_date_profile_rules_out_alternatives_that_break_it() -> None
     from app.document_intelligence.decision_robust import RuleSpec, is_decision_robust
 
     spec = [RuleSpec(TAX, "valid_until", "on_or_after_ref")]
-    ref = date(2027, 3, 10)
     siblings = {
         "issue_date": date(2027, 3, 1),
         "valid_from": None,
         "valid_until": date(2027, 3, 31),
     }
-    # the year 2021 reading would break the 30-day profile with the printed issue date
-    assert is_decision_robust(spec, ref, "valid_until", TAX, "2027-03-31", siblings=siblings)
+    # a check date at the issue date: a reading in a different year breaks the legal period with the printed
+    # issue date and is ruled out; every lawful (shortened) reading is still not expired
+    assert is_decision_robust(
+        spec, date(2027, 3, 1), "valid_until", TAX, "2027-03-31", siblings=siblings
+    )
+    # a later check date: a lawfully shortened validity could already be over, so the decision is not robust
+    assert not is_decision_robust(
+        spec, date(2027, 3, 10), "valid_until", TAX, "2027-03-31", siblings=siblings
+    )
 
 
 def test_s9_accepts_a_robust_value_and_labels_it_s8_does_not() -> None:

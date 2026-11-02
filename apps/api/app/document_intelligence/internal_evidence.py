@@ -59,6 +59,9 @@ class DocFacts:
     corporate_numbers: tuple[str, ...] = ()
     entity_type: str | None = None  # "corporate" / "individual" when the form states it
     number_years: tuple[int, ...] = ()  # years that start a printed document number ("제 YYYY-…호")
+    # 11-digit numbers printed as a box of their own on a certificate row ("사업장관리번호": the 10-digit business
+    # number plus a suffix digit): (the first ten digits, the read confidence of that box)
+    management_numbers: tuple[tuple[str, float | None], ...] = ()
 
 
 _BARE_TAIL = re.compile(r"^\s*(재학\s*중)?\s*$")
@@ -72,6 +75,7 @@ _CORP_NUMBER = re.compile(r"(?<!\d)(\d{6})\s*-\s*(\d{7})(?!\d)")
 _NUMBER = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*$")
 _DOCUMENT_NUMBER = re.compile(r"제((?:19|20)\d{2})[-‐‑–−－]\d{1,12}호")
 _NUMBER_HEAD_SEGMENTS = 8  # the document number is printed at the top of the page
+_MANAGEMENT_NUMBER = re.compile(r"^[\(\[]?(\d{10})-?\d[\)\]]?$")
 
 
 def _squash(text: str) -> str:
@@ -149,8 +153,18 @@ def extract_facts(pages: list[dict]) -> DocFacts:
             entity = "corporate"
         elif "개인사업자" in squashed:
             entity = "individual"
+    management: list[tuple[str, float | None]] = []
+    for _page, segment in segments:
+        copy = _MANAGEMENT_NUMBER.match(_squash(segment.text))
+        if copy is not None:
+            management.append((copy.group(1), segment.confidence))
     return DocFacts(
-        tuple(dates), _gpa_facts(segments), tuple(corporate), entity, _number_years(segments)
+        tuple(dates),
+        _gpa_facts(segments),
+        tuple(corporate),
+        entity,
+        _number_years(segments),
+        tuple(management),
     )
 
 
