@@ -58,7 +58,11 @@ SCENARIOS: tuple[Scenario, ...] = (
              "REVIEW_REQUIRED", ("UNCLASSIFIED_DOCUMENT_REQUIRES_REVIEW",)),
     # Since D3 the clean scan of B01 is decided without a person: every value has an independent
     # confirmation (another document, check digit, internal arithmetic). It stays a scan example.
-    Scenario("D6", "D6 스캔본 제출 (자동 확인)", "B01", "scanned", "business", "READY"),
+    # A 4대보험 완납증명서 has no legal validity period (real ones are valid 7-28 days), so its printed validity end
+    # is never derived from the issue date: on a scan it is the one value a person confirms. Everything else
+    # (numbers, names, the other validity ends) is decided by the documents themselves.
+    Scenario("D6", "D6 스캔본 제출 (대부분 자동 확인, 확인 1건)", "B01", "scanned", "business",
+             "REVIEW_REQUIRED"),
     Scenario("D7", "D7 정상 제출 (학생)", "S01", "digital", "student", "READY"),
     Scenario("D8", "D8 필수 서류 누락", "B08", "digital", "business", "NEEDS_CORRECTION",
              ("MISSING_REQUIRED_DOCUMENT",)),
