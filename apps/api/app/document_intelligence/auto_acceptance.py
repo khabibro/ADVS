@@ -98,9 +98,9 @@ class Strategy(StrEnum):
     S13 = "S13"  # S11 + business pair: second copy of the business number, below-floor exact confirmations
     S14 = "S14"  # S15 + the second-pass name veto is lifted for a jumbled re-read when another document reads back
     S15 = "S15"  # S13 + company identity by numbers: names that agree but cannot be confirmed no longer block
-    S16 = "S16"  # S11 + route A: the total GPA confirmed by the page's own GPA-to-백분율 conversion
-    S17 = "S17"  # S11 + route B: the applicant-entered GPA and scale
-    S18 = "S18"  # S11 + routes A and B
+    S16 = "S16"  # S14 + route A: the total GPA confirmed by the page's own GPA-to-백분율 conversion
+    S17 = "S17"  # S14 + route B: the applicant-entered GPA and scale
+    S18 = "S18"  # S14 + routes A and B
 
 
 @dataclass(frozen=True)
@@ -244,46 +244,6 @@ STRATEGY_FEATURES: dict[Strategy, Features] = {
         business_pair=True,
         company_identity=True,
     ),
-    Strategy.S16: Features(
-        validators=True,
-        corroboration=True,
-        second_pass=True,
-        application=True,
-        second_pass_veto=True,
-        name_veto=True,
-        internal=True,
-        robust=True,
-        student_pair=True,
-        pair_below_floor=True,
-        gpa_relation=True,
-    ),
-    Strategy.S17: Features(
-        validators=True,
-        corroboration=True,
-        second_pass=True,
-        application=True,
-        second_pass_veto=True,
-        name_veto=True,
-        internal=True,
-        robust=True,
-        student_pair=True,
-        pair_below_floor=True,
-        applicant_gpa=True,
-    ),
-    Strategy.S18: Features(
-        validators=True,
-        corroboration=True,
-        second_pass=True,
-        application=True,
-        second_pass_veto=True,
-        name_veto=True,
-        internal=True,
-        robust=True,
-        student_pair=True,
-        pair_below_floor=True,
-        gpa_relation=True,
-        applicant_gpa=True,
-    ),
     Strategy.S14: Features(
         validators=True,
         corroboration=True,
@@ -300,6 +260,12 @@ STRATEGY_FEATURES: dict[Strategy, Features] = {
         veto_lift=True,
     ),
 }
+# Routes A and B stack on the default (S14).
+STRATEGY_FEATURES[Strategy.S16] = replace(STRATEGY_FEATURES[Strategy.S14], gpa_relation=True)
+STRATEGY_FEATURES[Strategy.S17] = replace(STRATEGY_FEATURES[Strategy.S14], applicant_gpa=True)
+STRATEGY_FEATURES[Strategy.S18] = replace(
+    STRATEGY_FEATURES[Strategy.S14], gpa_relation=True, applicant_gpa=True
+)
 
 STUDENT_PAIR_TYPES = frozenset({DocumentType.ENROLLMENT_CERTIFICATE, DocumentType.TRANSCRIPT})
 BUSINESS_PAIR_TYPES = frozenset(
