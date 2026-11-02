@@ -1135,7 +1135,7 @@ def _decide_applicant_gpa(
     if typed is None:
         return _no(strategy, "NO_INDEPENDENT_CONFIRMATION", rule.rule_id)
     if not _same_number(item.value, typed):
-        return _no(strategy, "CONFLICTS_WITH_APPLICATION_VALUE", rule.rule_id)
+        return _no(strategy, "CONFLICTS_WITH_APPLICANT_GPA", rule.rule_id)
     return AutoDecision(
         True,
         strategy.value,

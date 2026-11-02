@@ -80,7 +80,7 @@ def test_applicant_one_digit_typo_goes_to_review() -> None:
     items = _items("3.40", "4.3")
     got = _decide(items, "3.49", "4.3")
     gpa = got[(items[0].document_id, "gpa")]
-    assert not gpa.accepted and gpa.reason == "CONFLICTS_WITH_APPLICATION_VALUE"
+    assert not gpa.accepted and gpa.reason == "CONFLICTS_WITH_APPLICANT_GPA"
 
 
 def test_applicant_scale_mismatch_goes_to_review() -> None:
