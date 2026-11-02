@@ -150,3 +150,59 @@ def test_the_veto_stays_when_nothing_reads_the_name_back_or_the_re_read_looks_li
     assert not ok(res, a, "company_name")
     res, a = names(JUMBLE, NAME, other_value="마바사상사")  # the other document carries another name
     assert not ok(res, a, "company_name")
+
+
+# ---- the 4대보험 expiry is the printed one, never issue + 30 ------------------------------------------------------
+
+def test_a_social_insurance_validity_end_equal_to_issue_plus_thirty_is_not_confirmed_by_a_relation() -> None:
+    d = uuid.uuid4()
+    fields = [item(d, INS, "issue_date", "2030-05-20"), item(d, INS, "valid_until", "2030-06-19")]
+    res = run(Strategy.S13, fields)
+    decision = res.get((d, "valid_until"))
+    assert decision is None or "date_pair" not in decision.sources
+
+
+def _ins_submission(valid_until: str | None, status_of_dates=None):
+    """The submission engine for one 4대보험 certificate with the 'not expired' rule (invented values)."""
+    from app.core.domain import OverallStatus, ProcessingStatus, RuleOperator, RuleType, Severity
+    from app.document_intelligence.evidence_sufficiency import EvidenceAssessmentState
+    from app.document_intelligence.validation.submission import (
+        DocumentSnapshot,
+        FieldSnapshot,
+        RequirementSnapshot,
+        SubmissionRule,
+        SubmissionVerificationEngine,
+        VerificationContext,
+    )
+
+    def field(name, value):
+        sufficient = EvidenceAssessmentState.SUFFICIENT if value else EvidenceAssessmentState.UNAVAILABLE
+        return FieldSnapshot(uuid.uuid4(), name, value, False, value is not None, sufficient)
+
+    rule = SubmissionRule(
+        uuid.uuid4(), RuleType.DATE_COMPARISON, Severity.ERROR,
+        {"document_type": INS.value, "field": "valid_until", "operator": RuleOperator.ON_OR_AFTER.value,
+         "comparison_source": "EVALUATION_DATE"},
+    )
+    document = DocumentSnapshot(
+        uuid.uuid4(), INS, ProcessingStatus.COMPLETED, uuid.uuid4().hex,
+        {"issue_date": field("issue_date", "2030-05-20"), "valid_until": field("valid_until", valid_until)},
+    )
+    result = SubmissionVerificationEngine().verify(
+        project_id=uuid.UUID(int=1), workflow_id=uuid.UUID(int=2),
+        requirements=[RequirementSnapshot(uuid.uuid4(), INS, True, (rule,), ("valid_until",))],
+        documents=[document], context=VerificationContext(date(2030, 6, 10)),
+    )
+    return result.status, OverallStatus
+
+
+def test_a_certificate_expired_by_its_printed_date_but_valid_by_issue_plus_thirty_is_never_ready() -> None:
+    # printed validity end 2030-05-31 is before the check date 2030-06-10; issue 2030-05-20 + 30 = 2030-06-19 is after
+    status, overall = _ins_submission("2030-05-31")
+    assert status == overall.NEEDS_CORRECTION
+
+
+def test_an_unread_printed_validity_end_goes_to_review_never_ready() -> None:
+    status, overall = _ins_submission(None)
+    assert status == overall.REVIEW_REQUIRED
+    assert status != overall.READY

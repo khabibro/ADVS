@@ -151,12 +151,21 @@ class ValidityProfile:
     span_days: tuple[int, int] | None = None  # valid_until - valid_from
     issue_after_start_days: tuple[int, int] | None = None  # issue_date - valid_from
     tolerance_days: int = 1
+    # a validity shorter than the period (down to the issue date) is lawful but never a confirmation
+    shorter_is_consistent: bool = False
 
 
+#: Only relations that rest on a legal period or on measured real certificates may confirm a date.
+#: * 국세 납세증명서: 국세징수법 시행령 제96조 제1항: valid for 30 days from issue; shortened (to a payment
+#:   deadline, with the reason and period printed) only when a tax is due sooner. Exactly +30 confirms; a shorter
+#:   validity is consistent, not confirmed; a longer one or one before the issue date is inconsistent.
+#: * 4대보험 완납증명서: no legal period; real certificates are valid 7-28 days after their issue (measured), so
+#:   there is no profile: its validity end is the printed one, confirmed by other evidence or by a person.
+#: * 중소기업확인서: still the profile of the fictional data (a fixed span and an issue date a few days after the
+#:   start); no real sample and the law fixes the validity by the fiscal year, not by the issue date. Under review.
 VALIDITY_PROFILES: dict[DocumentType, ValidityProfile] = {
-    DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE: ValidityProfile(until_after_issue_days=(30, 30)),
-    DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE: ValidityProfile(
-        until_after_issue_days=(30, 30)
+    DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE: ValidityProfile(
+        until_after_issue_days=(30, 30), tolerance_days=0, shorter_is_consistent=True
     ),
     DocumentType.SME_CONFIRMATION_CERTIFICATE: ValidityProfile(
         span_days=(364, 365), issue_after_start_days=(0, 31)
@@ -188,11 +197,10 @@ def date_pair(
     if profile.until_after_issue_days is not None:
         if issue is None or valid_until is None:
             return NONE
-        checks.append(
-            _within(
-                (valid_until - issue).days, profile.until_after_issue_days, profile.tolerance_days
-            )
-        )
+        days = (valid_until - issue).days
+        if profile.shorter_is_consistent and 0 <= days < profile.until_after_issue_days[0]:
+            return NONE  # shortened by law (reason printed): consistent, not confirmed
+        checks.append(_within(days, profile.until_after_issue_days, profile.tolerance_days))
     if profile.span_days is not None or profile.issue_after_start_days is not None:
         if issue is None or valid_from is None or valid_until is None:
             return NONE
