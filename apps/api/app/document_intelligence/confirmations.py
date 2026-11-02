@@ -103,6 +103,62 @@ def gpa_arithmetic(facts: DocFacts | None, gpa: float) -> Verdict:
     )
 
 
+#: The university truncates GPAs and 백분율 to 2 decimals, so a printed value p stands for [p, p + 0.01). A line
+#: (g, p) on a relation p = a*g + b may therefore be off by 0.01*|a| (the GPA) plus 0.01 (the 백분율) and no more.
+MIN_RELATION_PAIRS = 3
+_TRUNCATION = 0.01
+
+
+def _relation_bound(slope: float) -> float:
+    return _TRUNCATION * abs(slope) + _TRUNCATION
+
+
+def percent_relation_fit(facts: DocFacts | None) -> tuple[float, float] | None:
+    """The relation 백분율 = a * GPA + b of the page, fitted from the grading legend and the semester lines only,
+    never from the cumulative line. It exists only if at least three pairs fit and every one of them lies within
+    the truncation bound of the fitted line. The top grade of the legend is left out: its range ends at the
+    ceiling of 100, which is not a measured upper bound."""
+    g = facts.gpa if facts else None
+    if g is None:
+        return None
+    pairs = [pair for pair in g.legend_pairs if pair[1] < 100] + list(g.semester_percent_pairs)
+    if g.total_pair is not None:  # a semester line identical to the cumulative line must not stand in for it
+        pairs = [pair for pair in pairs if pair != g.total_pair]
+    if len(pairs) < MIN_RELATION_PAIRS or len({gp for gp, _ in pairs}) < 2:
+        return None
+    n = len(pairs)
+    mean_g = sum(gp for gp, _ in pairs) / n
+    mean_p = sum(pp for _, pp in pairs) / n
+    spread = sum((gp - mean_g) ** 2 for gp, _ in pairs)
+    if spread == 0:
+        return None
+    slope = sum((gp - mean_g) * (pp - mean_p) for gp, pp in pairs) / spread
+    intercept = mean_p - slope * mean_g
+    bound = _relation_bound(slope)
+    if any(abs(pp - (slope * gp + intercept)) > bound + 1e-9 for gp, pp in pairs):
+        return None
+    return slope, intercept
+
+
+def gpa_percent_relation(facts: DocFacts | None, gpa: float) -> Verdict:
+    """The total GPA confirmed by the page's own GPA-to-백분율 conversion: the cumulative line's (GPA, 백분율)
+    pair lies on the relation fitted from the legend and the semester lines, within the truncation bound. No
+    relation (too few pairs, or pairs that do not agree): nothing is said. A relation that the total does not fit
+    is a disagreement."""
+    g = facts.gpa if facts else None
+    fit = percent_relation_fit(facts)
+    if g is None or fit is None or g.total_pair is None or abs(g.total_pair[0] - gpa) > 1e-9:
+        return NONE
+    slope, intercept = fit
+    if abs(g.total_pair[1] - (slope * g.total_pair[0] + intercept)) <= _relation_bound(slope) + 1e-9:
+        return Verdict("CONFIRMED", "percent_relation")
+    return Verdict(
+        "MISMATCH",
+        "percent_relation",
+        "the page's own GPA-to-백분율 conversion does not give the printed total 백분율 for the printed total GPA",
+    )
+
+
 def business_number_copy(facts: DocFacts | None, digits: str, floor: float) -> Verdict:
     """The business number printed a second time on the same page (the 11-digit management number, whose first
     ten digits are the business number). Two reads of separate boxes that agree, with a valid check digit,

@@ -55,6 +55,7 @@ from app.document_intelligence.confirmations import (
     business_number_type_plausible,
     date_pair,
     gpa_arithmetic,
+    gpa_percent_relation,
     issue_date_box_for,
     parse_iso,
     printed_twice,
@@ -97,6 +98,9 @@ class Strategy(StrEnum):
     S13 = "S13"  # S11 + business pair: second copy of the business number, below-floor exact confirmations
     S14 = "S14"  # S15 + the second-pass name veto is lifted for a jumbled re-read when another document reads back
     S15 = "S15"  # S13 + company identity by numbers: names that agree but cannot be confirmed no longer block
+    S16 = "S16"  # S11 + route A: the total GPA confirmed by the page's own GPA-to-백분율 conversion
+    S17 = "S17"  # S11 + route B: the applicant-entered GPA and scale
+    S18 = "S18"  # S11 + routes A and B
 
 
 @dataclass(frozen=True)
@@ -129,6 +133,11 @@ class Features:
     # every document that prints it, a company or workplace name that agrees with every other name read but is
     # held by the floor or the second-pass veto no longer blocks; it stays unconfirmed and is labelled so.
     company_identity: bool = False
+    # Route A: the total GPA is confirmed when its (GPA, 백분율) pair lies on the conversion that the legend and the
+    # semester lines of the same page fit (never fitted from the total line itself).
+    gpa_relation: bool = False
+    # Route B: a GPA and scale typed by the applicant confirm the read value and scale only by exact equality.
+    applicant_gpa: bool = False
 
 
 STRATEGY_FEATURES: dict[Strategy, Features] = {
@@ -234,6 +243,46 @@ STRATEGY_FEATURES: dict[Strategy, Features] = {
         pair_below_floor=True,
         business_pair=True,
         company_identity=True,
+    ),
+    Strategy.S16: Features(
+        validators=True,
+        corroboration=True,
+        second_pass=True,
+        application=True,
+        second_pass_veto=True,
+        name_veto=True,
+        internal=True,
+        robust=True,
+        student_pair=True,
+        pair_below_floor=True,
+        gpa_relation=True,
+    ),
+    Strategy.S17: Features(
+        validators=True,
+        corroboration=True,
+        second_pass=True,
+        application=True,
+        second_pass_veto=True,
+        name_veto=True,
+        internal=True,
+        robust=True,
+        student_pair=True,
+        pair_below_floor=True,
+        applicant_gpa=True,
+    ),
+    Strategy.S18: Features(
+        validators=True,
+        corroboration=True,
+        second_pass=True,
+        application=True,
+        second_pass_veto=True,
+        name_veto=True,
+        internal=True,
+        robust=True,
+        student_pair=True,
+        pair_below_floor=True,
+        gpa_relation=True,
+        applicant_gpa=True,
     ),
     Strategy.S14: Features(
         validators=True,
@@ -445,6 +494,8 @@ class ProjectContext:
     reference_date: date | None = None
     issue_max_age_days: int | None = None  # the workflow's ISSUE_DATE_MAX_AGE, if configured
     gpa_threshold: float | None = None  # the workflow's GPA threshold, if configured
+    applicant_gpa: str | None = None  # route B: the GPA the applicant typed (e.g. "3.40")
+    applicant_gpa_scale: str | None = None  # route B: the scale the applicant typed (e.g. "4.3")
     rules: tuple[RuleSpec, ...] = ()  # the workflow's active rules on decision-driving fields
 
 
@@ -673,10 +724,15 @@ ROBUST_FIELDS = frozenset({"gpa", "valid_from", "valid_until", "issue_date"})
 INTERNAL_FIELDS = frozenset({"gpa", "gpa_scale", "issue_date", "valid_from", "valid_until"})
 
 
-def _internal_verdict(item: FieldInput, index: _Index, context: ProjectContext):  # type: ignore[no-untyped-def]
+def _internal_verdict(  # type: ignore[no-untyped-def]
+    item: FieldInput, index: _Index, context: ProjectContext, features: Features | None = None
+):
     """Confirmation from the document's own content (D3-1..D3-3); None when no rule applies."""
     if item.field_name == "gpa":
-        return gpa_arithmetic(item.facts, float(item.value or 0))
+        arithmetic = gpa_arithmetic(item.facts, float(item.value or 0))
+        if arithmetic.state != "NONE" or features is None or not features.gpa_relation:
+            return arithmetic
+        return gpa_percent_relation(item.facts, float(item.value or 0))
     if item.field_name == "gpa_scale":
         return scale_confirmation(item.facts, item.value or "")
 
@@ -754,6 +810,14 @@ def decide(
         if semantic and not internal_only:
             decisions[key] = _no(strategy, "SEMANTIC_INFERENCE", rule.rule_id)
             continue
+        if (
+            features.applicant_gpa
+            and item.field_name in ("gpa", "gpa_scale")
+            and (context.applicant_gpa if item.field_name == "gpa" else context.applicant_gpa_scale)
+            and item.document_type == DocumentType.TRANSCRIPT
+        ):
+            decisions[key] = _decide_applicant_gpa(item, rule, index, context, strategy, features)
+            continue
         if item.confidence is None or item.confidence < rule.floor:
             if _below_floor_pair_allowed(item, features):
                 decisions[key] = _decide_below_floor(
@@ -806,7 +870,7 @@ def decide(
             continue
 
         if features.internal and item.field_name in INTERNAL_FIELDS:
-            verdict = _internal_verdict(item, index, context)
+            verdict = _internal_verdict(item, index, context, features)
             if (
                 verdict is not None
                 and verdict.state == "CONFIRMED"
@@ -1076,6 +1140,42 @@ def _company_identity_pass(
 def _accepted(decisions: dict[tuple[uuid.UUID, str], AutoDecision], item: FieldInput) -> bool:
     decision = decisions.get((item.document_id, item.field_name))
     return bool(decision and decision.accepted)
+
+
+def _same_number(left: str | None, right: str | None) -> bool:
+    try:
+        return left is not None and right is not None and abs(float(left) - float(right)) < 1e-9
+    except ValueError:
+        return False
+
+
+def _decide_applicant_gpa(
+    item: FieldInput,
+    rule: FieldRule,
+    index: _Index,
+    context: ProjectContext,
+    strategy: Strategy,
+    features: Features,
+) -> AutoDecision:
+    """Route B: the GPA (or its scale) the applicant typed confirms the OCR read only by exact equality, whatever
+    the read's confidence (two independent sources, one of them a person). Any difference, a typo as well as a
+    misread, goes to a person. The value's format must still be valid."""
+    assert item.value is not None
+    if features.validators and item.field_name in HAS_VALIDATOR:
+        problem = _valid_format(item, index, context)
+        if problem:
+            return _no(strategy, problem, rule.rule_id)
+    typed = context.applicant_gpa if item.field_name == "gpa" else context.applicant_gpa_scale
+    if typed is None:
+        return _no(strategy, "NO_INDEPENDENT_CONFIRMATION", rule.rule_id)
+    if not _same_number(item.value, typed):
+        return _no(strategy, "CONFLICTS_WITH_APPLICATION_VALUE", rule.rule_id)
+    return AutoDecision(
+        True,
+        strategy.value,
+        rule_id=f"{rule.rule_id}:APPLICANT_ENTERED",
+        sources=("application",),
+    )
 
 
 def _below_floor_pair_allowed(item: FieldInput, features: Features) -> bool:
