@@ -1415,7 +1415,10 @@ def _decide_corroborated(
             or _reads_like_a_misread(key, second.normalized)
             or not _read_back_by_another_document(item, rule, fields, index, context, features)
         ):
-            return _no(strategy, "SECOND_PASS_CONTRADICTS_NAME", rule.rule_id)
+            return replace(
+                _no(strategy, "SECOND_PASS_CONTRADICTS_NAME", rule.rule_id),
+                second_pass_value=second.normalized,
+            )
 
     sources: list[str] = []
     corroborators: list[uuid.UUID] = []
