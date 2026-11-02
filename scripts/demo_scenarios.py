@@ -59,8 +59,8 @@ SCENARIOS: tuple[Scenario, ...] = (
     # Since D3 the clean scan of B01 is decided without a person: every value has an independent
     # confirmation (another document, check digit, internal arithmetic). It stays a scan example.
     # A 4대보험 완납증명서 has no legal validity period (real ones are valid 7-28 days), so its printed validity end
-    # is never derived from the issue date or taken as a value from a rule: on a scan the printed period (start and end
-    # of that one certificate) is what a person confirms. Everything else (numbers, names, the other validity ends)
+    # is never derived from the issue date or taken as a value from a rule, and the 중소기업확인서 start date has no second
+    # source: on a scan those two printed dates are what a person confirms. Everything else (numbers, names, the other validity ends)
     # is decided by the documents themselves.
     Scenario("D6", "D6 스캔본 제출 (대부분 자동 확인, 확인 2건)", "B01", "scanned", "business",
              "REVIEW_REQUIRED"),
