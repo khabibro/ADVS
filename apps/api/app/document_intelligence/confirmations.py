@@ -103,6 +103,22 @@ def gpa_arithmetic(facts: DocFacts | None, gpa: float) -> Verdict:
     )
 
 
+def business_number_copy(facts: DocFacts | None, digits: str, floor: float) -> Verdict:
+    """The business number printed a second time on the same page (the 11-digit management number, whose first
+    ten digits are the business number). Two reads of separate boxes that agree, with a valid check digit,
+    confirm it; the copy must itself be read above the floor. A differing copy confirms nothing."""
+    from app.document_intelligence.normalization.field_normalizer import is_valid_business_number
+
+    if facts is None or not is_valid_business_number(digits):
+        return NONE
+    agreeing = [
+        confidence
+        for prefix, confidence in facts.management_numbers
+        if prefix == digits and confidence is not None and confidence >= floor
+    ]
+    return Verdict("CONFIRMED", "second_copy") if agreeing else NONE
+
+
 def scale_confirmation(facts: DocFacts | None, scale: str) -> Verdict:
     """The scale printed in the grading legend (top grade value) and beside the semester GPAs.
     Independent: the legend and the per-semester scales are other boxes than the cumulative one."""

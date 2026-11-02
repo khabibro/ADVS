@@ -50,6 +50,8 @@ from app.core.domain import DocumentType
 from app.document_intelligence.candidate_repair import PROVENANCE, propose_repair
 from app.document_intelligence.company_names import company_key, company_names_agree
 from app.document_intelligence.confirmations import (
+    VALIDITY_PROFILES,
+    business_number_copy,
     business_number_type_plausible,
     date_pair,
     gpa_arithmetic,
@@ -92,6 +94,8 @@ class Strategy(StrEnum):
     S10 = "S10"  # S9 + the student pair: cross-document confirmation, both reads above the floor
     S11 = "S11"  # S10 + a below-floor read confirmed by an exact match with the other document
     S12 = "S12"  # S11 + the same-person verdict is decision-robust when both names read the same
+    S13 = "S13"  # S11 + business pair: second copy of the business number, below-floor exact confirmations
+    S14 = "S14"  # S13 + the second-pass name veto is lifted for a jumbled re-read when another document reads back
 
 
 @dataclass(frozen=True)
@@ -113,6 +117,13 @@ class Features:
     # both: the same-person verdict does not depend on which characters the name really has. The name value
     # stays unconfirmed.
     name_pair_robust: bool = False
+    # Business certificates (사업자등록증, 국세 납세증명서, 4대보험 완납증명서): the business number is confirmed by
+    # its second copy on the same page, and a below-floor business number or validity end is confirmed by an exact
+    # independent relation (equal reliable read on another document; issue date plus the legal period).
+    business_pair: bool = False
+    # A jumbled second-pass re-read (it neither shows the name nor looks like a misread of it) does not veto a
+    # name that another document carries identically and whose own re-read shows it.
+    veto_lift: bool = False
 
 
 STRATEGY_FEATURES: dict[Strategy, Features] = {
@@ -192,9 +203,45 @@ STRATEGY_FEATURES: dict[Strategy, Features] = {
         pair_below_floor=True,
         name_pair_robust=True,
     ),
+    Strategy.S13: Features(
+        validators=True,
+        corroboration=True,
+        second_pass=True,
+        application=True,
+        second_pass_veto=True,
+        name_veto=True,
+        internal=True,
+        robust=True,
+        student_pair=True,
+        pair_below_floor=True,
+        business_pair=True,
+    ),
+    Strategy.S14: Features(
+        validators=True,
+        corroboration=True,
+        second_pass=True,
+        application=True,
+        second_pass_veto=True,
+        name_veto=True,
+        internal=True,
+        robust=True,
+        student_pair=True,
+        pair_below_floor=True,
+        business_pair=True,
+        veto_lift=True,
+    ),
 }
 
 STUDENT_PAIR_TYPES = frozenset({DocumentType.ENROLLMENT_CERTIFICATE, DocumentType.TRANSCRIPT})
+BUSINESS_PAIR_TYPES = frozenset(
+    {
+        DocumentType.BUSINESS_REGISTRATION_CERTIFICATE,
+        DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE,
+        DocumentType.SOCIAL_INSURANCE_PAYMENT_CERTIFICATE,
+    }
+)
+#: Business fields a below-floor read may be confirmed for.
+BUSINESS_BELOW_FLOOR_FIELDS = frozenset({"business_registration_number", "valid_until"})
 #: Marks a decision that rests on the same value on the other student document (an inferred issue date was
 #: accepted).
 CROSS_DOCUMENT_SOURCE = "cross_document"
@@ -724,6 +771,20 @@ def decide(
                 decisions[key] = decision
                 continue
 
+        if (
+            features.business_pair
+            and item.field_name == "business_registration_number"
+            and item.document_type in BUSINESS_PAIR_TYPES
+            and business_number_copy(item.facts, item.value, rule.floor).state == "CONFIRMED"
+        ):
+            decisions[key] = AutoDecision(
+                True,
+                strategy.value,
+                rule_id=f"{rule.rule_id}:SECOND_COPY",
+                sources=("second_copy",),
+            )
+            continue
+
         if features.internal and item.field_name in INTERNAL_FIELDS:
             verdict = _internal_verdict(item, index, context)
             if (
@@ -800,6 +861,8 @@ def _group_values(
     index: _Index,
     context: ProjectContext,
     features: Features,
+    *,
+    reliable_partner_only: bool = False,
 ) -> tuple[list[FieldInput], list[FieldInput]]:
     """(agreeing, disagreeing) valid values of the same attribute on *other* documents."""
     assert rule.group is not None and item.value is not None
@@ -817,6 +880,8 @@ def _group_values(
             or other.value is None
         ):
             continue
+        if reliable_partner_only and (other.confidence is None or other.confidence < other_rule.floor):
+            continue  # a below-floor read is confirmed only by a reliable read of another document
         weak_partner = _unreliable_partner(item, other, other_rule, features)
         if weak_partner and not features.pair_below_floor:
             continue  # student pair: the other document counts only with a read above its floor
@@ -917,11 +982,14 @@ def _accepted(decisions: dict[tuple[uuid.UUID, str], AutoDecision], item: FieldI
 
 
 def _below_floor_pair_allowed(item: FieldInput, features: Features) -> bool:
+    if item.confidence is None:
+        return False
+    if features.business_pair and item.document_type in BUSINESS_PAIR_TYPES:
+        return item.field_name in BUSINESS_BELOW_FLOOR_FIELDS
     return (
         features.pair_below_floor
         and item.document_type in STUDENT_PAIR_TYPES
         and item.field_name in BELOW_FLOOR_PAIR_FIELDS
-        and item.confidence is not None
     )
 
 
@@ -980,6 +1048,40 @@ def _pair_decision(strategy: Strategy, rule: FieldRule, partners: list[FieldInpu
     )
 
 
+def _validity_end_by_legal_period(
+    item: FieldInput, rule: FieldRule, index: _Index, strategy: Strategy
+) -> AutoDecision:
+    """A validity end read below the floor, confirmed by the certificate's own issue date (read above the floor
+    on the same page, another box): the end falls exactly the legal period after the issue date. Only the
+    national tax certificate has one (국세징수법 시행령 제96조: 30 days from issue; a shorter validity, to a payment
+    deadline, is printed with its reason and is consistent but not confirmed). The 4대보험 완납증명서 has no
+    legal period and the measured offsets on real certificates differ, so it is never confirmed this way.
+    Shorter, longer or earlier: nothing is confirmed."""
+    if item.document_type != DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE:
+        return _no(strategy, "CONFIDENCE_BELOW_FLOOR", rule.rule_id)
+    profile = VALIDITY_PROFILES.get(item.document_type)
+    issue = index.sibling(item.document_id, "issue_date")
+    if (
+        profile is None
+        or profile.until_after_issue_days is None
+        or issue is None
+        or issue.value is None
+        or issue.confidence is None
+        or issue.confidence < FIELD_RULES["issue_date"].floor
+    ):
+        return _no(strategy, "CONFIDENCE_BELOW_FLOOR", rule.rule_id)
+    issued, end = parse_iso(issue.value), parse_iso(item.value or "")
+    low, high = profile.until_after_issue_days
+    if issued is None or end is None or not low <= (end - issued).days <= high:
+        return _no(strategy, "CONFIDENCE_BELOW_FLOOR", rule.rule_id)
+    return AutoDecision(
+        True,
+        strategy.value,
+        rule_id=f"{rule.rule_id}:LEGAL_PERIOD_BELOW_FLOOR",
+        sources=("date_pair",),
+    )
+
+
 def _decide_below_floor(
     item: FieldInput,
     rule: FieldRule,
@@ -1003,8 +1105,65 @@ def _decide_below_floor(
             if pair
             else _no(strategy, "CONFIDENCE_BELOW_FLOOR", rule.rule_id)
         )
+    if features.business_pair and item.document_type in BUSINESS_PAIR_TYPES:
+        if item.field_name == "valid_until":
+            return _validity_end_by_legal_period(item, rule, index, strategy)
+        if item.field_name == "business_registration_number":
+            copy = business_number_copy(item.facts, item.value, FIELD_RULES["business_registration_number"].floor)
+            if copy.state == "CONFIRMED":
+                return AutoDecision(
+                    True,
+                    strategy.value,
+                    rule_id=f"{rule.rule_id}:SECOND_COPY_BELOW_FLOOR",
+                    sources=("second_copy",),
+                )
     return _decide_corroborated(
         item, rule, fields, index, context, strategy, features, below_floor=True
+    )
+
+
+NAME_MISREAD_MIN_SIMILARITY = 0.6
+
+
+def _reads_like_a_misread(key: str, reading: str) -> bool:
+    """The re-read contains a stretch of about the name's length that agrees with it at 60% of the positions or
+    more without being the name: the shape of a misread (a character or two different). A fragment, or text of
+    other words and digits, is no information about the name."""
+    squashed = "".join(unicodedata.normalize("NFKC", reading).split())
+    if not key or key in squashed:
+        return False
+    for width in {len(key) - 1, len(key), len(key) + 1}:
+        if width < 2 or len(squashed) < width:
+            continue
+        for start in range(len(squashed) - width + 1):
+            window = squashed[start : start + width]
+            same = sum(a == b for a, b in zip(window, key, strict=False))
+            if same / len(key) >= NAME_MISREAD_MIN_SIMILARITY:
+                return True
+    return False
+
+
+def _read_back_by_another_document(
+    item: FieldInput,
+    rule: FieldRule,
+    fields: Sequence[FieldInput],
+    index: _Index,
+    context: ProjectContext,
+    features: Features,
+) -> bool:
+    """A jumbled re-read lifts the veto only when another document carries the same value, no document
+    disagrees, and that document's own re-read shows the name: two documents repeating one misread cannot
+    clear each other."""
+    assert rule.group is not None and item.value is not None
+    agreeing, disagreeing = _group_values(item, rule, fields, index, context, features)
+    if disagreeing:
+        return False
+    key = canonical_key(rule.group, item.value)
+    return any(
+        other.second_pass is not None
+        and other.second_pass.normalized is not None
+        and key in other.second_pass.normalized
+        for other in agreeing
     )
 
 
@@ -1045,7 +1204,12 @@ def _decide_corroborated(
         return _no(strategy, "SECOND_PASS_DISAGREES", rule.rule_id)
 
     if features.name_veto and rule.name_veto and rule.group and second and second.normalized:
-        if canonical_key(rule.group, item.value) not in second.normalized:
+        key = canonical_key(rule.group, item.value)
+        if key not in second.normalized and (
+            not features.veto_lift
+            or _reads_like_a_misread(key, second.normalized)
+            or not _read_back_by_another_document(item, rule, fields, index, context, features)
+        ):
             return _no(strategy, "SECOND_PASS_CONTRADICTS_NAME", rule.rule_id)
 
     sources: list[str] = []
@@ -1053,7 +1217,9 @@ def _decide_corroborated(
     if below_floor:
         # only the other document can confirm a read below the floor
         agreeing, disagreeing = (
-            _group_values(item, rule, fields, index, context, features) if rule.group else ([], [])
+            _group_values(item, rule, fields, index, context, features, reliable_partner_only=True)
+            if rule.group
+            else ([], [])
         )
         if agreeing and not disagreeing:
             return AutoDecision(
