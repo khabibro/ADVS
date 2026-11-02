@@ -1137,11 +1137,6 @@ def issuer_university_candidate(source: ExtractionInput) -> ExtractionCandidate 
     if not names:  # fallback only: a name that one box already holds is never overridden
         for name, evidences in _issuer_row_names(source):
             names.setdefault(_compact(name), ExtractionCandidate(name, list(evidences)))
-    if (
-        not names
-    ):  # last resort: the name a printed footnote sentence gives ("※ OO대학교에서는 ...")
-        for name, evidences in _footnote_university_names(source):
-            names.setdefault(_compact(name), ExtractionCandidate(name, list(evidences)))
     if len(names) != 1:
         return None
     return next(iter(names.values()))
@@ -1179,25 +1174,6 @@ def _drop_overlap_repeat(
         if len(piece) > size and joined.endswith(piece[:size]):
             return piece[size:]
     return piece
-
-
-_FOOTNOTE_UNIVERSITY_RE = re.compile(r"(?:^|[\s※*(])([가-힣]{2,12}?)\s*대\s*학\s*교\s*에서는")
-
-
-def _footnote_university_names(source: ExtractionInput) -> list[tuple[str, list[EvidenceRef]]]:
-    """The university a footnote sentence names ("※ OO 대학교에서는 …학년도부터"), for a page whose issuer
-    line was not read (a cropped or shadowed photo). Only a name followed directly by 에서는 counts; a
-    self-reference ("본", "우리", "당") names no university. The value is never accepted on its own: it still
-    needs the other document to say the same."""
-    found: list[tuple[str, list[EvidenceRef]]] = []
-    for text, evidence in _source_lines(source):
-        if evidence is None:
-            continue
-        match = _FOOTNOTE_UNIVERSITY_RE.search(_normalize_extraction_text(text))
-        if match is None or match.group(1).startswith(_SELF_REFERENCE_PREFIXES):
-            continue
-        found.append((f"{match.group(1)}대학교", [evidence]))
-    return found
 
 
 def _issuer_row_names(source: ExtractionInput) -> list[tuple[str, list[EvidenceRef]]]:
@@ -1578,9 +1554,7 @@ class BaseDocumentExtractor(ABC):
         normalized = normalize_date(candidate.value) if candidate else None
         if candidate is None or normalized is None:
             return labelled
-        return self._value(
-            "admission_date", candidate.value, normalized, "date_before_word", candidate
-        )
+        return self._value("admission_date", candidate.value, normalized, "date_before_word", candidate)
 
     def birth_date_field(self, text: ExtractionInput) -> ExtractedValue:
         """생년월일 beside its value; otherwise the one plausible birth date after a separated label."""
@@ -1591,9 +1565,7 @@ class BaseDocumentExtractor(ABC):
         normalized = normalize_date(candidate.value) if candidate else None
         if candidate is None or normalized is None:
             return labelled
-        return self._value(
-            "birth_date", candidate.value, normalized, "separated_label_date", candidate
-        )
+        return self._value("birth_date", candidate.value, normalized, "separated_label_date", candidate)
 
     def student_name_field(self, text: ExtractionInput) -> ExtractedValue:
         """Labelled name; otherwise the name beside a split-up 성명 label (positional)."""
@@ -1604,15 +1576,11 @@ class BaseDocumentExtractor(ABC):
             return labelled
         candidate = stacked_label_name_candidate(text)
         normalized = (
-            normalize_text_field(re.sub(r"^명?[:：]", "", _compact(candidate.value)))
-            if candidate
-            else None
+            normalize_text_field(re.sub(r"^명?[:：]", "", _compact(candidate.value))) if candidate else None
         )
         if candidate is None or normalized is None:
             return labelled
-        return self._value(
-            "student_name", candidate.value, normalized, "stacked_label_name", candidate
-        )
+        return self._value("student_name", candidate.value, normalized, "stacked_label_name", candidate)
 
     def student_id_field(self, text: ExtractionInput) -> ExtractedValue:
         """Labelled student number; otherwise the number beside a split-up label (positional, so it
