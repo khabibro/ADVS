@@ -94,3 +94,45 @@ def test_route_b_is_off_by_default() -> None:
     items = _items("3.40", "4.3")
     got = _decide(items, "3.40", "4.3", strategy=Strategy.S11)
     assert not any(d.accepted for d in got.values())
+
+
+def test_narrow_margin_option_pins_a_confirmed_gpa_away_from_the_threshold() -> None:
+    from app.document_intelligence.auto_acceptance import STRATEGY_FEATURES
+
+    assert STRATEGY_FEATURES[Strategy.S14].confirmed_gpa_margin is None
+    assert STRATEGY_FEATURES[Strategy.S19].confirmed_gpa_margin == 0.05
+    assert STRATEGY_FEATURES[Strategy.S20].applicant_gpa
+
+
+def _gpa_item(value: str, total_pair: tuple[float, float]):
+    doc = uuid.uuid4()
+    gpa = FieldInput(
+        doc, "x", DocumentType.TRANSCRIPT, "gpa", value, 0.97, True, False, facts=facts(total_pair)
+    )
+    scale = FieldInput(doc, "x", DocumentType.TRANSCRIPT, "gpa_scale", "4.3", 0.97, True, False)
+    return gpa, scale
+
+
+def _gpa_decision(value: str, pair: tuple[float, float], context, strategy):
+    gpa, scale = _gpa_item(value, pair)
+    return decide([gpa, scale], context, strategy)[(gpa.document_id, "gpa")]
+
+
+def test_relation_confirmed_gpa_is_blocked_by_the_policy_margin_but_not_the_narrow_one() -> None:
+    context = ProjectContext(gpa_threshold=3.0)
+    for strategy, far_accepted in (
+        (Strategy.S16, False),
+        (Strategy.S19, True),
+        (Strategy.S14, False),
+    ):
+        got = _gpa_decision(
+            "3.40", (3.4, 80.0), context, strategy
+        )  # on the relation, 0.4 from the threshold
+        assert got.accepted is far_accepted, strategy
+    near = _gpa_decision("3.02", (3.02, 72.4), context, Strategy.S19)  # 0.02 from the threshold
+    assert not near.accepted and near.reason == "NEAR_DECISION_BOUNDARY"
+
+
+def test_one_digit_misread_of_the_total_gpa_is_not_confirmed_by_the_relation() -> None:
+    got = _gpa_decision("3.90", (3.9, 80.0), ProjectContext(gpa_threshold=2.0), Strategy.S19)
+    assert not got.accepted  # the percent says 3.40

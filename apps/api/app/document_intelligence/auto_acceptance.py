@@ -101,6 +101,8 @@ class Strategy(StrEnum):
     S16 = "S16"  # S14 + route A: the total GPA confirmed by the page's own GPA-to-백분율 conversion
     S17 = "S17"  # S14 + route B: the applicant-entered GPA and scale
     S18 = "S18"  # S14 + routes A and B
+    S19 = "S19"  # S16 + a narrow boundary margin for GPA values the page itself confirms (report-only option)
+    S20 = "S20"  # S18 + the same narrow margin (report-only option)
 
 
 @dataclass(frozen=True)
@@ -117,7 +119,9 @@ class Features:
     # with a read above the floor, issue dates are confirmed across the two documents, institution names
     # are compared by their name part.
     student_pair: bool = False
-    pair_below_floor: bool = False  # a below-floor read is confirmed by an exact match of a reliable one
+    pair_below_floor: bool = (
+        False  # a below-floor read is confirmed by an exact match of a reliable one
+    )
     # Both student documents read the same name exactly (any confidence) and the date of birth is confirmed on
     # both: the same-person verdict does not depend on which characters the name really has. The name value
     # stays unconfirmed.
@@ -138,6 +142,9 @@ class Features:
     gpa_relation: bool = False
     # Route B: a GPA and scale typed by the applicant confirm the read value and scale only by exact equality.
     applicant_gpa: bool = False
+    # A GPA the page itself confirms (arithmetic, conversion) is pinned to the printed truncation (0.01), so the
+    # distance to the threshold that blocks it can be this small instead of the policy margin. None = policy margin.
+    confirmed_gpa_margin: float | None = None
 
 
 STRATEGY_FEATURES: dict[Strategy, Features] = {
@@ -265,6 +272,12 @@ STRATEGY_FEATURES[Strategy.S16] = replace(STRATEGY_FEATURES[Strategy.S14], gpa_r
 STRATEGY_FEATURES[Strategy.S17] = replace(STRATEGY_FEATURES[Strategy.S14], applicant_gpa=True)
 STRATEGY_FEATURES[Strategy.S18] = replace(
     STRATEGY_FEATURES[Strategy.S14], gpa_relation=True, applicant_gpa=True
+)
+STRATEGY_FEATURES[Strategy.S19] = replace(
+    STRATEGY_FEATURES[Strategy.S16], confirmed_gpa_margin=0.05
+)
+STRATEGY_FEATURES[Strategy.S20] = replace(
+    STRATEGY_FEATURES[Strategy.S18], confirmed_gpa_margin=0.05
 )
 
 STUDENT_PAIR_TYPES = frozenset({DocumentType.ENROLLMENT_CERTIFICATE, DocumentType.TRANSCRIPT})
@@ -497,7 +510,11 @@ class AutoDecision:
             if self.robust or self.repair_candidate
             else None,
             "confirmation": (
-                "DECISION_ROBUST" if self.robust else "INDEPENDENT_SOURCE" if self.accepted else None
+                "DECISION_ROBUST"
+                if self.robust
+                else "INDEPENDENT_SOURCE"
+                if self.accepted
+                else None
             ),
             "label": DECISION_ROBUST_LABEL if self.robust else None,
             "label_ko": DECISION_ROBUST_LABEL_KO if self.robust else None,
@@ -667,7 +684,9 @@ def _anchored_issue_date_robust(item: FieldInput, index: _Index, context: Projec
     )
 
 
-def _near_decision_boundary(item: FieldInput, context: ProjectContext) -> bool:
+def _near_decision_boundary(
+    item: FieldInput, context: ProjectContext, gpa_margin: float | None = None
+) -> bool:
     """True when `item` lies within the policy margin of a decision boundary of the workflow."""
     margin_days = BOUNDARY_MARGINS["date_days"]
     reference = context.reference_date
@@ -680,7 +699,9 @@ def _near_decision_boundary(item: FieldInput, context: ProjectContext) -> bool:
             limit = reference - timedelta(days=context.issue_max_age_days)
             return abs((date.fromisoformat(item.value) - limit).days) <= margin_days
         if item.field_name == "gpa" and context.gpa_threshold is not None:
-            return abs(float(item.value) - context.gpa_threshold) <= BOUNDARY_MARGINS["gpa"]
+            return abs(float(item.value) - context.gpa_threshold) <= (
+                BOUNDARY_MARGINS["gpa"] if gpa_margin is None else gpa_margin
+            )
     except ValueError:
         return False
     return False
@@ -840,7 +861,13 @@ def decide(
             if (
                 verdict is not None
                 and verdict.state == "CONFIRMED"
-                and _near_decision_boundary(item, context)
+                and _near_decision_boundary(
+                    item,
+                    context,
+                    features.confirmed_gpa_margin
+                    if verdict.source in ("arithmetic", "percent_relation")
+                    else None,
+                )
             ):
                 # internal confirmations are tolerance-based (a one-day shift still fits a
                 # profile), so they cannot pin a value that sits next to a decision boundary
@@ -932,7 +959,9 @@ def _group_values(
             or other.value is None
         ):
             continue
-        if reliable_partner_only and (other.confidence is None or other.confidence < other_rule.floor):
+        if reliable_partner_only and (
+            other.confidence is None or other.confidence < other_rule.floor
+        ):
             continue  # a below-floor read is confirmed only by a reliable read of another document
         weak_partner = _unreliable_partner(item, other, other_rule, features)
         if weak_partner and not features.pair_below_floor:
@@ -944,7 +973,9 @@ def _group_values(
         ):
             continue  # an unreadable/invalid value from another document is noise, not evidence
         theirs = canonical_key(rule.group, other.value, tolerant=tolerant)
-        if weak_partner and (theirs != mine or item.confidence is None or item.confidence < rule.floor):
+        if weak_partner and (
+            theirs != mine or item.confidence is None or item.confidence < rule.floor
+        ):
             continue  # a below-floor partner supports a reliable read only by an exact match
         if theirs == mine or (
             rule.group == "company"
@@ -1097,7 +1128,14 @@ def _company_identity_pass(
             rule_id="COMPANY:IDENTITY_BY_NUMBERS",
             sources=("decision_robust", "identity_numbers"),
             corroborating_document_ids=tuple(
-                sorted({other.document_id for other in numbers if other.document_id != item.document_id}, key=str)
+                sorted(
+                    {
+                        other.document_id
+                        for other in numbers
+                        if other.document_id != item.document_id
+                    },
+                    key=str,
+                )
             ),
             robust=True,
         )
@@ -1207,7 +1245,9 @@ def _pair_decision(strategy: Strategy, rule: FieldRule, partners: list[FieldInpu
         strategy.value,
         rule_id=f"{rule.rule_id}:CROSS_DOCUMENT",
         sources=("documents", CROSS_DOCUMENT_SOURCE),
-        corroborating_document_ids=tuple(sorted({other.document_id for other in partners}, key=str)),
+        corroborating_document_ids=tuple(
+            sorted({other.document_id for other in partners}, key=str)
+        ),
     )
 
 
@@ -1272,7 +1312,9 @@ def _decide_below_floor(
         if item.field_name == "valid_until":
             return _validity_end_by_legal_period(item, rule, index, strategy)
         if item.field_name == "business_registration_number":
-            copy = business_number_copy(item.facts, item.value, FIELD_RULES["business_registration_number"].floor)
+            copy = business_number_copy(
+                item.facts, item.value, FIELD_RULES["business_registration_number"].floor
+            )
             if copy.state == "CONFIRMED":
                 return AutoDecision(
                     True,
