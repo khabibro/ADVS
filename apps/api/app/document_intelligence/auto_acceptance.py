@@ -77,7 +77,7 @@ AUTO_ACCEPT_POLICY_VERSION = "auto-accept-v1"
 #: A value accepted only because every plausible misreading gives the same verdict is never presented as
 #: confirmed. Staff-facing copy, English and Korean; the UI shows it next to the value.
 DECISION_ROBUST_LABEL = "decision-robust (value not individually confirmed)"
-DECISION_ROBUST_LABEL_KO = "결정 기준으로만 확인됨 (값은 개별 확인되지 않음)"
+DECISION_ROBUST_LABEL_KO = "판정상 안전 (값 미확정)"
 
 
 class Strategy(StrEnum):
@@ -96,6 +96,7 @@ class Strategy(StrEnum):
     S12 = "S12"  # S11 + the same-person verdict is decision-robust when both names read the same
     S13 = "S13"  # S11 + business pair: second copy of the business number, below-floor exact confirmations
     S14 = "S14"  # S13 + the second-pass name veto is lifted for a jumbled re-read when another document reads back
+    S15 = "S15"  # S13 + company identity by numbers: names that agree but cannot be confirmed no longer block
 
 
 @dataclass(frozen=True)
@@ -124,6 +125,10 @@ class Features:
     # A jumbled second-pass re-read (it neither shows the name nor looks like a misread of it) does not veto a
     # name that another document carries identically and whose own re-read shows it.
     veto_lift: bool = False
+    # Company identity by numbers: when the business number is confirmed on at least two documents and equal on
+    # every document that prints it, a company or workplace name that agrees with every other name read but is
+    # held by the floor or the second-pass veto no longer blocks; it stays unconfirmed and is labelled so.
+    company_identity: bool = False
 
 
 STRATEGY_FEATURES: dict[Strategy, Features] = {
@@ -215,6 +220,20 @@ STRATEGY_FEATURES: dict[Strategy, Features] = {
         student_pair=True,
         pair_below_floor=True,
         business_pair=True,
+    ),
+    Strategy.S15: Features(
+        validators=True,
+        corroboration=True,
+        second_pass=True,
+        application=True,
+        second_pass_veto=True,
+        name_veto=True,
+        internal=True,
+        robust=True,
+        student_pair=True,
+        pair_below_floor=True,
+        business_pair=True,
+        company_identity=True,
     ),
     Strategy.S14: Features(
         validators=True,
@@ -839,6 +858,8 @@ def decide(
         )
     if features.name_pair_robust:
         _name_pair_robust_pass(fields, decisions, strategy, features)
+    if features.company_identity:
+        _company_identity_pass(fields, decisions, strategy, features, index, context)
     return decisions
 
 
@@ -972,6 +993,81 @@ def _name_pair_robust_pass(
             rule_id="PERSON:DECISION_ROBUST_PAIR",
             sources=("decision_robust", "pair_name"),
             corroborating_document_ids=(partner.document_id,),
+            robust=True,
+        )
+
+
+#: Reasons for which a business name stays open without being contradicted by another document's name.
+_COMPANY_OPEN_REASONS = frozenset(
+    {"SECOND_PASS_CONTRADICTS_NAME", "CONFIDENCE_BELOW_FLOOR", "NO_INDEPENDENT_CONFIRMATION"}
+)
+
+
+def _company_identity_pass(
+    fields: Sequence[FieldInput],
+    decisions: dict[tuple[uuid.UUID, str], AutoDecision],
+    strategy: Strategy,
+    features: Features,
+    index: _Index,
+    context: ProjectContext,
+) -> None:
+    """The same company by its numbers: the business number is accepted (valid check digit, read on at least
+    two documents) and equal on every business document that prints it. A company or workplace name of a
+    document that prints that number, which agrees with every other name read and is open only because of
+    the confidence floor, the second-pass veto or a missing second source, no longer blocks. A name that is
+    readable and different from another document's stays in review, as does a document with no number or a
+    different one. The name value is not confirmed and is labelled so."""
+    numbers = [
+        item
+        for item in fields
+        if item.field_name == "business_registration_number"
+        and item.document_type in BUSINESS_PAIR_TYPES
+        and item.value is not None
+    ]
+    digits = {canonical_key("business_number", item.value or "") for item in numbers}
+    if (
+        len(digits) != 1
+        or len({item.document_id for item in numbers}) < 2
+        or not is_valid_business_number(next(iter(digits)))
+        or not all(_accepted(decisions, item) for item in numbers)
+    ):
+        return
+    with_number = {item.document_id for item in numbers}
+    for item in fields:
+        key = (item.document_id, item.field_name)
+        rule = FIELD_RULES.get(item.field_name)
+        current = decisions.get(key)
+        if (
+            item.field_name not in ("company_name", "workplace_name")
+            or rule is None
+            or rule.group != "company"
+            or item.document_type not in BUSINESS_PAIR_TYPES
+            or item.document_id not in with_number
+            or item.value is None
+            or current is None
+            or current.accepted
+            or current.reason not in _COMPANY_OPEN_REASONS
+        ):
+            continue
+        _, disagreeing = _group_values(
+            item, rule, fields, index, context, features, reliable_partner_only=True
+        )
+        readable_different = [
+            other
+            for other in disagreeing
+            if getattr(decisions.get((other.document_id, other.field_name)), "reason", None)
+            != "SECOND_PASS_CONTRADICTS_NAME"
+        ]
+        if readable_different:
+            continue  # a name read reliably and different from this one: a person decides, as now
+        decisions[key] = AutoDecision(
+            True,
+            strategy.value,
+            rule_id="COMPANY:IDENTITY_BY_NUMBERS",
+            sources=("decision_robust", "identity_numbers"),
+            corroborating_document_ids=tuple(
+                sorted({other.document_id for other in numbers if other.document_id != item.document_id}, key=str)
+            ),
             robust=True,
         )
 

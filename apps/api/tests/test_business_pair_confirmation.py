@@ -206,3 +206,64 @@ def test_an_unread_printed_validity_end_goes_to_review_never_ready() -> None:
     status, overall = _ins_submission(None)
     assert status == overall.REVIEW_REQUIRED
     assert status != overall.READY
+
+
+# ---- S15: company identity by numbers --------------------------------------------------------------------------
+
+def three_documents(
+    *, brn_b=BRN, brn_c=BRN, names=(NAME, NAME, NAME), name_conf=(GOOD, LOW, LOW), vetoed=(False, True, False),
+    strategy=Strategy.S15, c_has_number=True,
+):
+    a, b, c = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    fields = [
+        item(a, BRC, "business_registration_number", BRN),
+        item(b, TAX, "business_registration_number", brn_b),
+    ]
+    if c_has_number:
+        fields.append(item(c, INS, "business_registration_number", brn_c))
+    for doc, kind, field, value, conf, veto in zip(
+        (a, b, c), (BRC, TAX, INS), ("company_name", "company_name", "workplace_name"), names, name_conf, vetoed, strict=True
+    ):
+        second = SecondPassInput(JUMBLE, JUMBLE, 0.9) if veto else None
+        fields.append(item(doc, kind, field, value, conf=conf, second=second))
+    return run(strategy, fields), (a, b, c)
+
+
+def test_names_that_agree_but_are_held_by_the_floor_or_the_veto_no_longer_block_when_the_number_is_the_same() -> None:
+    res, (a, b, c) = three_documents()
+    for doc, field in ((b, "company_name"), (c, "workplace_name")):
+        decision = res[(doc, field)]
+        assert decision.accepted and decision.robust and decision.rule_id == "COMPANY:IDENTITY_BY_NUMBERS"
+        assert decision.to_dict()["label_ko"] == "판정상 안전 (값 미확정)"
+    res, (a, b, c) = three_documents(strategy=Strategy.S13)
+    assert not ok(res, b, "company_name")  # off in every other strategy
+
+
+def test_a_company_mismatch_stays_in_review() -> None:
+    # N3: the names are readable and different, whatever the numbers say
+    res, (a, b, c) = three_documents(names=(NAME, "마바사상사", NAME), name_conf=(GOOD, GOOD, LOW), vetoed=(False, False, False))
+    assert not ok(res, c, "workplace_name") and not ok(res, b, "company_name")
+
+
+def test_one_changed_digit_in_a_number_on_one_document_settles_nothing() -> None:
+    res, (a, b, c) = three_documents(brn_b="1234567899")  # one digit differs on the 국세 certificate
+    assert not ok(res, b, "company_name") and not ok(res, c, "workplace_name")
+    res, (a, b, c) = three_documents(brn_c="1234567899")
+    assert not ok(res, b, "company_name") and not ok(res, c, "workplace_name")
+
+
+def test_a_document_with_no_number_is_not_tied_to_the_company() -> None:
+    res, (a, b, c) = three_documents(c_has_number=False)
+    assert ok(res, b, "company_name")  # the two documents with the same number still agree
+    assert not ok(res, c, "workplace_name")  # the one without a number is not settled by it
+
+
+def test_an_invalid_check_digit_or_a_single_document_settles_nothing() -> None:
+    res, (a, b, c) = three_documents(brn_b=BAD_CHECK, brn_c=BAD_CHECK)
+    assert not ok(res, b, "company_name")
+    a, b = uuid.uuid4(), uuid.uuid4()
+    only_one = run(Strategy.S15, [
+        item(a, BRC, "business_registration_number", BRN),
+        item(b, TAX, "company_name", NAME, conf=LOW),
+    ])
+    assert not ok(only_one, b, "company_name")

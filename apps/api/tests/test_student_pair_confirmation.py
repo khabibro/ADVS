@@ -142,7 +142,7 @@ def test_two_below_floor_reads_of_the_same_name_settle_the_verdict_not_the_value
         decision = res[(doc, "student_name")]
         assert decision.accepted and decision.robust
         data = decision.to_dict()
-        assert data["confirmation"] == "DECISION_ROBUST" and "개별 확인되지" in data["label_ko"]
+        assert data["confirmation"] == "DECISION_ROBUST" and "값 미확정" in data["label_ko"]
 
 
 def test_the_baseline_variants_do_not_settle_two_below_floor_names() -> None:
