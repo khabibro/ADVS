@@ -1,0 +1,24 @@
+{
+ "_rule": "Choose the matched-review-burden thresholds on the DEVELOPMENT set only.",
+ "_advs_dev_burden": 3.409090909090909,
+ "_advs_dev_review_fields": 150,
+ "_dev_ocr_submissions": 44,
+ "CONF": {
+  "tau": 0.958,
+  "dev_burden": 3.3636363636363638,
+  "dev_review_fields": 148,
+  "abs_gap": 0.045454545454545414
+ },
+ "CONFG": {
+  "tau": 0.958,
+  "dev_burden": 3.3636363636363638,
+  "dev_review_fields": 148,
+  "abs_gap": 0.045454545454545414
+ },
+ "CONFF": {
+  "tau": 0.902,
+  "dev_burden": 6.0,
+  "dev_review_fields": 264,
+  "abs_gap": 2.590909090909091
+ }
+}

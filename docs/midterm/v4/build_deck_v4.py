@@ -115,7 +115,7 @@ def new_slide(title, number=True, size=28, criteria=()):
         text(s, 0.6, 0.32, 12.2, 0.95, [{"t": title, "size": size, "bold": True, "color": NAVY, "ls": 1.0}])
     if number and count > 1:
         text(s, 12.1, 7.05, 0.8, 0.32, [{"t": str(count), "size": 12, "color": MUTED, "align": PP_ALIGN.RIGHT}])
-        text(s, 0.6, 7.05, 7, 0.32, [{"t": "ADVS · 1차 중간발표 · 2026-10-15", "size": 12, "color": MUTED}])
+        text(s, 0.6, 7.05, 7, 0.32, [{"t": "ADVS · 1차 중간발표 · 2026-10-22", "size": 12, "color": MUTED}])
     for c in criteria:
         CRITERIA[c].append(count)
     return s
@@ -242,7 +242,7 @@ text(s, 0.9, 4.15, 11.5, 0.6, [{"t": "제출 전에, 설정된 기준으로, 근
 text(s, 0.9, 5.15, 11.5, 1.5, [
     {"t": "팀 올림조노바 무니라 · 굴로모프 하비빌로", "size": 22, "color": WHITE},
     {"t": "멘토 이현지 (플래시21)   지도교수 김동균", "size": 22, "color": WHITE, "space": 6},
-    {"t": "2026년 10월 15일", "size": 20, "color": RGBColor(0xC7, 0xD3, 0xE8), "space": 6}])
+    {"t": "2026년 10월 22일", "size": 20, "color": RGBColor(0xC7, 0xD3, 0xE8), "space": 6}])
 lk = text(s, 0.9, 6.55, 11.5, 0.45, [{"t": "GitHub: github.com/khabibro/ADVS", "size": 16, "color": WHITE}])
 lk.click_action.hyperlink.address = "https://github.com/khabibro/ADVS"
 lk.text_frame.paragraphs[0].runs[0].font.underline = True
@@ -336,7 +336,7 @@ for label, plan, act, st in rows:
 tx = dx(dt.date(2026, 10, 15))
 ln = arrow_line(s, tx, 1.85, tx, y + 0.05, color=RED_TX, width=2.5, head=False)
 ln.line.dash_style = 4
-text(s, tx - 0.6, y + 0.07, 1.2, 0.35, [{"t": "오늘 10/15", "size": 14, "bold": True, "color": RED_TX, "align": PP_ALIGN.CENTER}])
+text(s, tx - 0.6, y + 0.07, 1.2, 0.35, [{"t": "오늘 10/22", "size": 14, "bold": True, "color": RED_TX, "align": PP_ALIGN.CENTER}])
 # legend
 box(s, 0.7, 6.55, 0.5, 0.2, fill=GREY_BAR, line=MUTED, shape=MSO_SHAPE.RECTANGLE, lw=1)
 text(s, 1.3, 6.45, 2.0, 0.4, [{"t": "계획 (수행계획서)", "size": 14, "color": INK}])
@@ -638,9 +638,9 @@ notes(s, 15, False, "한계도 말씀드립니다. OCR은 진위를 보증하지
 s = new_slide("향후 계획: 11월 실제 데이터 검증, 12월 최종 시스템", criteria=(5,), size=28)
 # timeline bar
 box(s, 0.7, 2.05, 11.9, 0.14, fill=NAVY, shape=MSO_SHAPE.RECTANGLE)
-for lab, cx in (("10/15  1차 중간", 0.7), ("11/19  2차 중간", 6.0), ("12/10  최종", 12.0)):
+for lab, cx in (("10/22  1차 중간", 0.7), ("11/19  2차 중간", 6.0), ("12/10  최종", 12.0)):
     o = box(s, cx - 0.01, 1.95, 0.34, 0.34, fill=RED_TX, shape=MSO_SHAPE.OVAL)
-text(s, 0.6, 1.4, 2.8, 0.45, [{"t": "10/15 1차 중간", "size": 16, "bold": True, "color": NAVY}])
+text(s, 0.6, 1.4, 2.8, 0.45, [{"t": "10/22 1차 중간", "size": 16, "bold": True, "color": NAVY}])
 text(s, 5.3, 1.4, 2.8, 0.45, [{"t": "11/19 2차 중간", "size": 16, "bold": True, "color": NAVY}])
 text(s, 10.2, 1.4, 2.5, 0.45, [{"t": "12/10 최종", "size": 16, "bold": True, "color": NAVY, "align": PP_ALIGN.RIGHT}])
 cols = [("2차 중간 (11월)", 0.7, [("실제 스캔·사진으로 검증", "새 hold-out 판정"), ("촬영 품질 검사 · 재촬영 안내", "이미지 보정"), ("검토 대기열 · 관리자 화면", "")],

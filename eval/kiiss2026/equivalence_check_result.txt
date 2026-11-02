@@ -1,0 +1,14 @@
+rm: runs/_cache_dev_P0: is a directory
+multi: verify_calls=3391 reused=848
+ADVS                   clean identical=True injection identical=True
+H14                    clean identical=True injection identical=True
+ABL-a_no_docs          clean identical=True injection identical=True
+ABL-c_no_second        clean identical=True injection identical=True
+ABL-d_no_internal      clean identical=True injection identical=True
+CONF@0.97              clean identical=True injection identical=True
+CONF@0.996             clean identical=True injection identical=True
+CONFF@0.95             clean identical=True injection identical=True
+NONE                   clean identical=True injection identical=True
+EQUIVALENCE PASS
+
+[exited with code 0]
