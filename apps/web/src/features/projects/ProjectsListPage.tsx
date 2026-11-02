@@ -88,7 +88,7 @@ export function ProjectsListPage() {
                 })
               : null;
             return (
-              <li key={project.id}>
+              <li className="min-w-0" key={project.id}>
                 <Link
                   className="group block h-full rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   href={`/projects/${project.id}`}
