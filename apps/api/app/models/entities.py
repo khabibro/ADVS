@@ -46,6 +46,10 @@ class Project(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(200), index=True)
     applicant_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     company_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # Optional, typed by the applicant: the 평점평균 and its scale as printed on the transcript. Used only to
+    # confirm the OCR read on exact agreement (route B); never shown back as a document value.
+    applicant_gpa: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    applicant_gpa_scale: Mapped[str | None] = mapped_column(String(8), nullable=True)
     status: Mapped[str] = mapped_column(String(40), default="REVIEW_REQUIRED", index=True)
     checklist = relationship("Checklist")
     submissions = relationship("Submission", back_populates="project", cascade="all, delete-orphan")
