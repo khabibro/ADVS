@@ -24,11 +24,17 @@ const schema = z.object({
   workflow_id: z.string().uuid("업무를 선택해 주세요."),
   applicant_name: z.string().trim().max(120, "120자 이내로 입력해 주세요.").optional(),
   company_name: z.string().trim().max(200, "200자 이내로 입력해 주세요.").optional(),
+  applicant_gpa: z
+    .string()
+    .trim()
+    .regex(/^(\d([.,]\d{1,2})?(\s*[/／]\s*\d([.,]\d{1,2})?)?)?$/, "예: 3.40 또는 3.40 / 4.3 형식으로 입력해 주세요.")
+    .optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
 
 const STUDENT_DOCUMENT_TYPE: DocumentType = "ENROLLMENT_CERTIFICATE";
+const TRANSCRIPT_DOCUMENT_TYPE: DocumentType = "TRANSCRIPT";
 
 function workflowIcon(workflow: Workflow) {
   const isStudent = workflow.document_requirements.some(
@@ -50,11 +56,23 @@ export function NewProjectPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", workflow_id: "", applicant_name: "", company_name: "" },
+    defaultValues: {
+      name: "",
+      workflow_id: "",
+      applicant_name: "",
+      company_name: "",
+      applicant_gpa: "",
+    },
   });
   const selectedWorkflowId = form.watch("workflow_id");
   const selectedWorkflow = workflowsQuery.data?.find(
     (workflow) => workflow.id === selectedWorkflowId,
+  );
+
+  const asksForGpa = Boolean(
+    selectedWorkflow?.document_requirements.some(
+      (item) => item.document_type === TRANSCRIPT_DOCUMENT_TYPE,
+    ),
   );
 
   const createMutation = useMutation({
@@ -95,7 +113,12 @@ export function NewProjectPage() {
       ) : (
         <form
           className="grid gap-8 lg:grid-cols-[1.35fr_1fr] lg:items-start"
-          onSubmit={form.handleSubmit((values) => createMutation.mutate(values))}
+          onSubmit={form.handleSubmit((values) =>
+            createMutation.mutate({
+              ...values,
+              applicant_gpa: asksForGpa && values.applicant_gpa ? values.applicant_gpa : undefined,
+            }),
+          )}
         >
           <div className="space-y-6">
             <fieldset>
@@ -192,6 +215,31 @@ export function NewProjectPage() {
                     {...form.register("company_name")}
                   />
                 </label>
+                {asksForGpa ? (
+                  <label className="space-y-1.5 text-sm sm:col-span-2">
+                    <span className="font-medium">성적증명서의 평점평균 (선택)</span>
+                    <input
+                      aria-describedby="applicant-gpa-hint"
+                      autoComplete="off"
+                      className={inputClass}
+                      inputMode="decimal"
+                      placeholder="예: 3.40 / 4.3"
+                      {...form.register("applicant_gpa")}
+                    />
+                    <span
+                      className="block text-xs leading-5 text-muted-foreground"
+                      id="applicant-gpa-hint"
+                    >
+                      성적증명서에 인쇄된 총 평점평균과 만점 기준을 입력하면 확인이 더
+                      빨라집니다. 입력하지 않아도 제출할 수 있습니다.
+                    </span>
+                    {form.formState.errors.applicant_gpa ? (
+                      <span className="block text-red-700" role="alert">
+                        {form.formState.errors.applicant_gpa.message}
+                      </span>
+                    ) : null}
+                  </label>
+                ) : null}
               </div>
               <p className="text-xs leading-5 text-muted-foreground">
                 신청인 이름과 회사명은 서류 간 정보가 같은지 비교할 때 기준값으로
