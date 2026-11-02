@@ -4,6 +4,21 @@ Branch `auto/real-automation` (from `fix/orientation-issue-date`, gated tip). Co
 Measurement: `run_real.py --ocr-cache` (OCR read once, replayed afterwards), `loop_score.py` (READY, correct READY, verification issues per valid submission), `review_categories.py`.
 Development: student fresh G0–G5, G0b, seed A, real pair; business F21. Validation (aggregate only, failures not read): student seed B; business RS.
 
+## Scoreboard 2026-11-03 (fully automatic / <= 1 click, dev / validation; wrong = 0 everywhere)
+
+| | v4 | v5 (S14) | v6 final | v6 + applicant GPA (simulation) |
+|---|---|---|---|---|
+| student (108), READY | 0 / 0 | 0 / 0 | 0 / 0 | 15 / 2 |
+| student, <= 1 click | 10 / 0 | 13 / 1 | 17 / 2 | 17 / 2 |
+| business realistic (2 x 38), READY | 23 / 23 | 28 / 26 | 28 / 28 | - |
+| business realistic, <= 1 click | 25 / 28 | 30 / 32 | 32 / 34 | - |
+
+Cycles of the 2026-11-03 stretch: v5 S14 default (accepted, merged); cycle 1 resolver honours below-floor pair
+confirmations (accepted, v6); route B applicant GPA (accepted, v6); route A (measured, off: no gain without a margin
+policy change); cycle 2 footnote university (reverted, zero effect); cycle 3 name vetoes (analysed, no general fix).
+Full tables: `evaluation/paper/FINAL_RESULTS_2026-11-03.md`. Open items for the owner: the narrow GPA margin for
+page-confirmed GPAs (+4 student READY on development photos), reading the transcript issuer line on photos.
+
 ## Scoreboard (valid submissions on the reduced checklist that are READY and correct)
 
 Business is reported at two check dates: "original" = the harness date (last valid day of the 국세 납세증명서, a boundary case by construction) and "realistic" (20 days before the earliest printed validity end; see cycle 0). Student numbers did not change in any accepted cycle.
