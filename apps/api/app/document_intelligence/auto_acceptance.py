@@ -95,7 +95,7 @@ class Strategy(StrEnum):
     S11 = "S11"  # S10 + a below-floor read confirmed by an exact match with the other document
     S12 = "S12"  # S11 + the same-person verdict is decision-robust when both names read the same
     S13 = "S13"  # S11 + business pair: second copy of the business number, below-floor exact confirmations
-    S14 = "S14"  # S13 + the second-pass name veto is lifted for a jumbled re-read when another document reads back
+    S14 = "S14"  # S15 + the second-pass name veto is lifted for a jumbled re-read when another document reads back
     S15 = "S15"  # S13 + company identity by numbers: names that agree but cannot be confirmed no longer block
 
 
@@ -247,6 +247,7 @@ STRATEGY_FEATURES: dict[Strategy, Features] = {
         student_pair=True,
         pair_below_floor=True,
         business_pair=True,
+        company_identity=True,
         veto_lift=True,
     ),
 }

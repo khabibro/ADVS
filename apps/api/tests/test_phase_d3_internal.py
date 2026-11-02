@@ -118,15 +118,14 @@ def test_the_social_insurance_certificate_has_no_profile_its_validity_end_is_onl
         assert date_pair(SOC, issue, None, end).state == "NONE"
 
 
-def test_sme_range_is_confirmed_only_together_with_the_separately_printed_issue_date() -> None:
-    assert (
-        date_pair(SME, date(2027, 1, 9), date(2027, 1, 1), date(2027, 12, 31)).state == "CONFIRMED"
-    )
+def test_the_sme_range_is_a_consistency_check_only_never_a_confirmation() -> None:
+    # the one-year validity is set by the fiscal year, not by the issue date: a range of about a year fits and
+    # confirms nothing; a range that is not a year is flagged; the issue date plays no part
+    assert date_pair(SME, date(2027, 1, 9), date(2027, 1, 1), date(2027, 12, 31)).state == "NONE"
     assert date_pair(SME, None, date(2027, 1, 1), date(2027, 12, 31)).state == "NONE"
-    assert (
-        date_pair(SME, date(2027, 6, 9), date(2027, 1, 1), date(2027, 12, 31)).state == "MISMATCH"
-    )
+    assert date_pair(SME, date(2027, 6, 9), date(2027, 1, 1), date(2027, 12, 31)).state == "NONE"
     assert date_pair(SME, date(2027, 1, 9), date(2027, 1, 1), date(2028, 6, 30)).state == "MISMATCH"
+    assert date_pair(SME, None, date(2027, 1, 1), date(2027, 3, 1)).state == "MISMATCH"
 
 
 def test_a_date_printed_twice_is_confirmed_only_with_two_separate_bare_boxes() -> None:

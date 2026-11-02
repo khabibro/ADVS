@@ -267,3 +267,59 @@ def test_an_invalid_check_digit_or_a_single_document_settles_nothing() -> None:
         item(b, TAX, "company_name", NAME, conf=LOW),
     ])
     assert not ok(only_one, b, "company_name")
+
+
+# ---- the 중소기업확인서 expiry is the printed one, never taken from or confirmed by the one-year profile ---------------
+
+def _sme_submission(valid_from, valid_until):
+    from app.core.domain import OverallStatus, ProcessingStatus, RuleOperator, RuleType, Severity
+    from app.document_intelligence.evidence_sufficiency import EvidenceAssessmentState
+    from app.document_intelligence.validation.submission import (
+        DocumentSnapshot,
+        FieldSnapshot,
+        RequirementSnapshot,
+        SubmissionRule,
+        SubmissionVerificationEngine,
+        VerificationContext,
+    )
+
+    SME = DocumentType.SME_CONFIRMATION_CERTIFICATE
+
+    def field(name, value):
+        state = EvidenceAssessmentState.SUFFICIENT if value else EvidenceAssessmentState.UNAVAILABLE
+        return FieldSnapshot(uuid.uuid4(), name, value, False, value is not None, state)
+
+    rule = SubmissionRule(
+        uuid.uuid4(), RuleType.DATE_COMPARISON, Severity.ERROR,
+        {"document_type": SME.value, "field": "valid_until", "operator": RuleOperator.ON_OR_AFTER.value,
+         "comparison_source": "EVALUATION_DATE"},
+    )
+    document = DocumentSnapshot(
+        uuid.uuid4(), SME, ProcessingStatus.COMPLETED, uuid.uuid4().hex,
+        {"valid_from": field("valid_from", valid_from), "valid_until": field("valid_until", valid_until)},
+    )
+    result = SubmissionVerificationEngine().verify(
+        project_id=uuid.UUID(int=1), workflow_id=uuid.UUID(int=2),
+        requirements=[RequirementSnapshot(uuid.uuid4(), SME, True, (rule,), ("valid_until",))],
+        documents=[document], context=VerificationContext(date(2030, 6, 10)),
+    )
+    return result.status, OverallStatus
+
+
+def test_an_sme_certificate_expired_by_its_printed_date_but_valid_by_the_profile_is_never_ready() -> None:
+    # printed range 2030-01-01 .. 2030-05-31 ends before the check date 2030-06-10; the one-year profile would say 2030-12-31
+    status, overall = _sme_submission("2030-01-01", "2030-05-31")
+    assert status == overall.NEEDS_CORRECTION
+
+
+def test_an_unread_printed_sme_validity_end_goes_to_review_never_ready() -> None:
+    status, overall = _sme_submission("2030-01-01", None)
+    assert status == overall.REVIEW_REQUIRED and status != overall.READY
+
+
+def test_the_sme_profile_never_confirms_a_validity_end() -> None:
+    d = uuid.uuid4()
+    SME = DocumentType.SME_CONFIRMATION_CERTIFICATE
+    fields = [item(d, SME, "valid_from", "2030-01-01"), item(d, SME, "valid_until", "2030-12-31")]
+    decision = run(Strategy.S13, fields).get((d, "valid_until"))
+    assert decision is None or "date_pair" not in decision.sources
