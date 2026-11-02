@@ -76,7 +76,8 @@ def gpa_arithmetic(facts: DocFacts | None, gpa: float) -> Verdict:
     if (
         len(g.pairs) >= MIN_SEMESTERS
         and credits > 0
-        and (g.total_credits is None or credits == g.total_credits)
+        and g.total_credits is not None  # a table is known to be complete only if its credits add up
+        and credits == g.total_credits
     ):
         if g.percent_pairs and g.total_percent is not None and len(g.percent_pairs) == len(g.pairs):
             percent = sum(c * x for c, x in g.percent_pairs) / sum(c for c, _ in g.percent_pairs)
@@ -93,7 +94,13 @@ def gpa_arithmetic(facts: DocFacts | None, gpa: float) -> Verdict:
         return NONE
     if all(ok for _, ok in results):
         return Verdict("CONFIRMED", "arithmetic", "+".join(name for name, _ in results))
-    return Verdict("MISMATCH", "arithmetic", "cumulative GPA does not match the recomputation")
+    return Verdict(
+        "MISMATCH",
+        "arithmetic",
+        "the printed semesters reproduce their credits (and 백분율) but their credit-weighted GPA mean "
+        "differs from the printed total by more than the floor bound; a retake, a pass/fail course or "
+        "transfer credits can do this on a genuine certificate, a misread digit can too",
+    )
 
 
 def scale_confirmation(facts: DocFacts | None, scale: str) -> Verdict:
