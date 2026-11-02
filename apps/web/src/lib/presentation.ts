@@ -383,6 +383,7 @@ const AUTO_ACCEPT_REASON_LABELS: Record<string, string> = {
   EXTRACTION_MARKED_FOR_REVIEW: "추출 과정에서 확인이 필요한 항목으로 표시됐습니다.",
   DISAGREES_WITH_OTHER_DOCUMENT: "다른 서류의 값과 다릅니다.",
   CONFLICTS_WITH_APPLICATION_VALUE: "신청 정보와 다릅니다.",
+  CONFLICTS_WITH_APPLICANT_GPA: "입력하신 평점평균과 서류에서 읽은 값이 달라 담당자가 확인합니다.",
   SECOND_PASS_DISAGREES: "재판독 결과가 첫 판독과 다릅니다.",
   SEMANTIC_INFERENCE: "문맥으로 추론한 값입니다.",
   CONFIDENCE_BELOW_FLOOR: "인식 신뢰도가 자동 사용 기준보다 낮습니다.",
