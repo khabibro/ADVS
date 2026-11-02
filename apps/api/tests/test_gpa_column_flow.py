@@ -45,7 +45,8 @@ def test_a_misread_semester_gpa_total_or_percent_never_confirms() -> None:
     assert gpa_arithmetic(facts_for(bad_semester), 3.51).state == "MISMATCH"
     assert gpa_arithmetic(facts_for(total=3.57), 3.57).state == "MISMATCH"
     bad_percent = [*SEMESTERS[:4], (17, "3.50", "75.00"), SEMESTERS[5]]
-    assert gpa_arithmetic(facts_for(bad_percent), 3.51).state == "MISMATCH"
+    # a table that does not reproduce the printed 백분율 is a reading problem: it cannot be judged by
+    assert gpa_arithmetic(facts_for(bad_percent), 3.51).state == "NONE"
 
 
 def test_misread_credits_or_a_dropped_line_do_not_confirm() -> None:
@@ -57,3 +58,23 @@ def test_misread_credits_or_a_dropped_line_do_not_confirm() -> None:
 def test_the_scale_is_confirmed_when_every_line_and_the_legend_agree() -> None:
     assert scale_confirmation(facts_for(), "4.5").state == "CONFIRMED"
     assert scale_confirmation(facts_for(legend="4.0"), "4.5").state == "MISMATCH"
+
+
+def test_the_total_must_lie_strictly_within_one_hundredth_of_the_mean_of_the_printed_semesters() -> None:
+    # the credit-weighted mean of the invented table is 3.5109 (GPAs are floored to 2 decimals): P must satisfy
+    # M - 0.01 < P < M + 0.01, i.e. 3.5009 < P < 3.5209
+    for total in (3.51, 3.52):
+        assert gpa_arithmetic(facts_for(total=total), total).state == "CONFIRMED", total
+    for total in (3.50, 3.53, 3.62):
+        assert gpa_arithmetic(facts_for(total=total), total).state == "MISMATCH", total
+
+
+def test_a_sound_table_that_disagrees_is_a_mismatch_a_broken_table_is_not() -> None:
+    # semester GPA misread (one digit): credits and 백분율 still add up, the GPA does not -> truly disagrees
+    bad_semester = [*SEMESTERS[:2], (12, "3.80", "87.00"), *SEMESTERS[3:]]
+    assert gpa_arithmetic(facts_for(bad_semester), 3.51).state == "MISMATCH"
+    # two semesters' values swapped between their credits (a pairing error): 백분율 no longer adds up -> NONE
+    swapped = [(15, "3.00", "93.00"), (18, "4.00", "80.00"), *SEMESTERS[2:]]
+    assert gpa_arithmetic(facts_for(swapped), 3.51).state == "NONE"
+    # a dropped credits line: the credits cannot add up to the total -> NONE
+    assert gpa_arithmetic(facts_for(drop_credit=1), 3.51).state == "NONE"

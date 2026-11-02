@@ -124,3 +124,71 @@ def test_the_baseline_strategy_does_not_use_the_pair_rules() -> None:
 def test_the_institution_name_part_is_compared_when_a_stamp_covers_the_title() -> None:
     res, enr, trn = pair(enr={"university_name": "가상과학기술대학교총장"})
     assert accepted(res, trn, "university_name")
+
+
+# ---- S12: the same-person verdict is decision-robust when both names read the same and the birth date is confirmed
+
+def robust_pair(enr=None, trn=None, name_conf=LOW):
+    return pair(
+        Strategy.S12,
+        enr={"student_name": (NAME, name_conf), **(enr or {})},
+        trn={"student_name": (NAME, name_conf), **(trn or {})},
+    )
+
+
+def test_two_below_floor_reads_of_the_same_name_settle_the_verdict_not_the_value() -> None:
+    res, enr, trn = robust_pair()
+    for doc in (enr, trn):
+        decision = res[(doc, "student_name")]
+        assert decision.accepted and decision.robust
+        data = decision.to_dict()
+        assert data["confirmation"] == "DECISION_ROBUST" and "개별 확인되지" in data["label_ko"]
+
+
+def test_the_baseline_variants_do_not_settle_two_below_floor_names() -> None:
+    for strategy in (Strategy.S9, Strategy.S10, Strategy.S11):
+        d1, d2 = uuid.uuid4(), uuid.uuid4()
+        fields = [
+            item(d1, ENR, "student_name", NAME, conf=LOW),
+            item(d2, TRN, "student_name", NAME, conf=LOW),
+            item(d1, ENR, "birth_date", BIRTH),
+            item(d2, TRN, "birth_date", BIRTH),
+        ]
+        out = decide(fields, CTX, strategy)
+        assert not out[(d1, "student_name")].accepted, strategy
+
+
+def test_a_different_name_on_one_document_settles_nothing() -> None:
+    res, enr, trn = robust_pair(trn={"student_name": ("박다라", LOW)})
+    assert not accepted(res, enr, "student_name") and not accepted(res, trn, "student_name")
+    res, enr, trn = robust_pair(trn={"student_name": ("류하눌", LOW)})  # one character misread on one document
+    assert not accepted(res, enr, "student_name") and not accepted(res, trn, "student_name")
+
+
+def test_a_birth_date_that_is_not_confirmed_on_both_settles_nothing() -> None:
+    for trn_birth in ("2008-05-18", None):
+        res, enr, trn = robust_pair(trn={"birth_date": trn_birth})
+        assert not accepted(res, enr, "student_name"), trn_birth
+        assert not accepted(res, trn, "student_name"), trn_birth
+    # two below-floor birth dates are not confirmed either (a below-floor read needs a reliable partner)
+    res, enr, trn = robust_pair(enr={"birth_date": (BIRTH, LOW)}, trn={"birth_date": (BIRTH, LOW)})
+    assert not accepted(res, enr, "student_name") and not accepted(res, trn, "student_name")
+    # one below-floor birth date IS confirmed by the reliable one (variant b), so the verdict is settled
+    res, enr, trn = robust_pair(trn={"birth_date": (BIRTH, LOW)})
+    assert accepted(res, enr, "student_name") and accepted(res, trn, "student_name")
+
+
+def test_a_name_the_second_reading_contradicts_stays_vetoed() -> None:
+    d1, d2 = uuid.uuid4(), uuid.uuid4()
+    from app.document_intelligence.auto_acceptance import SecondPassInput
+
+    one = item(d1, ENR, "student_name", NAME, conf=LOW)
+    one = FieldInput(**{**one.__dict__, "second_pass": SecondPassInput("류하눌", "류하눌", 0.9)})
+    fields = [
+        one,
+        item(d2, TRN, "student_name", NAME, conf=LOW),
+        item(d1, ENR, "birth_date", BIRTH),
+        item(d2, TRN, "birth_date", BIRTH),
+    ]
+    out = decide(fields, CTX, Strategy.S12)
+    assert not out[(d1, "student_name")].accepted

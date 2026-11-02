@@ -35,8 +35,23 @@ NONE = Verdict("NONE")
 
 
 MIN_SEMESTERS = 3
-WEIGHTED_AVERAGE_TOLERANCE = 0.015  # semester GPAs are printed to 2 decimals
-PERCENT_TOLERANCE = 0.015  # 백분율 is printed to 2 decimals as well
+#: The rounding bound only, never widened: the credit-weighted mean of values printed to 2 decimals is itself
+#: rounded to 2 decimals and compared with the printed total, which may differ by one unit in the last place
+#: (a mean of 87.4985 rounds to 87.50 against a printed 87.51).
+ROUNDING_BOUND = 0.010
+_EPSILON = 1e-9
+
+
+def _gpa_within_truncation(mean: float, printed: float) -> bool:
+    """The university truncates (floors) GPAs to 2 decimals. With M the credit-weighted mean of the printed
+    semester GPAs, each of which is floored, the true mean lies in [M, M + 0.01) and the floored total P in
+    (M - 0.01, M + 0.01): the exact bound, open at both ends."""
+    return mean - 0.01 < printed < mean + 0.01
+
+
+def _agrees(mean: float, printed: float) -> bool:
+    """The mean, rounded to 2 decimals, equals the printed 2-decimal value within one last-place unit."""
+    return abs(round(mean, 2) - printed) <= ROUNDING_BOUND + _EPSILON
 POINTS_TOLERANCE = 0.006  # total points / total credits, printed exactly
 
 
@@ -45,7 +60,13 @@ def gpa_arithmetic(facts: DocFacts | None, gpa: float) -> Verdict:
 
     Independent because the semester GPAs, the credits and the printed totals are separate OCR boxes
     in different regions from the cumulative GPA box (the cumulative GPA line is excluded from the
-    semester pairs); a misread of the cumulative value does not change them. A mismatch blocks.
+    semester pairs); a misread of the cumulative value does not change them.
+
+    Three outcomes. CONFIRMED: the table reproduces the page and the total within the rounding bound.
+    MISMATCH: the table is sound (the credits add up to the printed total and, where printed, the 백분율
+    average reproduces the printed 백분율) and the GPA still disagrees: the numbers truly disagree.
+    NONE ("could not check"): anything else -- too few semesters, credits that do not add up, a 백분율 that
+    does not reproduce -- is a reading or parsing problem, never a mismatch.
     """
     g = facts.gpa if facts else None
     if g is None:
@@ -57,23 +78,18 @@ def gpa_arithmetic(facts: DocFacts | None, gpa: float) -> Verdict:
         and credits > 0
         and (g.total_credits is None or credits == g.total_credits)
     ):
+        if g.percent_pairs and g.total_percent is not None and len(g.percent_pairs) == len(g.pairs):
+            percent = sum(c * x for c, x in g.percent_pairs) / sum(c for c, _ in g.percent_pairs)
+            if not _agrees(percent, g.total_percent):
+                return NONE  # the table does not reproduce the printed 백분율: not a table to judge by
+            results.append(("weighted_percent", True))
         average = sum(c * x for c, x in g.pairs) / credits
-        results.append(("weighted_average", abs(average - gpa) <= WEIGHTED_AVERAGE_TOLERANCE))
-    if (
-        results
-        and g.percent_pairs
-        and g.total_percent is not None
-        and len(g.percent_pairs) == len(g.pairs)
-    ):
-        percent = sum(c * x for c, x in g.percent_pairs) / sum(c for c, _ in g.percent_pairs)
-        results.append(
-            ("weighted_percent", abs(percent - g.total_percent) <= PERCENT_TOLERANCE)
-        )
+        results.append(("weighted_average", _gpa_within_truncation(average, gpa)))
     if g.total_points is not None and g.total_credits:
         results.append(
             ("total_points", abs(g.total_points / g.total_credits - gpa) <= POINTS_TOLERANCE)
         )
-    if not results:
+    if not [name for name, _ in results if name != "weighted_percent"]:
         return NONE
     if all(ok for _, ok in results):
         return Verdict("CONFIRMED", "arithmetic", "+".join(name for name, _ in results))
