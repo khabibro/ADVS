@@ -277,6 +277,8 @@ def decisions_for_project(
     context = ProjectContext(
         company_name=project.company_name,
         applicant_name=project.applicant_name,
+        applicant_gpa=project.applicant_gpa,
+        applicant_gpa_scale=project.applicant_gpa_scale,
         reference_date=reference_date,
         issue_max_age_days=max_age,
         gpa_threshold=gpa_threshold,

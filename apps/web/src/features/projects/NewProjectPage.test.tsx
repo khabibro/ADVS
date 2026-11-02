@@ -66,4 +66,36 @@ describe("NewProjectPage", () => {
     expect(screen.getByText("필수")).toBeInTheDocument();
     expect(screen.getByText("선택")).toBeInTheDocument();
   });
+
+  it("asks for the transcript GPA only for a workflow that has a transcript, and sends it as typed", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.createProject).mockResolvedValue({
+      id: "33333333-3333-4333-8333-333333333333",
+    } as never);
+    renderWithQuery(<NewProjectPage />);
+    await user.click(await screen.findByRole("radio", { name: /기업 제출서류 점검/ }));
+    expect(screen.queryByLabelText(/성적증명서의 평점평균/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: /학생 제출서류 점검/ }));
+    const field = screen.getByLabelText(/성적증명서의 평점평균/);
+    await user.type(screen.getByLabelText(/제출 건 이름/), "테스트 제출");
+    await user.type(field, "3.40 / 4.3");
+    await user.click(screen.getByRole("button", { name: "제출 건 만들기" }));
+    await vi.waitFor(() => expect(api.createProject).toHaveBeenCalled());
+    expect(vi.mocked(api.createProject).mock.calls[0][0]).toMatchObject({
+      applicant_gpa: "3.40 / 4.3",
+    });
+  });
+
+  it("rejects a GPA that is not in the 3.40 / 4.3 form and stays optional when empty", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.createProject).mockClear();
+    renderWithQuery(<NewProjectPage />);
+    await user.click(await screen.findByRole("radio", { name: /학생 제출서류 점검/ }));
+    await user.type(screen.getByLabelText(/제출 건 이름/), "테스트 제출");
+    await user.type(screen.getByLabelText(/성적증명서의 평점평균/), "삼점사");
+    await user.click(screen.getByRole("button", { name: "제출 건 만들기" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("3.40 / 4.3");
+    expect(api.createProject).not.toHaveBeenCalled();
+  });
 });

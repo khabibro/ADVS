@@ -56,6 +56,7 @@ from app.schemas.api import (
     WorkflowRead,
     WorkflowSummary,
 )
+from app.services.applicant_gpa import format_applicant_gpa, parse_applicant_gpa
 from app.services.auto_acceptance import decisions_for_project
 from app.services.consistency import lock_project
 from app.services.document_validation import (
@@ -137,6 +138,7 @@ def _project_read(project: Project) -> ProjectRead:
         ],
         applicant_name=project.applicant_name,
         company_name=project.company_name,
+        applicant_gpa=format_applicant_gpa(project.applicant_gpa, project.applicant_gpa_scale),
         status=normalize_overall_status(project.status),
         created_at=project.created_at,
     )
@@ -210,6 +212,8 @@ def create_project(payload: ProjectCreate, db: Session = Depends(get_db)):
         name=payload.name,
         applicant_name=payload.applicant_name,
         company_name=payload.company_name,
+        applicant_gpa=parse_applicant_gpa(payload.applicant_gpa)[0],
+        applicant_gpa_scale=parse_applicant_gpa(payload.applicant_gpa)[1],
     )
     db.add(project)
     db.flush()
@@ -249,6 +253,7 @@ def update_project(project_id: uuid.UUID, payload: ProjectCreate, db: Session = 
     project.name = payload.name
     project.applicant_name = payload.applicant_name
     project.company_name = payload.company_name
+    project.applicant_gpa, project.applicant_gpa_scale = parse_applicant_gpa(payload.applicant_gpa)
     invalidate_submission_verification(db, project.id)
     db.commit()
     db.refresh(project)

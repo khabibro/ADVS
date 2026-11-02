@@ -50,6 +50,12 @@ class GpaFacts:
     percent_pairs: tuple[tuple[int, float], ...] = ()
     total_percent: float | None = None  # 백분율 of the cumulative line
     ordered_pairing: bool = False  # the semesters were paired by reading order (columns left to right)
+    # Same-line (평점평균, 백분율) pairs of the semester lines, and the pair of the cumulative line (kept apart:
+    # it is only ever checked against a relation fitted without it)
+    semester_percent_pairs: tuple[tuple[float, float], ...] = ()
+    total_pair: tuple[float, float] | None = None
+    # (grade point, upper bound of its 백분율 range) of the printed grading legend
+    legend_pairs: tuple[tuple[float, float], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -71,6 +77,7 @@ _GPA = re.compile(r"평점평균\s*[:：]?\s*(\d\.\d{1,3})\s*/\s*(\d(?:\.\d{1,3}
 _PERCENT = re.compile(r"백분[율을]\s*[:：]?\s*(\d{1,3}(?:\.\d{1,3})?)\s*/\s*(\d{2,3})")
 _COLUMN_GAP = 0.5  # a new column starts where the box centres are further apart than this share of a line's width
 _LEGEND_MAX = re.compile(r"A\s*\+\s*=\s*(\d(?:\.\d{1,3})?)")
+_LEGEND_ENTRY = re.compile(r"[ABCDF][+\-0]?=(\d\.\d{1,2})\((\d{1,3})-(\d{1,3})\)")
 _CORP_NUMBER = re.compile(r"(?<!\d)(\d{6})\s*-\s*(\d{7})(?!\d)")
 _NUMBER = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*$")
 _DOCUMENT_NUMBER = re.compile(r"제((?:19|20)\d{2})[-‐‑–−－]\d{1,12}호")
@@ -184,6 +191,7 @@ def _gpa_facts(segments: list[tuple[int, OCRLine]]) -> GpaFacts | None:
     totals: list[tuple[int, BoundingBox, int]] = []
     gpas: list[tuple[int, BoundingBox, float, str]] = []
     percents: dict[int, float] = {}  # id(box) of a GPA line -> its 백분율
+    legend_pairs: list[tuple[float, float]] = []
     legend: str | None = None
     headers: dict[str, list[tuple[int, BoundingBox]]] = {"credits": [], "points": []}
     cells: list[tuple[int, BoundingBox, float]] = []
@@ -201,6 +209,8 @@ def _gpa_facts(segments: list[tuple[int, OCRLine]]) -> GpaFacts | None:
                 percents[id(box)] = float(pm.group(1))
         if (m := _LEGEND_MAX.search(text)) is not None:
             legend = m.group(1)
+        for entry in _LEGEND_ENTRY.finditer(text):
+            legend_pairs.append((float(entry.group(1)), float(entry.group(3))))
         if text == "총취득학점":
             headers["credits"].append((page, box))
         elif text == "총평점":
@@ -244,10 +254,16 @@ def _gpa_facts(segments: list[tuple[int, OCRLine]]) -> GpaFacts | None:
     percent_pairs: list[tuple[int, float]] = []
     semester_lines: list[tuple[int, BoundingBox, float]] = []
     total_percent: float | None = None
+    total_pair: tuple[float, float] | None = None
+    semester_percent_pairs: list[tuple[float, float]] = []
     for page, box, gpa, _scale in gpas:
         if under_total(page, box):
             total_percent = percents.get(id(box))
+            if total_percent is not None:
+                total_pair = (gpa, total_percent)
             continue
+        if id(box) in percents:
+            semester_percent_pairs.append((gpa, percents[id(box)]))
         semester_lines.append((page, box, gpa))
         above = [
             (box.y - c_box.y, c_value)
@@ -283,6 +299,9 @@ def _gpa_facts(segments: list[tuple[int, OCRLine]]) -> GpaFacts | None:
         percent_pairs=tuple(percent_pairs),
         total_percent=total_percent,
         ordered_pairing=ordered,
+        semester_percent_pairs=tuple(semester_percent_pairs),
+        total_pair=total_pair,
+        legend_pairs=tuple(legend_pairs),
     )
 
 

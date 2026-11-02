@@ -432,6 +432,23 @@ export interface components {
             second_pass_value?: string | null;
             /** Reason */
             reason?: string | null;
+            /**
+             * Robust
+             * @default false
+             */
+            robust: boolean;
+            /** Repair Candidate */
+            repair_candidate?: string | null;
+            /** Repair Provenance */
+            repair_provenance?: string | null;
+            /** Confusion Table Version */
+            confusion_table_version?: string | null;
+            /** Confirmation */
+            confirmation?: string | null;
+            /** Label */
+            label?: string | null;
+            /** Label Ko */
+            label_ko?: string | null;
         };
         /** Body_upload_document_api_v1_projects__project_id__documents_post */
         Body_upload_document_api_v1_projects__project_id__documents_post: {
@@ -655,6 +672,11 @@ export interface components {
             current_review_decision?: components["schemas"]["FieldReviewDecision"] | null;
             auto_acceptance?: components["schemas"]["AutoAcceptanceRead"] | null;
             /**
+             * Decision Relevant
+             * @default true
+             */
+            decision_relevant: boolean;
+            /**
              * Used By Rules
              * @default false
              */
@@ -846,6 +868,8 @@ export interface components {
             applicant_name?: string | null;
             /** Company Name */
             company_name?: string | null;
+            /** Applicant Gpa */
+            applicant_gpa?: string | null;
         };
         /** ProjectOverviewRead */
         ProjectOverviewRead: {
@@ -896,6 +920,8 @@ export interface components {
             applicant_name?: string | null;
             /** Company Name */
             company_name?: string | null;
+            /** Applicant Gpa */
+            applicant_gpa?: string | null;
             status: components["schemas"]["OverallStatus"];
             /**
              * Created At

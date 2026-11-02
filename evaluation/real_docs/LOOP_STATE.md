@@ -36,3 +36,8 @@ covered take the safer option, log it, continue. Full brief: the owner's 2026-11
 - [00:55] v5 candidate: route A/B code parked on branch `auto/gpa-routes` (S16–S18, off by default); default S14 set
   on `auto/real-automation`. Evidence for v5 (code identical to the tested S14 runs): injection s14g (6815 cases, 1
   known E3c-both, 0 false_ready_decision), lanes s14g (0 wrong, true negatives 0 READY, N5 duplicates only).
+- [00:55] v5 gate chain `/tmp/advs-gates/chain_g10.sh` running in worktree ADVS-g10 (commit 7056398): UI step failed at
+  start (git-ignored synthetic test data was missing in the worktree) -> data copied in, UI re-run queued after the
+  chain (`chain_g10b.sh`); then lanes (biz/real/student), then the four injection corpora. One heavy job at a time.
+- Route B backend done on `auto/gpa-routes` (Project.applicant_gpa/_scale, migration 0007, parser, API, tests; 860+
+  tests). Route A/B/A+B harness measurement queued after the v5 chain. UI work for the applicant GPA field next.

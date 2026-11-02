@@ -40,6 +40,9 @@ def main() -> int:
     ap.add_argument("--memo-ocr", action="store_true", help="read each distinct file with OCR once per run (the output is deterministic); the same bytes in another submission reuse it")
     ap.add_argument("--ocr-cache", type=Path, default=None, help="persistent OCR cache (sha256 -> pages, plus second-pass regions): a miss reads with OCR and stores, a hit replays, so a later run on the same files needs no OCR")
     ap.add_argument("--applicant-from-gold", type=Path, default=None, help="WHAT-IF only: give every project the applicant name (student) / company name (business) of this gold file, as if the application form had been filled in. Never a default; the report must say so")
+    ap.add_argument("--applicant-gpa-truth", type=Path, default=None, help="SIMULATION of route B: a private JSON {transcript kind: \"3.40 / 4.3\", \"default\": ...}; every project gets the applicant GPA of its transcript, as if the applicant had typed it. Never a default; the report must say so")
+    ap.add_argument("--applicant-gpa-typo", action="store_true", help="with --applicant-gpa-truth: type the GPA with its last digit changed by one (the one-digit typo variant; every such value must go to review)")
+    ap.add_argument("--gpa-threshold", default=None, help="REPORT-ONLY replay under another GPA requirement: 'none' removes the GPA rule of the student workflow, a number (e.g. 2.5) replaces its threshold. Never a default")
     ap.add_argument("--drop-requirement", default=None, help="also create a copy of the workflow without this document type; a submission selects it with \"workflow\": \"reduced\"")
     args = ap.parse_args()
 
@@ -65,6 +68,18 @@ def main() -> int:
     name = "학생 제출서류 점검" if args.workflow == "student" else "기업 제출서류 점검"
     with SessionLocal() as db:
         checklist_id = db.scalar(select(Checklist).where(Checklist.name == name)).id
+    if args.gpa_threshold is not None and args.workflow == "student":
+        from app.models.entities import DocumentRequirement, ValidationRule
+
+        with SessionLocal() as db:
+            rules = db.query(ValidationRule).join(DocumentRequirement, ValidationRule.requirement_id == DocumentRequirement.id).filter(DocumentRequirement.checklist_id == checklist_id).all()
+            for rule in rules:
+                if rule.rule_type == "NUMERIC_COMPARISON" and (rule.params or {}).get("field") == "gpa":
+                    if args.gpa_threshold.lower() == "none":
+                        db.delete(rule)
+                    else:
+                        rule.params = {**rule.params, "expected_value": args.gpa_threshold}
+            db.commit()
     reduced_id = None
     if args.drop_requirement:
         from app.models.entities import DocumentRequirement, ValidationRule
@@ -123,6 +138,7 @@ def main() -> int:
                 application = {"applicant_name" if args.workflow == "student" else "company_name": str(value)}
                 break
 
+    gpa_truth = json.loads(args.applicant_gpa_truth.read_text(encoding="utf-8")) if args.applicant_gpa_truth else None
     if args.submissions is None and args.files is None:
         raise SystemExit("--files or --submissions is required")
     files = [] if args.files is None else [args.files] if args.files.is_file() else sorted(p for p in args.files.iterdir() if p.suffix.lower().lstrip(".") in MIME)
@@ -135,7 +151,19 @@ def main() -> int:
 
     def run(client, group: list[Path] | None, tag: str, eval_date: str | None = None, extra_dates: list[str] | None = None, workflow: str | None = None) -> dict:
         wid = reduced_id if workflow == "reduced" and reduced_id is not None else checklist_id
-        project = client.post("/api/v1/projects", json={"name": f"{args.label}-{tag}", "workflow_id": str(wid), **application})
+        entry = {}
+        if gpa_truth and group is not None:
+            names = " ".join(p.name for p in group)
+            kind = "transcript_43" if "transcript_43" in names else "transcript_45" if "transcript_45" in names else "default"
+            typed = gpa_truth.get(kind) or gpa_truth.get("default")
+            if typed and any("transcript" in p.name or "성적" in p.name for p in group):
+                if args.applicant_gpa_typo:
+                    number, _, scale = typed.partition(" / ")
+                    last = int(number[-1])
+                    typed = f"{number[:-1]}{(last + 1) % 10} / {scale}"
+                entry = {"applicant_gpa": typed}
+                print("applicant GPA entry given:", tag, flush=True)
+        project = client.post("/api/v1/projects", json={"name": f"{args.label}-{tag}", "workflow_id": str(wid), **application, **entry})
         project.raise_for_status()
         pid = project.json()["id"]
         records = []

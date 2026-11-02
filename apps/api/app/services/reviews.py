@@ -136,6 +136,14 @@ class EffectiveFieldResolver:
             <= (
                 {EvidenceAssessmentReason.OCR_REQUIRES_CONFIRMATION}
                 | (
+                    # a read below the confidence floor that the other document confirms by an exact match
+                    # (the acceptance already required that partner; the policy floor is a diagnostic of the read
+                    # itself, which is exactly what the partner read replaces)
+                    {EvidenceAssessmentReason.OCR_CONFIDENCE_BELOW_POLICY}
+                    if (auto.rule_id or "").endswith(":DOCUMENTS_BELOW_FLOOR")
+                    else set()
+                )
+                | (
                     # an inferred issue date accepted on the certificate-number year: the
                     # inference is what the decision-robust check covers
                     INFERRED_DATE_REASONS

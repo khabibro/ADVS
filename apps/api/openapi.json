@@ -1178,6 +1178,77 @@
               }
             ],
             "title": "Reason"
+          },
+          "robust": {
+            "type": "boolean",
+            "title": "Robust",
+            "default": false
+          },
+          "repair_candidate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repair Candidate"
+          },
+          "repair_provenance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repair Provenance"
+          },
+          "confusion_table_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confusion Table Version"
+          },
+          "confirmation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmation"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "label_ko": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Ko"
           }
         },
         "type": "object",
@@ -1853,6 +1924,11 @@
               }
             ]
           },
+          "decision_relevant": {
+            "type": "boolean",
+            "title": "Decision Relevant",
+            "default": true
+          },
           "used_by_rules": {
             "type": "boolean",
             "title": "Used By Rules",
@@ -2499,6 +2575,17 @@
               }
             ],
             "title": "Company Name"
+          },
+          "applicant_gpa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applicant Gpa"
           }
         },
         "type": "object",
@@ -2682,6 +2769,17 @@
               }
             ],
             "title": "Company Name"
+          },
+          "applicant_gpa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applicant Gpa"
           },
           "status": {
             "$ref": "#/components/schemas/OverallStatus"

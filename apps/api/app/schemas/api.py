@@ -3,7 +3,7 @@ from datetime import date, datetime
 from enum import StrEnum
 from typing import Self
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.core.domain import (
     DOCUMENT_TYPE_DISPLAY_NAMES,
@@ -18,6 +18,7 @@ from app.document_intelligence.evidence_sufficiency import (
     EvidenceAssessmentState,
     FieldReviewDecision,
 )
+from app.services.applicant_gpa import ApplicantGpaError, format_applicant_gpa, parse_applicant_gpa
 
 
 class ProjectCreate(BaseModel):
@@ -25,6 +26,17 @@ class ProjectCreate(BaseModel):
     workflow_id: uuid.UUID
     applicant_name: str | None = None
     company_name: str | None = None
+    # Optional: the 평점평균 as printed on the transcript, "3.40" or "3.40 / 4.3" (route B confirmation)
+    applicant_gpa: str | None = None
+
+    @field_validator("applicant_gpa")
+    @classmethod
+    def _check_applicant_gpa(cls, value: str | None) -> str | None:
+        try:
+            gpa, scale = parse_applicant_gpa(value)
+        except ApplicantGpaError as error:
+            raise ValueError(str(error)) from error
+        return format_applicant_gpa(gpa, scale)
 
 
 class WorkflowDocumentRequirementRead(BaseModel):
@@ -56,6 +68,7 @@ class ProjectRead(BaseModel):
     expected_documents: list[WorkflowDocumentRequirementRead]
     applicant_name: str | None = None
     company_name: str | None = None
+    applicant_gpa: str | None = None
     status: OverallStatus
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
