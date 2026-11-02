@@ -286,6 +286,24 @@ class Runner:
         Base.metadata.create_all(db_engine)
         seed = runpy.run_path(str(REPO_ROOT / "scripts" / "seed.py"))
         seed["main"]()
+        _gpa_setting = os.environ.get("ADVS_GPA_THRESHOLD")  # REPORT-ONLY replay under another GPA requirement
+        if _gpa_setting:
+            from app.models.entities import DocumentRequirement, ValidationRule
+
+            with SessionLocal() as db:
+                student = db.scalar(select(Checklist).where(Checklist.name == "학생 제출서류 점검"))
+                for rule in (
+                    db.query(ValidationRule)
+                    .join(DocumentRequirement, ValidationRule.requirement_id == DocumentRequirement.id)
+                    .filter(DocumentRequirement.checklist_id == student.id)
+                    .all()
+                ):
+                    if rule.rule_type == "NUMERIC_COMPARISON" and (rule.params or {}).get("field") == "gpa":
+                        if _gpa_setting.lower() == "none":
+                            db.delete(rule)
+                        else:
+                            rule.params = {**rule.params, "expected_value": _gpa_setting}
+                db.commit()
         with SessionLocal() as db:
             self.business_id = db.scalar(select(Checklist).where(Checklist.name == "기업 제출서류 점검")).id
             self.student_id = db.scalar(select(Checklist).where(Checklist.name == "학생 제출서류 점검")).id

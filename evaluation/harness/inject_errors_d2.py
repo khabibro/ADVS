@@ -48,6 +48,12 @@ BOUNDARY_DAYS = (0, 1, 3, 7)
 BOUNDARY_GPA = ("3.00", "3.05", "3.10")
 
 
+def boundary_gpa() -> tuple[str, ...]:
+    """The threshold and two values just above it (3.00 / 3.05 / 3.10 for the default requirement)."""
+    base = ie.gpa_threshold()
+    return tuple(f"{base + step:.2f}" for step in (0.0, 0.05, 0.10))
+
+
 # ----------------------------------------------------------------------------- E10
 
 
@@ -187,8 +193,8 @@ def plan_boundary(manifest: dict[str, Any], root: Path, cache: Path, versions=("
                         new = (submission - timedelta(days=90 - days)).isoformat()
                         add(f"{tag}:E11-issue_date-{90 - days}d:{name}", "E11", ie.date_edit(spec["value"], new, f"too-old issue_date misread as {90 - days} days old", "issue_date"))
                 spec = fields.get("gpa")
-                if spec and spec.get("state") == "KNOWN_VALUE" and float(spec["value"]) < 3.0:
-                    for new in BOUNDARY_GPA:
+                if spec and spec.get("state") == "KNOWN_VALUE" and float(spec["value"]) < ie.gpa_threshold():
+                    for new in boundary_gpa():
                         add(f"{tag}:E12-gpa->{new}:{name}", "E12", _gpa_token_edit(spec["value"], new))
     return cases
 

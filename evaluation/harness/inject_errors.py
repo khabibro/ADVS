@@ -42,6 +42,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import random
 import re
 import sys
@@ -204,9 +205,15 @@ def confusable_char(ch: str, rng: random.Random) -> str | None:
     return None
 
 
+def gpa_threshold() -> float:
+    """The GPA requirement the suites aim at (3.0 unless a report-only replay sets ADVS_GPA_THRESHOLD)."""
+    setting = os.environ.get("ADVS_GPA_THRESHOLD", "3.0")
+    return 3.0 if setting.lower() == "none" else float(setting)
+
+
 def gpa_edit(expected: str, scale: str, description: str) -> Edit | None:
     value = float(expected)
-    if value < 3.0:
+    if value < gpa_threshold():
         wrong = f"{value + 1.0:.2f}"
     else:
         wrong = f"{min(float(scale) - 0.1, value + 0.7):.2f}"
