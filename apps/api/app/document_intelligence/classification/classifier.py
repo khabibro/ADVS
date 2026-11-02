@@ -19,6 +19,11 @@ import re
 from dataclasses import dataclass, field
 
 from app.core.domain import DocumentType
+from app.document_intelligence.classification.body_labels import (
+    BODY_LABELS_EVIDENCE,
+    OTHER_STATUS_WORDS,
+    enrolment_body_labels,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -251,8 +256,22 @@ class DocumentClassifier:
         runner_score = ranked[1][1] if len(ranked) > 1 else 0.0
 
         if winner_score < MIN_SCORE_FOR_CONFIDENT_TYPE or not has_strong_signal[winner_type]:
+            if enrolment_body_labels(haystack):
+                # a damaged title: the body decides, with the guard against the other student statuses
+                return ClassificationResult(
+                    predicted_type=DocumentType.ENROLLMENT_CERTIFICATE,
+                    confidence_score=MIN_SCORE_FOR_CONFIDENT_TYPE / (MIN_SCORE_FOR_CONFIDENT_TYPE + 1),
+                    score=MIN_SCORE_FOR_CONFIDENT_TYPE,
+                    evidence=list(BODY_LABELS_EVIDENCE),
+                    needs_review=False,
+                    alternatives=_alternatives(scores),
+                )
             return _unknown(scores, evidence)
 
+        if winner_type == DocumentType.ENROLLMENT_CERTIFICATE and any(
+            word in haystack for word in OTHER_STATUS_WORDS
+        ):
+            return _unknown(scores, evidence)  # the layout is shared with the other student statuses
         issuer_unconfirmed = False
         if winner_type == DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE:
             if any(marker in haystack for marker in LOCAL_TAX_MARKERS):
