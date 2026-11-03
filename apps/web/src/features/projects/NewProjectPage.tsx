@@ -262,14 +262,18 @@ export function NewProjectPage() {
               ) : (
                 <ul className="mt-3 divide-y divide-border">
                   {selectedWorkflow.document_requirements.map((requirement) => (
-                    <li
-                      className="flex items-center justify-between gap-3 py-2.5 text-sm"
-                      key={requirement.document_type}
-                    >
-                      <span className="min-w-0 truncate">
-                        {requirement.display_name}
-                      </span>
-                      <RequiredBadge required={requirement.required} />
+                    <li className="py-2.5 text-sm" key={requirement.document_type}>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="min-w-0 truncate">
+                          {requirement.display_name}
+                        </span>
+                        <RequiredBadge required={requirement.required} />
+                      </div>
+                      {requirement.checks?.length ? (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {requirement.checks.join(" · ")}
+                        </p>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

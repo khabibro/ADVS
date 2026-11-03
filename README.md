@@ -26,7 +26,7 @@ This is not production-ready OCR/extraction. PaddleOCR is the only real OCR prov
 ## Monorepo Structure
 
 - `apps/web`: Next.js user-facing application
-- `apps/admin`: separate Next.js admin application shell
+- `apps/admin`: Next.js admin console: 점검 기준 관리 (required/optional documents, issue-date age, validity checks, comparisons between documents, version history and restore), dashboard and submission overview
 - `apps/api`: FastAPI backend, SQLAlchemy models, Alembic migrations, document pipeline
 - `packages/ui`: shared UI primitives used by web and admin
 - `packages/contracts`: generated TypeScript contracts from FastAPI OpenAPI

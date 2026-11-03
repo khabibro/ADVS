@@ -83,6 +83,9 @@ export function RequirementChecklist({
                 </div>
                 <StatusChip label={view.label} loading={view.tone === "info"} tone={view.tone} />
               </div>
+              {requirement.checks?.length ? (
+                <p className="mt-1 text-xs text-muted-foreground">점검 기준: {requirement.checks.join(" · ")}</p>
+              ) : null}
               {requirement.documents.length > 0 ? (
                 <ul className="mt-3 space-y-1.5">
                   {requirement.documents.map((document) => (

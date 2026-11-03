@@ -33,8 +33,8 @@ const project: Project = {
   workflow_id: "w",
   workflow: { id: "w", name: "기업 제출서류 점검", description: null },
   expected_documents: [
-    { document_type: "BUSINESS_REGISTRATION_CERTIFICATE", display_name: "사업자등록증", required: true },
-    { document_type: "NATIONAL_TAX_PAYMENT_CERTIFICATE", display_name: "국세 납세증명서", required: true },
+    { document_type: "BUSINESS_REGISTRATION_CERTIFICATE", display_name: "사업자등록증", required: true, checks: [] },
+    { document_type: "NATIONAL_TAX_PAYMENT_CERTIFICATE", display_name: "국세 납세증명서", required: true, checks: [] },
   ],
   applicant_name: null,
   company_name: null,
@@ -79,6 +79,7 @@ const expiredOverview: ProjectOverview = {
       state: "OK",
       documents: [docRef("d1", "사업자등록증.pdf", "BUSINESS_REGISTRATION_CERTIFICATE")],
       issue_codes: [],
+      checks: [],
     },
     {
       document_type: "NATIONAL_TAX_PAYMENT_CERTIFICATE",
@@ -87,6 +88,7 @@ const expiredOverview: ProjectOverview = {
       state: "NEEDS_CORRECTION",
       documents: [docRef("d2", "납세증명서.pdf", "NATIONAL_TAX_PAYMENT_CERTIFICATE")],
       issue_codes: ["EXPIRED_DOCUMENT"],
+      checks: [],
     },
   ],
   other_documents: [],

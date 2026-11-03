@@ -26,6 +26,7 @@ services:
       WEB_URL: http://localhost:3000
       ADMIN_URL: http://localhost:3002
       CORS_ORIGINS: http://localhost:3000,http://localhost:3002
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
     volumes:
       - api_storage:/app/storage
     ports:
@@ -58,6 +59,8 @@ services:
       dockerfile: apps/admin/Dockerfile
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+      ADVS_API_URL: http://api:8000/api/v1
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
     ports:
       - "3002:3000"
     depends_on:

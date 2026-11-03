@@ -29,11 +29,13 @@ describe("NewProjectPage", () => {
             document_type: "ENROLLMENT_CERTIFICATE",
             display_name: "재학증명서",
             required: true,
+            checks: ["발급일로부터 90일 이내"],
           },
           {
             document_type: "TRANSCRIPT",
             display_name: "성적증명서",
             required: false,
+            checks: [],
           },
         ],
       },
@@ -48,6 +50,7 @@ describe("NewProjectPage", () => {
             document_type: "BUSINESS_REGISTRATION_CERTIFICATE",
             display_name: "사업자등록증",
             required: true,
+            checks: [],
           },
         ],
       },
@@ -65,6 +68,8 @@ describe("NewProjectPage", () => {
     expect(screen.getByText("성적증명서")).toBeInTheDocument();
     expect(screen.getByText("필수")).toBeInTheDocument();
     expect(screen.getByText("선택")).toBeInTheDocument();
+    // the configured check criteria are shown before the applicant gathers documents
+    expect(screen.getByText("발급일로부터 90일 이내")).toBeInTheDocument();
   });
 
   it("asks for the transcript GPA only for a workflow that has a transcript, and sends it as typed", async () => {

@@ -300,6 +300,10 @@ const FIELD_LABELS: Record<string, string> = {
   workplace_name: "사업장명",
   representative_name: "대표자명",
   business_registration_number: "사업자등록번호",
+  business_address: "사업장 소재지",
+  business_type: "업태",
+  business_item: "종목",
+  certificate_number: "확인서 번호",
   valid_from: "유효기간 시작일",
   valid_until: "유효기간 종료일",
   // student
@@ -317,7 +321,7 @@ const FIELD_LABELS: Record<string, string> = {
   employment_end_date: "근무 종료일",
   position: "직위",
   // academic
-  gpa: "평점",
+  gpa: "평점평균",
   gpa_scale: "평점 만점",
 };
 

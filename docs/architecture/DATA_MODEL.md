@@ -1,6 +1,6 @@
 # Data Model
 
-Entities: User, Project, Checklist, DocumentRequirement, ValidationRule, Submission, Document, OCRResult, ExtractedField, FieldReview, ValidationResult, AuditLog. UUID primary keys and timestamps are used throughout.
+Entities: User, Project, Checklist, ChecklistRevision, DocumentRequirement, ValidationRule, Submission, Document, OCRResult, ExtractedField, FieldReview, ValidationResult, AuditLog. UUID primary keys and timestamps are used throughout.
 
 `ValidationResult.scope=SUBMISSION` identifies the latest project-level verification rows.
 `outcome` stores `PASS`, `FAIL`, `UNRESOLVED`, or `NOT_APPLICABLE`; `details` stores only
@@ -37,3 +37,8 @@ erDiagram
 Important indexes cover project ownership, document checksum, document type, processing status, checklist requirements, and validation codes.
 
 `Checklist` is the persistence name for the user-facing Workflow concept. `Project.checklist_id` remains nullable only for backward compatibility with existing projects; all new project API requests require an active `workflow_id`, which is stored in that column. Document requirements are scoped to a checklist and carry `required=true|false`, so no document type is universally required.
+
+`Checklist.version` increases on every saved change to a workflow's check criteria. `ChecklistRevision`
+keeps one row per version (editor label, note, timestamp and a full snapshot of the criteria), so the admin
+console can show who changed what and restore an earlier version as a new version. `scripts/seed.py` does
+not overwrite a workflow that has revisions, so criteria edited in the admin console survive re-seeding.
