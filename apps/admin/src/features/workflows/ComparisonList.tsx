@@ -24,7 +24,8 @@ function Side({
 }) {
   const fields = catalog.get(documentType)?.fields ?? [];
   return (
-    <div className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-2">
+    <div className="grid min-w-0 flex-1 items-center gap-1.5 sm:grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)]">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
       <select
         aria-label={`${label} 서류`}
         className={inputClass}
@@ -93,7 +94,7 @@ export function ComparisonList({
             id={`comparisons.${index}`}
             key={index}
           >
-            <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+            <div className="flex flex-col gap-2">
               <Side
                 catalog={catalog}
                 documentType={item.source_document_type}
@@ -102,7 +103,10 @@ export function ComparisonList({
                 label="기준"
                 onChange={(type, field) => update(index, { ...item, source_document_type: type as typeof item.source_document_type, source_field: field })}
               />
-              <ArrowLeftRight aria-label="같은지 비교" className="mx-auto h-4 w-4 shrink-0 text-muted-foreground" />
+              <div className="flex items-center gap-2 pl-[3.375rem] text-xs text-muted-foreground">
+                <ArrowLeftRight aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                같은 값이어야 함
+              </div>
               <Side
                 catalog={catalog}
                 documentType={item.target_document_type}
@@ -111,10 +115,10 @@ export function ComparisonList({
                 label="대상"
                 onChange={(type, field) => update(index, { ...item, target_document_type: type as typeof item.target_document_type, target_field: field })}
               />
-              <div className="flex items-center gap-1.5 lg:w-48">
+              <div className="flex items-center gap-1.5 sm:pl-[3.375rem]">
                 <select
                   aria-label="비교 방식"
-                  className={inputClass}
+                  className={cn(inputClass, "sm:w-56")}
                   onChange={(event) => update(index, { ...item, value_type: event.target.value })}
                   title={VALUE_TYPES.find((type) => type.value === (item.value_type ?? "string"))?.hint}
                   value={item.value_type ?? "string"}
