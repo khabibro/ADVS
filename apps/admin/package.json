@@ -12,6 +12,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@advs/contracts": "workspace:*",
     "@advs/ui": "workspace:*",
     "lucide-react": "^0.468.0",
     "next": "^15.0.0",
@@ -31,4 +32,3 @@
     "typescript": "^5.5.4"
   }
 }
-

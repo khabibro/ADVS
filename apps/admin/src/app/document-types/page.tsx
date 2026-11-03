@@ -1,8 +1,6 @@
-import { Card } from "@advs/ui";
+import { redirect } from "next/navigation";
 
-const types = ["GRADUATION_CERTIFICATE", "CAREER_CERTIFICATE", "BUSINESS_REGISTRATION_CERTIFICATE", "SME_CONFIRMATION_CERTIFICATE"];
-
-export default function DocumentTypesPage() {
-  return <section className="space-y-4"><h1 className="text-2xl font-semibold">문서 유형</h1>{types.map((type) => <Card key={type}>{type}</Card>)}</section>;
+// Old placeholder page: its function now lives in 점검 기준 관리.
+export default function Page() {
+  redirect("/workflows");
 }
-

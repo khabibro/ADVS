@@ -1,6 +1,6 @@
-import { Card } from "@advs/ui";
+import { redirect } from "next/navigation";
 
-export default function RulesPage() {
-  return <Card><h1 className="text-2xl font-semibold">검증 규칙</h1><p className="mt-2 text-sm text-muted-foreground">결정적 규칙 구성 화면의 초기 경계입니다.</p></Card>;
+// Old placeholder page: its function now lives in 점검 기준 관리.
+export default function Page() {
+  redirect("/workflows");
 }
-
