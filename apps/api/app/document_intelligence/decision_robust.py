@@ -159,7 +159,11 @@ def is_decision_robust(
         if read_date is None or read_date.year != year_anchor:
             return False
     for alternative in _alternative_values(field, value, scale):
-        if year_anchor is not None and field == "issue_date" and int(alternative[:4]) != year_anchor:
+        if (
+            year_anchor is not None
+            and field == "issue_date"
+            and int(alternative[:4]) != year_anchor
+        ):
             continue  # the certificate number fixes the year
         if readings:
             parsed_alternative = parse_iso(alternative)

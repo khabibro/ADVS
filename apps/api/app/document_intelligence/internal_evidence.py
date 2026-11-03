@@ -49,7 +49,9 @@ class GpaFacts:
     # (credits, semester 백분율) in the same order as `pairs`, when every semester line prints one
     percent_pairs: tuple[tuple[int, float], ...] = ()
     total_percent: float | None = None  # 백분율 of the cumulative line
-    ordered_pairing: bool = False  # the semesters were paired by reading order (columns left to right)
+    ordered_pairing: bool = (
+        False  # the semesters were paired by reading order (columns left to right)
+    )
     # Same-line (평점평균, 백분율) pairs of the semester lines, and the pair of the cumulative line (kept apart:
     # it is only ever checked against a relation fitted without it)
     semester_percent_pairs: tuple[tuple[float, float], ...] = ()
@@ -278,7 +280,9 @@ def _gpa_facts(segments: list[tuple[int, OCRLine]]) -> GpaFacts | None:
     if semester_lines and len(credits) == len(semester_lines):
         # Semesters are printed in columns and a semester may continue at the top of the next column
         # (its credits at the bottom of one, its GPA at the top of the next): pair by reading order.
-        order = _reading_order([(p, b) for p, b, _ in semester_lines] + [(p, b) for p, b, _ in credits])
+        order = _reading_order(
+            [(p, b) for p, b, _ in semester_lines] + [(p, b) for p, b, _ in credits]
+        )
         ranked_gpa = sorted(semester_lines, key=lambda item: order[id(item[1])])
         ranked_credits = sorted(credits, key=lambda item: order[id(item[1])])
         pairs = [(c[2], g[2]) for c, g in zip(ranked_credits, ranked_gpa, strict=True)]

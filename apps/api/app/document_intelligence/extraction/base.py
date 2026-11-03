@@ -1554,7 +1554,9 @@ class BaseDocumentExtractor(ABC):
         normalized = normalize_date(candidate.value) if candidate else None
         if candidate is None or normalized is None:
             return labelled
-        return self._value("admission_date", candidate.value, normalized, "date_before_word", candidate)
+        return self._value(
+            "admission_date", candidate.value, normalized, "date_before_word", candidate
+        )
 
     def birth_date_field(self, text: ExtractionInput) -> ExtractedValue:
         """생년월일 beside its value; otherwise the one plausible birth date after a separated label."""
@@ -1565,7 +1567,9 @@ class BaseDocumentExtractor(ABC):
         normalized = normalize_date(candidate.value) if candidate else None
         if candidate is None or normalized is None:
             return labelled
-        return self._value("birth_date", candidate.value, normalized, "separated_label_date", candidate)
+        return self._value(
+            "birth_date", candidate.value, normalized, "separated_label_date", candidate
+        )
 
     def student_name_field(self, text: ExtractionInput) -> ExtractedValue:
         """Labelled name; otherwise the name beside a split-up 성명 label (positional)."""
@@ -1576,11 +1580,15 @@ class BaseDocumentExtractor(ABC):
             return labelled
         candidate = stacked_label_name_candidate(text)
         normalized = (
-            normalize_text_field(re.sub(r"^명?[:：]", "", _compact(candidate.value))) if candidate else None
+            normalize_text_field(re.sub(r"^명?[:：]", "", _compact(candidate.value)))
+            if candidate
+            else None
         )
         if candidate is None or normalized is None:
             return labelled
-        return self._value("student_name", candidate.value, normalized, "stacked_label_name", candidate)
+        return self._value(
+            "student_name", candidate.value, normalized, "stacked_label_name", candidate
+        )
 
     def student_id_field(self, text: ExtractionInput) -> ExtractedValue:
         """Labelled student number; otherwise the number beside a split-up label (positional, so it

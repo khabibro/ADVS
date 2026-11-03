@@ -52,6 +52,8 @@ def _gpa_within_truncation(mean: float, printed: float) -> bool:
 def _agrees(mean: float, printed: float) -> bool:
     """The mean, rounded to 2 decimals, equals the printed 2-decimal value within one last-place unit."""
     return abs(round(mean, 2) - printed) <= ROUNDING_BOUND + _EPSILON
+
+
 POINTS_TOLERANCE = 0.006  # total points / total credits, printed exactly
 
 
@@ -76,13 +78,16 @@ def gpa_arithmetic(facts: DocFacts | None, gpa: float) -> Verdict:
     if (
         len(g.pairs) >= MIN_SEMESTERS
         and credits > 0
-        and g.total_credits is not None  # a table is known to be complete only if its credits add up
+        and g.total_credits
+        is not None  # a table is known to be complete only if its credits add up
         and credits == g.total_credits
     ):
         if g.percent_pairs and g.total_percent is not None and len(g.percent_pairs) == len(g.pairs):
             percent = sum(c * x for c, x in g.percent_pairs) / sum(c for c, _ in g.percent_pairs)
             if not _agrees(percent, g.total_percent):
-                return NONE  # the table does not reproduce the printed 백분율: not a table to judge by
+                return (
+                    NONE  # the table does not reproduce the printed 백분율: not a table to judge by
+                )
             results.append(("weighted_percent", True))
         average = sum(c * x for c, x in g.pairs) / credits
         results.append(("weighted_average", _gpa_within_truncation(average, gpa)))
@@ -122,7 +127,9 @@ def percent_relation_fit(facts: DocFacts | None) -> tuple[float, float] | None:
     if g is None:
         return None
     pairs = [pair for pair in g.legend_pairs if pair[1] < 100] + list(g.semester_percent_pairs)
-    if g.total_pair is not None:  # a semester line identical to the cumulative line must not stand in for it
+    if (
+        g.total_pair is not None
+    ):  # a semester line identical to the cumulative line must not stand in for it
         pairs = [pair for pair in pairs if pair != g.total_pair]
     if len(pairs) < MIN_RELATION_PAIRS or len({gp for gp, _ in pairs}) < 2:
         return None
@@ -150,7 +157,10 @@ def gpa_percent_relation(facts: DocFacts | None, gpa: float) -> Verdict:
     if g is None or fit is None or g.total_pair is None or abs(g.total_pair[0] - gpa) > 1e-9:
         return NONE
     slope, intercept = fit
-    if abs(g.total_pair[1] - (slope * g.total_pair[0] + intercept)) <= _relation_bound(slope) + 1e-9:
+    if (
+        abs(g.total_pair[1] - (slope * g.total_pair[0] + intercept))
+        <= _relation_bound(slope) + 1e-9
+    ):
         return Verdict("CONFIRMED", "percent_relation")
     return Verdict(
         "MISMATCH",
@@ -228,7 +238,9 @@ VALIDITY_PROFILES: dict[DocumentType, ValidityProfile] = {
     DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE: ValidityProfile(
         until_after_issue_days=(30, 30), tolerance_days=0, shorter_is_consistent=True
     ),
-    DocumentType.SME_CONFIRMATION_CERTIFICATE: ValidityProfile(span_days=(364, 365), confirms=False),
+    DocumentType.SME_CONFIRMATION_CERTIFICATE: ValidityProfile(
+        span_days=(364, 365), confirms=False
+    ),
 }
 
 

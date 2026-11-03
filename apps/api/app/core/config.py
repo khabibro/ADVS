@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     # Read a page that looks unread in all four rotations and keep the best-reading one.
     paddle_ocr_rotation_search: bool = True
     log_level: str = "INFO"
+    # When set, the admin endpoints (/api/v1/admin/...) require this value in the X-ADVS-Admin-Token
+    # header. The admin console sends it from its own server, so the token never reaches a browser.
+    admin_api_token: str | None = None
     # Load the OCR model at API start (demo / production) instead of on the first upload.
     ocr_warmup: bool = False
     # Auto-acceptance of OCR values (see document_intelligence/auto_acceptance.py).

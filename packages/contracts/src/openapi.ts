@@ -384,6 +384,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Catalog */
+        get: operations["get_catalog_api_v1_admin_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/workflows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Workflows */
+        get: operations["list_workflows_api_v1_admin_workflows_get"];
+        put?: never;
+        /** Create Workflow */
+        post: operations["create_workflow_api_v1_admin_workflows_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/workflows/{workflow_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Workflow */
+        get: operations["get_workflow_api_v1_admin_workflows__workflow_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Workflow */
+        patch: operations["update_workflow_api_v1_admin_workflows__workflow_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/workflows/{workflow_id}/criteria": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save Criteria */
+        put: operations["save_criteria_api_v1_admin_workflows__workflow_id__criteria_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/workflows/{workflow_id}/revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Revisions */
+        get: operations["list_revisions_api_v1_admin_workflows__workflow_id__revisions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/workflows/{workflow_id}/revisions/{version}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore Revision */
+        post: operations["restore_revision_api_v1_admin_workflows__workflow_id__revisions__version__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -405,6 +509,101 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AdminRevisionRead */
+        AdminRevisionRead: {
+            /** Version */
+            version: number;
+            /** Editor Label */
+            editor_label?: string | null;
+            /** Note */
+            note?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            criteria: components["schemas"]["Criteria"];
+        };
+        /** AdminWorkflowCreate */
+        AdminWorkflowCreate: {
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /** Copy From Id */
+            copy_from_id?: string | null;
+            criteria?: components["schemas"]["Criteria"] | null;
+            /** Editor */
+            editor?: string | null;
+        };
+        /** AdminWorkflowDetail */
+        AdminWorkflowDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /** Is Active */
+            is_active: boolean;
+            /** Version */
+            version: number;
+            /** Document Count */
+            document_count: number;
+            /** Required Document Count */
+            required_document_count: number;
+            /** Project Count */
+            project_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Updated At */
+            updated_at?: string | null;
+            criteria: components["schemas"]["Criteria"];
+        };
+        /** AdminWorkflowSummary */
+        AdminWorkflowSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /** Is Active */
+            is_active: boolean;
+            /** Version */
+            version: number;
+            /** Document Count */
+            document_count: number;
+            /** Required Document Count */
+            required_document_count: number;
+            /** Project Count */
+            project_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Updated At */
+            updated_at?: string | null;
+        };
+        /** AdminWorkflowUpdate */
+        AdminWorkflowUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Is Active */
+            is_active?: boolean | null;
+        };
         /**
          * AutoAcceptanceRead
          * @description Why an OCR value does (or does not) still need a human check.
@@ -466,6 +665,29 @@ export interface components {
             /** Height */
             height: number;
         };
+        /** CatalogDocumentType */
+        CatalogDocumentType: {
+            document_type: components["schemas"]["DocumentType"];
+            /** Display Name */
+            display_name: string;
+            /** Supports Issue Date */
+            supports_issue_date: boolean;
+            /** Supports Validity */
+            supports_validity: boolean;
+            /** Default Required Fields */
+            default_required_fields: string[];
+            /** Fields */
+            fields: components["schemas"]["CatalogField"][];
+        };
+        /** CatalogField */
+        CatalogField: {
+            /** Name */
+            name: string;
+            /** Display Name */
+            display_name: string;
+            /** Kind */
+            kind: string;
+        };
         /**
          * CheckState
          * @enum {string}
@@ -496,6 +718,83 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** Criteria */
+        Criteria: {
+            /**
+             * Documents
+             * @default []
+             */
+            documents: components["schemas"]["CriteriaDocument"][];
+            /**
+             * Comparisons
+             * @default []
+             */
+            comparisons: components["schemas"]["CriteriaComparison"][];
+        };
+        /** CriteriaCatalog */
+        CriteriaCatalog: {
+            /** Document Types */
+            document_types: components["schemas"]["CatalogDocumentType"][];
+        };
+        /** CriteriaComparison */
+        CriteriaComparison: {
+            source_document_type: components["schemas"]["DocumentType"];
+            /** Source Field */
+            source_field: string;
+            target_document_type: components["schemas"]["DocumentType"];
+            /** Target Field */
+            target_field: string;
+            /**
+             * Value Type
+             * @default string
+             */
+            value_type: string;
+        };
+        /** CriteriaDocument */
+        CriteriaDocument: {
+            document_type: components["schemas"]["DocumentType"];
+            /**
+             * Required
+             * @default true
+             */
+            required: boolean;
+            /** Issue Date Max Age Days */
+            issue_date_max_age_days?: number | null;
+            /**
+             * Check Validity
+             * @default false
+             */
+            check_validity: boolean;
+            /**
+             * Value Rules
+             * @default []
+             */
+            value_rules: components["schemas"]["CriteriaValueRule"][];
+            /**
+             * Required Fields
+             * @default []
+             */
+            required_fields: string[];
+        };
+        /** CriteriaSave */
+        CriteriaSave: {
+            criteria: components["schemas"]["Criteria"];
+            /** Expected Version */
+            expected_version?: number | null;
+            /** Editor */
+            editor?: string | null;
+            /** Note */
+            note?: string | null;
+        };
+        /** CriteriaValueRule */
+        CriteriaValueRule: {
+            /** Field */
+            field: string;
+            /** Operator */
+            operator: string;
+            /** Value */
+            value: string;
         };
         /** DocumentDetail */
         DocumentDetail: {
@@ -963,6 +1262,11 @@ export interface components {
             documents: components["schemas"]["OverviewDocumentRef"][];
             /** Issue Codes */
             issue_codes: string[];
+            /**
+             * Checks
+             * @default []
+             */
+            checks: string[];
         };
         /**
          * RequirementState
@@ -1009,6 +1313,11 @@ export interface components {
             effective_value: string | null;
             effective_source: components["schemas"]["EffectiveValueSource"];
             auto_acceptance?: components["schemas"]["AutoAcceptanceRead"] | null;
+        };
+        /** RevisionRestore */
+        RevisionRestore: {
+            /** Editor */
+            editor?: string | null;
         };
         /** RuleEvaluationRead */
         RuleEvaluationRead: {
@@ -1148,6 +1457,11 @@ export interface components {
             display_name: string;
             /** Required */
             required: boolean;
+            /**
+             * Checks
+             * @default []
+             */
+            checks: string[];
         };
         /** WorkflowRead */
         WorkflowRead: {
@@ -2009,6 +2323,281 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FieldReviewRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_catalog_api_v1_admin_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-advs-admin-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CriteriaCatalog"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_workflows_api_v1_admin_workflows_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-advs-admin-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminWorkflowSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_workflow_api_v1_admin_workflows_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-advs-admin-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminWorkflowCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminWorkflowDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_workflow_api_v1_admin_workflows__workflow_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-advs-admin-token"?: string | null;
+            };
+            path: {
+                workflow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminWorkflowDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_workflow_api_v1_admin_workflows__workflow_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-advs-admin-token"?: string | null;
+            };
+            path: {
+                workflow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminWorkflowUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminWorkflowDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_criteria_api_v1_admin_workflows__workflow_id__criteria_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-advs-admin-token"?: string | null;
+            };
+            path: {
+                workflow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CriteriaSave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminWorkflowDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_revisions_api_v1_admin_workflows__workflow_id__revisions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-advs-admin-token"?: string | null;
+            };
+            path: {
+                workflow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRevisionRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_revision_api_v1_admin_workflows__workflow_id__revisions__version__restore_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-advs-admin-token"?: string | null;
+            };
+            path: {
+                workflow_id: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevisionRestore"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminWorkflowDetail"];
                 };
             };
             /** @description Validation Error */

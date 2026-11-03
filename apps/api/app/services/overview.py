@@ -41,6 +41,7 @@ from app.schemas.api import (
     RequirementState,
     VerificationIssueRead,
 )
+from app.services.criteria import requirement_hints
 from app.services.reviews import FieldReviewService
 from app.services.verification import SubmissionVerificationService
 
@@ -233,6 +234,7 @@ class ProjectOverviewService:
                     state=state,
                     documents=[_ref(d) for d in reversed(mine)],
                     issue_codes=sorted({i.code for i in touching}),
+                    checks=requirement_hints(requirement),
                 )
             )
         return out

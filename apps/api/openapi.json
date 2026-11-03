@@ -1090,6 +1090,501 @@
         }
       }
     },
+    "/api/v1/admin/catalog": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Get Catalog",
+        "operationId": "get_catalog_api_v1_admin_catalog_get",
+        "parameters": [
+          {
+            "name": "x-advs-admin-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Advs-Admin-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CriteriaCatalog"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List Workflows",
+        "operationId": "list_workflows_api_v1_admin_workflows_get",
+        "parameters": [
+          {
+            "name": "x-advs-admin-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Advs-Admin-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminWorkflowSummary"
+                  },
+                  "title": "Response List Workflows Api V1 Admin Workflows Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Create Workflow",
+        "operationId": "create_workflow_api_v1_admin_workflows_post",
+        "parameters": [
+          {
+            "name": "x-advs-admin-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Advs-Admin-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminWorkflowCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminWorkflowDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows/{workflow_id}": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Get Workflow",
+        "operationId": "get_workflow_api_v1_admin_workflows__workflow_id__get",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          },
+          {
+            "name": "x-advs-admin-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Advs-Admin-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminWorkflowDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Update Workflow",
+        "operationId": "update_workflow_api_v1_admin_workflows__workflow_id__patch",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          },
+          {
+            "name": "x-advs-admin-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Advs-Admin-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminWorkflowUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminWorkflowDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows/{workflow_id}/criteria": {
+      "put": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Save Criteria",
+        "operationId": "save_criteria_api_v1_admin_workflows__workflow_id__criteria_put",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          },
+          {
+            "name": "x-advs-admin-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Advs-Admin-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriteriaSave"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminWorkflowDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows/{workflow_id}/revisions": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List Revisions",
+        "operationId": "list_revisions_api_v1_admin_workflows__workflow_id__revisions_get",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          },
+          {
+            "name": "x-advs-admin-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Advs-Admin-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminRevisionRead"
+                  },
+                  "title": "Response List Revisions Api V1 Admin Workflows  Workflow Id  Revisions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/workflows/{workflow_id}/revisions/{version}/restore": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Restore Revision",
+        "operationId": "restore_revision_api_v1_admin_workflows__workflow_id__revisions__version__restore_post",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Version"
+            }
+          },
+          {
+            "name": "x-advs-admin-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Advs-Admin-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisionRestore"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminWorkflowDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Root Health",
@@ -1115,6 +1610,303 @@
   },
   "components": {
     "schemas": {
+      "AdminRevisionRead": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "editor_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Editor Label"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "criteria": {
+            "$ref": "#/components/schemas/Criteria"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "created_at",
+          "criteria"
+        ],
+        "title": "AdminRevisionRead"
+      },
+      "AdminWorkflowCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "copy_from_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Copy From Id"
+          },
+          "criteria": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Criteria"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "editor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Editor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "AdminWorkflowCreate"
+      },
+      "AdminWorkflowDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "document_count": {
+            "type": "integer",
+            "title": "Document Count"
+          },
+          "required_document_count": {
+            "type": "integer",
+            "title": "Required Document Count"
+          },
+          "project_count": {
+            "type": "integer",
+            "title": "Project Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "criteria": {
+            "$ref": "#/components/schemas/Criteria"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "is_active",
+          "version",
+          "document_count",
+          "required_document_count",
+          "project_count",
+          "created_at",
+          "criteria"
+        ],
+        "title": "AdminWorkflowDetail"
+      },
+      "AdminWorkflowSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "document_count": {
+            "type": "integer",
+            "title": "Document Count"
+          },
+          "required_document_count": {
+            "type": "integer",
+            "title": "Required Document Count"
+          },
+          "project_count": {
+            "type": "integer",
+            "title": "Project Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "is_active",
+          "version",
+          "document_count",
+          "required_document_count",
+          "project_count",
+          "created_at"
+        ],
+        "title": "AdminWorkflowSummary"
+      },
+      "AdminWorkflowUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "AdminWorkflowUpdate"
+      },
       "AutoAcceptanceRead": {
         "properties": {
           "accepted": {
@@ -1302,6 +2094,72 @@
         ],
         "title": "BoundingBoxRead"
       },
+      "CatalogDocumentType": {
+        "properties": {
+          "document_type": {
+            "$ref": "#/components/schemas/DocumentType"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "supports_issue_date": {
+            "type": "boolean",
+            "title": "Supports Issue Date"
+          },
+          "supports_validity": {
+            "type": "boolean",
+            "title": "Supports Validity"
+          },
+          "default_required_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Default Required Fields"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogField"
+            },
+            "type": "array",
+            "title": "Fields"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_type",
+          "display_name",
+          "supports_issue_date",
+          "supports_validity",
+          "default_required_fields",
+          "fields"
+        ],
+        "title": "CatalogDocumentType"
+      },
+      "CatalogField": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "display_name",
+          "kind"
+        ],
+        "title": "CatalogField"
+      },
       "CheckState": {
         "type": "string",
         "enum": [
@@ -1374,6 +2232,194 @@
           "created_at"
         ],
         "title": "ChecklistRead"
+      },
+      "Criteria": {
+        "properties": {
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/CriteriaDocument"
+            },
+            "type": "array",
+            "title": "Documents",
+            "default": []
+          },
+          "comparisons": {
+            "items": {
+              "$ref": "#/components/schemas/CriteriaComparison"
+            },
+            "type": "array",
+            "title": "Comparisons",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "Criteria"
+      },
+      "CriteriaCatalog": {
+        "properties": {
+          "document_types": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogDocumentType"
+            },
+            "type": "array",
+            "title": "Document Types"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_types"
+        ],
+        "title": "CriteriaCatalog"
+      },
+      "CriteriaComparison": {
+        "properties": {
+          "source_document_type": {
+            "$ref": "#/components/schemas/DocumentType"
+          },
+          "source_field": {
+            "type": "string",
+            "title": "Source Field"
+          },
+          "target_document_type": {
+            "$ref": "#/components/schemas/DocumentType"
+          },
+          "target_field": {
+            "type": "string",
+            "title": "Target Field"
+          },
+          "value_type": {
+            "type": "string",
+            "title": "Value Type",
+            "default": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_document_type",
+          "source_field",
+          "target_document_type",
+          "target_field"
+        ],
+        "title": "CriteriaComparison"
+      },
+      "CriteriaDocument": {
+        "properties": {
+          "document_type": {
+            "$ref": "#/components/schemas/DocumentType"
+          },
+          "required": {
+            "type": "boolean",
+            "title": "Required",
+            "default": true
+          },
+          "issue_date_max_age_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issue Date Max Age Days"
+          },
+          "check_validity": {
+            "type": "boolean",
+            "title": "Check Validity",
+            "default": false
+          },
+          "value_rules": {
+            "items": {
+              "$ref": "#/components/schemas/CriteriaValueRule"
+            },
+            "type": "array",
+            "title": "Value Rules",
+            "default": []
+          },
+          "required_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Required Fields",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_type"
+        ],
+        "title": "CriteriaDocument"
+      },
+      "CriteriaSave": {
+        "properties": {
+          "criteria": {
+            "$ref": "#/components/schemas/Criteria"
+          },
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version"
+          },
+          "editor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Editor"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "criteria"
+        ],
+        "title": "CriteriaSave"
+      },
+      "CriteriaValueRule": {
+        "properties": {
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "operator": {
+            "type": "string",
+            "title": "Operator"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "field",
+          "operator",
+          "value"
+        ],
+        "title": "CriteriaValueRule"
       },
       "DocumentDetail": {
         "properties": {
@@ -2891,6 +3937,14 @@
             },
             "type": "array",
             "title": "Issue Codes"
+          },
+          "checks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Checks",
+            "default": []
           }
         },
         "type": "object",
@@ -3090,6 +4144,24 @@
           "effective_source"
         ],
         "title": "ReviewItemRead"
+      },
+      "RevisionRestore": {
+        "properties": {
+          "editor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Editor"
+          }
+        },
+        "type": "object",
+        "title": "RevisionRestore"
       },
       "RuleEvaluationRead": {
         "properties": {
@@ -3588,6 +4660,14 @@
           "required": {
             "type": "boolean",
             "title": "Required"
+          },
+          "checks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Checks",
+            "default": []
           }
         },
         "type": "object",

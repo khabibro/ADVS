@@ -100,8 +100,10 @@ def strip_jpeg_metadata(data: bytes) -> bytes:
             # 0xFF00 or a restart marker; copy it unchanged.
             start = pos
             while pos < size - 1:
-                if data[pos] == 0xFF and data[pos + 1] != 0x00 and not (
-                    0xD0 <= data[pos + 1] <= 0xD7
+                if (
+                    data[pos] == 0xFF
+                    and data[pos + 1] != 0x00
+                    and not (0xD0 <= data[pos + 1] <= 0xD7)
                 ):
                     if data[pos + 1] == 0xFF:  # fill byte
                         pos += 1

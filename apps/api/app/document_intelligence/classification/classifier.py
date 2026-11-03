@@ -260,7 +260,8 @@ class DocumentClassifier:
                 # a damaged title: the body decides, with the guard against the other student statuses
                 return ClassificationResult(
                     predicted_type=DocumentType.ENROLLMENT_CERTIFICATE,
-                    confidence_score=MIN_SCORE_FOR_CONFIDENT_TYPE / (MIN_SCORE_FOR_CONFIDENT_TYPE + 1),
+                    confidence_score=MIN_SCORE_FOR_CONFIDENT_TYPE
+                    / (MIN_SCORE_FOR_CONFIDENT_TYPE + 1),
                     score=MIN_SCORE_FOR_CONFIDENT_TYPE,
                     evidence=list(BODY_LABELS_EVIDENCE),
                     needs_review=False,
@@ -271,7 +272,9 @@ class DocumentClassifier:
         if winner_type == DocumentType.ENROLLMENT_CERTIFICATE and any(
             word in haystack for word in OTHER_STATUS_WORDS
         ):
-            return _unknown(scores, evidence)  # the layout is shared with the other student statuses
+            return _unknown(
+                scores, evidence
+            )  # the layout is shared with the other student statuses
         issuer_unconfirmed = False
         if winner_type == DocumentType.NATIONAL_TAX_PAYMENT_CERTIFICATE:
             if any(marker in haystack for marker in LOCAL_TAX_MARKERS):

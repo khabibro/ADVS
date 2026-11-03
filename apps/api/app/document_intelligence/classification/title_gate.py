@@ -172,8 +172,12 @@ def _adjacent_prefix(segments: list[OCRLine], title: str) -> str | None:
 def _has_official_marker(pages: list[OCRPage]) -> bool:
     """A certificate serial ("제 YYYY-…호"), the attestation sentence ("위의 사실을 증명합니다"), the issuer
     line ("…대학교 총장") or the certificate-service footer."""
-    text = _squash("".join(page.text + "".join(line.text for line in page.lines) for page in pages)).lower()
-    return bool(_OFFICIAL_SERIAL.search(text)) or any(phrase in text for phrase in _OFFICIAL_PHRASES)
+    text = _squash(
+        "".join(page.text + "".join(line.text for line in page.lines) for page in pages)
+    ).lower()
+    return bool(_OFFICIAL_SERIAL.search(text)) or any(
+        phrase in text for phrase in _OFFICIAL_PHRASES
+    )
 
 
 def _body_labels(document_type: DocumentType, evidence: list[str]) -> int:
@@ -195,7 +199,9 @@ def assess_title(
         and tuple(evidence) == BODY_LABELS_EVIDENCE
         and enrolment_body_labels(_squash("".join(page.text for page in pages)))
     ):
-        return TitleAssessment(True)  # typed by its body labels, with the other-status guard re-checked
+        return TitleAssessment(
+            True
+        )  # typed by its body labels, with the other-status guard re-checked
     for page in pages:
         for row in build_rows(page):
             segments = [item for item in row.segments if item.text.strip()]

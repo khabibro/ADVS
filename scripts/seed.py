@@ -5,6 +5,7 @@ from app.core.domain import DocumentType, RuleOperator, RuleType, Severity
 from app.db.session import Base, SessionLocal, engine
 from app.models.entities import (
     Checklist,
+    ChecklistRevision,
     DocumentRequirement,
     Project,
     Submission,
@@ -35,6 +36,10 @@ def upsert_workflow(
         db.add(workflow)
         db.flush()
     else:
+        if db.query(ChecklistRevision).filter_by(checklist_id=workflow.id).count():
+            # An administrator has edited this workflow's criteria in the admin console:
+            # the seed must not silently replace them with the defaults in this file.
+            return workflow
         workflow.description = description
         workflow.is_active = True
         project_ids = [

@@ -197,3 +197,63 @@ def normalize_overall_status(value: str | OverallStatus) -> OverallStatus:
         return LEGACY_OVERALL_STATUS_MAP[value]
     except KeyError as exc:
         raise ValueError(f"Unsupported overall status: {value}") from exc
+
+
+#: Korean display names of canonical fields (shared with the admin console through the API).
+FIELD_DISPLAY_NAMES: dict[str, str] = {
+    "company_name": "기업명",
+    "workplace_name": "사업장명",
+    "representative_name": "대표자명",
+    "business_registration_number": "사업자등록번호",
+    "business_address": "사업장 소재지",
+    "business_type": "업태",
+    "business_item": "종목",
+    "certificate_number": "확인서 번호",
+    "valid_from": "유효기간 시작일",
+    "valid_until": "유효기간 종료일",
+    "student_name": "성명",
+    "applicant_name": "신청인 이름",
+    "university_name": "학교",
+    "department": "학과",
+    "degree": "학위",
+    "student_id": "학번",
+    "birth_date": "생년월일",
+    "admission_date": "입학일자",
+    "issue_date": "발급일",
+    "graduation_date": "졸업일",
+    "employment_start_date": "근무 시작일",
+    "employment_end_date": "근무 종료일",
+    "position": "직위",
+    "gpa": "평점평균",
+    "gpa_scale": "평점 만점",
+}
+
+#: Value kind of each canonical field: decides which checks an administrator can configure on it.
+FIELD_KINDS: dict[str, str] = {
+    **{
+        name: "date"
+        for name in (
+            "valid_from",
+            "valid_until",
+            "birth_date",
+            "admission_date",
+            "issue_date",
+            "graduation_date",
+            "employment_start_date",
+            "employment_end_date",
+        )
+    },
+    **{name: "number" for name in ("gpa", "gpa_scale")},
+    **{
+        name: "identifier"
+        for name in ("business_registration_number", "student_id", "certificate_number")
+    },
+}
+
+
+def field_display_name(name: str) -> str:
+    return FIELD_DISPLAY_NAMES.get(name, name)
+
+
+def field_kind(name: str) -> str:
+    return FIELD_KINDS.get(name, "text")

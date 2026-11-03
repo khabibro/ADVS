@@ -61,9 +61,35 @@ class Checklist(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(200), index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Incremented on every saved change to the criteria; each version is kept in checklist_revisions.
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default=text("1"))
     requirements = relationship(
         "DocumentRequirement", back_populates="checklist", cascade="all, delete-orphan"
     )
+    revisions = relationship(
+        "ChecklistRevision",
+        back_populates="checklist",
+        cascade="all, delete-orphan",
+        order_by="ChecklistRevision.version.desc()",
+    )
+
+
+class ChecklistRevision(Base, TimestampMixin):
+    """One saved version of a workflow's check criteria (who, when, why, and the full criteria)."""
+
+    __tablename__ = "checklist_revisions"
+    __table_args__ = (
+        Index("uq_checklist_revision_version", "checklist_id", "version", unique=True),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    checklist_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("checklists.id", ondelete="CASCADE"), index=True
+    )
+    version: Mapped[int] = mapped_column(Integer)
+    editor_label: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    snapshot: Mapped[dict] = mapped_column(JSONType, default=dict)
+    checklist = relationship("Checklist", back_populates="revisions")
 
 
 class DocumentRequirement(Base, TimestampMixin):

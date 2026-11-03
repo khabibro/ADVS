@@ -57,6 +57,7 @@ def test_list_workflows_exposes_document_requirements(client: TestClient, db_ses
         "document_type": "BUSINESS_REGISTRATION_CERTIFICATE",
         "display_name": "사업자등록증",
         "required": True,
+        "checks": [],
     }
     assert requirements["NATIONAL_TAX_PAYMENT_CERTIFICATE"]["display_name"] == "국세 납세증명서"
     assert requirements["SOCIAL_INSURANCE_PAYMENT_CERTIFICATE"]["required"] is True
@@ -214,9 +215,11 @@ def test_student_workflow_required_and_optional_semantics(client: TestClient, db
         "document_type": "ENROLLMENT_CERTIFICATE",
         "display_name": "재학증명서",
         "required": True,
+        "checks": [],
     }
     assert requirements["TRANSCRIPT"] == {
         "document_type": "TRANSCRIPT",
         "display_name": "성적증명서",
         "required": False,
+        "checks": [],
     }

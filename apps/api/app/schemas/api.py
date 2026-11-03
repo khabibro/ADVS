@@ -43,6 +43,8 @@ class WorkflowDocumentRequirementRead(BaseModel):
     document_type: DocumentType
     display_name: str
     required: bool
+    # short Korean descriptions of the configured checks, e.g. "발급일로부터 90일 이내"
+    checks: list[str] = []
 
 
 class WorkflowRead(BaseModel):
@@ -355,6 +357,7 @@ class RequirementOverview(BaseModel):
     state: RequirementState
     documents: list[OverviewDocumentRef]
     issue_codes: list[str]
+    checks: list[str] = []
 
 
 class OtherDocumentOverview(BaseModel):
@@ -418,3 +421,103 @@ class ProjectSummaryRead(BaseModel):
     required_ok: int
     required_total: int
     review_open: int
+
+
+# ----------------------------------------------------------------------------- admin: check criteria
+
+
+class CriteriaValueRule(BaseModel):
+    field: str
+    operator: str
+    value: str
+
+
+class CriteriaDocument(BaseModel):
+    document_type: DocumentType
+    required: bool = True
+    issue_date_max_age_days: int | None = None
+    check_validity: bool = False
+    value_rules: list[CriteriaValueRule] = []
+    required_fields: list[str] = []
+
+
+class CriteriaComparison(BaseModel):
+    source_document_type: DocumentType
+    source_field: str
+    target_document_type: DocumentType
+    target_field: str
+    value_type: str = "string"
+
+
+class Criteria(BaseModel):
+    documents: list[CriteriaDocument] = []
+    comparisons: list[CriteriaComparison] = []
+
+
+class CatalogField(BaseModel):
+    name: str
+    display_name: str
+    kind: str
+
+
+class CatalogDocumentType(BaseModel):
+    document_type: DocumentType
+    display_name: str
+    supports_issue_date: bool
+    supports_validity: bool
+    default_required_fields: list[str]
+    fields: list[CatalogField]
+
+
+class CriteriaCatalog(BaseModel):
+    document_types: list[CatalogDocumentType]
+
+
+class AdminWorkflowSummary(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: str | None = None
+    is_active: bool
+    version: int
+    document_count: int
+    required_document_count: int
+    project_count: int
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class AdminWorkflowDetail(AdminWorkflowSummary):
+    criteria: Criteria
+
+
+class AdminWorkflowCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=2000)
+    copy_from_id: uuid.UUID | None = None
+    criteria: Criteria | None = None
+    editor: str | None = Field(default=None, max_length=120)
+
+
+class AdminWorkflowUpdate(BaseModel):
+    name: str | None = Field(default=None, max_length=200)
+    description: str | None = Field(default=None, max_length=2000)
+    is_active: bool | None = None
+
+
+class CriteriaSave(BaseModel):
+    criteria: Criteria
+    expected_version: int | None = None
+    editor: str | None = Field(default=None, max_length=120)
+    note: str | None = Field(default=None, max_length=2000)
+
+
+class RevisionRestore(BaseModel):
+    editor: str | None = Field(default=None, max_length=120)
+
+
+class AdminRevisionRead(BaseModel):
+    version: int
+    editor_label: str | None = None
+    note: str | None = None
+    created_at: datetime
+    criteria: Criteria

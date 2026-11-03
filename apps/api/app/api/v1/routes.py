@@ -59,6 +59,7 @@ from app.schemas.api import (
 from app.services.applicant_gpa import format_applicant_gpa, parse_applicant_gpa
 from app.services.auto_acceptance import decisions_for_project
 from app.services.consistency import lock_project
+from app.services.criteria import requirement_hints
 from app.services.document_validation import (
     validate_effective_document,
 )
@@ -105,6 +106,7 @@ def _document_requirement_read(
         document_type=document_type.value,
         display_name=DOCUMENT_TYPE_DISPLAY_NAMES[document_type],
         required=requirement.required,
+        checks=requirement_hints(requirement),
     )
 
 

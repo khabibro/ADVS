@@ -109,9 +109,7 @@ class LocalStorageService:
         original = sanitize_filename(file.filename or "upload")
         ext = Path(original).suffix.lower()
         if ext in _HEIF_EXTENSIONS:
-            raise api_error(
-                ApiErrorCode.HEIC_NOT_SUPPORTED, "HEIC/HEIF photos are not supported."
-            )
+            raise api_error(ApiErrorCode.HEIC_NOT_SUPPORTED, "HEIC/HEIF photos are not supported.")
         if ext not in ALLOWED_EXT:
             raise api_error(
                 ApiErrorCode.INVALID_FILE_TYPE, "PDF, PNG, JPG, JPEG and WebP files are supported."
