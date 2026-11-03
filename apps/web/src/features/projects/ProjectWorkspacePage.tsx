@@ -8,6 +8,7 @@ import { ErrorState, SkeletonRows } from "@/components/page-state";
 import { IssueList } from "@/features/overview/IssueList";
 import { RequirementChecklist } from "@/features/overview/RequirementChecklist";
 import { StatusBanner } from "@/features/overview/StatusBanner";
+import { ProjectActions } from "@/features/projects/ProjectActions";
 import { ReviewPanel } from "@/features/reviews/ReviewPanel";
 import { UploadProvider } from "@/features/upload/UploadProvider";
 import { UploadDropzone, UploadNotices, UploadQueueList } from "@/features/upload/UploadParts";
@@ -16,7 +17,7 @@ import {
   useProjectInvalidation,
   useProjectOverview,
 } from "@/lib/queries";
-import { rememberEvaluationDate, useAutoCheck, useStatusChange } from "@/lib/use-auto-check";
+import { useAutoCheck, useStatusChange } from "@/lib/use-auto-check";
 import { formatDateTime } from "@/lib/presentation";
 import { queryKeys } from "@/lib/query-keys";
 import { api } from "@/services/api";
@@ -78,7 +79,13 @@ export function ProjectWorkspacePage({ projectId }: { projectId: string }) {
             <ArrowLeft aria-hidden="true" className="h-4 w-4" />
             제출 건 목록
           </Link>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{project.name}</h1>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{project.name}</h1>
+            <ProjectActions
+              asksForGpa={project.expected_documents.some((item) => item.document_type === "TRANSCRIPT")}
+              project={project}
+            />
+          </div>
           <p className="text-sm text-muted-foreground">
             {project.workflow?.name ?? "업무 미지정"} · 생성 {formatDateTime(project.created_at)}
             {project.applicant_name || project.company_name
@@ -91,10 +98,6 @@ export function ProjectWorkspacePage({ projectId }: { projectId: string }) {
           changedFrom={changedFrom}
           checkError={verify.isError ? apiErrorMessage(verify.error, "verify") : null}
           checking={verify.isPending}
-          onRecheck={(date) => {
-            rememberEvaluationDate(projectId, date);
-            verify.mutate(date);
-          }}
           overview={overview}
         />
 

@@ -38,6 +38,10 @@ export const api = {
     apiRequest<Project>(`/projects/${projectId}`),
   createProject: (body: ProjectCreate) =>
     apiJsonRequest<Project>("/projects", "POST", body),
+  updateProject: (projectId: string, body: ProjectCreate) =>
+    apiJsonRequest<Project>(`/projects/${projectId}`, "PATCH", body),
+  deleteProject: (projectId: string) =>
+    apiJsonRequest<void>(`/projects/${projectId}`, "DELETE"),
 
   projectOverview: (projectId: string) =>
     apiRequest<ProjectOverview>(`/projects/${projectId}/overview`),

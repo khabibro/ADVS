@@ -1,4 +1,5 @@
 import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithQuery } from "@/test/render";
 import { api } from "@/services/api";
@@ -57,5 +58,20 @@ describe("ProjectsListPage", () => {
     vi.mocked(api.projectSummaries).mockRejectedValue(new Error("x"));
     renderWithQuery(<ProjectsListPage />);
     expect(await screen.findByRole("heading", { name: "정상 제출" })).toBeInTheDocument();
+  });
+
+  it("filters by status and searches by name", async () => {
+    const user = userEvent.setup();
+    renderWithQuery(<ProjectsListPage />);
+    await screen.findByRole("heading", { name: "정상 제출" });
+    await user.click(screen.getByRole("button", { name: /보완 필요/ }));
+    expect(screen.getByRole("heading", { name: "보완 제출" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "정상 제출" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /전체/ }));
+    await user.type(screen.getByLabelText("제출 건 검색"), "새");
+    expect(screen.getByRole("heading", { name: "새 제출" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "보완 제출" })).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText("제출 건 검색"), "없는이름");
+    expect(screen.getByText("조건에 맞는 제출 건이 없습니다.")).toBeInTheDocument();
   });
 });

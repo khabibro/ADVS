@@ -18,7 +18,7 @@ from app.document_intelligence.validation.engine import (
     ValidationEngine,
     ValidationIssue,
 )
-from app.models.entities import Document, DocumentRequirement, Project, Submission
+from app.models.entities import Document, DocumentRequirement, Project, Submission, ValidationResult
 from app.services.requirements import required_fields
 
 _KST = ZoneInfo("Asia/Seoul")
@@ -43,6 +43,26 @@ def submission_reference_date(submission: Submission | None) -> date | None:
     if timestamp.tzinfo is None:
         timestamp = timestamp.replace(tzinfo=UTC)
     return timestamp.astimezone(_KST).date()
+
+
+def current_check_date(db: Session, project_id) -> date | None:
+    """The check date (점검 기준일) of the submission's current result, if one exists.
+
+    A document's own validity/age check must use the same date as the submission result shown
+    next to it; otherwise a document could show "보완 필요" inside a submission that is "제출 가능"
+    (it used the submission's creation date while the result used the chosen check date).
+    Stored rows exist only while the result is current (any input change deletes them).
+    """
+    row = db.scalar(
+        select(ValidationResult)
+        .where(ValidationResult.project_id == project_id, ValidationResult.scope == "SUBMISSION")
+        .limit(1)
+    )
+    value = (row.details or {}).get("evaluation_date") if row is not None else None
+    try:
+        return date.fromisoformat(str(value)) if value else None
+    except ValueError:
+        return None
 
 
 def policy_gated_fields(fields: list[ExtractedValue]) -> list[ExtractedValue]:
@@ -143,7 +163,8 @@ def validate_effective_document(
         project.company_name if project else None,
         duplicate,
         configured_document_rules(db, project, document_type),
-        submission_reference_date(submission),
+        (current_check_date(db, project.id) if project else None)
+        or submission_reference_date(submission),
     )
     if (document.classification_meta or {}).get("multiple_documents_in_file"):
         issues.append(

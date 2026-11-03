@@ -1,4 +1,5 @@
 import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api-error";
 import { renderWithQuery } from "@/test/render";
@@ -16,8 +17,13 @@ vi.mock("@/services/api", () => ({
     processDocument: vi.fn(),
     verify: vi.fn(),
     submitReview: vi.fn(),
+    updateProject: vi.fn(),
+    deleteProject: vi.fn(),
   },
 }));
+
+const push = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
@@ -187,5 +193,40 @@ describe("ProjectWorkspacePage", () => {
     renderWithQuery(<ProjectWorkspacePage projectId="p" />);
     expect(await screen.findByText(/서버에 연결할 수 없습니다\./)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /다시 시도/ })).toBeInTheDocument();
+  });
+
+  it("does not let the applicant change the check date (it is shown read-only)", async () => {
+    renderWithQuery(<ProjectWorkspacePage projectId="p" />);
+    await screen.findByRole("heading", { name: "보완 필요" });
+    expect(screen.getByText("점검 기준일")).toBeInTheDocument();
+    expect(screen.queryByText("날짜를 바꿔 다시 점검하기")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("점검 기준일")).not.toBeInTheDocument();
+  });
+
+  it("edits the submission's basic information", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.updateProject).mockResolvedValue({ ...project, name: "기업 제출 (수정)" });
+    renderWithQuery(<ProjectWorkspacePage projectId="p" />);
+    await user.click(await screen.findByRole("button", { name: "정보 수정" }));
+    const name = screen.getByLabelText("제출 건 이름");
+    await user.clear(name);
+    await user.type(name, "기업 제출 (수정)");
+    await user.click(screen.getByRole("button", { name: "저장" }));
+    expect(vi.mocked(api.updateProject).mock.calls[0]).toEqual([
+      "p",
+      expect.objectContaining({ name: "기업 제출 (수정)", workflow_id: "w" }),
+    ]);
+  });
+
+  it("deletes the submission after confirmation and returns to the list", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.deleteProject).mockResolvedValue(undefined);
+    renderWithQuery(<ProjectWorkspacePage projectId="p" />);
+    await user.click(await screen.findByRole("button", { name: "삭제" }));
+    expect(api.deleteProject).not.toHaveBeenCalled();
+    const dialog = screen.getByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "삭제" }));
+    expect(api.deleteProject).toHaveBeenCalledWith("p");
+    await vi.waitFor(() => expect(push).toHaveBeenCalledWith("/projects"));
   });
 });

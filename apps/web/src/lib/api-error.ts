@@ -27,6 +27,7 @@ export type ApiErrorCode =
   | "PROCESSING_FAILED"
   | "VALIDATION_FAILED"
   | "VALIDATION_ERROR"
+  | "PROCESSING_IN_PROGRESS"
   | "NETWORK_ERROR"
   | "HTTP_ERROR";
 
@@ -50,6 +51,7 @@ const CODE_MESSAGES: Record<ApiErrorCode, string> = {
   PROCESSING_FAILED: "서류 분석에 실패했습니다.",
   VALIDATION_FAILED: "입력값을 확인해 주세요.",
   VALIDATION_ERROR: "입력값을 확인해 주세요.",
+  PROCESSING_IN_PROGRESS: "서류 분석이 끝난 뒤에 다시 시도해 주세요.",
   NETWORK_ERROR: "서버에 연결할 수 없습니다. 네트워크 연결을 확인하고 다시 시도해 주세요.",
   HTTP_ERROR: "요청을 처리하지 못했습니다.",
 };

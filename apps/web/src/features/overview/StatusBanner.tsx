@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { AlertTriangle, CheckCircle2, CircleDashed, LoaderCircle, RefreshCw, XCircle } from "lucide-react";
-import { Button } from "@advs/ui";
+import { AlertTriangle, CheckCircle2, CircleDashed, LoaderCircle, XCircle } from "lucide-react";
 import { bannerFor } from "@/lib/copy";
 import { formatDate, type Tone } from "@/lib/presentation";
 import type { ProjectOverview } from "@/types/api";
@@ -32,21 +30,18 @@ export function StatusBanner({
   changedFrom,
   checking,
   checkError,
-  onRecheck,
 }: {
   overview: ProjectOverview;
   /** Label of the previous status when it just changed (e.g. "확인 필요"). */
   changedFrom: string | null;
+  /** The automatic check is running. */
   checking: boolean;
   checkError: string | null;
-  onRecheck: (evaluationDate: string) => void;
 }) {
   const banner = bannerFor(overview);
   const tone = TONE[banner.tone];
   const Icon = ICON[banner.tone];
-  const [date, setDate] = useState<string | null>(null);
   const shownDate = overview.evaluation_date ?? overview.suggested_evaluation_date;
-  const editedDate = date ?? shownDate;
 
   return (
     <section aria-labelledby="status-heading" className={`rounded-xl border-2 p-5 sm:p-6 ${tone.card}`}>
@@ -95,35 +90,12 @@ export function StatusBanner({
             {overview.evaluated_at ? "" : " (아직 점검 전이라 오늘 날짜를 제안합니다)"}
           </span>
         </p>
-        <details className="mt-2">
-          <summary className="inline-flex cursor-pointer items-center gap-1 rounded font-semibold underline underline-offset-2">
-            날짜를 바꿔 다시 점검하기
-          </summary>
-          <div className="mt-2 flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1 text-xs font-semibold">
-              점검 기준일
-              <input
-                className="h-9 rounded-md border border-border bg-white px-2 text-sm font-normal text-foreground"
-                onChange={(event) => setDate(event.target.value)}
-                type="date"
-                value={editedDate}
-              />
-            </label>
-            <Button
-              disabled={checking || !editedDate}
-              onClick={() => onRecheck(editedDate)}
-              size="sm"
-              variant="secondary"
-            >
-              {checking ? (
-                <LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw aria-hidden="true" className="h-4 w-4" />
-              )}
-              {checking ? "점검 중" : "다시 점검"}
-            </Button>
-          </div>
-        </details>
+        {checking ? (
+          <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium" role="status">
+            <LoaderCircle aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />
+            점검 중입니다…
+          </p>
+        ) : null}
       </div>
     </section>
   );
