@@ -37,7 +37,10 @@ from app.document_intelligence.normalization.field_normalizer import (
     normalize_gpa_scale,
     normalize_text_field,
 )
-from app.document_intelligence.validation.submission import SUBMISSION_WIDE_FIELDS
+from app.document_intelligence.validation.submission import (
+    OBSERVATION_ONLY_FIELDS,
+    SUBMISSION_WIDE_FIELDS,
+)
 from app.models.entities import (
     Checklist,
     Document,
@@ -360,12 +363,16 @@ class FieldReviewService:
                 params: dict[str, Any] = rule.params or {}
                 rule_type = RuleType(rule.rule_type)
                 if rule_type == RuleType.FIELD_COMPARISON:
-                    dependencies.add(
-                        (DocumentType(params["source_document_type"]), str(params["source_field"]))
-                    )
-                    dependencies.add(
-                        (DocumentType(params["target_document_type"]), str(params["target_field"]))
-                    )
+                    for side in ("source", "target"):
+                        side_type = DocumentType(params[f"{side}_document_type"])
+                        side_field = str(params[f"{side}_field"])
+                        if side_field in OBSERVATION_ONLY_FIELDS and not any(
+                            item.document_type == side_type.value
+                            and side_field in required_fields(item)
+                            for item in checklist.requirements
+                        ):
+                            continue  # an observation: compared when both documents print it, never queued
+                        dependencies.add((side_type, side_field))
                 elif rule_type in {RuleType.DATE_COMPARISON, RuleType.NUMERIC_COMPARISON}:
                     dependencies.add((DocumentType(params["document_type"]), str(params["field"])))
                 elif rule_type in {RuleType.DATE_NOT_EXPIRED, RuleType.ISSUE_DATE_MAX_AGE}:

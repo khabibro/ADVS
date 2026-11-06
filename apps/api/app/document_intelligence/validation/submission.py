@@ -231,7 +231,10 @@ SUBMISSION_WIDE_FIELDS = frozenset({"student_id", "admission_date"})
 
 #: Observations that are compared only when both documents print them AND both reads are reliable; an unreliable
 #: side is not a blocker for a field no decision depends on.
-SOFT_OBSERVATION_FIELDS = frozenset({"admission_date"})
+SOFT_OBSERVATION_FIELDS = frozenset({"admission_date", "student_id"})
+#: Observation-only fields (identity is name + date of birth): never queued for a person and never a blocker unless
+#: the checklist itself lists them as required fields of the document.
+OBSERVATION_ONLY_FIELDS = frozenset({"student_id"})
 
 
 def _business_number_value(document: DocumentSnapshot) -> str | None:
