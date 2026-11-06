@@ -477,7 +477,8 @@ class CriteriaDatePolicy(BaseModel):
 class Criteria(BaseModel):
     documents: list[CriteriaDocument] = []
     comparisons: list[CriteriaComparison] = []
-    evaluation_date_policy: CriteriaDatePolicy = CriteriaDatePolicy()
+    # Left out on a save, the checklist keeps the policy it has.
+    evaluation_date_policy: CriteriaDatePolicy | None = None
 
 
 class CatalogField(BaseModel):

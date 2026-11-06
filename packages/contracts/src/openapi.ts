@@ -731,12 +731,7 @@ export interface components {
              * @default []
              */
             comparisons: components["schemas"]["CriteriaComparison"][];
-            /**
-             * @default {
-             *       "mode": "TODAY"
-             *     }
-             */
-            evaluation_date_policy: components["schemas"]["CriteriaDatePolicy"];
+            evaluation_date_policy?: components["schemas"]["CriteriaDatePolicy"] | null;
         };
         /** CriteriaCatalog */
         CriteriaCatalog: {

@@ -2252,10 +2252,14 @@
             "default": []
           },
           "evaluation_date_policy": {
-            "$ref": "#/components/schemas/CriteriaDatePolicy",
-            "default": {
-              "mode": "TODAY"
-            }
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CriteriaDatePolicy"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",

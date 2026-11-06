@@ -187,9 +187,17 @@ def criteria_from_checklist(checklist: Checklist) -> dict[str, Any]:
     }
 
 
-def _date_policy(criteria: dict[str, Any]) -> tuple[str, date | None]:
-    """The check-date policy of a criteria set: ('TODAY', None) or ('FIXED', the date)."""
-    policy = criteria.get("evaluation_date_policy") or {}
+def _date_policy(
+    criteria: dict[str, Any], current: Checklist | None = None
+) -> tuple[str, date | None]:
+    """The check-date policy of a criteria set: ('TODAY', None) or ('FIXED', the date).
+
+    A criteria set without a policy (an older client, the admin editor) keeps the current one."""
+    policy = criteria.get("evaluation_date_policy")
+    if not policy:
+        if current is not None:
+            return current.evaluation_date_mode or "TODAY", current.evaluation_date_fixed
+        return "TODAY", None
     mode = str(policy.get("mode") or "TODAY").upper()
     if mode == "TODAY":
         return "TODAY", None
@@ -509,7 +517,7 @@ def save_criteria(
             "version",
         )
     requirements = _build_requirements(criteria)
-    mode, fixed = _date_policy(criteria)
+    mode, fixed = _date_policy(criteria, checklist)
     if not _has_revisions(db, checklist.id):
         _record_revision(db, checklist, "시스템", "최초 기준 (변경 전 상태)")
     checklist.requirements.clear()

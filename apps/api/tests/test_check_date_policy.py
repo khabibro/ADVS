@@ -69,3 +69,18 @@ def test_a_fixed_policy_without_a_date_is_refused(client: TestClient, db_session
         json={"criteria": criteria, "expected_version": detail["version"]},
     )
     assert response.status_code == 422
+
+
+def test_a_save_without_a_policy_keeps_the_fixed_date(client: TestClient, db_session) -> None:
+    project, _, _ = _business_project(db_session)
+    fixed = _set_policy(client, project.checklist_id, {"mode": "FIXED", "date": "2026-10-30"})
+    criteria = {k: v for k, v in fixed["criteria"].items() if k != "evaluation_date_policy"}
+    response = client.put(
+        f"/api/v1/admin/workflows/{project.checklist_id}/criteria",
+        json={"criteria": criteria, "expected_version": fixed["version"]},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["criteria"]["evaluation_date_policy"] == {
+        "mode": "FIXED",
+        "date": "2026-10-30",
+    }
