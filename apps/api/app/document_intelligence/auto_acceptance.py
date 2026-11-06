@@ -1472,6 +1472,10 @@ def _plausible_different_value(key: str, reading: str) -> bool:
         return False
     if not all(ch.isalpha() for ch in text):
         return False
+    # one script only: a Korean name with a stray Latin letter is a garbled re-read, not another name
+    hangul = [ch for ch in text if "\uac00" <= ch <= "\ud7a3"]
+    if hangul and len(hangul) != len(text):
+        return False
     if any("\u1100" <= ch <= "\u11ff" or "\u3130" <= ch <= "\u318f" for ch in text):
         return False
     doubled = {a for a, b in zip(text, text[1:], strict=False) if a == b}

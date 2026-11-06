@@ -144,3 +144,8 @@ def test_reliable_read_with_garbled_reread_is_accepted_when_the_typed_name_equal
         [_name(0.995, reread="김가가나나나")], ProjectContext(applicant_name="김가나"), Strategy.S21
     )
     assert got[(E, "student_name")].accepted
+
+
+def test_a_stray_latin_letter_makes_the_reread_garbled_not_plausible() -> None:
+    assert _plausible_different_value("가나대학교", "가나대학m") is False
+    assert _plausible_different_value("가나대학교", "가다대학교") is True

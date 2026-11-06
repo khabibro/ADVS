@@ -70,6 +70,10 @@ class FieldSnapshot:
     effective_source: EffectiveValueSource = EffectiveValueSource.MACHINE
     review_id: uuid.UUID | None = None
     extraction_method: str | None = None
+    # What the machine read and why it was not accepted (None when accepted); used only to see that two
+    # confident reads disagree.
+    machine_value: str | None = None
+    auto_reason: str | None = None
 
 
 @dataclass(frozen=True)
@@ -240,6 +244,21 @@ OBSERVATION_ONLY_FIELDS = frozenset({"student_id"})
 def _business_number_value(document: DocumentSnapshot) -> str | None:
     number = document.fields.get("business_registration_number")
     return number.normalized_value if number is not None else None
+
+
+def _confident_numbers_differ(left: FieldSnapshot, right: FieldSnapshot) -> bool:
+    values = []
+    for snapshot in (left, right):
+        value = snapshot.normalized_value or snapshot.machine_value
+        if (
+            value is None
+            or not is_valid_business_number("".join(ch for ch in value if ch.isdigit()))
+            or snapshot.auto_reason not in (None, "DISAGREES_WITH_OTHER_DOCUMENT")
+            or (snapshot.normalized_value is None and snapshot.auto_reason is None)
+        ):
+            return False
+        values.append("".join(ch for ch in value if ch.isdigit()))
+    return values[0] != values[1]
 
 
 def _single_input_issue(results: list[RuleEvaluationResult]) -> list[RuleEvaluationResult]:
@@ -891,6 +910,39 @@ class SubmissionVerificationEngine:
             )
         source_field = source.fields.get(source_name)
         target_field = target.fields.get(target_name)
+        if (
+            source_name == target_name == "business_registration_number"
+            and source_field is not None
+            and target_field is not None
+            and _confident_numbers_differ(source_field, target_field)
+        ):
+            # Two business numbers that each pass the floor and the check digit, and are held back only because
+            # they disagree with each other: the documents belong to different businesses.
+            return RuleEvaluationResult(
+                rule.id,
+                rule.rule_type,
+                RuleOutcome.FAIL,
+                VerificationIssue(
+                    code="INFORMATION_MISMATCH",
+                    status_effect=_status_for_severity(rule.severity),
+                    message="서류의 사업자등록번호가 서로 다릅니다. 같은 사업자의 서류인지 확인해 주세요.",
+                    document_id=source.id,
+                    document_type=source_type,
+                    field_name=source_name,
+                    related_document_id=target.id,
+                    related_document_type=target_type,
+                    related_field_name=target_name,
+                    rule_id=rule.id,
+                    field_id=source_field.id,
+                    related_field_id=target_field.id,
+                ),
+                source.id,
+                source_type,
+                source_name,
+                target.id,
+                target_type,
+                target_name,
+            )
         if source_name == target_name and source_name in SUBMISSION_WIDE_FIELDS:
             # An observation, not a requirement: compared only when both documents print it. A value
             # printed on one document alone is nothing to check or confirm.

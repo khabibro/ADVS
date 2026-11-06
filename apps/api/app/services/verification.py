@@ -319,6 +319,13 @@ class SubmissionVerificationService:
                     effective_source=effective.source,
                     review_id=effective.review.id if effective.review else None,
                     extraction_method=machine.extraction_method if machine else None,
+                    machine_value=machine.normalized_value if machine else None,
+                    auto_reason=(
+                        decisions[(row.id, field_name)].reason
+                        if (row.id, field_name) in decisions
+                        and not decisions[(row.id, field_name)].accepted
+                        else None
+                    ),
                 )
             snapshots.append(
                 DocumentSnapshot(
