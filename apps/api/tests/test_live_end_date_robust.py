@@ -105,9 +105,8 @@ def _with_printed_issue(end: str, printed: str, reference: date):
 
 
 def test_a_printed_issue_date_a_legal_period_before_the_end_gives_the_context() -> None:
-    # the issue date is printed but not extracted as a field; the 5-day validity (shortened by law) ends 3 days after
-    # the check date and no likely misreading changes the verdict only if the printed date backs it
-    got = _with_printed_issue("2026-11-13", "2026-10-14", date(2026, 11, 14))
+    # the issue date is printed but not extracted as a field: it is the context that lets the end date be judged
+    got = _with_printed_issue("2026-11-13", "2026-10-14", date(2026, 10, 20))
     assert got.accepted
 
 
