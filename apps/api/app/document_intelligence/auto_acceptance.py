@@ -48,7 +48,12 @@ from typing import Any
 
 from app.core.domain import DocumentType
 from app.document_intelligence.candidate_repair import PROVENANCE, propose_repair
-from app.document_intelligence.company_names import company_key, company_names_agree
+from app.document_intelligence.company_names import (
+    alias_pool,
+    company_key,
+    company_names_agree,
+    typed_name_matches,
+)
 from app.document_intelligence.confirmations import (
     VALIDITY_PROFILES,
     business_number_copy,
@@ -103,6 +108,7 @@ class Strategy(StrEnum):
     S18 = "S18"  # S14 + routes A and B
     S19 = "S19"  # S16 + a narrow boundary margin for GPA values the page itself confirms (report-only option)
     S20 = "S20"  # S18 + the same narrow margin (report-only option)
+    S21 = "S21"  # S17 + the live-strictness fixes (company aliases, typed-name/GPA exact confirmation, ...)
 
 
 @dataclass(frozen=True)
@@ -145,6 +151,9 @@ class Features:
     # A GPA the page itself confirms (arithmetic, conversion) is pinned to the printed truncation (0.01), so the
     # distance to the threshold that blocks it can be this small instead of the policy margin. None = policy margin.
     confirmed_gpa_margin: float | None = None
+    # Every name form a certificate prints (the Korean name, the Latin name in brackets) is an alias: a typed
+    # company name conflicts only when it equals none of the aliases printed on the documents of that business.
+    company_alias: bool = False
 
 
 STRATEGY_FEATURES: dict[Strategy, Features] = {
@@ -273,6 +282,7 @@ STRATEGY_FEATURES[Strategy.S17] = replace(STRATEGY_FEATURES[Strategy.S14], appli
 STRATEGY_FEATURES[Strategy.S18] = replace(
     STRATEGY_FEATURES[Strategy.S14], gpa_relation=True, applicant_gpa=True
 )
+STRATEGY_FEATURES[Strategy.S21] = replace(STRATEGY_FEATURES[Strategy.S17], company_alias=True)
 STRATEGY_FEATURES[Strategy.S19] = replace(
     STRATEGY_FEATURES[Strategy.S16], confirmed_gpa_margin=0.05
 )
@@ -394,6 +404,27 @@ def canonical_key(group: str, value: str, *, tolerant: bool = False) -> str:
 def _business_number_of(item: FieldInput, index: _Index) -> str | None:
     number = index.sibling(item.document_id, "business_registration_number")
     return number.value if number is not None else None
+
+
+def _company_alias_pool(
+    item: FieldInput, fields: Sequence[FieldInput], index: _Index
+) -> frozenset[str]:
+    """Every name form printed on the documents of the item's business (same valid business number)."""
+    number = "".join(ch for ch in (_business_number_of(item, index) or "") if ch.isdigit())
+    values: list[str | None] = [item.value]
+    for other in fields:
+        rule = FIELD_RULES.get(other.field_name)
+        if (
+            other.document_id == item.document_id
+            or rule is None
+            or rule.group != "company"
+            or other.value is None
+        ):
+            continue
+        theirs = "".join(ch for ch in (_business_number_of(other, index) or "") if ch.isdigit())
+        if number and theirs == number and is_valid_business_number(number):
+            values.append(other.value)
+    return alias_pool(values)
 
 
 def parse_second_pass(field_name: str, text: str | None) -> str | None:
@@ -1391,7 +1422,10 @@ def _decide_corroborated(
             context.company_name if rule.application == "company_name" else context.applicant_name
         )
     if reference and rule.group:
-        if canonical_key(rule.group, reference) != canonical_key(rule.group, item.value):
+        if features.company_alias and rule.group == "company":
+            if not typed_name_matches(reference, _company_alias_pool(item, fields, index)):
+                return _no(strategy, "CONFLICTS_WITH_APPLICATION_VALUE", rule.rule_id)
+        elif canonical_key(rule.group, reference) != canonical_key(rule.group, item.value):
             return _no(strategy, "CONFLICTS_WITH_APPLICATION_VALUE", rule.rule_id)
 
     # ---- second-pass veto (S6) ----------------------------------------------------------------
