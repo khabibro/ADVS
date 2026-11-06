@@ -27,6 +27,7 @@ const BACKEND_SUBMISSION_CODES = [
   "OCR_UNCERTAIN",
   "REQUIRED_FIELD_UNRESOLVED",
   "DUPLICATE_UPLOAD_IGNORED",
+  "COMPANY_NAME_INPUT_NOT_FOUND",
 ];
 const hangul = /[가-힣]/;
 
@@ -143,5 +144,17 @@ describe("requirement rows and banner", () => {
       "필요한 서류 4종을 업로드해 주세요.",
     );
     expect(bannerFor({ ...base, next_step: "WAIT_PROCESSING" }).label).toBe("분석 중");
+  });
+});
+
+describe("specific reasons", () => {
+  it("uses the explanation the API sent instead of the generic sentence", () => {
+    const text = issueSentence({
+      code: "OCR_UNCERTAIN",
+      document_type: "TRANSCRIPT",
+      field_name: "university_name",
+      explanation: "성적증명서의 학교를 한 번 더 읽은 결과가 달라 자동으로 확정하지 못했습니다.",
+    } as Parameters<typeof issueSentence>[0]);
+    expect(text).toContain("한 번 더 읽은 결과");
   });
 });

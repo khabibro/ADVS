@@ -29,7 +29,7 @@ function IssueCard({ issue, projectId }: { issue: OverviewIssue; projectId: stri
           ) : null}
           <p className="mt-2 text-sm leading-6">
             <span className="font-semibold">해결 방법 </span>
-            {copy.fix}
+            {issue.action ?? copy.fix}
           </p>
           {issue.document_id ? (
             <Link

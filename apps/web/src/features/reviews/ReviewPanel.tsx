@@ -84,8 +84,19 @@ function ReviewCard({
           </p>
           <p className="mt-3 text-sm leading-6">
             <span className="font-semibold">확인이 필요한 이유 </span>
-            {why ?? "인식한 값을 원본과 대조해야 합니다."}
+            {item.reason_ko ?? why ?? "인식한 값을 원본과 대조해야 합니다."}
           </p>
+          {item.action_ko ? (
+            <p className="mt-1 text-sm leading-6">
+              <span className="font-semibold">할 일 </span>
+              {item.action_ko}
+            </p>
+          ) : null}
+          {item.reason_code ? (
+            <p className="mt-1 text-xs text-muted-foreground" data-testid="reason-code">
+              사유 코드 {item.reason_code}
+            </p>
+          ) : null}
           {item.assessment_reasons.length > 0 ? (
             <ul className="mt-1 space-y-0.5 text-sm text-muted-foreground">
               {item.assessment_reasons.map((reason) => (

@@ -1144,6 +1144,12 @@ export interface components {
             expected_value?: string | null;
             /** Max Age Days */
             max_age_days?: number | null;
+            /** Reason Code */
+            reason_code?: string | null;
+            /** Explanation */
+            explanation?: string | null;
+            /** Action */
+            action?: string | null;
         };
         /** PageInfoRead */
         PageInfoRead: {
@@ -1313,6 +1319,12 @@ export interface components {
             effective_value: string | null;
             effective_source: components["schemas"]["EffectiveValueSource"];
             auto_acceptance?: components["schemas"]["AutoAcceptanceRead"] | null;
+            /** Reason Code */
+            reason_code?: string | null;
+            /** Reason Ko */
+            reason_ko?: string | null;
+            /** Action Ko */
+            action_ko?: string | null;
         };
         /** RevisionRestore */
         RevisionRestore: {
