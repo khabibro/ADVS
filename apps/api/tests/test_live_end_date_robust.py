@@ -87,3 +87,31 @@ def test_an_end_date_that_breaks_the_legal_period_is_never_accepted_as_robust() 
     ]
     got = decide(fields, ProjectContext(reference_date=date(2026, 10, 5), rules=SPEC), Strategy.S21)
     assert not got[(DOC, "valid_until")].accepted
+
+
+def _with_printed_issue(end: str, printed: str, reference: date):
+    from app.document_intelligence.internal_evidence import DateBox, DocFacts
+
+    facts = DocFacts(dates=(DateBox(printed, 1, 100, 100, 200, 30, True),))
+    second = SecondPassInput(end, end, 0.9)
+    fields = [
+        FieldInput(
+            DOC, "c", D, "valid_until", end, 0.95, True, False, second_pass=second, facts=facts
+        )
+    ]
+    return decide(fields, ProjectContext(reference_date=reference, rules=SPEC), Strategy.S21)[
+        (DOC, "valid_until")
+    ]
+
+
+def test_a_printed_issue_date_a_legal_period_before_the_end_gives_the_context() -> None:
+    # the issue date is printed but not extracted as a field; the 5-day validity (shortened by law) ends 3 days after
+    # the check date and no likely misreading changes the verdict only if the printed date backs it
+    got = _with_printed_issue("2026-11-13", "2026-10-14", date(2026, 11, 14))
+    assert got.accepted
+
+
+def test_an_end_date_far_beyond_every_printed_date_is_not_robust() -> None:
+    # injection E11 shape: the end is 66 days after the only other printed date
+    got = _with_printed_issue("2026-10-06", "2026-08-01", date(2026, 10, 5))
+    assert not got.accepted

@@ -737,6 +737,18 @@ def _anchored_issue_date_robust(item: FieldInput, index: _Index, context: Projec
     )
 
 
+def _context_dates(item: FieldInput, index: _Index) -> list[date]:
+    """The other dates of the page that can be read: the sibling dates and the bare dates printed elsewhere."""
+    found: list[date] = []
+    for name in ("issue_date", "valid_from", "valid_until"):
+        other = index.sibling(item.document_id, name)
+        parsed = parse_iso(other.value) if other is not None and name != item.field_name else None
+        if parsed is not None:
+            found.append(parsed)
+    found.extend(_printed_bare_dates(item))
+    return found
+
+
 def _decision_robust_item(item: FieldInput, index: _Index, context: ProjectContext) -> bool:
     """Every plausible misreading of the value (digit-confusion table) gives the same rule outcomes."""
     assert item.value is not None
@@ -758,6 +770,13 @@ def _decision_robust_item(item: FieldInput, index: _Index, context: ProjectConte
             == "MISMATCH"
         ):
             return False  # the dates the page prints do not fit the type's legal period: not a value to act on
+        profile = VALIDITY_PROFILES.get(item.document_type)
+        end = parse_iso(item.value) if item.field_name == "valid_until" else None
+        if end is not None and profile is not None and profile.until_after_issue_days is not None:
+            longest = profile.until_after_issue_days[1] + profile.tolerance_days
+            candidates = _context_dates(item, index)
+            if not any(0 <= (end - day).days <= longest for day in candidates):
+                return False  # no printed date lies a legal period (or less) before this end
     return is_decision_robust(
         list(context.rules),
         context.reference_date,
@@ -796,12 +815,7 @@ def _boundary_blocks(
     if features.robust_end_dates and item.field_name in ("valid_until", "valid_from"):
         if item.value is None or context.reference_date is None:
             return False
-        has_context = any(
-            (other := index.sibling(item.document_id, name)) is not None
-            and parse_iso(other.value) is not None
-            for name in ("issue_date", "valid_from", "valid_until")
-            if name != item.field_name
-        )
+        has_context = bool(_context_dates(item, index))
         if not has_context:
             # No other date of the page to judge the end by: a misread that moves an expired date next to the
             # check date (injection E11) cannot be told from a true one, so the policy margin stays.
