@@ -1,7 +1,8 @@
 import uuid
 from datetime import date, datetime
+from datetime import date as date_type
 from enum import StrEnum
-from typing import Self
+from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -266,7 +267,8 @@ class DocumentDetail(DocumentRead):
 
 
 class VerificationRequest(BaseModel):
-    evaluation_date: date
+    # Left out, the check date comes from the check-date policy of the submission's checklist version.
+    evaluation_date: date | None = None
 
 
 class VerificationIssueRead(BaseModel):
@@ -457,9 +459,25 @@ class CriteriaComparison(BaseModel):
     value_type: str = "string"
 
 
+class CriteriaDatePolicy(BaseModel):
+    """Which day a check of this version counts as: the day it is run, or one fixed date."""
+
+    mode: Literal["TODAY", "FIXED"] = "TODAY"
+    date: date_type | None = None
+
+    @model_validator(mode="after")
+    def _fixed_needs_a_date(self) -> "CriteriaDatePolicy":
+        if self.mode == "FIXED" and self.date is None:
+            raise ValueError("고정 점검일을 입력해 주세요.")
+        if self.mode == "TODAY":
+            self.date = None
+        return self
+
+
 class Criteria(BaseModel):
     documents: list[CriteriaDocument] = []
     comparisons: list[CriteriaComparison] = []
+    evaluation_date_policy: CriteriaDatePolicy = CriteriaDatePolicy()
 
 
 class CatalogField(BaseModel):

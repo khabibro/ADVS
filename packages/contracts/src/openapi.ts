@@ -731,6 +731,12 @@ export interface components {
              * @default []
              */
             comparisons: components["schemas"]["CriteriaComparison"][];
+            /**
+             * @default {
+             *       "mode": "TODAY"
+             *     }
+             */
+            evaluation_date_policy: components["schemas"]["CriteriaDatePolicy"];
         };
         /** CriteriaCatalog */
         CriteriaCatalog: {
@@ -750,6 +756,20 @@ export interface components {
              * @default string
              */
             value_type: string;
+        };
+        /**
+         * CriteriaDatePolicy
+         * @description Which day a check of this version counts as: the day it is run, or one fixed date.
+         */
+        CriteriaDatePolicy: {
+            /**
+             * Mode
+             * @default TODAY
+             * @enum {string}
+             */
+            mode: "TODAY" | "FIXED";
+            /** Date */
+            date?: string | null;
         };
         /** CriteriaDocument */
         CriteriaDocument: {
@@ -1456,11 +1476,8 @@ export interface components {
         };
         /** VerificationRequest */
         VerificationRequest: {
-            /**
-             * Evaluation Date
-             * Format: date
-             */
-            evaluation_date: string;
+            /** Evaluation Date */
+            evaluation_date?: string | null;
         };
         /** WorkflowDocumentRequirementRead */
         WorkflowDocumentRequirementRead: {

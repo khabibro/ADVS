@@ -1,8 +1,9 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
     Boolean,
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -64,6 +65,11 @@ class Checklist(Base, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     # Incremented on every saved change to the criteria; each version is kept in checklist_revisions.
     version: Mapped[int] = mapped_column(Integer, default=1, server_default=text("1"))
+    # Check-date policy of this version: TODAY (the day of the check) or FIXED (evaluation_date_fixed).
+    evaluation_date_mode: Mapped[str] = mapped_column(
+        String(10), default="TODAY", server_default=text("'TODAY'")
+    )
+    evaluation_date_fixed: Mapped[date | None] = mapped_column(Date, nullable=True)
     requirements = relationship(
         "DocumentRequirement", back_populates="checklist", cascade="all, delete-orphan"
     )

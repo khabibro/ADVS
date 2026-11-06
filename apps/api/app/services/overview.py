@@ -41,7 +41,7 @@ from app.schemas.api import (
     RequirementState,
     VerificationIssueRead,
 )
-from app.services.criteria import requirement_hints
+from app.services.criteria import policy_evaluation_date, requirement_hints
 from app.services.reason_text import explain
 from app.services.reviews import FieldReviewService
 from app.services.verification import SubmissionVerificationService
@@ -167,7 +167,11 @@ class ProjectOverviewService:
             status=status,
             evaluation_date=result.evaluation_date if result else None,
             evaluated_at=stored.evaluated_at if result else None,
-            suggested_evaluation_date=result.evaluation_date if result else date.today(),
+            suggested_evaluation_date=(
+                result.evaluation_date
+                if result
+                else policy_evaluation_date(project.checklist, date.today())
+            ),
             status_item_count=item_count,
             next_step=self._next_step(counts, status, issues),
             counts=counts,

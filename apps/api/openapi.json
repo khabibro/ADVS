@@ -2250,6 +2250,12 @@
             "type": "array",
             "title": "Comparisons",
             "default": []
+          },
+          "evaluation_date_policy": {
+            "$ref": "#/components/schemas/CriteriaDatePolicy",
+            "default": {
+              "mode": "TODAY"
+            }
           }
         },
         "type": "object",
@@ -2301,6 +2307,34 @@
           "target_field"
         ],
         "title": "CriteriaComparison"
+      },
+      "CriteriaDatePolicy": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "TODAY",
+              "FIXED"
+            ],
+            "title": "Mode",
+            "default": "TODAY"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          }
+        },
+        "type": "object",
+        "title": "CriteriaDatePolicy",
+        "description": "Which day a check of this version counts as: the day it is run, or one fixed date."
       },
       "CriteriaDocument": {
         "properties": {
@@ -4703,15 +4737,19 @@
       "VerificationRequest": {
         "properties": {
           "evaluation_date": {
-            "type": "string",
-            "format": "date",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Evaluation Date"
           }
         },
         "type": "object",
-        "required": [
-          "evaluation_date"
-        ],
         "title": "VerificationRequest"
       },
       "WorkflowDocumentRequirementRead": {
