@@ -55,3 +55,5 @@ evaluation/phase_d*/H*_raw.json
 
 # Real documents (private, never committed; see evaluation/real_docs)
 data/private_real/
+apps/web/e2e-private/
+apps/web/playwright.private.config.ts
