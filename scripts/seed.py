@@ -131,8 +131,10 @@ def main() -> None:
             [
                 (DocumentType.BUSINESS_REGISTRATION_CERTIFICATE, True, []),
                 (
+                    # Optional ("멘토 실제 제출 서류 기준: 중소기업확인서 선택"): the real submissions
+                    # do not contain one; when it is uploaded its checks still apply.
                     DocumentType.SME_CONFIRMATION_CERTIFICATE,
-                    True,
+                    False,
                     [
                         comparison_rule(
                             DocumentType.SME_CONFIRMATION_CERTIFICATE,
