@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     # Auto-acceptance of OCR values (see document_intelligence/auto_acceptance.py).
     # S0 = off (every OCR field to a human) ... S18. Default S17 (v6): S14 (S11 + company identity by numbers
     # + veto lift) + the optional applicant-entered GPA (route B; inert when the applicant typed none).
-    auto_accept_strategy: str = "S17"
+    auto_accept_strategy: str = "S21"
     # Comma-separated workflow (checklist) ids for which auto-acceptance is switched off.
     auto_accept_disabled_workflows: str = ""
 

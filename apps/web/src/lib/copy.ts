@@ -82,6 +82,10 @@ export const SUBMISSION_ISSUE_COPY: Record<string, IssueCopy> = {
     title: "필수 항목을 읽지 못했습니다.",
     fix: "원본을 보고 값을 직접 입력해 주세요.",
   },
+  COMPANY_NAME_INPUT_NOT_FOUND: {
+    title: "입력한 회사명이 서류에 인쇄된 상호와 일치하지 않습니다.",
+    fix: "서류에 인쇄된 상호(한글 또는 괄호 안 영문)로 다시 입력해 주세요.",
+  },
   DUPLICATE_UPLOAD_IGNORED: {
     title: "같은 파일이 이미 제출되어 한 번만 사용했습니다.",
     fix: "추가로 할 일은 없습니다.",
@@ -174,6 +178,7 @@ type IssueLike = Pick<
   | "reference_date"
   | "expected_value"
   | "max_age_days"
+  | "explanation"
 >;
 
 function valueText(field: string | null | undefined, value: string | null | undefined) {
@@ -183,6 +188,7 @@ function valueText(field: string | null | undefined, value: string | null | unde
 
 /** "What is wrong", with the actual values when the API returned them. */
 export function issueSentence(issue: IssueLike): string {
+  if (issue.explanation) return issue.explanation;
   const doc = issue.document_type ? documentTypeLabel(issue.document_type) : "서류";
   const field = fieldLabel(issue.field_name);
   const value = valueText(issue.field_name, issue.value);

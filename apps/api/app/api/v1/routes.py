@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import date
 
 from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, status
 from sqlalchemy import delete, select, update
@@ -59,7 +60,7 @@ from app.schemas.api import (
 from app.services.applicant_gpa import format_applicant_gpa, parse_applicant_gpa
 from app.services.auto_acceptance import decisions_for_project
 from app.services.consistency import lock_project
-from app.services.criteria import requirement_hints
+from app.services.criteria import policy_evaluation_date, requirement_hints
 from app.services.document_validation import (
     validate_effective_document,
 )
@@ -532,7 +533,11 @@ def verify_project(
     if not project:
         raise api_error(ApiErrorCode.RESOURCE_NOT_FOUND, "Project not found", 404)
     try:
-        stored = submission_verification_service.verify(db, project_id, payload.evaluation_date)
+        # Without an explicit date the check date is the one the checklist version's policy gives.
+        evaluation_date = payload.evaluation_date or policy_evaluation_date(
+            project.checklist, date.today()
+        )
+        stored = submission_verification_service.verify(db, project_id, evaluation_date)
     except (RuleConfigurationError, ValueError) as exc:
         db.rollback()
         raise api_error(ApiErrorCode.VALIDATION_FAILED, str(exc), 400) from exc

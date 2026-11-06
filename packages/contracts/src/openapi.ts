@@ -731,6 +731,7 @@ export interface components {
              * @default []
              */
             comparisons: components["schemas"]["CriteriaComparison"][];
+            evaluation_date_policy?: components["schemas"]["CriteriaDatePolicy"] | null;
         };
         /** CriteriaCatalog */
         CriteriaCatalog: {
@@ -750,6 +751,20 @@ export interface components {
              * @default string
              */
             value_type: string;
+        };
+        /**
+         * CriteriaDatePolicy
+         * @description Which day a check of this version counts as: the day it is run, or one fixed date.
+         */
+        CriteriaDatePolicy: {
+            /**
+             * Mode
+             * @default TODAY
+             * @enum {string}
+             */
+            mode: "TODAY" | "FIXED";
+            /** Date */
+            date?: string | null;
         };
         /** CriteriaDocument */
         CriteriaDocument: {
@@ -1144,6 +1159,12 @@ export interface components {
             expected_value?: string | null;
             /** Max Age Days */
             max_age_days?: number | null;
+            /** Reason Code */
+            reason_code?: string | null;
+            /** Explanation */
+            explanation?: string | null;
+            /** Action */
+            action?: string | null;
         };
         /** PageInfoRead */
         PageInfoRead: {
@@ -1313,6 +1334,12 @@ export interface components {
             effective_value: string | null;
             effective_source: components["schemas"]["EffectiveValueSource"];
             auto_acceptance?: components["schemas"]["AutoAcceptanceRead"] | null;
+            /** Reason Code */
+            reason_code?: string | null;
+            /** Reason Ko */
+            reason_ko?: string | null;
+            /** Action Ko */
+            action_ko?: string | null;
         };
         /** RevisionRestore */
         RevisionRestore: {
@@ -1444,11 +1471,8 @@ export interface components {
         };
         /** VerificationRequest */
         VerificationRequest: {
-            /**
-             * Evaluation Date
-             * Format: date
-             */
-            evaluation_date: string;
+            /** Evaluation Date */
+            evaluation_date?: string | null;
         };
         /** WorkflowDocumentRequirementRead */
         WorkflowDocumentRequirementRead: {

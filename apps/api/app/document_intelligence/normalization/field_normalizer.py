@@ -11,7 +11,7 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 
 DATE_RE = re.compile(r"(?<!\d)((?:19|20)\d{2})\s*[.\-/년]\s*(\d{1,2})\s*[.\-/월]\s*(\d{1,2})(?!\d)")
-BUSINESS_NUMBER_RE = re.compile(r"(?<!\d)(\d{3})[- ]?(\d{2})[- ]?(\d{5})(?!\d)")
+BUSINESS_NUMBER_RE = re.compile(r"(?<!\d)(\d{3})[-. ·]?(\d{2})[-. ·]?(\d{5})(?!\d)")
 GPA_RE = re.compile(r"(?<!\d)(\d(?:\.\d{1,3})?)(?:\s*/\s*(\d(?:\.\d{1,3})?))?(?!\d)")
 _EDGE_NOISE_RE = re.compile(r"^[\s:：·\-_]+|[\s:：·\-_]+$")
 _WHITESPACE_RE = re.compile(r"\s+")

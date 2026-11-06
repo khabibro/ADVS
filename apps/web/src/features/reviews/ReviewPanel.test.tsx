@@ -74,6 +74,27 @@ describe("ReviewPanel", () => {
     expect(await within(first).findByTestId("evidence-crop")).toBeInTheDocument();
   });
 
+  it("shows the specific reason, what to do and the reason code from the API", () => {
+    renderWithQuery(
+      <ReviewPanel
+        done={0}
+        items={[
+          item({
+            reason_code: "NEAR_DECISION_BOUNDARY",
+            reason_ko: "국세 납세증명서의 유효기간 종료일은 한 글자만 잘못 읽혀도 판정이 달라질 수 있어 자동으로 확정하지 못했습니다.",
+            action_ko: "직원이 날짜를 서류 원본으로 확인합니다.",
+          }),
+        ]}
+        open={1}
+        projectId="p"
+      />,
+    );
+    const [card] = screen.getAllByTestId("review-card");
+    expect(within(card).getByText(/한 글자만 잘못 읽혀도/)).toBeInTheDocument();
+    expect(within(card).getByText(/직원이 날짜를 서류 원본으로 확인합니다/)).toBeInTheDocument();
+    expect(within(card).getByTestId("reason-code")).toHaveTextContent("NEAR_DECISION_BOUNDARY");
+  });
+
   it("confirms with one click and sends the processing version it was shown", async () => {
     const user = userEvent.setup();
     renderWithQuery(<ReviewPanel done={0} items={[item()]} open={1} projectId="p" />);

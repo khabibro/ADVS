@@ -37,7 +37,10 @@ from app.document_intelligence.normalization.field_normalizer import (
     normalize_gpa_scale,
     normalize_text_field,
 )
-from app.document_intelligence.validation.submission import SUBMISSION_WIDE_FIELDS
+from app.document_intelligence.validation.submission import (
+    OBSERVATION_ONLY_FIELDS,
+    SUBMISSION_WIDE_FIELDS,
+)
 from app.models.entities import (
     Checklist,
     Document,
@@ -49,6 +52,7 @@ from app.models.entities import (
 )
 from app.services.auto_acceptance import decisions_for_project
 from app.services.consistency import lock_project
+from app.services.reason_text import explain, pick_reason
 from app.services.requirements import required_fields
 
 
@@ -99,6 +103,10 @@ def invalidate_document_reviews(db: Session, document_id: uuid.UUID) -> None:
     )
 
 
+#: Rule-id suffixes of an acceptance that explicitly replaces the read's own confidence by an independent source.
+BELOW_POLICY_CONFIRMATIONS = (":DOCUMENTS_BELOW_FLOOR", ":APPLICANT_ENTERED")
+
+
 class EffectiveFieldResolver:
     def __init__(self, policy: EvidenceSufficiencyPolicy | None = None) -> None:
         self.policy = policy or EvidenceSufficiencyPolicy()
@@ -139,8 +147,9 @@ class EffectiveFieldResolver:
                     # a read below the confidence floor that the other document confirms by an exact match
                     # (the acceptance already required that partner; the policy floor is a diagnostic of the read
                     # itself, which is exactly what the partner read replaces)
+                    # or the same value typed by the applicant (exact equality, route B): two independent sources
                     {EvidenceAssessmentReason.OCR_CONFIDENCE_BELOW_POLICY}
-                    if (auto.rule_id or "").endswith(":DOCUMENTS_BELOW_FLOOR")
+                    if (auto.rule_id or "").endswith(BELOW_POLICY_CONFIRMATIONS)
                     else set()
                 )
                 | (
@@ -341,7 +350,9 @@ class FieldReviewService:
             return normalize_gpa_scale(raw_value)
         return normalize_text_field(raw_value)
 
-    def review_dependencies(self, project: Project) -> set[tuple[DocumentType, str]]:
+    def review_dependencies(
+        self, project: Project, present_types: set[DocumentType] | None = None
+    ) -> set[tuple[DocumentType, str]]:
         dependencies: set[tuple[DocumentType, str]] = set()
         checklist = project.checklist
         if checklist is None:
@@ -355,12 +366,26 @@ class FieldReviewService:
                 params: dict[str, Any] = rule.params or {}
                 rule_type = RuleType(rule.rule_type)
                 if rule_type == RuleType.FIELD_COMPARISON:
-                    dependencies.add(
-                        (DocumentType(params["source_document_type"]), str(params["source_field"]))
-                    )
-                    dependencies.add(
-                        (DocumentType(params["target_document_type"]), str(params["target_field"]))
-                    )
+                    if (
+                        present_types is not None
+                        and not {
+                            DocumentType(params["source_document_type"]),
+                            DocumentType(params["target_document_type"]),
+                        }
+                        <= present_types
+                    ):
+                        # the comparison cannot run without both documents: its fields decide nothing yet
+                        continue
+                    for side in ("source", "target"):
+                        side_type = DocumentType(params[f"{side}_document_type"])
+                        side_field = str(params[f"{side}_field"])
+                        if side_field in OBSERVATION_ONLY_FIELDS and not any(
+                            item.document_type == side_type.value
+                            and side_field in required_fields(item)
+                            for item in checklist.requirements
+                        ):
+                            continue  # an observation: compared when both documents print it, never queued
+                        dependencies.add((side_type, side_field))
                 elif rule_type in {RuleType.DATE_COMPARISON, RuleType.NUMERIC_COMPARISON}:
                     dependencies.add((DocumentType(params["document_type"]), str(params["field"])))
                 elif rule_type in {RuleType.DATE_NOT_EXPIRED, RuleType.ISSUE_DATE_MAX_AGE}:
@@ -400,11 +425,30 @@ class FieldReviewService:
             db.scalars(statement.order_by(FieldReview.reviewed_at.desc(), FieldReview.id)).all()
         )
 
+    @staticmethod
+    def _reason_fields(
+        document_type: DocumentType,
+        field_name: str,
+        field: ExtractedField | None,
+        effective: EffectiveFieldValue,
+        auto: AutoDecision | None,
+    ) -> dict[str, str | None]:
+        code = pick_reason(
+            auto.reason if auto is not None and not auto.accepted else None,
+            list(effective.assessment.reasons),
+            field is None or field.normalized_value is None,
+        )
+        text = explain(code, document_type, field_name)
+        return {
+            "reason_code": text.code if text else None,
+            "reason_ko": text.explanation if text else None,
+            "action_ko": text.action if text else None,
+        }
+
     def review_items(self, db: Session, project_id: uuid.UUID) -> list[dict[str, Any]] | None:
         project = self.project_with_rules(db, project_id)
         if project is None:
             return None
-        dependencies = self.review_dependencies(project)
         documents = db.scalars(
             select(Document)
             .join(Submission)
@@ -415,6 +459,9 @@ class FieldReviewService:
             )
             .order_by(Document.created_at, Document.id)
         ).all()
+        dependencies = self.review_dependencies(
+            project, {DocumentType(item.document_type) for item in documents}
+        )
         reviews = self.list_reviews(db, project_id, include_history=True)
         decisions = decisions_for_project(db, project)
         current = {(item.document_id, item.field_name): item for item in reviews if item.is_current}
@@ -485,6 +532,13 @@ class FieldReviewService:
                         "evidence": field.evidence if field else None,
                         "assessment_state": effective.assessment.state,
                         "assessment_reasons": list(effective.assessment.reasons),
+                        **self._reason_fields(
+                            document_type,
+                            field_name,
+                            field,
+                            effective,
+                            decisions.get((document.id, field_name)),
+                        ),
                         "policy_version": effective.assessment.policy_version,
                         "issue_code": (
                             "OCR_UNCERTAIN"

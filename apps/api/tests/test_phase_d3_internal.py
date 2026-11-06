@@ -423,7 +423,8 @@ def test_fields_no_rule_uses_are_marked_informational(client, db_session) -> Non
         f["field_name"]: f
         for f in client.get(f"/api/v1/documents/{uploaded['id']}").json()["extracted_fields"]
     }
-    assert fields["student_id"]["decision_relevant"] is True  # required by the workflow
+    # observation only (identity is name + date of birth): never queued unless the checklist requires it
+    assert fields["student_id"]["decision_relevant"] is False
     assert fields["issue_date"]["decision_relevant"] is True
     assert fields["department"]["decision_relevant"] is False  # no rule uses it
 

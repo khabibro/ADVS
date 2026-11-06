@@ -18,7 +18,13 @@ from app.core.domain import (
     RuleType,
     Severity,
 )
-from app.document_intelligence.company_names import company_key, company_names_agree
+from app.document_intelligence.company_names import (
+    alias_pool,
+    company_aliases,
+    company_key,
+    company_names_agree,
+    typed_name_matches,
+)
 from app.document_intelligence.evidence_sufficiency import (
     EffectiveValueSource,
     EvidenceAssessmentReason,
@@ -26,6 +32,7 @@ from app.document_intelligence.evidence_sufficiency import (
 )
 from app.document_intelligence.extraction.base import BRN_CHECKSUM_FAILED_METHOD
 from app.document_intelligence.normalization.field_normalizer import (
+    is_valid_business_number,
     normalize_lexical_text,
     strip_legal_entity_markers,
 )
@@ -63,6 +70,10 @@ class FieldSnapshot:
     effective_source: EffectiveValueSource = EffectiveValueSource.MACHINE
     review_id: uuid.UUID | None = None
     extraction_method: str | None = None
+    # What the machine read and why it was not accepted (None when accepted); used only to see that two
+    # confident reads disagree.
+    machine_value: str | None = None
+    auto_reason: str | None = None
 
 
 @dataclass(frozen=True)
@@ -224,12 +235,71 @@ SUBMISSION_WIDE_FIELDS = frozenset({"student_id", "admission_date"})
 
 #: Observations that are compared only when both documents print them AND both reads are reliable; an unreliable
 #: side is not a blocker for a field no decision depends on.
-SOFT_OBSERVATION_FIELDS = frozenset({"admission_date"})
+SOFT_OBSERVATION_FIELDS = frozenset({"admission_date", "student_id"})
+#: Observation-only fields (identity is name + date of birth): never queued for a person and never a blocker unless
+#: the checklist itself lists them as required fields of the document.
+OBSERVATION_ONLY_FIELDS = frozenset({"student_id"})
 
 
 def _business_number_value(document: DocumentSnapshot) -> str | None:
     number = document.fields.get("business_registration_number")
     return number.normalized_value if number is not None else None
+
+
+def _confident_numbers_differ(left: FieldSnapshot, right: FieldSnapshot) -> bool:
+    values = []
+    for snapshot in (left, right):
+        value = snapshot.normalized_value or snapshot.machine_value
+        if (
+            value is None
+            or not is_valid_business_number("".join(ch for ch in value if ch.isdigit()))
+            or snapshot.auto_reason not in (None, "DISAGREES_WITH_OTHER_DOCUMENT")
+            or (snapshot.normalized_value is None and snapshot.auto_reason is None)
+        ):
+            return False
+        values.append("".join(ch for ch in value if ch.isdigit()))
+    return values[0] != values[1]
+
+
+def _single_input_issue(results: list[RuleEvaluationResult]) -> list[RuleEvaluationResult]:
+    """The typed company name is one input: report a mismatch once, not once per document."""
+    seen = False
+    kept: list[RuleEvaluationResult] = []
+    for result in results:
+        if result.issue is not None and result.issue.code == "COMPANY_NAME_INPUT_NOT_FOUND":
+            if seen:
+                continue
+            seen = True
+        kept.append(result)
+    return kept
+
+
+def _company_pools(
+    selected: dict[DocumentType, DocumentSnapshot | None],
+) -> dict[uuid.UUID, frozenset[str]]:
+    """Per document: every name form printed on the documents of the same business (same valid business
+    number; a document without a number stands alone)."""
+    docs = [doc for doc in selected.values() if doc is not None]
+    pools: dict[uuid.UUID, frozenset[str]] = {}
+    for doc in docs:
+        number = "".join(ch for ch in (_business_number_value(doc) or "") if ch.isdigit())
+        same = [
+            other
+            for other in docs
+            if other.id == doc.id
+            or (number and is_valid_business_number(number) and _digits_of(other) == number)
+        ]
+        values: list[str | None] = []
+        for other in same:
+            for name in _COMPANY_NAME_FIELDS:
+                field_ = other.fields.get(name)
+                values.append(field_.normalized_value if field_ is not None else None)
+        pools[doc.id] = alias_pool(values)
+    return pools
+
+
+def _digits_of(document: DocumentSnapshot) -> str:
+    return "".join(ch for ch in (_business_number_value(document) or "") if ch.isdigit())
 
 
 def _reliable(snapshot: FieldSnapshot | None) -> bool:
@@ -280,6 +350,7 @@ class SubmissionVerificationEngine:
         self.validate_configuration(requirements)
         selected, availability_results = self._resolve_documents(requirements, documents)
         results = list(availability_results)
+        company_pools = _company_pools(selected)
         for requirement in sorted(requirements, key=lambda item: item.document_type.value):
             document = selected.get(requirement.document_type)
             if document is not None:
@@ -302,12 +373,17 @@ class SubmissionVerificationEngine:
                     )
                     if unresolved:
                         results.append(unresolved)
-                results.extend(self._document_conditions(document, requirement, context))
+                results.extend(
+                    self._document_conditions(
+                        document, requirement, context, company_pools.get(document.id, frozenset())
+                    )
+                )
             for rule in sorted(
                 requirement.rules,
                 key=lambda item: (item.rule_type.value, str(sorted(item.params.items()))),
             ):
                 results.append(self._evaluate_rule(rule, selected, context))
+        results = _single_input_issue(results)
         issues = [
             result.issue
             for result in results
@@ -668,6 +744,7 @@ class SubmissionVerificationEngine:
         document: DocumentSnapshot,
         requirement: RequirementSnapshot,
         context: VerificationContext,
+        company_pool: frozenset[str] = frozenset(),
     ) -> list[RuleEvaluationResult]:
         """Re-evaluate applicable conditions using effective evidence, not stale machine issues."""
         results: list[RuleEvaluationResult] = []
@@ -698,7 +775,38 @@ class SubmissionVerificationEngine:
             if unresolved:
                 results.append(unresolved)
             elif (
-                snapshot
+                rule_type == RuleType.COMPANY_NAME_MATCH
+                and snapshot
+                and snapshot.normalized_value is not None
+                and not typed_name_matches(
+                    expected, company_pool | company_aliases(snapshot.normalized_value)
+                )
+            ):
+                # The typed name equals no name form printed on the documents of this company. The documents
+                # themselves are compared with each other by the cross-document rules (business number, name);
+                # a typed name alone never sends a submission to correction.
+                issue = VerificationIssue(
+                    "COMPANY_NAME_INPUT_NOT_FOUND",
+                    OverallStatus.REVIEW_REQUIRED,
+                    "입력하신 회사명이 서류에 인쇄된 상호와 일치하지 않습니다. 서류에 인쇄된 상호로 다시 입력해 주세요.",
+                    document.id,
+                    document.document_type,
+                    name,
+                )
+                results.append(
+                    RuleEvaluationResult(
+                        requirement.id,
+                        rule_type,
+                        RuleOutcome.UNRESOLVED,
+                        issue,
+                        document.id,
+                        document.document_type,
+                        name,
+                    )
+                )
+            elif (
+                rule_type == RuleType.APPLICANT_NAME_MATCH
+                and snapshot
                 and snapshot.normalized_value is not None
                 and not _same_name(snapshot.normalized_value, expected, rule_type)
             ):
@@ -802,6 +910,39 @@ class SubmissionVerificationEngine:
             )
         source_field = source.fields.get(source_name)
         target_field = target.fields.get(target_name)
+        if (
+            source_name == target_name == "business_registration_number"
+            and source_field is not None
+            and target_field is not None
+            and _confident_numbers_differ(source_field, target_field)
+        ):
+            # Two business numbers that each pass the floor and the check digit, and are held back only because
+            # they disagree with each other: the documents belong to different businesses.
+            return RuleEvaluationResult(
+                rule.id,
+                rule.rule_type,
+                RuleOutcome.FAIL,
+                VerificationIssue(
+                    code="INFORMATION_MISMATCH",
+                    status_effect=_status_for_severity(rule.severity),
+                    message="서류의 사업자등록번호가 서로 다릅니다. 같은 사업자의 서류인지 확인해 주세요.",
+                    document_id=source.id,
+                    document_type=source_type,
+                    field_name=source_name,
+                    related_document_id=target.id,
+                    related_document_type=target_type,
+                    related_field_name=target_name,
+                    rule_id=rule.id,
+                    field_id=source_field.id,
+                    related_field_id=target_field.id,
+                ),
+                source.id,
+                source_type,
+                source_name,
+                target.id,
+                target_type,
+                target_name,
+            )
         if source_name == target_name and source_name in SUBMISSION_WIDE_FIELDS:
             # An observation, not a requirement: compared only when both documents print it. A value
             # printed on one document alone is nothing to check or confirm.

@@ -32,6 +32,10 @@ def main() -> int:
     parser.add_argument("--skip-ocr", action="store_true", help="digital only")
     parser.add_argument("--skip-formats", action="store_true")
     parser.add_argument("--project-values", action="store_true")
+    parser.add_argument(
+        "--input-mode", choices=["empty", "correct", "short", "latin"], default=None,
+        help="what the applicant types: empty, correct, short, latin (default: empty; --project-values = correct)",
+    )
     parser.add_argument("--ocr-cache", type=Path, default=None)
     parser.add_argument("--ocr-mode", choices=["live", "record", "replay"], default="live")
     parser.add_argument("--strategy", default=None, help="auto-acceptance strategy S0..S5")
@@ -50,6 +54,7 @@ def main() -> int:
         ocr_mode=args.ocr_mode,
         ocr_cache_dir=args.ocr_cache,
         project_values=args.project_values,
+        input_mode=args.input_mode,
         extra_env=extra_env,
     )
     try:

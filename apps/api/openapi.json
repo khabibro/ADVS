@@ -2250,6 +2250,16 @@
             "type": "array",
             "title": "Comparisons",
             "default": []
+          },
+          "evaluation_date_policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CriteriaDatePolicy"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -2301,6 +2311,34 @@
           "target_field"
         ],
         "title": "CriteriaComparison"
+      },
+      "CriteriaDatePolicy": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "TODAY",
+              "FIXED"
+            ],
+            "title": "Mode",
+            "default": "TODAY"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          }
+        },
+        "type": "object",
+        "title": "CriteriaDatePolicy",
+        "description": "Which day a check of this version counts as: the day it is run, or one fixed date."
       },
       "CriteriaDocument": {
         "properties": {
@@ -3556,6 +3594,39 @@
               }
             ],
             "title": "Max Age Days"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          },
+          "action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action"
           }
         },
         "type": "object",
@@ -4119,6 +4190,39 @@
                 "type": "null"
               }
             ]
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "reason_ko": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Ko"
+          },
+          "action_ko": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Ko"
           }
         },
         "type": "object",
@@ -4637,15 +4741,19 @@
       "VerificationRequest": {
         "properties": {
           "evaluation_date": {
-            "type": "string",
-            "format": "date",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Evaluation Date"
           }
         },
         "type": "object",
-        "required": [
-          "evaluation_date"
-        ],
         "title": "VerificationRequest"
       },
       "WorkflowDocumentRequirementRead": {

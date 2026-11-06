@@ -37,6 +37,7 @@ Mandatory rules (all corroborating strategies)
 
 from __future__ import annotations
 
+import logging
 import re
 import unicodedata
 import uuid
@@ -48,7 +49,13 @@ from typing import Any
 
 from app.core.domain import DocumentType
 from app.document_intelligence.candidate_repair import PROVENANCE, propose_repair
-from app.document_intelligence.company_names import company_key, company_names_agree
+from app.document_intelligence.company_names import (
+    alias_pool,
+    company_aliases,
+    company_key,
+    company_names_agree,
+    typed_name_matches,
+)
 from app.document_intelligence.confirmations import (
     VALIDITY_PROFILES,
     business_number_copy,
@@ -65,6 +72,7 @@ from app.document_intelligence.decision_robust import RuleSpec, is_decision_robu
 from app.document_intelligence.internal_evidence import DocFacts
 from app.document_intelligence.normalization.field_normalizer import (
     DATE_RE,
+    LEGAL_ENTITY_MARKERS,
     canonicalize_numeric_text,
     is_valid_business_number,
     normalize_business_number,
@@ -72,6 +80,8 @@ from app.document_intelligence.normalization.field_normalizer import (
 )
 from app.document_intelligence.ocr_confusions import CONFUSION_TABLE_VERSION
 from app.document_intelligence.validation.submission import institution_key
+
+_LOG = logging.getLogger("advs.auto_acceptance")
 
 AUTO_ACCEPT_POLICY_VERSION = "auto-accept-v1"
 
@@ -103,6 +113,7 @@ class Strategy(StrEnum):
     S18 = "S18"  # S14 + routes A and B
     S19 = "S19"  # S16 + a narrow boundary margin for GPA values the page itself confirms (report-only option)
     S20 = "S20"  # S18 + the same narrow margin (report-only option)
+    S21 = "S21"  # S17 + the live-strictness fixes (company aliases, typed-name/GPA exact confirmation, ...)
 
 
 @dataclass(frozen=True)
@@ -145,6 +156,18 @@ class Features:
     # A GPA the page itself confirms (arithmetic, conversion) is pinned to the printed truncation (0.01), so the
     # distance to the threshold that blocks it can be this small instead of the policy margin. None = policy margin.
     confirmed_gpa_margin: float | None = None
+    # Every name form a certificate prints (the Korean name, the Latin name in brackets) is an alias: a typed
+    # company name conflicts only when it equals none of the aliases printed on the documents of that business.
+    company_alias: bool = False
+    # A same-image re-read may not veto a first read that passes the floor and that the other document (or the typed
+    # name) reads exactly the same, unless the re-read is itself a plausible, different value.
+    veto_exact_lift: bool = False
+    # The applicant-typed name equals a below-floor read exactly: two independent sources confirm it (like route B).
+    applicant_name_confirm: bool = False
+    # Certificate end dates: the fixed 10-day margin around the check date is replaced by the digit-confusion
+    # check (decision_robust.py): an unconfirmed end date passes only when every likely misreading gives the same
+    # verdict at the check date.
+    robust_end_dates: bool = False
 
 
 STRATEGY_FEATURES: dict[Strategy, Features] = {
@@ -273,6 +296,13 @@ STRATEGY_FEATURES[Strategy.S17] = replace(STRATEGY_FEATURES[Strategy.S14], appli
 STRATEGY_FEATURES[Strategy.S18] = replace(
     STRATEGY_FEATURES[Strategy.S14], gpa_relation=True, applicant_gpa=True
 )
+STRATEGY_FEATURES[Strategy.S21] = replace(
+    STRATEGY_FEATURES[Strategy.S17],
+    company_alias=True,
+    veto_exact_lift=True,
+    applicant_name_confirm=True,
+    robust_end_dates=True,
+)
 STRATEGY_FEATURES[Strategy.S19] = replace(
     STRATEGY_FEATURES[Strategy.S16], confirmed_gpa_margin=0.05
 )
@@ -396,6 +426,27 @@ def _business_number_of(item: FieldInput, index: _Index) -> str | None:
     return number.value if number is not None else None
 
 
+def _company_alias_pool(
+    item: FieldInput, fields: Sequence[FieldInput], index: _Index
+) -> frozenset[str]:
+    """Every name form printed on the documents of the item's business (same valid business number)."""
+    number = "".join(ch for ch in (_business_number_of(item, index) or "") if ch.isdigit())
+    values: list[str | None] = [item.value]
+    for other in fields:
+        rule = FIELD_RULES.get(other.field_name)
+        if (
+            other.document_id == item.document_id
+            or rule is None
+            or rule.group != "company"
+            or other.value is None
+        ):
+            continue
+        theirs = "".join(ch for ch in (_business_number_of(other, index) or "") if ch.isdigit())
+        if number and theirs == number and is_valid_business_number(number):
+            values.append(other.value)
+    return alias_pool(values)
+
+
 def parse_second_pass(field_name: str, text: str | None) -> str | None:
     """Normalise a second-pass reading of a region the same way the first pass is."""
     if not text:
@@ -492,6 +543,7 @@ class AutoDecision:
     repair_candidate: str | None = (
         None  # D3-9: a proposed repair of a failed checksum (never applied)
     )
+    lifted_veto: str | None = None  # the same-image re-read that did not veto this value (logged)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -505,6 +557,7 @@ class AutoDecision:
             "reason": self.reason,
             "robust": self.robust,
             "repair_candidate": self.repair_candidate,
+            "lifted_veto": self.lifted_veto,
             "repair_provenance": PROVENANCE if self.repair_candidate else None,
             "confusion_table_version": CONFUSION_TABLE_VERSION
             if self.robust or self.repair_candidate
@@ -684,6 +737,93 @@ def _anchored_issue_date_robust(item: FieldInput, index: _Index, context: Projec
     )
 
 
+def _context_dates(item: FieldInput, index: _Index) -> list[date]:
+    """The other dates of the page that can be read: the sibling dates and the bare dates printed elsewhere."""
+    found: list[date] = []
+    for name in ("issue_date", "valid_from", "valid_until"):
+        other = index.sibling(item.document_id, name)
+        parsed = parse_iso(other.value) if other is not None and name != item.field_name else None
+        if parsed is not None:
+            found.append(parsed)
+    found.extend(_printed_bare_dates(item))
+    return found
+
+
+def _decision_robust_item(item: FieldInput, index: _Index, context: ProjectContext) -> bool:
+    """Every plausible misreading of the value (digit-confusion table) gives the same rule outcomes."""
+    assert item.value is not None
+    scale_item = index.sibling(item.document_id, "gpa_scale")
+    siblings = {
+        name: parse_iso(other.value)
+        for name in ("issue_date", "valid_from", "valid_until")
+        if (other := index.sibling(item.document_id, name)) is not None
+    }
+    if item.field_name in ("valid_until", "valid_from", "issue_date"):
+        read = {**siblings, item.field_name: parse_iso(item.value)}
+        if (
+            date_pair(
+                item.document_type,
+                read.get("issue_date"),
+                read.get("valid_from"),
+                read.get("valid_until"),
+            ).state
+            == "MISMATCH"
+        ):
+            return False  # the dates the page prints do not fit the type's legal period: not a value to act on
+        profile = VALIDITY_PROFILES.get(item.document_type)
+        end = parse_iso(item.value) if item.field_name == "valid_until" else None
+        if end is not None and profile is not None and profile.until_after_issue_days is not None:
+            longest = profile.until_after_issue_days[1] + profile.tolerance_days
+            candidates = _context_dates(item, index)
+            if not any(0 <= (end - day).days <= longest for day in candidates):
+                return False  # no printed date lies a legal period (or less) before this end
+    return is_decision_robust(
+        list(context.rules),
+        context.reference_date,
+        item.field_name,
+        item.document_type,
+        item.value,
+        scale=float(scale_item.value) if scale_item and scale_item.value else None,
+        siblings=siblings,
+        window_dates=_printed_bare_dates(item),
+    )
+
+
+def _exact_legal_relation(verdict, item: FieldInput, features: Features) -> bool:  # type: ignore[no-untyped-def]
+    """The end date equals the legal period after the issue date exactly (national tax certificate, 30 days,
+    tolerance 0): another source, so no margin or misreading check is needed."""
+    if not features.robust_end_dates or verdict.source != "date_pair":
+        return False
+    profile = VALIDITY_PROFILES.get(item.document_type)
+    return (
+        profile is not None
+        and profile.tolerance_days == 0
+        and item.field_name in ("valid_until", "valid_from", "issue_date")
+    )
+
+
+def _boundary_blocks(
+    item: FieldInput,
+    index: _Index,
+    context: ProjectContext,
+    features: Features,
+    gpa_margin: float | None = None,
+) -> bool:
+    """A value that is only tolerance-confirmed (or confirmed by a re-read of the same image) must not sit where a
+    misreading could flip the decision. Certificate end dates: decided by the digit-confusion check; everything
+    else keeps the policy margin."""
+    if features.robust_end_dates and item.field_name in ("valid_until", "valid_from"):
+        if item.value is None or context.reference_date is None:
+            return False
+        has_context = bool(_context_dates(item, index))
+        if not has_context:
+            # No other date of the page to judge the end by: a misread that moves an expired date next to the
+            # check date (injection E11) cannot be told from a true one, so the policy margin stays.
+            return _near_decision_boundary(item, context, gpa_margin)
+        return not _decision_robust_item(item, index, context)
+    return _near_decision_boundary(item, context, gpa_margin)
+
+
 def _near_decision_boundary(
     item: FieldInput, context: ProjectContext, gpa_margin: float | None = None
 ) -> bool:
@@ -805,6 +945,13 @@ def decide(
         ):
             decisions[key] = _decide_applicant_gpa(item, rule, index, context, strategy, features)
             continue
+        if (item.confidence is None or item.confidence < rule.floor) and (
+            features.applicant_name_confirm
+            and rule.application
+            and (typed_decision := _decide_applicant_name(item, rule, context, strategy))
+        ):
+            decisions[key] = typed_decision
+            continue
         if item.confidence is None or item.confidence < rule.floor:
             if _below_floor_pair_allowed(item, features):
                 decisions[key] = _decide_below_floor(
@@ -861,9 +1008,12 @@ def decide(
             if (
                 verdict is not None
                 and verdict.state == "CONFIRMED"
-                and _near_decision_boundary(
+                and not _exact_legal_relation(verdict, item, features)
+                and _boundary_blocks(
                     item,
+                    index,
                     context,
+                    features,
                     features.confirmed_gpa_margin
                     if verdict.source in ("arithmetic", "percent_relation")
                     else None,
@@ -1348,6 +1498,125 @@ def _reads_like_a_misread(key: str, reading: str) -> bool:
     return False
 
 
+def _letter_runs(text: str) -> list[str]:
+    """Maximal runs of Hangul syllables or of Latin letters; digits, marks, jamo and a change of script end a run."""
+    runs: list[str] = []
+    current = ""
+    current_kind = ""
+    for ch in unicodedata.normalize("NFKC", text):
+        kind = "H" if "\uac00" <= ch <= "\ud7a3" else "L" if ch.isascii() and ch.isalpha() else ""
+        if kind and kind == current_kind:
+            current += ch
+            continue
+        if len(current) >= 2:
+            runs.append(current)
+        current, current_kind = (ch, kind) if kind else ("", "")
+    if len(current) >= 2:
+        runs.append(current)
+    return runs
+
+
+_GARBLED_NOISE_RATIO = 0.25
+_HARMLESS_MARKS = ":：.,-()·'"
+
+
+def _noise_ratio(reading: str, hangul: bool) -> float:
+    """Share of the re-read's characters that cannot belong to a name written in the key's script (a label word in
+    Hangul around a Latin name is harmless)."""
+    chars = [ch for ch in unicodedata.normalize("NFKC", reading) if not ch.isspace()]
+    if not chars:
+        return 1.0
+    noise = 0
+    for ch in chars:
+        if "\uac00" <= ch <= "\ud7a3" or ch in _HARMLESS_MARKS:
+            continue
+        if ch.isascii() and ch.isalpha() and not hangul:
+            continue
+        noise += 1
+    return noise / len(chars)
+
+
+def _plausible_different_value(key: str, reading: str, *, company: bool = False) -> bool:
+    """The re-read contains a run of letters that is itself a plausible, *different* value: about the name's length,
+    no stuttered syllable that the name does not have, and neither a fragment of the name nor containing it. Label
+    words and marks around it ("성명:") do not matter. A garbled string (repeated syllables, digits, symbols, jamo,
+    mixed scripts) or a truncation says nothing against the first read."""
+    if not key:
+        return False
+    if company:  # a legal form beside the name ("주식회사", "(주)") is not part of the name
+        for marker in LEGAL_ENTITY_MARKERS:
+            reading = reading.replace(marker, " ")
+    key_doubled = {a for a, b in zip(key, key[1:], strict=False) if a == b}
+    key_hangul = any("\uac00" <= ch <= "\ud7a3" for ch in key)
+    if _noise_ratio(reading, key_hangul) > _GARBLED_NOISE_RATIO:
+        return False  # digits, symbols, jamo and letters of another script all over it: garbled, not another name
+    for run in _letter_runs(reading):
+        if run in key or key in run:
+            continue
+        if ("\uac00" <= run[0] <= "\ud7a3") != key_hangul:
+            continue  # another script is not another spelling of this name
+        if abs(len(run) - len(key)) > 2:
+            continue
+        if {a for a, b in zip(run, run[1:], strict=False) if a == b} - key_doubled:
+            continue
+        return True
+    return False
+
+
+def _matched_exactly_elsewhere(
+    item: FieldInput,
+    rule: FieldRule,
+    fields: Sequence[FieldInput],
+    index: _Index,
+    context: ProjectContext,
+    features: Features,
+    reference: str | None,
+) -> bool:
+    """The first read equals the other document's read (or the typed name) after normalisation, and nothing
+    disagrees."""
+    assert rule.group is not None and item.value is not None
+    agreeing, disagreeing = _group_values(item, rule, fields, index, context, features)
+    if disagreeing:
+        return False
+    if agreeing:
+        return True
+    if reference is None:
+        return False
+    if rule.group == "company":
+        return typed_name_matches(reference, company_aliases(item.value))
+    return canonical_key(rule.group, reference) == canonical_key(rule.group, item.value)
+
+
+def _decide_applicant_name(
+    item: FieldInput, rule: FieldRule, context: ProjectContext, strategy: Strategy
+) -> AutoDecision | None:
+    """The typed name equals a below-floor read exactly: accepted like route B (two independent sources). A
+    reliable read is never overridden: this only runs for a read below the floor, and a plausible different re-read
+    of the same image still stops it."""
+    typed = context.company_name if rule.application == "company_name" else context.applicant_name
+    if not typed or item.value is None or not rule.group:
+        return None
+    if rule.group == "company":
+        same = typed_name_matches(typed, company_aliases(item.value))
+    else:
+        same = canonical_key(rule.group, typed) == canonical_key(rule.group, item.value)
+    if not same:
+        return None
+    second = item.second_pass
+    if second is not None and second.normalized:
+        key = canonical_key(rule.group, item.value)
+        if key not in second.normalized and _plausible_different_value(
+            key, second.normalized, company=rule.group == "company"
+        ):
+            return None
+    return AutoDecision(
+        True,
+        strategy.value,
+        rule_id=f"{rule.rule_id}:APPLICANT_ENTERED",
+        sources=("application",),
+    )
+
+
 def _read_back_by_another_document(
     item: FieldInput,
     rule: FieldRule,
@@ -1384,6 +1653,7 @@ def _decide_corroborated(
     below_floor: bool = False,
 ) -> AutoDecision:
     assert item.value is not None
+    lifted_veto: str | None = None
     # ---- application value (independent source, S5+) ---------------------------------------
     reference = None
     if features.application and rule.application:
@@ -1391,7 +1661,10 @@ def _decide_corroborated(
             context.company_name if rule.application == "company_name" else context.applicant_name
         )
     if reference and rule.group:
-        if canonical_key(rule.group, reference) != canonical_key(rule.group, item.value):
+        if features.company_alias and rule.group == "company":
+            if not typed_name_matches(reference, _company_alias_pool(item, fields, index)):
+                return _no(strategy, "CONFLICTS_WITH_APPLICATION_VALUE", rule.rule_id)
+        elif canonical_key(rule.group, reference) != canonical_key(rule.group, item.value):
             return _no(strategy, "CONFLICTS_WITH_APPLICATION_VALUE", rule.rule_id)
 
     # ---- second-pass veto (S6) ----------------------------------------------------------------
@@ -1410,7 +1683,23 @@ def _decide_corroborated(
 
     if features.name_veto and rule.name_veto and rule.group and second and second.normalized:
         key = canonical_key(rule.group, item.value)
-        if key not in second.normalized and (
+        if (
+            key not in second.normalized
+            and features.veto_exact_lift
+            and not below_floor
+            and not _plausible_different_value(
+                key, second.normalized, company=rule.group == "company"
+            )
+            and _matched_exactly_elsewhere(item, rule, fields, index, context, features, reference)
+        ):
+            lifted_veto = second.normalized
+            _LOG.info(
+                "second-pass veto lifted: field=%s document=%s reread_length=%d",
+                item.field_name,
+                item.document_id,
+                len(second.normalized),
+            )
+        elif key not in second.normalized and (
             not features.veto_lift
             or _reads_like_a_misread(key, second.normalized)
             or not _read_back_by_another_document(item, rule, fields, index, context, features)
@@ -1466,6 +1755,7 @@ def _decide_corroborated(
             rule_id=f"{rule.rule_id}:{'+'.join(s.upper() for s in sources)}",
             sources=tuple(sources),
             corroborating_document_ids=tuple(corroborators),
+            lifted_veto=lifted_veto,
         )
 
     # ---- second-pass consensus, only where nothing else can confirm it (S4+)
@@ -1474,7 +1764,7 @@ def _decide_corroborated(
         and rule.second_pass
         and second_value is not None
         and second_value == item.value
-        and _near_decision_boundary(item, context)
+        and _boundary_blocks(item, index, context, features)
     ):
         return _no(strategy, "NEAR_DECISION_BOUNDARY", rule.rule_id)
     if (
@@ -1491,28 +1781,17 @@ def _decide_corroborated(
             sources=("second_pass",),
             second_pass_value=second_value,
         )
-    if features.robust and item.field_name in ROBUST_FIELDS and not item.needs_review:
-        scale_item = index.sibling(item.document_id, "gpa_scale")
-        siblings = {
-            name: parse_iso(other.value)
-            for name in ("issue_date", "valid_from", "valid_until")
-            if (other := index.sibling(item.document_id, name)) is not None
-        }
-        if is_decision_robust(
-            list(context.rules),
-            context.reference_date,
-            item.field_name,
-            item.document_type,
-            item.value,
-            scale=float(scale_item.value) if scale_item and scale_item.value else None,
-            siblings=siblings,
-            window_dates=_printed_bare_dates(item),
-        ):
-            return AutoDecision(
-                True,
-                strategy.value,
-                rule_id=f"{rule.rule_id}:DECISION_ROBUST",
-                sources=("decision_robust",),
-                robust=True,
-            )
+    if (
+        features.robust
+        and item.field_name in ROBUST_FIELDS
+        and not item.needs_review
+        and _decision_robust_item(item, index, context)
+    ):
+        return AutoDecision(
+            True,
+            strategy.value,
+            rule_id=f"{rule.rule_id}:DECISION_ROBUST",
+            sources=("decision_robust",),
+            robust=True,
+        )
     return _no(strategy, "NO_INDEPENDENT_CONFIRMATION", rule.rule_id)

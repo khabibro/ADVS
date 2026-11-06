@@ -173,7 +173,50 @@ def criteria_from_checklist(checklist: Checklist) -> dict[str, Any]:
                 )
             elif rule.rule_type == RuleType.REQUIRED_FIELD.value and params.get("field"):
                 own["required_fields"].append(params["field"])
-    return {"documents": list(documents.values()), "comparisons": comparisons}
+    return {
+        "documents": list(documents.values()),
+        "comparisons": comparisons,
+        "evaluation_date_policy": {
+            "mode": checklist.evaluation_date_mode or "TODAY",
+            "date": (
+                checklist.evaluation_date_fixed.isoformat()
+                if checklist.evaluation_date_fixed
+                else None
+            ),
+        },
+    }
+
+
+def _date_policy(
+    criteria: dict[str, Any], current: Checklist | None = None
+) -> tuple[str, date | None]:
+    """The check-date policy of a criteria set: ('TODAY', None) or ('FIXED', the date).
+
+    A criteria set without a policy (an older client, the admin editor) keeps the current one."""
+    policy = criteria.get("evaluation_date_policy")
+    if not policy:
+        if current is not None:
+            return current.evaluation_date_mode or "TODAY", current.evaluation_date_fixed
+        return "TODAY", None
+    mode = str(policy.get("mode") or "TODAY").upper()
+    if mode == "TODAY":
+        return "TODAY", None
+    if mode != "FIXED":
+        raise CriteriaError("점검일 기준은 '제출일(오늘)' 또는 '고정일'이어야 합니다.", "date")
+    raw = policy.get("date")
+    try:
+        fixed = raw if isinstance(raw, date) else date.fromisoformat(str(raw))
+    except ValueError as exc:
+        raise CriteriaError("고정 점검일을 입력해 주세요.", "date") from exc
+    return "FIXED", fixed
+
+
+def policy_evaluation_date(checklist: Checklist | None, today: date) -> date:
+    """The day a check of this checklist version counts as (server side, not chosen by the browser)."""
+    if checklist is not None and checklist.evaluation_date_mode == "FIXED":
+        if checklist.evaluation_date_fixed is not None:
+            return checklist.evaluation_date_fixed
+    return today
 
 
 # --------------------------------------------------------------------------- criteria -> rows
@@ -474,11 +517,14 @@ def save_criteria(
             "version",
         )
     requirements = _build_requirements(criteria)
+    mode, fixed = _date_policy(criteria, checklist)
     if not _has_revisions(db, checklist.id):
         _record_revision(db, checklist, "시스템", "최초 기준 (변경 전 상태)")
     checklist.requirements.clear()
     db.flush()
     checklist.requirements.extend(requirements)
+    checklist.evaluation_date_mode = mode
+    checklist.evaluation_date_fixed = fixed
     checklist.version = (checklist.version or 1) + 1
     db.flush()
     _record_revision(db, checklist, editor, note)
@@ -531,8 +577,13 @@ def create_workflow(
     if source is None:
         raise CriteriaError("제출 서류를 1개 이상 추가해 주세요.", "documents")
     requirements = _build_requirements(source)
+    mode, fixed = _date_policy(source)
     checklist = Checklist(
-        name=cleaned[:200], description=(description or "").strip() or None, is_active=True
+        name=cleaned[:200],
+        description=(description or "").strip() or None,
+        is_active=True,
+        evaluation_date_mode=mode,
+        evaluation_date_fixed=fixed,
     )
     checklist.version = 1
     db.add(checklist)

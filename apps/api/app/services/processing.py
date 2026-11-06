@@ -6,6 +6,7 @@ import uuid
 from dataclasses import asdict, replace
 
 from sqlalchemy import delete, or_, update
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -67,6 +68,19 @@ from app.services.storage.local import LocalStorageService
 from app.services.verification import invalidate_document_project_verification
 
 logger = logging.getLogger(__name__)
+
+
+def mark_failed_in_new_session(document_id: uuid.UUID, code: ProcessingErrorCode, message: str) -> None:
+    from app.db.session import SessionLocal
+
+    with SessionLocal() as other:
+        other.execute(
+            update(Document)
+            .where(Document.id == document_id)
+            .values(processing_status=ProcessingStatus.FAILED, error_code=code, error_message=message)
+        )
+        other.commit()
+
 
 _ACTIVE_STATUSES = {
     ProcessingStatus.PREPROCESSING,
@@ -664,14 +678,21 @@ class DocumentProcessingService:
     def _fail(
         self, db: Session, document: Document, code: ProcessingErrorCode, message: str
     ) -> None:
-        lock_document_project(db, document)
-        db.refresh(document)
-        invalidate_document_project_verification(db, document)
-        document.processing_status = ProcessingStatus.FAILED
-        document.error_code = code
-        document.error_message = message
-        db.commit()
-        db.refresh(document)
+        try:
+            lock_document_project(db, document)
+            db.refresh(document)
+            invalidate_document_project_verification(db, document)
+            document.processing_status = ProcessingStatus.FAILED
+            document.error_code = code
+            document.error_message = message
+            db.commit()
+            db.refresh(document)
+        except OperationalError:
+            # The database stayed locked: never leave the document "in progress" for ever. A fresh session marks it
+            # failed (and startup recovery would do the same after a crash).
+            db.rollback()
+            mark_failed_in_new_session(document.id, code, message)
+            db.refresh(document)
 
     def _delete_derived_rows(self, db: Session, document_id: uuid.UUID) -> None:
         for model in (OCRResult, ExtractedField, ValidationResult):

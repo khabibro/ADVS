@@ -41,7 +41,8 @@ from app.schemas.api import (
     RequirementState,
     VerificationIssueRead,
 )
-from app.services.criteria import requirement_hints
+from app.services.criteria import policy_evaluation_date, requirement_hints
+from app.services.reason_text import explain
 from app.services.reviews import FieldReviewService
 from app.services.verification import SubmissionVerificationService
 
@@ -130,7 +131,9 @@ class ProjectOverviewService:
         issues = _unique(list(result.issues)) if result else []
         requirements = self._requirements(project, documents, issues, result is not None)
         other = self._other_documents(project, documents)
-        enriched = self._enrich(db, project_id, issues, result.evaluation_date if result else None)
+        enriched = self._enrich(
+            db, project_id, issues, result.evaluation_date if result else None, review_items
+        )
 
         nc = sum(1 for i in issues if i.status_effect == OverallStatus.NEEDS_CORRECTION)
         rr = sum(1 for i in issues if i.status_effect == OverallStatus.REVIEW_REQUIRED)
@@ -164,7 +167,11 @@ class ProjectOverviewService:
             status=status,
             evaluation_date=result.evaluation_date if result else None,
             evaluated_at=stored.evaluated_at if result else None,
-            suggested_evaluation_date=result.evaluation_date if result else date.today(),
+            suggested_evaluation_date=(
+                result.evaluation_date
+                if result
+                else policy_evaluation_date(project.checklist, date.today())
+            ),
             status_item_count=item_count,
             next_step=self._next_step(counts, status, issues),
             counts=counts,
@@ -259,9 +266,11 @@ class ProjectOverviewService:
         project_id: uuid.UUID,
         issues: list[Any],
         evaluation_date: date | None,
+        review_items: list[dict[str, Any]] | None = None,
     ) -> list[OverviewIssue]:
         if not issues:
             return []
+        reasons = {(item["document_id"], item["field_name"]): item for item in review_items or []}
         snapshots = {
             d.id: d for d in self.verification.document_snapshots(db, project_id, evaluation_date)
         }
@@ -286,11 +295,22 @@ class ProjectOverviewService:
             params = rules.get(issue.rule_id, {}) if issue.rule_id else {}
             max_age = params.get("max_age_days")
             expected = params.get("expected_value")
+            item = reasons.get((issue.document_id, issue.field_name))
+            text = None
+            if issue.code in ("OCR_UNCERTAIN", "REQUIRED_FIELD_UNRESOLVED") and item is not None:
+                text = (item.get("reason_code"), item.get("reason_ko"), item.get("action_ko"))
+            elif issue.code == "COMPANY_NAME_INPUT_NOT_FOUND":
+                found = explain(issue.code, issue.document_type, issue.field_name)
+                text = (found.code, found.explanation, found.action) if found else None
+            base = VerificationIssueRead.model_validate(issue, from_attributes=True).model_dump()
+            if text and text[1]:
+                base["message"] = text[1]
             out.append(
                 OverviewIssue(
-                    **VerificationIssueRead.model_validate(
-                        issue, from_attributes=True
-                    ).model_dump(),
+                    **base,
+                    reason_code=text[0] if text else None,
+                    explanation=text[1] if text else None,
+                    action=text[2] if text else None,
                     value=value(issue.document_id, issue.field_name),
                     related_value=value(issue.related_document_id, issue.related_field_name),
                     reference_date=(

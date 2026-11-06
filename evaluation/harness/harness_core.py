@@ -240,6 +240,33 @@ class OCRCacheProvider:
 # ----------------------------------------------------------------------------
 
 
+def typed_values(mode: str, workflow: str, entities: dict[str, Any]) -> dict[str, Any]:
+    """The applicant-typed fields of a project for a realistic input mode."""
+    if mode == "empty":
+        return {}
+    if workflow == "business":
+        full = entities.get("company_A", {}).get("full")
+        if full is None:
+            return {}
+        if mode == "correct":
+            return {"company_name": full}
+        if mode == "short":
+            return {"company_name": full.replace("주식회사", "").replace("(주)", "").strip()}
+        if mode == "latin":
+            return {"company_name": "Test Sangsa Co., Ltd."}
+    else:
+        name = entities.get("student", {}).get("name")
+        if name is None:
+            return {}
+        if mode == "correct":
+            return {"applicant_name": name}
+        if mode == "short":
+            return {"applicant_name": name.replace(" ", "")}
+        if mode == "latin":
+            return {"applicant_name": "Kim Test"}
+    raise ValueError(f"unknown input mode: {mode}")
+
+
 class Runner:
     def __init__(
         self,
@@ -249,6 +276,7 @@ class Runner:
         ocr_cache_dir: Path | None = None,
         injector: Callable[[str, list[Any]], list[Any]] | None = None,
         project_values: bool = False,
+        input_mode: str | None = None,
         extra_env: dict[str, str] | None = None,
         skip_ocr: bool = False,
     ) -> None:
@@ -256,7 +284,10 @@ class Runner:
         self.root = guard_corpus(corpus)
         self.manifest = json.loads((self.root / os.environ.get("ADVS_MANIFEST_FILE", "manifest.json")).read_text(encoding="utf-8"))
         self.submission_date = self.manifest["submission_date"]
-        self.project_values = project_values
+        # What the applicant types: empty | correct | short (no legal form, no spaces) | latin (a Latin name that
+        # the documents do not print). --project-values is the old name of 'correct'.
+        self.input_mode = input_mode or ("correct" if project_values else "empty")
+        self.project_values = self.input_mode != "empty"
         self.skip_ocr = skip_ocr
         self.by_file = {entry["file"]: entry for entry in self.manifest["files"]}
         self.temp_root = Path(tempfile.mkdtemp(prefix="advs_harness_", dir=str(REPO_ROOT / "evaluation" / "harness")))
@@ -374,12 +405,7 @@ class Runner:
 
     def project_payload(self, workflow: str, checklist_id: Any, name: str) -> dict[str, Any]:
         payload: dict[str, Any] = {"name": name, "workflow_id": str(checklist_id)}
-        if self.project_values:
-            entities = self.manifest.get("fictional_entities", {})
-            if workflow == "business":
-                payload["company_name"] = entities.get("company_A", {}).get("full")
-            else:
-                payload["applicant_name"] = entities.get("student", {}).get("name")
+        payload.update(typed_values(self.input_mode, workflow, self.manifest.get("fictional_entities", {})))
         return payload
 
     def make_project(self, workflow: str, checklist_id: Any, name: str) -> str:
@@ -516,6 +542,7 @@ class Runner:
             "manifest_submission_date": self.submission_date,
             "versions_run": versions,
             "project_values": self.project_values,
+            "input_mode": self.input_mode,
             "git_head": git_head(),
             "sets": {},
             "format_sets": {},
