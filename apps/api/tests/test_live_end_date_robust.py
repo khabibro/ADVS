@@ -62,3 +62,28 @@ def test_an_end_date_without_an_exact_relation_that_a_misreading_can_flip_waits_
 def test_far_from_the_check_date_with_a_confirmed_profile_is_robust() -> None:
     got = _decide("2026-11-13", date(2026, 10, 20), Strategy.S21)
     assert got.accepted
+
+
+def test_without_another_date_on_the_page_the_policy_margin_stays() -> None:
+    # injection E11: an expired end date misread as "the day after the check date" cannot be told from a true one
+    second = SecondPassInput("2026-10-06", "2026-10-06", 0.9)
+    only_end = [
+        FieldInput(DOC, "c", D, "valid_until", "2026-10-06", 0.95, True, False, second_pass=second)
+    ]
+    unread_issue = [*only_end, FieldInput(DOC, "c", D, "issue_date", None, None, True, False)]
+    for fields in (only_end, unread_issue):
+        got = decide(
+            fields, ProjectContext(reference_date=date(2026, 10, 5), rules=SPEC), Strategy.S21
+        )
+        assert not got[(DOC, "valid_until")].accepted
+        assert got[(DOC, "valid_until")].reason == "NEAR_DECISION_BOUNDARY"
+
+
+def test_an_end_date_that_breaks_the_legal_period_is_never_accepted_as_robust() -> None:
+    second = SecondPassInput("2026-10-06", "2026-10-06", 0.9)
+    fields = [
+        FieldInput(DOC, "c", D, "valid_until", "2026-10-06", 0.95, True, False, second_pass=second),
+        FieldInput(DOC, "c", D, "issue_date", "2026-08-01", 0.97, True, False),
+    ]
+    got = decide(fields, ProjectContext(reference_date=date(2026, 10, 5), rules=SPEC), Strategy.S21)
+    assert not got[(DOC, "valid_until")].accepted

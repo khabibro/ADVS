@@ -746,6 +746,18 @@ def _decision_robust_item(item: FieldInput, index: _Index, context: ProjectConte
         for name in ("issue_date", "valid_from", "valid_until")
         if (other := index.sibling(item.document_id, name)) is not None
     }
+    if item.field_name in ("valid_until", "valid_from", "issue_date"):
+        read = {**siblings, item.field_name: parse_iso(item.value)}
+        if (
+            date_pair(
+                item.document_type,
+                read.get("issue_date"),
+                read.get("valid_from"),
+                read.get("valid_until"),
+            ).state
+            == "MISMATCH"
+        ):
+            return False  # the dates the page prints do not fit the type's legal period: not a value to act on
     return is_decision_robust(
         list(context.rules),
         context.reference_date,
@@ -784,6 +796,16 @@ def _boundary_blocks(
     if features.robust_end_dates and item.field_name in ("valid_until", "valid_from"):
         if item.value is None or context.reference_date is None:
             return False
+        has_context = any(
+            (other := index.sibling(item.document_id, name)) is not None
+            and parse_iso(other.value) is not None
+            for name in ("issue_date", "valid_from", "valid_until")
+            if name != item.field_name
+        )
+        if not has_context:
+            # No other date of the page to judge the end by: a misread that moves an expired date next to the
+            # check date (injection E11) cannot be told from a true one, so the policy margin stays.
+            return _near_decision_boundary(item, context, gpa_margin)
         return not _decision_robust_item(item, index, context)
     return _near_decision_boundary(item, context, gpa_margin)
 
