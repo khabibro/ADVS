@@ -99,6 +99,10 @@ def invalidate_document_reviews(db: Session, document_id: uuid.UUID) -> None:
     )
 
 
+#: Rule-id suffixes of an acceptance that explicitly replaces the read's own confidence by an independent source.
+BELOW_POLICY_CONFIRMATIONS = (":DOCUMENTS_BELOW_FLOOR", ":APPLICANT_ENTERED")
+
+
 class EffectiveFieldResolver:
     def __init__(self, policy: EvidenceSufficiencyPolicy | None = None) -> None:
         self.policy = policy or EvidenceSufficiencyPolicy()
@@ -139,8 +143,9 @@ class EffectiveFieldResolver:
                     # a read below the confidence floor that the other document confirms by an exact match
                     # (the acceptance already required that partner; the policy floor is a diagnostic of the read
                     # itself, which is exactly what the partner read replaces)
+                    # or the same value typed by the applicant (exact equality, route B): two independent sources
                     {EvidenceAssessmentReason.OCR_CONFIDENCE_BELOW_POLICY}
-                    if (auto.rule_id or "").endswith(":DOCUMENTS_BELOW_FLOOR")
+                    if (auto.rule_id or "").endswith(BELOW_POLICY_CONFIRMATIONS)
                     else set()
                 )
                 | (
