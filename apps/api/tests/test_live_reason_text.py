@@ -44,3 +44,23 @@ def test_the_most_specific_reason_wins() -> None:
     )
     assert pick_reason("CONFIDENCE_BELOW_FLOOR", [], True) == "FIELD_MISSING"
     assert explain(None, None, None) is None
+
+
+@pytest.mark.parametrize(
+    ("field", "expected"),
+    [
+        ("valid_until", "유효기간 종료일은"),
+        ("gpa", "평점평균을"),
+        ("student_name", "성명을"),
+        ("birth_date", "생년월일을"),
+    ],
+)
+def test_korean_particles_follow_the_last_syllable(field: str, expected: str) -> None:
+    sentence = explain("CONFIDENCE_BELOW_FLOOR", DocumentType.TRANSCRIPT, field).explanation
+    topic = explain("NEAR_DECISION_BOUNDARY", DocumentType.TRANSCRIPT, field).explanation
+    assert (
+        expected in sentence
+        or expected.replace("을", "은") in topic
+        or expected.replace("은", "을") in sentence
+    )
+    assert "는는" not in sentence + topic and "를를" not in sentence + topic
