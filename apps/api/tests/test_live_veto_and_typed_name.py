@@ -149,3 +149,34 @@ def test_reliable_read_with_garbled_reread_is_accepted_when_the_typed_name_equal
 def test_a_stray_latin_letter_makes_the_reread_garbled_not_plausible() -> None:
     assert _plausible_different_value("가나대학교", "가나대학m") is False
     assert _plausible_different_value("가나대학교", "가다대학교") is True
+
+
+@pytest.mark.parametrize(
+    "reading", [":김테스트", "성명:김테스트", "성명 : 김테스트 학번", "김테스트"]
+)
+def test_a_clean_reread_of_another_spelling_still_vetoes_whatever_surrounds_it(
+    reading: str,
+) -> None:
+    # common-mode misread of a name on both documents: the re-read shows the true name next to a label
+    assert _plausible_different_value("김테스드", reading) is True
+
+
+def test_a_company_reread_with_its_legal_form_is_judged_by_the_name_alone() -> None:
+    # common-mode misread of one syllable on every document; the re-read shows the true name with 주식회사
+    assert _plausible_different_value("테스트상자", "주식회사테스트상사", company=True) is True
+    assert _plausible_different_value("테스트상자", "(주)테스트상사", company=True) is True
+    assert _plausible_different_value("테스트상자", "!):주식회사테스트상사", company=True) is True
+    # without the company switch the same text is too long to be a spelling of the name
+    assert _plausible_different_value("테스트상자", "주식회사테스트상사") is False
+
+
+def test_a_common_mode_name_misread_is_still_vetoed_by_a_clean_reread() -> None:
+    e, t = uuid.uuid4(), uuid.uuid4()
+    items = [
+        _item(
+            e, DocumentType.ENROLLMENT_CERTIFICATE, "student_name", "김테스드", 0.97, ":김테스트"
+        ),
+        _item(t, DocumentType.TRANSCRIPT, "student_name", "김테스드", 0.97, "성명:김테스트"),
+    ]
+    got = decide(items, ProjectContext(), Strategy.S21)
+    assert not got[(e, "student_name")].accepted and not got[(t, "student_name")].accepted

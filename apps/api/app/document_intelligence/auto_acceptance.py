@@ -72,6 +72,7 @@ from app.document_intelligence.decision_robust import RuleSpec, is_decision_robu
 from app.document_intelligence.internal_evidence import DocFacts
 from app.document_intelligence.normalization.field_normalizer import (
     DATE_RE,
+    LEGAL_ENTITY_MARKERS,
     canonicalize_numeric_text,
     is_valid_business_number,
     normalize_business_number,
@@ -1461,27 +1462,69 @@ def _reads_like_a_misread(key: str, reading: str) -> bool:
     return False
 
 
-def _plausible_different_value(key: str, reading: str) -> bool:
-    """The re-read is itself a plausible, *different* value: letters only, no stuttered syllable that the name does
-    not have, about the name's length, and not a fragment of the name (a truncated line under a stamp). A garbled
-    string (repeated syllables, digits, symbols, jamo) or a truncation says nothing against the first read."""
-    text = "".join(unicodedata.normalize("NFKC", reading).split())
-    if not text or not key:
+def _letter_runs(text: str) -> list[str]:
+    """Maximal runs of Hangul syllables or of Latin letters; digits, marks, jamo and a change of script end a run."""
+    runs: list[str] = []
+    current = ""
+    current_kind = ""
+    for ch in unicodedata.normalize("NFKC", text):
+        kind = "H" if "\uac00" <= ch <= "\ud7a3" else "L" if ch.isascii() and ch.isalpha() else ""
+        if kind and kind == current_kind:
+            current += ch
+            continue
+        if len(current) >= 2:
+            runs.append(current)
+        current, current_kind = (ch, kind) if kind else ("", "")
+    if len(current) >= 2:
+        runs.append(current)
+    return runs
+
+
+_GARBLED_NOISE_RATIO = 0.25
+_HARMLESS_MARKS = ":：.,-()·'"
+
+
+def _noise_ratio(reading: str, hangul: bool) -> float:
+    """Share of the re-read's characters that cannot belong to a name written in the key's script (a label word in
+    Hangul around a Latin name is harmless)."""
+    chars = [ch for ch in unicodedata.normalize("NFKC", reading) if not ch.isspace()]
+    if not chars:
+        return 1.0
+    noise = 0
+    for ch in chars:
+        if "\uac00" <= ch <= "\ud7a3" or ch in _HARMLESS_MARKS:
+            continue
+        if ch.isascii() and ch.isalpha() and not hangul:
+            continue
+        noise += 1
+    return noise / len(chars)
+
+
+def _plausible_different_value(key: str, reading: str, *, company: bool = False) -> bool:
+    """The re-read contains a run of letters that is itself a plausible, *different* value: about the name's length,
+    no stuttered syllable that the name does not have, and neither a fragment of the name nor containing it. Label
+    words and marks around it ("성명:") do not matter. A garbled string (repeated syllables, digits, symbols, jamo,
+    mixed scripts) or a truncation says nothing against the first read."""
+    if not key:
         return False
-    if text in key or key in text:
-        return False
-    if not all(ch.isalpha() for ch in text):
-        return False
-    # one script only: a Korean name with a stray Latin letter is a garbled re-read, not another name
-    hangul = [ch for ch in text if "\uac00" <= ch <= "\ud7a3"]
-    if hangul and len(hangul) != len(text):
-        return False
-    if any("\u1100" <= ch <= "\u11ff" or "\u3130" <= ch <= "\u318f" for ch in text):
-        return False
-    doubled = {a for a, b in zip(text, text[1:], strict=False) if a == b}
-    if doubled - {a for a, b in zip(key, key[1:], strict=False) if a == b}:
-        return False
-    return abs(len(text) - len(key)) <= 2
+    if company:  # a legal form beside the name ("주식회사", "(주)") is not part of the name
+        for marker in LEGAL_ENTITY_MARKERS:
+            reading = reading.replace(marker, " ")
+    key_doubled = {a for a, b in zip(key, key[1:], strict=False) if a == b}
+    key_hangul = any("\uac00" <= ch <= "\ud7a3" for ch in key)
+    if _noise_ratio(reading, key_hangul) > _GARBLED_NOISE_RATIO:
+        return False  # digits, symbols, jamo and letters of another script all over it: garbled, not another name
+    for run in _letter_runs(reading):
+        if run in key or key in run:
+            continue
+        if ("\uac00" <= run[0] <= "\ud7a3") != key_hangul:
+            continue  # another script is not another spelling of this name
+        if abs(len(run) - len(key)) > 2:
+            continue
+        if {a for a, b in zip(run, run[1:], strict=False) if a == b} - key_doubled:
+            continue
+        return True
+    return False
 
 
 def _matched_exactly_elsewhere(
@@ -1526,7 +1569,9 @@ def _decide_applicant_name(
     second = item.second_pass
     if second is not None and second.normalized:
         key = canonical_key(rule.group, item.value)
-        if key not in second.normalized and _plausible_different_value(key, second.normalized):
+        if key not in second.normalized and _plausible_different_value(
+            key, second.normalized, company=rule.group == "company"
+        ):
             return None
     return AutoDecision(
         True,
@@ -1606,7 +1651,9 @@ def _decide_corroborated(
             key not in second.normalized
             and features.veto_exact_lift
             and not below_floor
-            and not _plausible_different_value(key, second.normalized)
+            and not _plausible_different_value(
+                key, second.normalized, company=rule.group == "company"
+            )
             and _matched_exactly_elsewhere(item, rule, fields, index, context, features, reference)
         ):
             lifted_veto = second.normalized
