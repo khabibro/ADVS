@@ -52,6 +52,7 @@ from app.models.entities import (
 )
 from app.services.auto_acceptance import decisions_for_project
 from app.services.consistency import lock_project
+from app.services.reason_text import explain, pick_reason
 from app.services.requirements import required_fields
 
 
@@ -412,6 +413,26 @@ class FieldReviewService:
             db.scalars(statement.order_by(FieldReview.reviewed_at.desc(), FieldReview.id)).all()
         )
 
+    @staticmethod
+    def _reason_fields(
+        document_type: DocumentType,
+        field_name: str,
+        field: ExtractedField | None,
+        effective: EffectiveFieldValue,
+        auto: AutoDecision | None,
+    ) -> dict[str, str | None]:
+        code = pick_reason(
+            auto.reason if auto is not None and not auto.accepted else None,
+            list(effective.assessment.reasons),
+            field is None or field.normalized_value is None,
+        )
+        text = explain(code, document_type, field_name)
+        return {
+            "reason_code": text.code if text else None,
+            "reason_ko": text.explanation if text else None,
+            "action_ko": text.action if text else None,
+        }
+
     def review_items(self, db: Session, project_id: uuid.UUID) -> list[dict[str, Any]] | None:
         project = self.project_with_rules(db, project_id)
         if project is None:
@@ -497,6 +518,13 @@ class FieldReviewService:
                         "evidence": field.evidence if field else None,
                         "assessment_state": effective.assessment.state,
                         "assessment_reasons": list(effective.assessment.reasons),
+                        **self._reason_fields(
+                            document_type,
+                            field_name,
+                            field,
+                            effective,
+                            decisions.get((document.id, field_name)),
+                        ),
                         "policy_version": effective.assessment.policy_version,
                         "issue_code": (
                             "OCR_UNCERTAIN"

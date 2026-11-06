@@ -238,6 +238,10 @@ class ReviewItemRead(BaseModel):
     effective_value: str | None
     effective_source: EffectiveValueSource
     auto_acceptance: AutoAcceptanceRead | None = None
+    # Why this item waits for a person, in plain Korean (staff also see the code).
+    reason_code: str | None = None
+    reason_ko: str | None = None
+    action_ko: str | None = None
 
 
 class ValidationRead(BaseModel):
@@ -372,6 +376,10 @@ class OverviewIssue(VerificationIssueRead):
     reference_date: date | None = None
     expected_value: str | None = None
     max_age_days: int | None = None
+    # For findings that wait for a person: the specific reason (code), what is wrong and what to do.
+    reason_code: str | None = None
+    explanation: str | None = None
+    action: str | None = None
 
 
 class OverviewCounts(BaseModel):
