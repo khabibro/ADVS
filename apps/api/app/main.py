@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -11,6 +12,7 @@ from app.api.v1.routes import router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.document_intelligence.ocr.warmup import warm_up_ocr
+from app.services.startup_recovery import recover_interrupted_documents
 
 settings = get_settings()
 configure_logging(settings.log_level)
@@ -18,6 +20,10 @@ configure_logging(settings.log_level)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    try:
+        recover_interrupted_documents()
+    except Exception:  # a missing table must not stop the API from starting
+        logging.getLogger(__name__).exception("startup recovery failed")
     warmup = asyncio.create_task(warm_up_ocr(settings)) if settings.ocr_warmup else None
     yield
     if warmup is not None and not warmup.done():

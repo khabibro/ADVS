@@ -6,23 +6,41 @@ The lock is released only when the caller commits or rolls back. Acquire it
 before loading mutable verification inputs, in project -> document order.
 """
 
+import time
 import uuid
 
 from sqlalchemy import select, update
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from app.models.entities import Document, Project, Submission
+
+SQLITE_LOCK_ATTEMPTS = 6
+
+
+def _is_locked(error: OperationalError) -> bool:
+    return "database is locked" in str(error).lower() or "database is busy" in str(error).lower()
 
 
 def acquire_project_lock(db: Session, project_id: uuid.UUID) -> None:
     with db.no_autoflush:
         if db.get_bind().dialect.name == "sqlite":
-            db.execute(
-                update(Project)
-                .where(Project.id == project_id)
-                .values(status=Project.status)
-                .execution_options(synchronize_session=False)
-            )
+            # A reader that becomes a writer inside one transaction gets SQLITE_BUSY at once (the busy timeout does
+            # not apply to that upgrade); the statement did not start a write, so waiting and trying again is safe.
+            for attempt in range(SQLITE_LOCK_ATTEMPTS):
+                try:
+                    db.execute(
+                        update(Project)
+                        .where(Project.id == project_id)
+                        .values(status=Project.status)
+                        .execution_options(synchronize_session=False)
+                    )
+                    return
+                except OperationalError as error:
+                    if not _is_locked(error) or attempt == SQLITE_LOCK_ATTEMPTS - 1:
+                        raise
+                    db.rollback()
+                    time.sleep(0.25 * (attempt + 1))
         else:
             db.execute(select(Project.id).where(Project.id == project_id).with_for_update())
 

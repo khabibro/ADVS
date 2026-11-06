@@ -13,11 +13,12 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
 
 from app.db.session import Base
+from app.db.types import UUID
 
 JSONType = JSON().with_variant(JSONB, "postgresql")
 
@@ -31,14 +32,14 @@ class TimestampMixin:
 
 class User(Base, TimestampMixin):
     __tablename__ = "users"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(120))
 
 
 class Project(Base, TimestampMixin):
     __tablename__ = "projects"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     checklist_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("checklists.id"), nullable=True
@@ -57,7 +58,7 @@ class Project(Base, TimestampMixin):
 
 class Checklist(Base, TimestampMixin):
     __tablename__ = "checklists"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(200), index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -81,7 +82,7 @@ class ChecklistRevision(Base, TimestampMixin):
     __table_args__ = (
         Index("uq_checklist_revision_version", "checklist_id", "version", unique=True),
     )
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     checklist_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("checklists.id", ondelete="CASCADE"), index=True
     )
@@ -94,7 +95,7 @@ class ChecklistRevision(Base, TimestampMixin):
 
 class DocumentRequirement(Base, TimestampMixin):
     __tablename__ = "document_requirements"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     checklist_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("checklists.id"), index=True)
     document_type: Mapped[str] = mapped_column(String(80), index=True)
     required: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -106,7 +107,7 @@ class DocumentRequirement(Base, TimestampMixin):
 
 class ValidationRule(Base, TimestampMixin):
     __tablename__ = "validation_rules"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     requirement_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("document_requirements.id"), nullable=True, index=True
     )
@@ -118,7 +119,7 @@ class ValidationRule(Base, TimestampMixin):
 
 class Submission(Base, TimestampMixin):
     __tablename__ = "submissions"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
     status: Mapped[str] = mapped_column(String(40), default="REVIEW_REQUIRED", index=True)
     project = relationship("Project", back_populates="submissions")
@@ -127,7 +128,7 @@ class Submission(Base, TimestampMixin):
 
 class Document(Base, TimestampMixin):
     __tablename__ = "documents"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     submission_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("submissions.id"), index=True)
     original_filename: Mapped[str] = mapped_column(String(255))
     storage_key: Mapped[str] = mapped_column(String(255), unique=True)
@@ -157,7 +158,7 @@ class Document(Base, TimestampMixin):
 
 class OCRResult(Base, TimestampMixin):
     __tablename__ = "ocr_results"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     document_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("documents.id"), index=True)
     provider: Mapped[str] = mapped_column(String(80))
     page_number: Mapped[int] = mapped_column(Integer, default=1)
@@ -171,7 +172,7 @@ class OCRResult(Base, TimestampMixin):
 
 class ExtractedField(Base, TimestampMixin):
     __tablename__ = "extracted_fields"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     document_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("documents.id"), index=True)
     field_name: Mapped[str] = mapped_column(String(120), index=True)
     raw_value: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -186,7 +187,7 @@ class ExtractedField(Base, TimestampMixin):
 
 class FieldReview(Base, TimestampMixin):
     __tablename__ = "field_reviews"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
     document_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("documents.id"), index=True)
     extracted_field_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -223,7 +224,7 @@ class FieldReview(Base, TimestampMixin):
 
 class ValidationResult(Base, TimestampMixin):
     __tablename__ = "validation_results"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     document_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("documents.id"), nullable=True, index=True
     )
@@ -245,7 +246,7 @@ class ValidationResult(Base, TimestampMixin):
 
 class AuditLog(Base, TimestampMixin):
     __tablename__ = "audit_logs"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     project_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("projects.id"), nullable=True, index=True
     )
