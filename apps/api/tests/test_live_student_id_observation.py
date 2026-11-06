@@ -99,3 +99,37 @@ def test_an_unreliable_student_id_does_not_block_the_comparison() -> None:
         context=VerificationContext(date(2026, 11, 6)),
     )
     assert result.status == OverallStatus.READY and not result.issues
+
+
+def _birth_date_comparison() -> Project:
+    rule = ValidationRule(
+        rule_type=RuleType.FIELD_COMPARISON.value,
+        severity=Severity.ERROR.value,
+        params={
+            "source_document_type": DocumentType.ENROLLMENT_CERTIFICATE.value,
+            "source_field": "birth_date",
+            "target_document_type": DocumentType.TRANSCRIPT.value,
+            "target_field": "birth_date",
+            "operator": RuleOperator.EQUALS.value,
+            "value_type": "identifier",
+        },
+    )
+    enrolment = DocumentRequirement(
+        document_type=DocumentType.ENROLLMENT_CERTIFICATE.value, required=True, rules=[rule]
+    )
+    transcript = DocumentRequirement(
+        document_type=DocumentType.TRANSCRIPT.value, required=False, rules=[]
+    )
+    return Project(checklist=Checklist(name="x", requirements=[enrolment, transcript]))
+
+
+def test_a_comparison_only_field_is_queued_only_when_both_documents_are_there() -> None:
+    service = FieldReviewService()
+    project = _birth_date_comparison()
+    alone = service.review_dependencies(project, {DocumentType.ENROLLMENT_CERTIFICATE})
+    both = service.review_dependencies(
+        project, {DocumentType.ENROLLMENT_CERTIFICATE, DocumentType.TRANSCRIPT}
+    )
+    assert (DocumentType.ENROLLMENT_CERTIFICATE, "birth_date") not in alone
+    assert (DocumentType.ENROLLMENT_CERTIFICATE, "birth_date") in both
+    assert (DocumentType.TRANSCRIPT, "birth_date") in both

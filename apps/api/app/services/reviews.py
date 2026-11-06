@@ -350,7 +350,9 @@ class FieldReviewService:
             return normalize_gpa_scale(raw_value)
         return normalize_text_field(raw_value)
 
-    def review_dependencies(self, project: Project) -> set[tuple[DocumentType, str]]:
+    def review_dependencies(
+        self, project: Project, present_types: set[DocumentType] | None = None
+    ) -> set[tuple[DocumentType, str]]:
         dependencies: set[tuple[DocumentType, str]] = set()
         checklist = project.checklist
         if checklist is None:
@@ -364,6 +366,16 @@ class FieldReviewService:
                 params: dict[str, Any] = rule.params or {}
                 rule_type = RuleType(rule.rule_type)
                 if rule_type == RuleType.FIELD_COMPARISON:
+                    if (
+                        present_types is not None
+                        and not {
+                            DocumentType(params["source_document_type"]),
+                            DocumentType(params["target_document_type"]),
+                        }
+                        <= present_types
+                    ):
+                        # the comparison cannot run without both documents: its fields decide nothing yet
+                        continue
                     for side in ("source", "target"):
                         side_type = DocumentType(params[f"{side}_document_type"])
                         side_field = str(params[f"{side}_field"])
@@ -437,7 +449,6 @@ class FieldReviewService:
         project = self.project_with_rules(db, project_id)
         if project is None:
             return None
-        dependencies = self.review_dependencies(project)
         documents = db.scalars(
             select(Document)
             .join(Submission)
@@ -448,6 +459,9 @@ class FieldReviewService:
             )
             .order_by(Document.created_at, Document.id)
         ).all()
+        dependencies = self.review_dependencies(
+            project, {DocumentType(item.document_type) for item in documents}
+        )
         reviews = self.list_reviews(db, project_id, include_history=True)
         decisions = decisions_for_project(db, project)
         current = {(item.document_id, item.field_name): item for item in reviews if item.is_current}
