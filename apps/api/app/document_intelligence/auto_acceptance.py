@@ -37,6 +37,7 @@ Mandatory rules (all corroborating strategies)
 
 from __future__ import annotations
 
+import logging
 import re
 import unicodedata
 import uuid
@@ -50,6 +51,7 @@ from app.core.domain import DocumentType
 from app.document_intelligence.candidate_repair import PROVENANCE, propose_repair
 from app.document_intelligence.company_names import (
     alias_pool,
+    company_aliases,
     company_key,
     company_names_agree,
     typed_name_matches,
@@ -77,6 +79,8 @@ from app.document_intelligence.normalization.field_normalizer import (
 )
 from app.document_intelligence.ocr_confusions import CONFUSION_TABLE_VERSION
 from app.document_intelligence.validation.submission import institution_key
+
+_LOG = logging.getLogger("advs.auto_acceptance")
 
 AUTO_ACCEPT_POLICY_VERSION = "auto-accept-v1"
 
@@ -154,6 +158,11 @@ class Features:
     # Every name form a certificate prints (the Korean name, the Latin name in brackets) is an alias: a typed
     # company name conflicts only when it equals none of the aliases printed on the documents of that business.
     company_alias: bool = False
+    # A same-image re-read may not veto a first read that passes the floor and that the other document (or the typed
+    # name) reads exactly the same, unless the re-read is itself a plausible, different value.
+    veto_exact_lift: bool = False
+    # The applicant-typed name equals a below-floor read exactly: two independent sources confirm it (like route B).
+    applicant_name_confirm: bool = False
 
 
 STRATEGY_FEATURES: dict[Strategy, Features] = {
@@ -282,7 +291,12 @@ STRATEGY_FEATURES[Strategy.S17] = replace(STRATEGY_FEATURES[Strategy.S14], appli
 STRATEGY_FEATURES[Strategy.S18] = replace(
     STRATEGY_FEATURES[Strategy.S14], gpa_relation=True, applicant_gpa=True
 )
-STRATEGY_FEATURES[Strategy.S21] = replace(STRATEGY_FEATURES[Strategy.S17], company_alias=True)
+STRATEGY_FEATURES[Strategy.S21] = replace(
+    STRATEGY_FEATURES[Strategy.S17],
+    company_alias=True,
+    veto_exact_lift=True,
+    applicant_name_confirm=True,
+)
 STRATEGY_FEATURES[Strategy.S19] = replace(
     STRATEGY_FEATURES[Strategy.S16], confirmed_gpa_margin=0.05
 )
@@ -523,6 +537,7 @@ class AutoDecision:
     repair_candidate: str | None = (
         None  # D3-9: a proposed repair of a failed checksum (never applied)
     )
+    lifted_veto: str | None = None  # the same-image re-read that did not veto this value (logged)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -536,6 +551,7 @@ class AutoDecision:
             "reason": self.reason,
             "robust": self.robust,
             "repair_candidate": self.repair_candidate,
+            "lifted_veto": self.lifted_veto,
             "repair_provenance": PROVENANCE if self.repair_candidate else None,
             "confusion_table_version": CONFUSION_TABLE_VERSION
             if self.robust or self.repair_candidate
@@ -835,6 +851,13 @@ def decide(
             and item.document_type == DocumentType.TRANSCRIPT
         ):
             decisions[key] = _decide_applicant_gpa(item, rule, index, context, strategy, features)
+            continue
+        if (item.confidence is None or item.confidence < rule.floor) and (
+            features.applicant_name_confirm
+            and rule.application
+            and (typed_decision := _decide_applicant_name(item, rule, context, strategy))
+        ):
+            decisions[key] = typed_decision
             continue
         if item.confidence is None or item.confidence < rule.floor:
             if _below_floor_pair_allowed(item, features):
@@ -1379,6 +1402,77 @@ def _reads_like_a_misread(key: str, reading: str) -> bool:
     return False
 
 
+def _plausible_different_value(key: str, reading: str) -> bool:
+    """The re-read is itself a plausible, *different* value: letters only, no stuttered syllable that the name does
+    not have, about the name's length, and not a fragment of the name (a truncated line under a stamp). A garbled
+    string (repeated syllables, digits, symbols, jamo) or a truncation says nothing against the first read."""
+    text = "".join(unicodedata.normalize("NFKC", reading).split())
+    if not text or not key:
+        return False
+    if text in key or key in text:
+        return False
+    if not all(ch.isalpha() for ch in text):
+        return False
+    if any("\u1100" <= ch <= "\u11ff" or "\u3130" <= ch <= "\u318f" for ch in text):
+        return False
+    doubled = {a for a, b in zip(text, text[1:], strict=False) if a == b}
+    if doubled - {a for a, b in zip(key, key[1:], strict=False) if a == b}:
+        return False
+    return abs(len(text) - len(key)) <= 2
+
+
+def _matched_exactly_elsewhere(
+    item: FieldInput,
+    rule: FieldRule,
+    fields: Sequence[FieldInput],
+    index: _Index,
+    context: ProjectContext,
+    features: Features,
+    reference: str | None,
+) -> bool:
+    """The first read equals the other document's read (or the typed name) after normalisation, and nothing
+    disagrees."""
+    assert rule.group is not None and item.value is not None
+    agreeing, disagreeing = _group_values(item, rule, fields, index, context, features)
+    if disagreeing:
+        return False
+    if agreeing:
+        return True
+    if reference is None:
+        return False
+    if rule.group == "company":
+        return typed_name_matches(reference, company_aliases(item.value))
+    return canonical_key(rule.group, reference) == canonical_key(rule.group, item.value)
+
+
+def _decide_applicant_name(
+    item: FieldInput, rule: FieldRule, context: ProjectContext, strategy: Strategy
+) -> AutoDecision | None:
+    """The typed name equals a below-floor read exactly: accepted like route B (two independent sources). A
+    reliable read is never overridden: this only runs for a read below the floor, and a plausible different re-read
+    of the same image still stops it."""
+    typed = context.company_name if rule.application == "company_name" else context.applicant_name
+    if not typed or item.value is None or not rule.group:
+        return None
+    if rule.group == "company":
+        same = typed_name_matches(typed, company_aliases(item.value))
+    else:
+        same = canonical_key(rule.group, typed) == canonical_key(rule.group, item.value)
+    if not same:
+        return None
+    second = item.second_pass
+    if second is not None and second.normalized:
+        key = canonical_key(rule.group, item.value)
+        if key not in second.normalized and _plausible_different_value(key, second.normalized):
+            return None
+    return AutoDecision(
+        True,
+        strategy.value,
+        rule_id=f"{rule.rule_id}:APPLICANT_ENTERED",
+        sources=("application",),
+    )
+
+
 def _read_back_by_another_document(
     item: FieldInput,
     rule: FieldRule,
@@ -1415,6 +1509,7 @@ def _decide_corroborated(
     below_floor: bool = False,
 ) -> AutoDecision:
     assert item.value is not None
+    lifted_veto: str | None = None
     # ---- application value (independent source, S5+) ---------------------------------------
     reference = None
     if features.application and rule.application:
@@ -1444,7 +1539,21 @@ def _decide_corroborated(
 
     if features.name_veto and rule.name_veto and rule.group and second and second.normalized:
         key = canonical_key(rule.group, item.value)
-        if key not in second.normalized and (
+        if (
+            key not in second.normalized
+            and features.veto_exact_lift
+            and not below_floor
+            and not _plausible_different_value(key, second.normalized)
+            and _matched_exactly_elsewhere(item, rule, fields, index, context, features, reference)
+        ):
+            lifted_veto = second.normalized
+            _LOG.info(
+                "second-pass veto lifted: field=%s document=%s reread_length=%d",
+                item.field_name,
+                item.document_id,
+                len(second.normalized),
+            )
+        elif key not in second.normalized and (
             not features.veto_lift
             or _reads_like_a_misread(key, second.normalized)
             or not _read_back_by_another_document(item, rule, fields, index, context, features)
@@ -1500,6 +1609,7 @@ def _decide_corroborated(
             rule_id=f"{rule.rule_id}:{'+'.join(s.upper() for s in sources)}",
             sources=tuple(sources),
             corroborating_document_ids=tuple(corroborators),
+            lifted_veto=lifted_veto,
         )
 
     # ---- second-pass consensus, only where nothing else can confirm it (S4+)
