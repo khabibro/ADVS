@@ -132,6 +132,10 @@ _KNOWN_LABELS = [
     "사업장 명칭",
     "학생명",
     "학번",
+    "생년월일",
+    "입학일자",
+    "입학일",
+    "소속",
     "평점",
     "총평점",
     "평점평균",
@@ -374,6 +378,23 @@ def _looks_like_label_or_title(value: str) -> bool:
     if _DOCUMENT_TITLE_RE.search(compact):
         return True
     return any(compact == _compact(label) for label in _KNOWN_LABELS)
+
+
+_COMPACT_DATE_RE = re.compile(r"(\d{4})(\d{2})(\d{2})")
+
+
+def _compact_label_date(raw: str) -> str | None:
+    """A date printed as eight digits (19990307) directly after its label. Only ever used for a value that
+    follows a date label: an eight-digit number elsewhere (a student number) is not a date."""
+    match = _COMPACT_DATE_RE.fullmatch(re.sub(r"\s", "", canonicalize_numeric_text(raw)))
+    if match is None:
+        return None
+    year, month, day = (int(part) for part in match.groups())
+    try:
+        parsed = date(year, month, day)
+    except ValueError:
+        return None
+    return parsed.isoformat() if 1900 <= year <= 2100 else None
 
 
 def _strip_trailing_labels(value: str, active_labels: list[str]) -> str:
@@ -1122,7 +1143,8 @@ def issuer_university_candidate(source: ExtractionInput) -> ExtractionCandidate 
     universities on one document -> no answer."""
     names: dict[str, ExtractionCandidate] = {}
     for text, evidences in _joined_university_lines(_source_lines(source)):
-        collapsed = _normalize_extraction_text(text).strip()
+        # a speck or the stamp's edge read as a quotation mark inside the line ("경 북 대학"교 총") is not text
+        collapsed = _STRAY_MARKS_RE.sub("", _normalize_extraction_text(text)).strip()
         match = _ISSUER_UNIVERSITY_RE.fullmatch(_compact(collapsed))
         if not match:
             continue
@@ -1621,6 +1643,8 @@ class BaseDocumentExtractor(ABC):
         candidate = candidate_after_label(text, labels)
         raw = candidate.value if candidate else None
         normalized = normalize_date(raw)
+        if normalized is None and raw is not None:
+            normalized = _compact_label_date(raw)  # "19990307" right after a date label
         if candidate is None or normalized is None:
             return self.missing(field_name)
         assert raw is not None
