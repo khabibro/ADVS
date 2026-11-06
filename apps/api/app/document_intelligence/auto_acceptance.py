@@ -163,6 +163,10 @@ class Features:
     veto_exact_lift: bool = False
     # The applicant-typed name equals a below-floor read exactly: two independent sources confirm it (like route B).
     applicant_name_confirm: bool = False
+    # Certificate end dates: the fixed 10-day margin around the check date is replaced by the digit-confusion
+    # check (decision_robust.py): an unconfirmed end date passes only when every likely misreading gives the same
+    # verdict at the check date.
+    robust_end_dates: bool = False
 
 
 STRATEGY_FEATURES: dict[Strategy, Features] = {
@@ -296,6 +300,7 @@ STRATEGY_FEATURES[Strategy.S21] = replace(
     company_alias=True,
     veto_exact_lift=True,
     applicant_name_confirm=True,
+    robust_end_dates=True,
 )
 STRATEGY_FEATURES[Strategy.S19] = replace(
     STRATEGY_FEATURES[Strategy.S16], confirmed_gpa_margin=0.05
@@ -731,6 +736,57 @@ def _anchored_issue_date_robust(item: FieldInput, index: _Index, context: Projec
     )
 
 
+def _decision_robust_item(item: FieldInput, index: _Index, context: ProjectContext) -> bool:
+    """Every plausible misreading of the value (digit-confusion table) gives the same rule outcomes."""
+    assert item.value is not None
+    scale_item = index.sibling(item.document_id, "gpa_scale")
+    siblings = {
+        name: parse_iso(other.value)
+        for name in ("issue_date", "valid_from", "valid_until")
+        if (other := index.sibling(item.document_id, name)) is not None
+    }
+    return is_decision_robust(
+        list(context.rules),
+        context.reference_date,
+        item.field_name,
+        item.document_type,
+        item.value,
+        scale=float(scale_item.value) if scale_item and scale_item.value else None,
+        siblings=siblings,
+        window_dates=_printed_bare_dates(item),
+    )
+
+
+def _exact_legal_relation(verdict, item: FieldInput, features: Features) -> bool:  # type: ignore[no-untyped-def]
+    """The end date equals the legal period after the issue date exactly (national tax certificate, 30 days,
+    tolerance 0): another source, so no margin or misreading check is needed."""
+    if not features.robust_end_dates or verdict.source != "date_pair":
+        return False
+    profile = VALIDITY_PROFILES.get(item.document_type)
+    return (
+        profile is not None
+        and profile.tolerance_days == 0
+        and item.field_name in ("valid_until", "valid_from", "issue_date")
+    )
+
+
+def _boundary_blocks(
+    item: FieldInput,
+    index: _Index,
+    context: ProjectContext,
+    features: Features,
+    gpa_margin: float | None = None,
+) -> bool:
+    """A value that is only tolerance-confirmed (or confirmed by a re-read of the same image) must not sit where a
+    misreading could flip the decision. Certificate end dates: decided by the digit-confusion check; everything
+    else keeps the policy margin."""
+    if features.robust_end_dates and item.field_name in ("valid_until", "valid_from"):
+        if item.value is None or context.reference_date is None:
+            return False
+        return not _decision_robust_item(item, index, context)
+    return _near_decision_boundary(item, context, gpa_margin)
+
+
 def _near_decision_boundary(
     item: FieldInput, context: ProjectContext, gpa_margin: float | None = None
 ) -> bool:
@@ -915,9 +971,12 @@ def decide(
             if (
                 verdict is not None
                 and verdict.state == "CONFIRMED"
-                and _near_decision_boundary(
+                and not _exact_legal_relation(verdict, item, features)
+                and _boundary_blocks(
                     item,
+                    index,
                     context,
+                    features,
                     features.confirmed_gpa_margin
                     if verdict.source in ("arithmetic", "percent_relation")
                     else None,
@@ -1618,7 +1677,7 @@ def _decide_corroborated(
         and rule.second_pass
         and second_value is not None
         and second_value == item.value
-        and _near_decision_boundary(item, context)
+        and _boundary_blocks(item, index, context, features)
     ):
         return _no(strategy, "NEAR_DECISION_BOUNDARY", rule.rule_id)
     if (
@@ -1635,28 +1694,17 @@ def _decide_corroborated(
             sources=("second_pass",),
             second_pass_value=second_value,
         )
-    if features.robust and item.field_name in ROBUST_FIELDS and not item.needs_review:
-        scale_item = index.sibling(item.document_id, "gpa_scale")
-        siblings = {
-            name: parse_iso(other.value)
-            for name in ("issue_date", "valid_from", "valid_until")
-            if (other := index.sibling(item.document_id, name)) is not None
-        }
-        if is_decision_robust(
-            list(context.rules),
-            context.reference_date,
-            item.field_name,
-            item.document_type,
-            item.value,
-            scale=float(scale_item.value) if scale_item and scale_item.value else None,
-            siblings=siblings,
-            window_dates=_printed_bare_dates(item),
-        ):
-            return AutoDecision(
-                True,
-                strategy.value,
-                rule_id=f"{rule.rule_id}:DECISION_ROBUST",
-                sources=("decision_robust",),
-                robust=True,
-            )
+    if (
+        features.robust
+        and item.field_name in ROBUST_FIELDS
+        and not item.needs_review
+        and _decision_robust_item(item, index, context)
+    ):
+        return AutoDecision(
+            True,
+            strategy.value,
+            rule_id=f"{rule.rule_id}:DECISION_ROBUST",
+            sources=("decision_robust",),
+            robust=True,
+        )
     return _no(strategy, "NO_INDEPENDENT_CONFIRMATION", rule.rule_id)

@@ -759,7 +759,9 @@ class SubmissionVerificationEngine:
                 rule_type == RuleType.COMPANY_NAME_MATCH
                 and snapshot
                 and snapshot.normalized_value is not None
-                and not typed_name_matches(expected, company_pool | company_aliases(snapshot.normalized_value))
+                and not typed_name_matches(
+                    expected, company_pool | company_aliases(snapshot.normalized_value)
+                )
             ):
                 # The typed name equals no name form printed on the documents of this company. The documents
                 # themselves are compared with each other by the cross-document rules (business number, name);
